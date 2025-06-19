@@ -1,4 +1,6 @@
 @import "tailwindcss";
+@import 'mapbox-gl/dist/mapbox-gl.css';
+
 
 /* No seu arquivo global.css ou dentro do componente com style jsx */
 .hide-scrollbar::-webkit-scrollbar {
