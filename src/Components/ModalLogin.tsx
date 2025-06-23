@@ -35,14 +35,10 @@ export default function ModalLogin({ onClose }: { onClose: () => void }) {
           }
         })
         if (signUpError) {
-          if (signUpError.message.includes('already registered')) {
-            setError('Este e-mail já está cadastrado. Faça login ou use outro e-mail.')
-          } else {
-            setError(signUpError.message)
-          }
+          setError(signUpError.message)
         } else {
           onClose()
-          router.push('/emailverification') // Redireciona para a tela de verificação de e-mail
+          router.push('/emailverification')
         }
       } else {
         // Login
@@ -51,8 +47,9 @@ export default function ModalLogin({ onClose }: { onClose: () => void }) {
           password: form.password,
         })
         if (signInError) throw signInError
+
         onClose()
-        router.push('/dashboard')
+        router.push('/results')
       }
     } catch (err: any) {
       setError(err.message || "Erro ao autenticar.")
@@ -75,21 +72,18 @@ export default function ModalLogin({ onClose }: { onClose: () => void }) {
         </h2>
         <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
           {isRegister && (
-            <>
-              <div className="flex flex-col gap-1">
-                <label className="text-left text-sm font-semibold">Nome</label>
-                <input
-                  type="text"
-                  name="name"
-                  className="border rounded px-3 border-gray-500 focus:border-orange-600 focus:outline-none focus:ring-0 py-2"
-                  placeholder="Seu nome"
-                  value={form.name}
-                  onChange={handleChange}
-                  required
-                />
-              </div>
-
-            </>
+            <div className="flex flex-col gap-1">
+              <label className="text-left text-sm font-semibold">Nome</label>
+              <input
+                type="text"
+                name="name"
+                className="border rounded px-3 border-gray-500 focus:border-orange-600 focus:outline-none focus:ring-0 py-2"
+                placeholder="Seu nome"
+                value={form.name}
+                onChange={handleChange}
+                required
+              />
+            </div>
           )}
           <div className="flex flex-col gap-1">
             <label className="text-left text-sm font-semibold">Email</label>
@@ -103,7 +97,6 @@ export default function ModalLogin({ onClose }: { onClose: () => void }) {
               required
             />
           </div>
-
           <div className="flex flex-col gap-1">
             <label className="text-left text-sm font-semibold">Senha</label>
             <input
@@ -116,7 +109,6 @@ export default function ModalLogin({ onClose }: { onClose: () => void }) {
               required
             />
           </div>
-
           <button
             type="submit"
             className="bg-orange-600 text-white rounded-full py-2 font-semibold mt-2 cursor-pointer hover:bg-orange-500 transition disabled:opacity-60"

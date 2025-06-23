@@ -68,7 +68,7 @@ export default function Header() {
               </button>
               <button
                 className="hidden md:block px-6 py-2 rounded-full font-medium transition-all duration-300 bg-orange-600 text-white hover:bg-orange-500 cursor-pointer"
-                onClick={() => router.push('/dashboard')}
+                onClick={() => router.push('/results')}
               >
                 Anunciar Agora!
               </button>
