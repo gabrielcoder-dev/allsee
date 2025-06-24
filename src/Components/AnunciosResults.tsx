@@ -1,6 +1,6 @@
 import React from 'react'
 import GetAnunciosResults from './GetAnunciosResults'
-import Mapbox from './Mapbox'
+import Mapbox from './MapboxWrapper'
 
 const AnunciosResults = () => {
   return (
