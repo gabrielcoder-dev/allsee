@@ -29,7 +29,7 @@ const ResultsHeader = () => {
   const [location, setLocation] = useState('')
   const [duration, setDuration] = useState('2')
   const [startDate, setStartDate] = useState<Date | undefined>(new Date())
-  const [order, setOrder] = useState('price')
+  const [order, setOrder] = useState('')
   const [showFilter, setShowFilter] = useState(false)
   const [open, setOpen] = useState(false)
   const popoverRef = useRef<HTMLDivElement>(null)
@@ -56,7 +56,7 @@ const ResultsHeader = () => {
   }, [open])
 
   return (
-    <div className="hidden w-full px-16 py-3 lg:flex lg:fixed top-0 left-0 right-0 z-50 justify-between items-center gap-4 ">
+    <div className="hidden w-full px-12 py-3 lg:flex top-0 left-0 right-0 z-50 justify-between items-center gap-4 ">
 
       <Image
       src={logoImg}
@@ -138,7 +138,7 @@ const ResultsHeader = () => {
         className="flex items-center gap-1 text-gray-600 font-medium px-2 py-1 rounded hover:bg-gray-100"
         onClick={() => setOpen(o => !o)}
       >
-        ordenar
+        {orderOptions.find(opt => opt.value === order)?.label || 'ordenar'}
         <ChevronDownIcon className="w-4 h-4" />
       </button>
       {open && (

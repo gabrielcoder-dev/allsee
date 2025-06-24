@@ -1,14 +1,14 @@
 import React from 'react'
 import HeaderResultsDesktop from '@/Components/HeaderResultsDesktop'
-import HeaderResultsMobile from '@/Components/HeaderResultsMobile'
-import Hero from '@/Components/Hero'
+import AnunciosResults from '@/Components/AnunciosResults'
+import MobileHeader from '@/Components/HeaderResultsMobile'
 
 const page = () => {
   return (
-    <div>
+    <div className=''>
       <HeaderResultsDesktop />
-      <HeaderResultsMobile />
-
+      <MobileHeader />
+      <AnunciosResults />
     </div>
   )
 }

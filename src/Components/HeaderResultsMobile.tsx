@@ -1,12 +1,11 @@
 'use client'
 
-import { MenuIcon, ShoppingCartIcon, Search, MapPinIcon, CalendarIcon, ChevronDownIcon, Sliders } from 'lucide-react'
+import { MenuIcon, ShoppingCartIcon, Search, MapPinIcon, ChevronDownIcon, Sliders } from 'lucide-react'
 import Image from 'next/image'
 import logoImg from '@/assets/logo.png'
 import { Button } from './ui/button'
 import { useEffect, useState, useRef } from 'react'
 import { supabase } from '@/lib/supabase'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select'
 import ModalHeaderMobile from './ModalHeaderMobile'
 import FilterModal from '@/Components/FilterModal'
 
@@ -22,26 +21,21 @@ export default function MobileHeader() {
   const [location, setLocation] = useState('')
   const [order, setOrder] = useState('')
   const [showTopBar, setShowTopBar] = useState(true)
-  const [isFixed, setIsFixed] = useState(false)
   const [showModal, setShowModal] = useState(false)
   const [showFilter, setShowFilter] = useState(false)
-   const [open, setOpen] = useState(false)
-     const popoverRef = useRef<HTMLDivElement>(null)
+  const [open, setOpen] = useState(false)
+  const popoverRef = useRef<HTMLDivElement>(null)
 
+  // Top bar show/hide on scroll
   useEffect(() => {
     const handleScroll = () => {
-      if (window.scrollY > 10) {
-        setIsFixed(true)
-        setShowTopBar(false)
-      } else {
-        setIsFixed(false)
-        setShowTopBar(true)
-      }
+      setShowTopBar(window.scrollY <= 10)
     }
     window.addEventListener('scroll', handleScroll)
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
 
+  // Fetch user name
   useEffect(() => {
     const fetchUserName = async () => {
       const { data: { user } } = await supabase.auth.getUser()
@@ -52,26 +46,20 @@ export default function MobileHeader() {
     fetchUserName()
   }, [])
 
-   useEffect(() => {
-      function handleClick(e: MouseEvent) {
-        if (popoverRef.current && !popoverRef.current.contains(e.target as Node)) {
-          setOpen(false)
-        }
+  // Fechar popover ao clicar fora
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (popoverRef.current && !popoverRef.current.contains(e.target as Node)) {
+        setOpen(false)
       }
-      if (open) document.addEventListener('mousedown', handleClick)
-      return () => document.removeEventListener('mousedown', handleClick)
-    }, [open])
-  
+    }
+    if (open) document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [open])
 
   return (
     <>
-      <div
-        className={`
-          lg:hidden flex flex-col gap-4 w-full px-4 py-3 bg-white z-50
-          transition-all duration-500
-          ${isFixed ? 'fixed top-0 left-0 shadow-lg' : ''}
-        `}
-      >
+      <div className="lg:hidden flex flex-col gap-4 w-full px-4 py-3 bg-white z-50 transition-all duration-500">
         {/* Top Bar: Logo, carrinho, saudação, menu */}
         <div
           className={`
