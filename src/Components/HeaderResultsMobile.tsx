@@ -4,21 +4,29 @@ import { MenuIcon, ShoppingCartIcon, Search, MapPinIcon, CalendarIcon, ChevronDo
 import Image from 'next/image'
 import logoImg from '@/assets/logo.png'
 import { Button } from './ui/button'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { supabase } from '@/lib/supabase'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select'
 import ModalHeaderMobile from './ModalHeaderMobile'
 import FilterModal from '@/Components/FilterModal'
 
+const orderOptions = [
+  { label: '$ menor para maior', value: 'price-asc' },
+  { label: '$ maior para menor', value: 'price-desc' },
+  { label: 'distância', value: 'distance' },
+  { label: 'alfabética', value: 'alphabetical' },
+]
 
 export default function MobileHeader() {
   const [userName, setUserName] = useState<string>('')
   const [location, setLocation] = useState('')
-  const [order, setOrder] = useState('price')
+  const [order, setOrder] = useState('')
   const [showTopBar, setShowTopBar] = useState(true)
   const [isFixed, setIsFixed] = useState(false)
   const [showModal, setShowModal] = useState(false)
   const [showFilter, setShowFilter] = useState(false)
+   const [open, setOpen] = useState(false)
+     const popoverRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     const handleScroll = () => {
@@ -43,6 +51,17 @@ export default function MobileHeader() {
     }
     fetchUserName()
   }, [])
+
+   useEffect(() => {
+      function handleClick(e: MouseEvent) {
+        if (popoverRef.current && !popoverRef.current.contains(e.target as Node)) {
+          setOpen(false)
+        }
+      }
+      if (open) document.addEventListener('mousedown', handleClick)
+      return () => document.removeEventListener('mousedown', handleClick)
+    }, [open])
+  
 
   return (
     <>
@@ -92,7 +111,7 @@ export default function MobileHeader() {
         <div className="w-full flex flex-col gap-4 md:flex-col justify-center">
           {/* Campo de localização */}
           <div className="w-full flex items-center shadow-sm rounded-xl p-3"
-          onClick={() => setShowModal(true)}
+            onClick={() => setShowModal(true)}
           >
             <div className="w-full flex items-center gap-8 bg-gray-50 rounded-lg px-3 py-2">
               <div className="flex-1 flex flex-col">
@@ -116,18 +135,39 @@ export default function MobileHeader() {
 
           <div className='w-full flex items-center justify-between gap-6'>
             {/* Ordenar */}
-            <Select value={order} onValueChange={setOrder}>
-              <SelectTrigger className="w-28 bg-gray-50 rounded-lg px-3 py-2">
-                <SelectValue placeholder="ordenar" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="price">Ordenar</SelectItem>
-              </SelectContent>
-            </Select>
+            <div className="relative" ref={popoverRef}>
+                  <button
+                    type="button"
+                    className="flex items-center gap-1 text-gray-600 font-medium px-2 py-1 rounded hover:bg-gray-100"
+                    onClick={() => setOpen(o => !o)}
+                  >
+                    ordenar
+                    <ChevronDownIcon className="w-4 h-4" />
+                  </button>
+                  {open && (
+                    <div className="absolute left-0 mt-2 min-w-[180px] bg-white rounded-xl shadow-lg border z-50 py-2">
+                      {orderOptions.map(opt => (
+                        <button
+                          key={opt.value}
+                          className={`w-full text-left px-4 py-2 hover:bg-gray-100 text-sm ${
+                            order === opt.value ? 'font-semibold text-orange-600' : 'text-gray-900'
+                          }`}
+                          onClick={() => {
+                            setOrder(opt.value)
+                            setOpen(false)
+                          }}
+                          type="button"
+                        >
+                          {opt.label}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
             {/* Filtrar */}
             <Button variant="ghost" className="flex items-center gap-1 text-gray-700"
-            onClick={() => setShowFilter(true)}
-            type="button"
+              onClick={() => setShowFilter(true)}
+              type="button"
             >
               <Sliders className="w-5 h-5" />
               <span>filtrar</span>
@@ -145,3 +185,4 @@ export default function MobileHeader() {
     </>
   )
 }
+

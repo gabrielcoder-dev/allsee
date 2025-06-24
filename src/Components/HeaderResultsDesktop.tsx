@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useRef } from 'react'
 import { Button } from '@/Components/ui/button'
 import { Popover, PopoverContent, PopoverTrigger } from '@/Components/ui/popover'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/Components/ui/select'
@@ -18,6 +18,13 @@ const durations = [
   { label: '24 semanas', value: '24' },
 ]
 
+const orderOptions = [
+  { label: '$ menor para maior', value: 'price-asc' },
+  { label: '$ maior para menor', value: 'price-desc' },
+  { label: 'distância', value: 'distance' },
+  { label: 'alfabética', value: 'alphabetical' },
+]
+
 const ResultsHeader = () => {
   const [userName, setUserName] = useState<string>('')
   const [location, setLocation] = useState('')
@@ -25,6 +32,8 @@ const ResultsHeader = () => {
   const [startDate, setStartDate] = useState<Date | undefined>(new Date())
   const [order, setOrder] = useState('price')
   const [showFilter, setShowFilter] = useState(false)
+  const [open, setOpen] = useState(false)
+  const popoverRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     const fetchUserName = async () => {
@@ -35,6 +44,17 @@ const ResultsHeader = () => {
     }
     fetchUserName()
   }, [])
+
+  // Fecha ao clicar fora
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (popoverRef.current && !popoverRef.current.contains(e.target as Node)) {
+        setOpen(false)
+      }
+    }
+    if (open) document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [open])
 
   return (
     <div className="hidden w-full px-16 py-3 lg:flex lg:fixed top-0 left-0 right-0 z-50 justify-between items-center gap-4 ">
@@ -113,14 +133,35 @@ const ResultsHeader = () => {
         </div>
         <div className='w-full flex items-center justify-between gap-6'>
           {/* Ordenar */}
-          <Select value={order} onValueChange={setOrder}>
-            <SelectTrigger className="w-28 bg-gray-50 rounded-lg px-3 py-2">
-              <SelectValue placeholder="ordenar" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="price">Ordenar</SelectItem>
-            </SelectContent>
-          </Select>
+          <div className="relative" ref={popoverRef}>
+      <button
+        type="button"
+        className="flex items-center gap-1 text-gray-600 font-medium px-2 py-1 rounded hover:bg-gray-100"
+        onClick={() => setOpen(o => !o)}
+      >
+        ordenar
+        <ChevronDownIcon className="w-4 h-4" />
+      </button>
+      {open && (
+        <div className="absolute left-0 mt-2 min-w-[180px] bg-white rounded-xl shadow-lg border z-50 py-2">
+          {orderOptions.map(opt => (
+            <button
+              key={opt.value}
+              className={`w-full text-left px-4 py-2 hover:bg-gray-100 text-sm ${
+                order === opt.value ? 'font-semibold text-orange-600' : 'text-gray-900'
+              }`}
+              onClick={() => {
+                setOrder(opt.value)
+                setOpen(false)
+              }}
+              type="button"
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
 
           {/* Filtrar */}
           <Button variant="ghost" className="flex items-center gap-1 text-gray-700" onClick={() => setShowFilter(true)} type="button">
