@@ -10,7 +10,6 @@ const ambientes = [
 ]
 
 const tiposMidia = [
-  { label: 'Impresso', icon: <Printer className="w-5 h-5" /> },
   { label: 'Digital', icon:  <Monitor className="w-5 h-5" />}
 ]
 
