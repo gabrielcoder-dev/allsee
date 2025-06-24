@@ -35,7 +35,7 @@ const ResultsHeader = () => {
   }, [])
 
   return (
-    <div className="hidden w-full px-4 py-3 lg:flex justify-between items-center gap-4 ">
+    <div className="hidden w-full px-16 py-3 lg:flex lg:fixed top-0 left-0 right-0 z-50 justify-between items-center gap-4 ">
 
       <Image
       src={logoImg}
