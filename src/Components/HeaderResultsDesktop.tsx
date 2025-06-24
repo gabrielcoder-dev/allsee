@@ -5,10 +5,11 @@ import { Button } from '@/Components/ui/button'
 import { Popover, PopoverContent, PopoverTrigger } from '@/Components/ui/popover'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/Components/ui/select'
 import { Calendar } from '@/Components/ui/calendar'
-import { CalendarIcon, ChevronDownIcon, MapPinIcon, ShoppingCartIcon, MenuIcon, Search } from 'lucide-react'
+import { CalendarIcon, ChevronDownIcon, MapPinIcon, ShoppingCartIcon, MenuIcon, Search, Sliders } from 'lucide-react'
 import { supabase } from '@/lib/supabase' // ajuste o caminho se necessário
 import logoImg from "@/assets/logo.png"
 import Image from 'next/image'
+import FilterModal from '@/Components/FilterModal'
 
 const durations = [
   { label: '2 semanas', value: '2' },
@@ -23,6 +24,7 @@ const ResultsHeader = () => {
   const [duration, setDuration] = useState('2')
   const [startDate, setStartDate] = useState<Date | undefined>(new Date())
   const [order, setOrder] = useState('price')
+  const [showFilter, setShowFilter] = useState(false)
 
   useEffect(() => {
     const fetchUserName = async () => {
@@ -121,9 +123,9 @@ const ResultsHeader = () => {
           </Select>
 
           {/* Filtrar */}
-          <Button variant="ghost" className="flex items-center gap-1 text-gray-700">
+          <Button variant="ghost" className="flex items-center gap-1 text-gray-700" onClick={() => setShowFilter(true)} type="button">
+            <Sliders className="w-5 h-5" />
             <span>filtrar</span>
-            <ChevronDownIcon className="w-4 h-4" />
           </Button>
         </div>
       </div>
@@ -146,6 +148,9 @@ const ResultsHeader = () => {
           </Button>
         </div>
       </div>
+
+      {/* Modal de filtro */}
+      <FilterModal open={showFilter} onClose={() => setShowFilter(false)} />
     </div>
   )
 }

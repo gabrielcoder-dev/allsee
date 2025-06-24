@@ -1,6 +1,6 @@
 'use client'
 
-import { MenuIcon, ShoppingCartIcon, Search, MapPinIcon, CalendarIcon, ChevronDownIcon } from 'lucide-react'
+import { MenuIcon, ShoppingCartIcon, Search, MapPinIcon, CalendarIcon, ChevronDownIcon, Sliders } from 'lucide-react'
 import Image from 'next/image'
 import logoImg from '@/assets/logo.png'
 import { Button } from './ui/button'
@@ -8,6 +8,7 @@ import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select'
 import ModalHeaderMobile from './ModalHeaderMobile'
+import FilterModal from '@/Components/FilterModal'
 
 
 export default function MobileHeader() {
@@ -17,6 +18,7 @@ export default function MobileHeader() {
   const [showTopBar, setShowTopBar] = useState(true)
   const [isFixed, setIsFixed] = useState(false)
   const [showModal, setShowModal] = useState(false)
+  const [showFilter, setShowFilter] = useState(false)
 
   useEffect(() => {
     const handleScroll = () => {
@@ -123,9 +125,12 @@ export default function MobileHeader() {
               </SelectContent>
             </Select>
             {/* Filtrar */}
-            <Button variant="ghost" className="flex items-center gap-1 text-gray-700">
+            <Button variant="ghost" className="flex items-center gap-1 text-gray-700"
+            onClick={() => setShowFilter(true)}
+            type="button"
+            >
+              <Sliders className="w-5 h-5" />
               <span>filtrar</span>
-              <ChevronDownIcon className="w-4 h-4" />
             </Button>
           </div>
         </div>
@@ -134,6 +139,9 @@ export default function MobileHeader() {
       {showModal && (
         <ModalHeaderMobile onClose={() => setShowModal(false)} />
       )}
+
+      {/* Modal de filtro */}
+      <FilterModal open={showFilter} onClose={() => setShowFilter(false)} />
     </>
   )
 }
