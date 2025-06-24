@@ -9,7 +9,6 @@ import { CalendarIcon } from 'lucide-react'
 const durations = [
   { label: '2 semanas', value: '2' },
   { label: '4 semanas', value: '4' },
-  { label: '12 semanas', value: '12' },
   { label: '24 semanas', value: '24' },
 ]
 

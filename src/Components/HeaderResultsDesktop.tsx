@@ -14,7 +14,6 @@ import FilterModal from '@/Components/FilterModal'
 const durations = [
   { label: '2 semanas', value: '2' },
   { label: '4 semanas', value: '4' },
-  { label: '12 semanas', value: '12' },
   { label: '24 semanas', value: '24' },
 ]
 
@@ -182,7 +181,7 @@ const ResultsHeader = () => {
         {/* Saudação e menu */}
         <div className="flex items-center gap-2 ">
           <span className="text-gray-700">
-            Olá, <span className="font-semibold text-orange-600">{userName}</span>!
+            Olá, <span className="font-semibold text-orange-600">{userName}</span>
           </span>
           <Button variant="ghost" size="icon">
             <MenuIcon className="w-6 h-6" />

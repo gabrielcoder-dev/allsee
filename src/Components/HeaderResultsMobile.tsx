@@ -141,7 +141,7 @@ export default function MobileHeader() {
                     className="flex items-center gap-1 text-gray-600 font-medium px-2 py-1 rounded hover:bg-gray-100"
                     onClick={() => setOpen(o => !o)}
                   >
-                    ordenar
+                    {orderOptions.find(opt => opt.value === order)?.label || 'ordenar'}
                     <ChevronDownIcon className="w-4 h-4" />
                   </button>
                   {open && (

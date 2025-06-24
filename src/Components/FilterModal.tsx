@@ -4,9 +4,7 @@ import { useState } from 'react'
 import { Monitor, Printer, X } from 'lucide-react'
 
 const ambientes = [
-  'Elevadores Comerciais', 'Elevadores Residenciais', 'Ponto de ônibus', 'Academias', 'Supermercados', 'Hotéis', 'Universidades',
-  'Salão de Beleza', 'Bancas de Jornal', 'Shoppings', 'Relógio de Rua', 'Painéis de Led', 'VLT', 'Painéis estáticos',
-  'Estação de bike', 'Estação de trem', 'Estação de Metrô', 'BRT Sorocaba', 'Aeroportos'
+  'Centro', 'Jardim Itália', 'Centro Leste', 'Jardim Riva 2'
 ]
 
 const tiposMidia = [
@@ -88,7 +86,7 @@ export default function FilterModal({ open, onClose }: { open: boolean, onClose:
           </div>
 
           {/* Ambientes */}
-          <div className="mb-2 font-semibold">Selecione ambientes para anunciar</div>
+          <div className="mb-2 font-semibold">Selecione bairros para anunciar</div>
           <div className="flex items-center mb-3">
             <input
               type="checkbox"
