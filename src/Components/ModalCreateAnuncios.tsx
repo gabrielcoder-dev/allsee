@@ -97,9 +97,9 @@ export default function ModalCreateAnuncios({ open, onClose }: { open: boolean, 
         >
           <X className="w-5 h-5" />
         </button>
-        <h2 className="text-2xl font-bold mb-4">Cadastrar anúncio</h2>
+        <h2 className="text-2xl font-bold mb-4">Cadastrar Totten</h2>
         <form className="flex flex-col gap-3" onSubmit={handleSubmit}>
-          <input type="text" placeholder="Nome do anúncio" className="border rounded-lg px-3 py-2" value={name} onChange={e => setName(e.target.value)} required />
+          <input type="text" placeholder="Nome do Totten" className="border rounded-lg px-3 py-2" value={name} onChange={e => setName(e.target.value)} required />
           <input type="file" accept="image/*" className="border rounded-lg px-3 py-2" onChange={e => { if (e.target.files && e.target.files[0]) { setImage(e.target.files[0]); setImageUrl('') } }} required />
           <input type="text" placeholder="Endereço" className="border rounded-lg px-3 py-2" value={address} onChange={e => setAddress(e.target.value)} required />
           <input type="number" placeholder="Quantidade de telas" className="border rounded-lg px-3 py-2" value={screens} onChange={e => setScreens(e.target.value)} required min={1} />
