@@ -30,7 +30,7 @@ const page = () => {
         <Mapbox />
       </div>
 
-      <HeaderPrice quantidade={1} valor={399.99} />
+      <HeaderPrice />
 
       <ToastContainer />
     </div>
