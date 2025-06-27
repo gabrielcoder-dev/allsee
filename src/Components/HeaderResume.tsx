@@ -11,6 +11,7 @@ import logoImg from "@/assets/logo.png"
 import Image from 'next/image'
 import FilterModal from '@/Components/FilterModal'
 import { useRouter } from 'next/navigation'
+import { useCart } from '@/context/CartContext'
 
 const durations = [
   { label: '2 semanas', value: '2' },
@@ -44,6 +45,8 @@ export const HeaderResume = () => {
   const [open, setOpen] = useState(false)
   const popoverRef = useRef<HTMLDivElement>(null)
   const router = useRouter()
+  const { produtos } = useCart()
+  const totalNoCarrinho = produtos.reduce((acc, p) => acc + p.quantidade, 0)
 
   useEffect(() => {
     const fetchUserName = async () => {
@@ -86,10 +89,13 @@ export const HeaderResume = () => {
           <Button
             variant="ghost"
             className="relative"
-            onClick={() => router.push('/resumo')}
           >
             <ShoppingCartIcon className="w-6 h-6" />
-            <span className="absolute -top-1 -right-1 bg-orange-500 text-white text-xs rounded-full px-1">01</span>
+            {totalNoCarrinho > 0 && (
+              <span className="absolute -top-1 -right-1 bg-orange-500 text-white text-xs rounded-full px-1">
+                {String(totalNoCarrinho).padStart(2, '0')}
+              </span>
+            )}
           </Button>
 
           {/* Saudação e menu */}

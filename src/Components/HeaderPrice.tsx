@@ -1,9 +1,11 @@
 'use client'
 
 import { useCart } from '@/context/CartContext';
+import { useRouter } from 'next/navigation';
 
 export default function HeaderPrice() {
   const { produtos } = useCart();
+  const router = useRouter();
 
   const quantidade = produtos.reduce((acc, p) => acc + p.quantidade, 0);
   const valor = produtos.reduce((acc, p) => acc + p.preco * p.quantidade, 0);
@@ -19,11 +21,15 @@ export default function HeaderPrice() {
         <span className="mx-2 text-gray-400">|</span>
         <span>Investimento: <span className="font-bold">R$ {valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span></span>
       </div>
-      <button
-        className="bg-orange-600 hover:bg-orange-700 text-white rounded-lg px-6 py-2 font-medium transition"
-      >
-        continuar
-      </button>
+      <div className="flex justify-end w-full md:w-auto pr-6 md:pr-0">
+        <button
+          className="bg-orange-600 cursor-pointer hover:bg-orange-700 text-white rounded-lg px-6 py-2 font-medium transition disabled:bg-orange-300 disabled:cursor-not-allowed"
+          disabled={quantidade === 0}
+          onClick={() => quantidade > 0 && router.push('/resumo')}
+        >
+          continuar
+        </button>
+      </div>
     </div>
   );
 }

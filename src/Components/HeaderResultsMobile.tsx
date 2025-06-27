@@ -8,6 +8,8 @@ import { useEffect, useState, useRef } from 'react'
 import { supabase } from '@/lib/supabase'
 import ModalHeaderMobile from './ModalHeaderMobile'
 import FilterModal from '@/Components/FilterModal'
+import { useCart } from '@/context/CartContext'
+import { useRouter } from 'next/navigation'
 
 const orderOptions = [
   { label: '$ menor para maior', value: 'price-asc' },
@@ -25,6 +27,9 @@ export default function MobileHeader() {
   const [showFilter, setShowFilter] = useState(false)
   const [open, setOpen] = useState(false)
   const popoverRef = useRef<HTMLDivElement>(null)
+  const { produtos } = useCart()
+  const totalNoCarrinho = produtos.reduce((acc, p) => acc + p.quantidade, 0)
+  const router = useRouter()
 
   // Top bar show/hide on scroll
   useEffect(() => {
@@ -78,9 +83,17 @@ export default function MobileHeader() {
 
           <div className='flex items-center gap-8'>
             {/* Carrinho */}
-            <Button variant="ghost" className="relative">
+            <Button
+              variant="ghost"
+              className="relative"
+              onClick={() => router.push('/resumo')}
+            >
               <ShoppingCartIcon className="w-6 h-6" />
-              <span className="absolute -top-1 -right-1 bg-orange-500 text-white text-xs rounded-full px-1">01</span>
+              {totalNoCarrinho > 0 && (
+                <span className="absolute -top-1 -right-1 bg-orange-500 text-white text-xs rounded-full px-1">
+                  {String(totalNoCarrinho).padStart(2, '0')}
+                </span>
+              )}
             </Button>
 
             {/* Saudação e menu */}
