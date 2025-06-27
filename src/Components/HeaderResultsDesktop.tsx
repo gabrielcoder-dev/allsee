@@ -11,6 +11,7 @@ import logoImg from "@/assets/logo.png"
 import Image from 'next/image'
 import FilterModal from '@/Components/FilterModal'
 import { useRouter } from 'next/navigation'
+import { useCart } from '@/context/CartContext'
 
 const durations = [
   { label: '2 semanas', value: '2' },
@@ -48,6 +49,8 @@ const ResultsHeader = () => {
   const [open, setOpen] = useState(false)
   const popoverRef = useRef<HTMLDivElement>(null)
   const router = useRouter()
+  const { produtos } = useCart()
+  const totalNoCarrinho = produtos.reduce((acc, p) => acc + p.quantidade, 0)
 
   useEffect(() => {
     const fetchUserName = async () => {
@@ -191,19 +194,23 @@ const ResultsHeader = () => {
           {/* Carrinho */}
           <Button
             variant="ghost"
-            className="relative"
+            className="relative cursor-pointer"
             onClick={() => router.push('/resumo')}
           >
-            <ShoppingCartIcon className="w-6 h-6" />
-            <span className="absolute -top-1 -right-1 bg-orange-500 text-white text-xs rounded-full px-1">01</span>
+            <ShoppingCartIcon className="w-7 h-7" />
+            {totalNoCarrinho > 0 && (
+              <span className="absolute -top-1 -right-1 bg-orange-500 text-white text-xs rounded-full px-1">
+                {String(totalNoCarrinho).padStart(2, '0')}
+              </span>
+            )}
           </Button>
 
           {/* Saudação e menu */}
-          <div className="flex items-center gap-2 ">
+          <div className="flex items-center gap-2">
             <span className="text-gray-700">
               Olá, <span className="font-semibold text-orange-600">{userName}</span>
             </span>
-            <Button variant="ghost" size="icon">
+            <Button variant="ghost" size="icon" className='cursor-pointer'>
               <MenuIcon className="w-6 h-6" />
             </Button>
           </div>
