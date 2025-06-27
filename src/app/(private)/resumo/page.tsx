@@ -7,9 +7,11 @@ import CartResume from '@/Components/CartResume'
 import { ArrowLeft } from 'lucide-react'
 import { HeaderResume } from '@/Components/HeaderResume'
 import { useRouter } from 'next/navigation'
+import { useCart } from '@/context/CartContext'
 
 const page = () => {
   const router = useRouter();
+  const { produtos } = useCart();
   return (
     <div className='h-screen flex flex-col'>
       <HeaderResume />
@@ -21,7 +23,12 @@ const page = () => {
         >
           <ArrowLeft /> Continuar Comprando
         </p>
-        <button className='bg-orange-500 text-white px-4 py-2 rounded-md cursor-pointer'>Avançar</button>
+        <button
+          className='bg-orange-500 text-white px-4 py-2 rounded-md cursor-pointer disabled:bg-orange-300 disabled:cursor-not-allowed'
+          disabled={produtos.length === 0}
+        >
+          Avançar
+        </button>
       </div>
     </div>
   )
