@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { createClient } from '@supabase/supabase-js'
+import { useCart } from '@/context/CartContext'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -18,7 +19,12 @@ type Anuncio = {
   duration: string
 }
 
-export default function GetAnunciosResults() {
+type GetAnunciosResultsProps = {
+  onAdicionarProduto?: (produto: Anuncio) => void
+}
+
+export default function GetAnunciosResults({ onAdicionarProduto }: GetAnunciosResultsProps) {
+  const { adicionarProduto } = useCart()
   const [anuncios, setAnuncios] = useState<Anuncio[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -29,7 +35,22 @@ export default function GetAnunciosResults() {
         .from('anuncios')
         .select('*')
         .order('id', { ascending: false })
-      if (!error && data) setAnuncios(data)
+      if (!error && data) {
+        console.log("Anúncios carregados do Supabase:", data);
+        // Verificar se todos os anúncios têm o campo address
+        data.forEach((anuncio, index) => {
+          console.log(`Anúncio ${index}:`, {
+            id: anuncio.id,
+            name: anuncio.name,
+            address: anuncio.address,
+            hasAddress: 'address' in anuncio,
+            addressType: typeof anuncio.address
+          });
+        });
+        setAnuncios(data)
+      } else {
+        console.error("Erro ao carregar anúncios:", error);
+      }
       setLoading(false)
     }
     fetchAnuncios()
@@ -66,7 +87,19 @@ export default function GetAnunciosResults() {
             <div className="text-xs text-gray-800 mb-1 font-bold">Telas: {anuncio.screens}</div>
             <div className="text-lg font-bold mb-1 text-green-700">R$ {Number(anuncio.price).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
             <div className="text-xs text-gray-500 mb-2">/ {anuncio.duration}</div>
-            <button className="w-full border border-green-400 text-green-600 rounded-lg py-2 text-base font-semibold hover:bg-green-50 transition">
+            <button
+              className="w-full border border-green-400 text-green-600 rounded-lg py-2 text-base font-semibold hover:bg-green-50 transition"
+               onClick={() =>
+                adicionarProduto({
+                  id: anuncio.id.toString(),
+                  nome: anuncio.name,
+                  preco: anuncio.price,
+                  quantidade: 1,
+                  image: anuncio.image,
+                  endereco: anuncio.address
+                })
+            }
+            >
               adicionar ponto
             </button>
           </div>

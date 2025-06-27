@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Montserrat } from "next/font/google";
 import "./globals.css";
+import { CartProvider } from "@/context/CartContext";
+import { Toaster } from 'sonner'
 
 const montserrat = Montserrat({
   subsets: ['cyrillic', 'latin'],
@@ -24,11 +26,15 @@ export default function RootLayout({
       <head>
         <link rel="shortcut icon" href="./logo.png" type="image/x-icon" />
       </head>
-     
+
       <body
         className={montserrat.variable}
       >
-        {children}
+        <Toaster richColors position="top-right" />
+        <CartProvider>
+          {children}
+        </CartProvider>
+
       </body>
     </html>
   );

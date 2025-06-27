@@ -1,12 +1,13 @@
 'use client'
 
-type HeaderPriceProps = {
-  quantidade: number
-  valor: number
-  onContinuar?: () => void
-}
+import { useCart } from '@/context/CartContext';
 
-export default function HeaderPrice({ quantidade, valor, onContinuar }: HeaderPriceProps) {
+export default function HeaderPrice() {
+  const { produtos } = useCart();
+
+  const quantidade = produtos.reduce((acc, p) => acc + p.quantidade, 0);
+  const valor = produtos.reduce((acc, p) => acc + p.preco * p.quantidade, 0);
+
   return (
     <div
       id="header-price"
@@ -20,10 +21,9 @@ export default function HeaderPrice({ quantidade, valor, onContinuar }: HeaderPr
       </div>
       <button
         className="bg-orange-600 hover:bg-orange-700 text-white rounded-lg px-6 py-2 font-medium transition"
-        onClick={onContinuar}
       >
         continuar
       </button>
     </div>
-  )
+  );
 }

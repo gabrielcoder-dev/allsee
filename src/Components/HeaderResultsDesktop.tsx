@@ -10,6 +10,7 @@ import { supabase } from '@/lib/supabase' // ajuste o caminho se necessário
 import logoImg from "@/assets/logo.png"
 import Image from 'next/image'
 import FilterModal from '@/Components/FilterModal'
+import { useRouter } from 'next/navigation'
 
 const durations = [
   { label: '2 semanas', value: '2' },
@@ -24,6 +25,19 @@ const orderOptions = [
   { label: 'alfabética', value: 'alphabetical' },
 ]
 
+// Certifique-se de que este tipo corresponde ao tipo Produto usado em ModalCartTotten
+type Produto = {
+  id: string
+  name: string
+  image: string
+  address: string
+  price: number
+  quantity: number
+  duration: string
+  screens: number
+  // Adicione outros campos conforme necessário para corresponder ao ModalCartTotten
+}
+
 const ResultsHeader = () => {
   const [userName, setUserName] = useState<string>('')
   const [location, setLocation] = useState('')
@@ -33,6 +47,7 @@ const ResultsHeader = () => {
   const [showFilter, setShowFilter] = useState(false)
   const [open, setOpen] = useState(false)
   const popoverRef = useRef<HTMLDivElement>(null)
+  const router = useRouter()
 
   useEffect(() => {
     const fetchUserName = async () => {
@@ -56,142 +71,148 @@ const ResultsHeader = () => {
   }, [open])
 
   return (
-    <div className="hidden w-full px-12 py-3 lg:flex top-0 left-0 right-0 z-50 justify-between items-center gap-4 ">
+    <>
+      <div className="hidden w-full px-12 py-3 lg:flex top-0 left-0 right-0 z-50 justify-between items-center gap-4 ">
 
-      <Image
-      src={logoImg}
-      alt="Logo"
-      className='w-20'
-      />
+        <Image
+        src={logoImg}
+        alt="Logo"
+        className='w-20'
+        />
 
-      {/* Pesquisa de localização */}
-      <div className=' flex flex-col gap-4  md:flex-col lg:flex-row lg:items-center justify-center'>
+        {/* Pesquisa de localização */}
+        <div className=' flex flex-col gap-4  md:flex-col lg:flex-row lg:items-center justify-center'>
 
 
-        <div className='flex items-center gap-4 shadow-sm rounded-xl p-3'>
-          <div className='flex items-center gap-8 bg-gray-50 rounded-lg px-3 py-2'>
+          <div className='flex items-center gap-4 shadow-sm rounded-xl p-3'>
+            <div className='flex items-center gap-8 bg-gray-50 rounded-lg px-3 py-2'>
 
-          
-          <div className="flex-1 flex flex-col">
-            <div className="flex items-center gap-1">
-              <MapPinIcon className="w-4 h-5 text-orange-500" />
-              <span className="text-gray-500 mb-1 font-semibold">Endereço ou região</span>
+            
+            <div className="flex-1 flex flex-col">
+              <div className="flex items-center gap-1">
+                <MapPinIcon className="w-4 h-5 text-orange-500" />
+                <span className="text-gray-500 mb-1 font-semibold">Endereço ou região</span>
+              </div>
+
+              <input
+                type="text"
+                placeholder="Ex.: Bairro Castelândia"
+                className="bg-transparent outline-none flex-1 w-72 text-sm"
+                value={location}
+                onChange={e => setLocation(e.target.value)}
+              />
+
+            </div>
+            <Search className="w-5 h-5 text-gray-500 cursor-pointer lg:hidden" />
             </div>
 
-            <input
-              type="text"
-              placeholder="Ex.: Bairro Castelândia"
-              className="bg-transparent outline-none flex-1 w-72 text-sm"
-              value={location}
-              onChange={e => setLocation(e.target.value)}
-            />
+            {/* Duração */}
 
+            <div className='flex-col hidden md:flex'>
+              <span className="text-gray-500 mb-1 font-semibold">Duração</span>
+              <Select value={duration} onValueChange={setDuration}>
+                <SelectTrigger className="w-32 bg-gray-50 rounded-lg px-3 py-2">
+                  <SelectValue placeholder="duração" />
+                </SelectTrigger>
+                <SelectContent>
+                  {durations.map(d => (
+                    <SelectItem key={d.value} value={d.value}>{d.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Data de início */}
+             <div className='flex-col hidden md:flex'>
+              <span className="text-gray-500 mb-1 font-semibold">Inicio</span>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" className="bg-gray-50 rounded-lg px-3 py-2 flex items-center gap-2">
+                  <CalendarIcon className="w-4 h-4 text-orange-500" />
+                  <span>
+                    {startDate ? startDate.toLocaleDateString('pt-BR') : 'início'}
+                  </span>
+                  <ChevronDownIcon className="w-4 h-4" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0">
+                <Calendar
+                  mode="single"
+                  selected={startDate}
+                  onSelect={setStartDate}
+                  initialFocus
+                />
+              </PopoverContent>
+            </Popover>
           </div>
-          <Search className="w-5 h-5 text-gray-500 cursor-pointer lg:hidden" />
           </div>
-
-          {/* Duração */}
-
-          <div className='flex-col hidden md:flex'>
-            <span className="text-gray-500 mb-1 font-semibold">Duração</span>
-            <Select value={duration} onValueChange={setDuration}>
-              <SelectTrigger className="w-32 bg-gray-50 rounded-lg px-3 py-2">
-                <SelectValue placeholder="duração" />
-              </SelectTrigger>
-              <SelectContent>
-                {durations.map(d => (
-                  <SelectItem key={d.value} value={d.value}>{d.label}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          <div className='w-full flex items-center justify-between gap-6'>
+            {/* Ordenar */}
+            <div className="relative" ref={popoverRef}>
+        <button
+          type="button"
+          className="flex items-center gap-1 text-gray-600 font-medium px-2 py-1 rounded hover:bg-gray-100"
+          onClick={() => setOpen(o => !o)}
+        >
+          {orderOptions.find(opt => opt.value === order)?.label || 'ordenar'}
+          <ChevronDownIcon className="w-4 h-4" />
+        </button>
+        {open && (
+          <div className="absolute left-0 mt-2 min-w-[180px] bg-white rounded-xl shadow-lg border z-50 py-2">
+            {orderOptions.map(opt => (
+              <button
+                key={opt.value}
+                className={`w-full text-left px-4 py-2 hover:bg-gray-100 text-sm ${
+                  order === opt.value ? 'font-semibold text-orange-600' : 'text-gray-900'
+                }`}
+                onClick={() => {
+                  setOrder(opt.value)
+                  setOpen(false)
+                }}
+                type="button"
+              >
+                {opt.label}
+              </button>
+            ))}
           </div>
-
-          {/* Data de início */}
-           <div className='flex-col hidden md:flex'>
-            <span className="text-gray-500 mb-1 font-semibold">Inicio</span>
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button variant="outline" className="bg-gray-50 rounded-lg px-3 py-2 flex items-center gap-2">
-                <CalendarIcon className="w-4 h-4 text-orange-500" />
-                <span>
-                  {startDate ? startDate.toLocaleDateString('pt-BR') : 'início'}
-                </span>
-                <ChevronDownIcon className="w-4 h-4" />
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0">
-              <Calendar
-                mode="single"
-                selected={startDate}
-                onSelect={setStartDate}
-                initialFocus
-              />
-            </PopoverContent>
-          </Popover>
-        </div>
-        </div>
-        <div className='w-full flex items-center justify-between gap-6'>
-          {/* Ordenar */}
-          <div className="relative" ref={popoverRef}>
-      <button
-        type="button"
-        className="flex items-center gap-1 text-gray-600 font-medium px-2 py-1 rounded hover:bg-gray-100"
-        onClick={() => setOpen(o => !o)}
-      >
-        {orderOptions.find(opt => opt.value === order)?.label || 'ordenar'}
-        <ChevronDownIcon className="w-4 h-4" />
-      </button>
-      {open && (
-        <div className="absolute left-0 mt-2 min-w-[180px] bg-white rounded-xl shadow-lg border z-50 py-2">
-          {orderOptions.map(opt => (
-            <button
-              key={opt.value}
-              className={`w-full text-left px-4 py-2 hover:bg-gray-100 text-sm ${
-                order === opt.value ? 'font-semibold text-orange-600' : 'text-gray-900'
-              }`}
-              onClick={() => {
-                setOrder(opt.value)
-                setOpen(false)
-              }}
-              type="button"
-            >
-              {opt.label}
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
-
-          {/* Filtrar */}
-          <Button variant="ghost" className="flex items-center gap-1 text-gray-700" onClick={() => setShowFilter(true)} type="button">
-            <Sliders className="w-5 h-5" />
-            <span>filtrar</span>
-          </Button>
-        </div>
+        )}
       </div>
 
-
-      <div className='flex items-center gap-8'>
-        {/* Carrinho */}
-        <Button variant="ghost" className="relative">
-          <ShoppingCartIcon className="w-6 h-6" />
-          <span className="absolute -top-1 -right-1 bg-orange-500 text-white text-xs rounded-full px-1">01</span>
-        </Button>
-
-        {/* Saudação e menu */}
-        <div className="flex items-center gap-2 ">
-          <span className="text-gray-700">
-            Olá, <span className="font-semibold text-orange-600">{userName}</span>
-          </span>
-          <Button variant="ghost" size="icon">
-            <MenuIcon className="w-6 h-6" />
-          </Button>
+            {/* Filtrar */}
+            <Button variant="ghost" className="flex items-center gap-1 text-gray-700" onClick={() => setShowFilter(true)} type="button">
+              <Sliders className="w-5 h-5" />
+              <span>filtrar</span>
+            </Button>
+          </div>
         </div>
-      </div>
 
-      {/* Modal de filtro */}
-      <FilterModal open={showFilter} onClose={() => setShowFilter(false)} />
-    </div>
+
+        <div className='flex items-center gap-8'>
+          {/* Carrinho */}
+          <Button
+            variant="ghost"
+            className="relative"
+            onClick={() => router.push('/resumo')}
+          >
+            <ShoppingCartIcon className="w-6 h-6" />
+            <span className="absolute -top-1 -right-1 bg-orange-500 text-white text-xs rounded-full px-1">01</span>
+          </Button>
+
+          {/* Saudação e menu */}
+          <div className="flex items-center gap-2 ">
+            <span className="text-gray-700">
+              Olá, <span className="font-semibold text-orange-600">{userName}</span>
+            </span>
+            <Button variant="ghost" size="icon">
+              <MenuIcon className="w-6 h-6" />
+            </Button>
+          </div>
+        </div>
+
+        {/* Modal de filtro */}
+        <FilterModal open={showFilter} onClose={() => setShowFilter(false)} />
+      </div>
+    </>
   )
 }
 
