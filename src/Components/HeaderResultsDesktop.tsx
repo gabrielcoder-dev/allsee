@@ -82,7 +82,7 @@ const ResultsHeader = () => {
 
   return (
     <>
-      <div className="w-full px-12 py-3 flex top-0 left-0 right-0 z-50 justify-between items-center gap-4 ">
+      <div className="w-full hidden px-12 py-3 lg:flex top-0 left-0 right-0 z-50 justify-between items-center gap-4 ">
 
         <Image
         src={logoImg}
@@ -229,13 +229,7 @@ const ResultsHeader = () => {
         {/* Modal de filtro */}
         <FilterModal open={showFilter} onClose={() => setShowFilter(false)} />
         <ModalMenu open={showMenuModal} onClose={() => setShowMenuModal(false)} />
-        
-        {/* Debug indicator - remove this later */}
-        {showMenuModal && (
-          <div className="fixed top-0 left-0 bg-red-500 text-white p-2 z-[9999]">
-            Modal should be open!
-          </div>
-        )}
+
       </div>
     </>
   )

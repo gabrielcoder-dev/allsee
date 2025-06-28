@@ -23,8 +23,19 @@ export default function ModalMenu({ open, onClose }: ModalMenuProps) {
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/30">
-      <div ref={modalRef} className="relative bg-white rounded-2xl shadow-xl w-full max-w-md mx-4 p-6 flex flex-col gap-4 animate-fade-in">
+    <div className="fixed inset-0 z-[9999] flex items-end justify-end md:items-start md:justify-end">
+      {/* Overlay escuro */}
+      <div
+        className="fixed inset-0 bg-black/30"
+        onClick={onClose}
+        aria-label="Fechar menu"
+      />
+      {/* Menu lateral */}
+      <div
+        ref={modalRef}
+        className="relative bg-white p-4 rounded-l-2xl shadow-xl h-screen w-4/5 max-w-xs md:w-80 flex flex-col gap-4 animate-slide-in-right z-10"
+        style={{ right: 0 }}
+      >
         {/* Botão de fechar */}
         <button
           className="absolute top-4 right-4 text-gray-400 hover:text-gray-700"
@@ -33,9 +44,8 @@ export default function ModalMenu({ open, onClose }: ModalMenuProps) {
         >
           <X size={24} />
         </button>
-
         {/* Grid de opções principais */}
-        <div className="grid grid-cols-2 gap-4 mb-2">
+        <div className="grid grid-cols-2 gap-4 mb-2 mt-12">
           <button className="flex flex-col items-start justify-center gap-2 p-4 rounded-xl bg-orange-600 text-white font-semibold shadow hover:bg-orange-700 transition">
             <Menu size={24} />
             <span className="text-sm text-left leading-tight">escolha onde anunciar</span>
@@ -53,13 +63,11 @@ export default function ModalMenu({ open, onClose }: ModalMenuProps) {
             <span className="text-sm text-left leading-tight">meus favoritos</span>
           </button>
         </div>
-
         {/* Accordions (simples, sem animação) */}
         <div className="flex flex-col gap-2">
           <AccordionItem title="gerenciamento de conta" />
           <AccordionItem title="materiais e ajuda" />
         </div>
-
         {/* Indique e ganhe + busca */}
         <div className="flex flex-col gap-2 mt-2">
           <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
@@ -83,7 +91,6 @@ export default function ModalMenu({ open, onClose }: ModalMenuProps) {
             </a>
           </div>
         </div>
-
         {/* Botão sair */}
         <button className="flex items-center gap-2 text-red-600 font-semibold mt-4 hover:underline" onClick={onClose}>
           <LogOut size={20} /> sair

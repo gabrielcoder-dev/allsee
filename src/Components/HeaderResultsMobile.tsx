@@ -66,7 +66,7 @@ export default function MobileHeader() {
 
   return (
     <>
-      <div className="flex flex-col gap-4 w-full px-4 py-3 bg-white z-50 transition-all duration-500">
+      <div className="flex lg:hidden flex-col gap-4 w-full px-4 py-3 bg-white z-50 transition-all duration-500">
         {/* Top Bar: Logo, carrinho, saudação, menu */}
         <div
           className={`
