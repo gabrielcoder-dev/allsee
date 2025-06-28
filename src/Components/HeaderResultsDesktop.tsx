@@ -12,6 +12,7 @@ import Image from 'next/image'
 import FilterModal from '@/Components/FilterModal'
 import { useRouter } from 'next/navigation'
 import { useCart } from '@/context/CartContext'
+import ModalMenu from './ModalMenu'
 
 const durations = [
   { label: '2 semanas', value: '2' },
@@ -51,6 +52,7 @@ const ResultsHeader = () => {
   const router = useRouter()
   const { produtos } = useCart()
   const totalNoCarrinho = produtos.reduce((acc, p) => acc + p.quantidade, 0)
+  const [showMenuModal, setShowMenuModal] = useState(false)
 
   useEffect(() => {
     const fetchUserName = async () => {
@@ -61,6 +63,11 @@ const ResultsHeader = () => {
     }
     fetchUserName()
   }, [])
+
+  // Debug: log when showMenuModal changes
+  useEffect(() => {
+    console.log('showMenuModal changed:', showMenuModal)
+  }, [showMenuModal])
 
   // Fecha ao clicar fora
   useEffect(() => {
@@ -75,7 +82,7 @@ const ResultsHeader = () => {
 
   return (
     <>
-      <div className="hidden w-full px-12 py-3 lg:flex top-0 left-0 right-0 z-50 justify-between items-center gap-4 ">
+      <div className="w-full px-12 py-3 flex top-0 left-0 right-0 z-50 justify-between items-center gap-4 ">
 
         <Image
         src={logoImg}
@@ -210,7 +217,10 @@ const ResultsHeader = () => {
             <span className="text-gray-700">
               Olá, <span className="font-semibold text-orange-600">{userName}</span>
             </span>
-            <Button variant="ghost" size="icon" className='cursor-pointer'>
+            <Button variant="ghost" size="icon" className="cursor-pointer" onClick={() => {
+              console.log('Menu button clicked!')
+              setShowMenuModal(true)
+            }}>
               <MenuIcon className="w-6 h-6" />
             </Button>
           </div>
@@ -218,6 +228,14 @@ const ResultsHeader = () => {
 
         {/* Modal de filtro */}
         <FilterModal open={showFilter} onClose={() => setShowFilter(false)} />
+        <ModalMenu open={showMenuModal} onClose={() => setShowMenuModal(false)} />
+        
+        {/* Debug indicator - remove this later */}
+        {showMenuModal && (
+          <div className="fixed top-0 left-0 bg-red-500 text-white p-2 z-[9999]">
+            Modal should be open!
+          </div>
+        )}
       </div>
     </>
   )

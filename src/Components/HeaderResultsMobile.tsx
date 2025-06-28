@@ -10,6 +10,7 @@ import ModalHeaderMobile from './ModalHeaderMobile'
 import FilterModal from '@/Components/FilterModal'
 import { useCart } from '@/context/CartContext'
 import { useRouter } from 'next/navigation'
+import ModalMenu from './ModalMenu'
 
 const orderOptions = [
   { label: '$ menor para maior', value: 'price-asc' },
@@ -30,6 +31,7 @@ export default function MobileHeader() {
   const { produtos } = useCart()
   const totalNoCarrinho = produtos.reduce((acc, p) => acc + p.quantidade, 0)
   const router = useRouter()
+  const [showMenuModal, setShowMenuModal] = useState(false)
 
   // Top bar show/hide on scroll
   useEffect(() => {
@@ -64,7 +66,7 @@ export default function MobileHeader() {
 
   return (
     <>
-      <div className="lg:hidden flex flex-col gap-4 w-full px-4 py-3 bg-white z-50 transition-all duration-500">
+      <div className="flex flex-col gap-4 w-full px-4 py-3 bg-white z-50 transition-all duration-500">
         {/* Top Bar: Logo, carrinho, saudação, menu */}
         <div
           className={`
@@ -97,11 +99,11 @@ export default function MobileHeader() {
             </Button>
 
             {/* Saudação e menu */}
-            <div className="flex items-center gap-2 ">
+            <div className="flex items-center gap-2">
               <span className="text-gray-700">
                 Olá, <span className="font-semibold text-orange-600">{userName}</span>
               </span>
-              <Button variant="ghost" size="icon">
+              <Button variant="ghost" size="icon" onClick={() => setShowMenuModal(true)}>
                 <MenuIcon className="w-6 h-6" />
               </Button>
             </div>
@@ -183,6 +185,8 @@ export default function MobileHeader() {
 
       {/* Modal de filtro */}
       <FilterModal open={showFilter} onClose={() => setShowFilter(false)} />
+
+      <ModalMenu open={showMenuModal} onClose={() => setShowMenuModal(false)} />
     </>
   )
 }
