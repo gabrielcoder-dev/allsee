@@ -1,6 +1,6 @@
 "use client";
 import { useCart } from "@/context/CartContext";
-import { ArrowLeft, CalendarIcon, ChevronDownIcon } from "lucide-react";
+import { ArrowLeft, CalendarIcon, ChevronDownIcon, X } from "lucide-react";
 import {
   Select,
   SelectTrigger,
@@ -21,17 +21,27 @@ export default function CartResume() {
   const { produtos, removerProduto } = useCart();
   const [duracao, setDuracao] = useState("12 semanas");
   const [startDate, setStartDate] = useState<Date | undefined>(new Date());
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   // Debug: verificar se os produtos estão sendo carregados
   console.log("Produtos no carrinho:", produtos);
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setSelectedImage(file);
+      setPreviewUrl(URL.createObjectURL(file));
+    }
+  };
 
   return (
     <div className="w-full h-full px-4 md:px-12 py-6 flex flex-col gap-4 overflow-y-auto">
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-2xl font-bold">Plano de Mídia</h2>
-        <button 
+        <button
           onClick={() => {
-            localStorage.removeItem('cart');
+            localStorage.removeItem("cart");
             window.location.reload();
           }}
           className="text-sm bg-red-500 text-white px-4 py-2 rounded-md cursor-pointer disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed"
@@ -64,9 +74,13 @@ export default function CartResume() {
                       <h3 className="font-semibold text-lg">{item.nome}</h3>
                     </div>
                     {item.endereco ? (
-                      <p className="text-sm text-gray-600 break-words">{item.endereco}</p>
+                      <p className="text-sm text-gray-600 break-words">
+                        {item.endereco}
+                      </p>
                     ) : (
-                      <p className="text-sm text-red-500">Endereço não disponível</p>
+                      <p className="text-sm text-red-500">
+                        Endereço não disponível
+                      </p>
                     )}
                     <div className="font-semibold text-green-700">
                       R${" "}
@@ -111,7 +125,9 @@ export default function CartResume() {
                   </Select>
                 </div>
                 <div>
-                  <span className="block text-xs text-gray-500 mb-1">Início</span>
+                  <span className="block text-xs text-gray-500 mb-1">
+                    Início
+                  </span>
                   <Popover>
                     <PopoverTrigger asChild>
                       <Button
@@ -157,13 +173,59 @@ export default function CartResume() {
                   <span className="font-semibold">436,2 mil</span>
                 </div>
                 <div>
-                  <span className="block text-xs text-gray-500">frequência</span>
+                  <span className="block text-xs text-gray-500">
+                    frequência
+                  </span>
                   <span className="font-semibold">1.99</span>
                 </div>
                 <div>
                   <span className="block text-xs text-gray-500">telas</span>
                   <span className="font-semibold">9</span>
                 </div>
+              </div>
+            </div>
+
+            <div className="my-4+">
+              <span className="block text-lg font-bold mb-5">
+                Carregar arte de exibição
+              </span>
+              <div className="flex items-center gap-4 relative">
+                {!previewUrl ? (
+                  <>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      id="upload-art"
+                      className="hidden"
+                      onChange={handleImageChange}
+                    />
+                    <label
+                      htmlFor="upload-art"
+                      className="cursor-pointer border border-gray-300 px-4 py-2 rounded transition hover:bg-gray-50"
+                    >
+                      Selecionar arte
+                    </label>
+                  </>
+                ) : (
+                  <div className="relative flex justify-center items-center gap-4">
+                    <button
+                      onClick={() => {
+                        setPreviewUrl(null);
+                        setSelectedImage(null);
+                      }}
+                      className="absolute -top-3 -right-3 w-6 h-6 flex  items-center justify-center  border border-gray-300 rounded-full bg-white text-xl font-bold cursor-pointer z-10"
+                      aria-label="Remover arte"
+                    >
+                      <X className="w-4"/>
+                    </button>
+                    <img
+                      src={previewUrl}
+                      alt="Arte selecionada"
+                      className="w-12 h-12 object-cover rounded"
+                    />
+                    <span>Arte selecionada</span>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -186,7 +248,10 @@ export default function CartResume() {
                     .toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
                 </span>
               </div>
-              <a href="#" className="text-xs text-blue-600 underline mb-2 block">
+              <a
+                href="#"
+                className="text-xs text-blue-600 underline mb-2 block"
+              >
                 Possui um cupom de desconto?
               </a>
               <div className="flex justify-between items-center text-lg font-bold border-t pt-2">

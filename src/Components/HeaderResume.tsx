@@ -95,6 +95,7 @@ export const HeaderResume = () => {
         <Button
           variant="ghost"
           className="relative"
+          onClick={() => router.push('/resumo')}
         >
           <ShoppingCartIcon className="w-6 h-6" />
           {totalNoCarrinho > 0 && (
