@@ -42,6 +42,7 @@ type Produto = {
 
 export const HeaderResume = () => {
   const [userName, setUserName] = useState<string>('')
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false)
   const [showFilter, setShowFilter] = useState(false)
   const [open, setOpen] = useState(false)
   const popoverRef = useRef<HTMLDivElement>(null)
@@ -55,6 +56,9 @@ export const HeaderResume = () => {
       const { data: { user } } = await supabase.auth.getUser()
       if (user) {
         setUserName(user.user_metadata?.name || user.email)
+        setIsAuthenticated(true)
+      } else {
+        setIsAuthenticated(false)
       }
     }
     fetchUserName()
@@ -100,15 +104,17 @@ export const HeaderResume = () => {
           )}
         </Button>
 
-        {/* Saudação e menu */}
-        <div className="flex items-center gap-2 ">
-          <span className="text-gray-700">
-            Olá, <span className="font-semibold text-orange-600">{userName}</span>
-          </span>
-          <Button variant="ghost" size="icon" onClick={() => setShowMenuModal(true)}>
-            <MenuIcon className="w-6 h-6" />
-          </Button>
-        </div>
+        {/* Saudação e menu - só aparece se autenticado */}
+        {isAuthenticated && (
+          <div className="flex items-center gap-2 ">
+            <span className="text-gray-700">
+              Olá, <span className="font-semibold text-orange-600">{userName}</span>
+            </span>
+            <Button variant="ghost" size="icon" onClick={() => setShowMenuModal(true)}>
+              <MenuIcon className="w-6 h-6" />
+            </Button>
+          </div>
+        )}
       </div>
 
       {/* Modal de filtro */}
