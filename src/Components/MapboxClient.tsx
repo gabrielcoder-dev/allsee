@@ -45,7 +45,7 @@ export default function Mapbox() {
 
   return (
     <div
-      className="hidden xl:flex w-[400px] flex-shrink-0"
+      className="hidden xl:flex w-[400px] flex-shrink-0 z-0"
       style={{ height: `${mapHeight}px`, background: '#fff' }} // força fundo branco
     >
       <MapContainer

@@ -214,11 +214,12 @@ const ResultsHeader = () => {
 
           {/* Saudação e menu */}
           <div className="flex items-center gap-2">
-            <span className="text-gray-700">
-              Olá, <span className="font-semibold text-orange-600">{userName}</span>
-            </span>
+            {userName && (
+              <span className="text-gray-700">
+                Olá, <span className="font-semibold text-orange-600">{userName}</span>
+              </span>
+            )}
             <Button variant="ghost" size="icon" className="cursor-pointer" onClick={() => {
-              console.log('Menu button clicked!')
               setShowMenuModal(true)
             }}>
               <MenuIcon className="w-6 h-6" />
