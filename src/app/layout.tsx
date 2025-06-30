@@ -30,11 +30,11 @@ export default function RootLayout({
       <body
         className={montserrat.variable}
       >
+
         <Toaster richColors position="top-right" />
         <CartProvider>
           {children}
         </CartProvider>
-
       </body>
     </html>
   );

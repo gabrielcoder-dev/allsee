@@ -19,13 +19,19 @@ type Anuncio = {
   screens: number
   price: number
   duration: string
+  display: number
+  views: number
+  duration_2: boolean
+  duration_4: boolean
+  duration_24: boolean
 }
 
 type GetAnunciosResultsProps = {
-  onAdicionarProduto?: (produto: Anuncio) => void
+  onAdicionarProduto?: (produto: Anuncio) => void;
+  selectedDuration?: string;
 }
 
-export default function GetAnunciosResults({ onAdicionarProduto }: GetAnunciosResultsProps) {
+export default function GetAnunciosResults({ onAdicionarProduto, selectedDuration = '2' }: GetAnunciosResultsProps) {
   const { adicionarProduto, removerProduto, produtos } = useCart()
   const [anuncios, setAnuncios] = useState<Anuncio[]>([])
   const [loading, setLoading] = useState(true)
@@ -34,9 +40,13 @@ export default function GetAnunciosResults({ onAdicionarProduto }: GetAnunciosRe
   useEffect(() => {
     async function fetchAnuncios() {
       setLoading(true)
+      let durationColumn = 'duration_2';
+      if (selectedDuration === '4') durationColumn = 'duration_4';
+      if (selectedDuration === '24') durationColumn = 'duration_24';
       const { data, error } = await supabase
         .from('anuncios')
         .select('*')
+        .eq(durationColumn, true)
         .order('id', { ascending: false })
       if (!error && data) {
         console.log("Anúncios carregados do Supabase:", data);
@@ -57,7 +67,7 @@ export default function GetAnunciosResults({ onAdicionarProduto }: GetAnunciosRe
       setLoading(false)
     }
     fetchAnuncios()
-  }, [])
+  }, [selectedDuration])
 
   if (loading) return <div>Carregando anúncios...</div>
   if (!anuncios.length) return <div>Nenhum anúncio encontrado.</div>
@@ -69,11 +79,22 @@ export default function GetAnunciosResults({ onAdicionarProduto }: GetAnunciosRe
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6 p-4">
           {anuncios.map(anuncio => {
             const estaNoCarrinho = produtos.some(p => p.id === anuncio.id.toString())
+            // Lógica de cálculo de preço
+            const durationsTrue = [
+              anuncio.duration_2,
+              anuncio.duration_4,
+              anuncio.duration_24
+            ].filter(Boolean).length;
+            let precoCalculado = anuncio.price;
+            if (durationsTrue > 1) {
+              if (selectedDuration === '4') precoCalculado = anuncio.price * 2;
+              if (selectedDuration === '24') precoCalculado = anuncio.price * 12;
+            }
             return (
               <div
                 key={anuncio.id}
                 className="
-                  bg-white rounded-2xl shadow-lg border border-gray-100 p-3 flex flex-col gap-2
+                  bg-white rounded-2xl shadow-lg border border-gray-100 p-3 flex flex-col gap-1
                   w-full max-w-xl h-[440px]
                   transition-all
                   hover:shadow-xl
@@ -89,11 +110,21 @@ export default function GetAnunciosResults({ onAdicionarProduto }: GetAnunciosRe
                 <div className="flex gap-2 mb-2">
                   <span className="bg-purple-600 text-white text-xs px-2 py-1 rounded font-medium">digital</span>
                 </div>
-                <h3 className="font-bold text-lg truncate">{anuncio.name}</h3>
-                <div className="text-gray-500 text-xs mb-1 truncate">{anuncio.address}</div>
+                <h3 className="font-bold text-lg">{anuncio.name}</h3>
+                <div className="text-gray-500 text-xs mb-1">{anuncio.address}</div>
+                <div className="flex gap-8 mb-1">
+                  <div className="flex flex-col items-start">
+                    <span className="text-[10px] text-gray-500 font-medium lowercase flex items-center gap-1">exibições <span className="text-[10px]">&#9654;</span></span>
+                    <span className="font-bold text-base">{formatarMilhar(anuncio.display)}</span>
+                  </div>
+                  <div className="flex flex-col items-start">
+                    <span className="text-[10px] text-gray-500 font-medium lowercase flex items-center gap-1">alcance <span className="text-[10px]">&#128100;</span></span>
+                    <span className="font-bold text-base">{formatarMilhar(anuncio.views)}</span>
+                  </div>
+                </div>
                 <div className="text-xs text-gray-800 mb-1 font-bold">Telas: {anuncio.screens}</div>
-                <div className="text-lg font-bold mb-1 text-green-700">R$ {Number(anuncio.price).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
-                <div className="text-xs text-gray-500 mb-2">/ {anuncio.duration}</div>
+                <div className="text-lg font-bold mb-1 text-green-700">R$ {Number(precoCalculado).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
+                <div className="text-xs text-gray-500 mb-2">/ {selectedDuration} semana{selectedDuration === '24' || selectedDuration === '4' || selectedDuration === '2' ? (Number(selectedDuration) > 1 ? 's' : '') : ''}</div>
                 <button
                   className={`w-full cursor-pointer flex items-center justify-center gap-4 border rounded-lg py-2 text-base font-semibold transition ${estaNoCarrinho ? 'border-red-400 text-red-600 hover:bg-red-50' : 'border-green-400 text-green-600 hover:bg-green-50'}`}
                   onClick={async () => {
@@ -112,7 +143,10 @@ export default function GetAnunciosResults({ onAdicionarProduto }: GetAnunciosRe
                         preco: anuncio.price,
                         quantidade: 1,
                         image: anuncio.image,
-                        endereco: anuncio.address
+                        endereco: anuncio.address,
+                        duration_2: anuncio.duration_2,
+                        duration_4: anuncio.duration_4,
+                        duration_24: anuncio.duration_24
                       })
                     }
                   }}
@@ -130,4 +164,11 @@ export default function GetAnunciosResults({ onAdicionarProduto }: GetAnunciosRe
       </div>
     </>
   )
+}
+
+function formatarMilhar(valor: number) {
+  if (valor >= 1000) {
+    return (valor / 1000).toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + ' mil';
+  }
+  return valor?.toLocaleString('pt-BR');
 }

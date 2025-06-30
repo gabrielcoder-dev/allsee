@@ -11,8 +11,9 @@ import 'react-toastify/dist/ReactToastify.css'
 
 const Mapbox = dynamic(() => import('@/Components/MapboxClient'), { ssr: false })
 
-const page = () => {
+const Page = () => {
   const [produtos, setProdutos] = useState<any[]>([])
+  const [selectedDuration, setSelectedDuration] = useState('2')
 
   // Função para adicionar produto ao carrinho
   function handleAdicionarProduto(produto: any) {
@@ -22,11 +23,11 @@ const page = () => {
 
   return (
     <div className="flex flex-col h-screen">
-      <HeaderResultsDesktop />
+      <HeaderResultsDesktop onDurationChange={setSelectedDuration} selectedDuration={selectedDuration} />
       <MobileHeader />
       {/* Área principal com scroll controlado */}
       <div className="flex flex-1 min-h-0 overflow-hidden xl:pl-16 justify-center xl:justify-between">
-        <GetAnunciosResults onAdicionarProduto={handleAdicionarProduto} />
+        <GetAnunciosResults onAdicionarProduto={handleAdicionarProduto} selectedDuration={selectedDuration} />
         <Mapbox />
       </div>
 
@@ -37,4 +38,4 @@ const page = () => {
   )
 }
 
-export default page
+export default Page

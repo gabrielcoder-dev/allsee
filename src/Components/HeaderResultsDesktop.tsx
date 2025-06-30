@@ -27,7 +27,6 @@ const orderOptions = [
   { label: 'alfabética', value: 'alphabetical' },
 ]
 
-// Certifique-se de que este tipo corresponde ao tipo Produto usado em ModalCartTotten
 type Produto = {
   id: string
   name: string
@@ -40,10 +39,15 @@ type Produto = {
   // Adicione outros campos conforme necessário para corresponder ao ModalCartTotten
 }
 
-const ResultsHeader = () => {
+type ResultsHeaderProps = {
+  onDurationChange?: (value: string) => void;
+  selectedDuration?: string;
+};
+
+const HeaderResultsDesktop = ({ onDurationChange, selectedDuration }: ResultsHeaderProps) => {
   const [userName, setUserName] = useState<string>('')
   const [location, setLocation] = useState('')
-  const [duration, setDuration] = useState('2')
+  const [duration, setDuration] = useState(selectedDuration || '2')
   const [startDate, setStartDate] = useState<Date | undefined>(new Date())
   const [order, setOrder] = useState('')
   const [showFilter, setShowFilter] = useState(false)
@@ -79,6 +83,11 @@ const ResultsHeader = () => {
     if (open) document.addEventListener('mousedown', handleClick)
     return () => document.removeEventListener('mousedown', handleClick)
   }, [open])
+
+  const handleDurationChange = (value: string) => {
+    setDuration(value);
+    if (onDurationChange) onDurationChange(value);
+  };
 
   return (
     <>
@@ -120,7 +129,7 @@ const ResultsHeader = () => {
 
             <div className='flex-col hidden md:flex'>
               <span className="text-gray-500 mb-1 font-semibold">Duração</span>
-              <Select value={duration} onValueChange={setDuration}>
+              <Select value={duration} onValueChange={handleDurationChange}>
                 <SelectTrigger className="w-32 bg-gray-50 rounded-lg px-3 py-2">
                   <SelectValue placeholder="duração" />
                 </SelectTrigger>
@@ -239,10 +248,10 @@ const ResultsHeader = () => {
 const Page = () => {
   return (
     <div className="max-w-7xl mx-auto">
-      <ResultsHeader />
+      <HeaderResultsDesktop />
       {/* Conteúdo dos resultados vai aqui */}
     </div>
   )
 }
 
-export default Page
+export default HeaderResultsDesktop

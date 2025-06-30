@@ -19,10 +19,24 @@ import { Button } from "./ui/button";
 
 export default function CartResume() {
   const { produtos, removerProduto } = useCart();
-  const [duracao, setDuracao] = useState("12 semanas");
+
+  // Estado para duração selecionada
+  const [duration, setDuration] = useState("2");
+  const handleDurationChange = (value: string) => {
+    console.log('Duração selecionada:', value);
+    setDuration(value);
+  };
+
+  // Valor inicial: menor duração disponível ou '2'
   const [startDate, setStartDate] = useState<Date | undefined>(new Date());
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+
+  const durations = [
+    { label: "2 semanas", value: "2" },
+    { label: "4 semanas", value: "4" },
+    { label: "24 semanas", value: "24" },
+  ];
 
   // Debug: verificar se os produtos estão sendo carregados
   console.log("Produtos no carrinho:", produtos);
@@ -57,6 +71,17 @@ export default function CartResume() {
           ) : (
             produtos.map((item) => {
               console.log("Item individual:", item);
+              // Lógica de cálculo de preço igual ao HeaderResults/GetAnunciosResults
+              const durationsTrue = [
+                (item as any).duration_2,
+                (item as any).duration_4,
+                (item as any).duration_24,
+              ].filter(Boolean).length;
+              let precoCalculado = item.preco;
+              if (durationsTrue > 1) {
+                if (duration === "4") precoCalculado = item.preco * 2;
+                if (duration === "24") precoCalculado = item.preco * 12;
+              }
               return (
                 <div
                   key={item.id}
@@ -84,8 +109,8 @@ export default function CartResume() {
                     )}
                     <div className="font-semibold text-green-700">
                       R${" "}
-                      {typeof item.preco === "number"
-                        ? item.preco.toLocaleString("pt-BR", {
+                      {typeof precoCalculado === "number"
+                        ? precoCalculado.toLocaleString("pt-BR", {
                             minimumFractionDigits: 2,
                           })
                         : "0,00"}{" "}
@@ -113,14 +138,16 @@ export default function CartResume() {
               <div className="flex gap-4 mb-2 items-end">
                 <div className="flex flex-col gap-1">
                   <span className="block text-xs text-gray-500">duração</span>
-                  <Select defaultValue="12 semanas">
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Selecione" />
+                  <Select value={duration} onValueChange={handleDurationChange}>
+                    <SelectTrigger className="w-32 bg-gray-50 rounded-lg px-3 py-2">
+                      <SelectValue placeholder="duração" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="4 semanas">2 semanas</SelectItem>
-                      <SelectItem value="8 semanas">4 semanas</SelectItem>
-                      <SelectItem value="12 semanas">24 semanas</SelectItem>
+                      {durations.map((d) => (
+                        <SelectItem key={d.value} value={d.value}>
+                          {d.label}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
@@ -216,7 +243,7 @@ export default function CartResume() {
                       className="absolute -top-3 -right-3 w-6 h-6 flex  items-center justify-center  border border-gray-300 rounded-full bg-white text-xl font-bold cursor-pointer z-10"
                       aria-label="Remover arte"
                     >
-                      <X className="w-4"/>
+                      <X className="w-4" />
                     </button>
                     <img
                       src={previewUrl}
@@ -237,14 +264,24 @@ export default function CartResume() {
                 <span className="font-semibold">
                   R${" "}
                   {produtos
-                    .reduce(
-                      (acc, item) =>
+                    .reduce((acc: number, item) => {
+                      const durationsTrue = [
+                        (item as any).duration_2,
+                        (item as any).duration_4,
+                        (item as any).duration_24,
+                      ].filter(Boolean).length;
+                      let precoCalculado = item.preco;
+                      if (durationsTrue > 1) {
+                        if (duration === "4") precoCalculado = item.preco * 2;
+                        if (duration === "24") precoCalculado = item.preco * 12;
+                      }
+                      return (
                         acc +
-                        (typeof item.preco === "number"
-                          ? item.preco * item.quantidade
-                          : 0),
-                      0
-                    )
+                        (typeof precoCalculado === "number"
+                          ? precoCalculado * item.quantidade
+                          : 0)
+                      );
+                    }, 0)
                     .toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
                 </span>
               </div>
@@ -259,14 +296,24 @@ export default function CartResume() {
                 <span>
                   R${" "}
                   {produtos
-                    .reduce(
-                      (acc, item) =>
+                    .reduce((acc: number, item) => {
+                      const durationsTrue = [
+                        (item as any).duration_2,
+                        (item as any).duration_4,
+                        (item as any).duration_24,
+                      ].filter(Boolean).length;
+                      let precoCalculado = item.preco;
+                      if (durationsTrue > 1) {
+                        if (duration === "4") precoCalculado = item.preco * 2;
+                        if (duration === "24") precoCalculado = item.preco * 12;
+                      }
+                      return (
                         acc +
-                        (typeof item.preco === "number"
-                          ? item.preco * item.quantidade
-                          : 0),
-                      0
-                    )
+                        (typeof precoCalculado === "number"
+                          ? precoCalculado * item.quantidade
+                          : 0)
+                      );
+                    }, 0)
                     .toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
                 </span>
               </div>

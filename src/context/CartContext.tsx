@@ -12,6 +12,9 @@ type Produto = {
   preco: number
   quantidade: number
   endereco: string
+  duration_2?: boolean
+  duration_4?: boolean
+  duration_24?: boolean
 }
 
 type CartContextType = {
