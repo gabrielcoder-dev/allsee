@@ -8,7 +8,32 @@ export default function HeaderPrice() {
   const router = useRouter();
 
   const quantidade = produtos.reduce((acc, p) => acc + p.quantidade, 0);
-  const valor = produtos.reduce((acc, p) => acc + p.preco * p.quantidade, 0);
+
+  // Calcular valor total considerando a duração (igual CartResume)
+  const durationsTrue = (p: any) => [p.duration_2, p.duration_4, p.duration_24].filter(Boolean).length;
+  const getPrecoMultiplicado = (p: any, duration: string) => {
+    let preco = p.preco;
+    if (durationsTrue(p) > 1) {
+      if (duration === "4") preco = p.preco * 2;
+      if (duration === "24") preco = p.preco * 12;
+    }
+    return preco;
+  };
+
+  // Buscar a duração padrão do carrinho (igual CartResume)
+  let duration = "2";
+  if (produtos.length > 0) {
+    const p = produtos[0];
+    let multiplicador = 1;
+    if (typeof p.precoMultiplicado === "number" && typeof p.preco === "number" && p.preco > 0) {
+      multiplicador = Math.round(p.precoMultiplicado / p.preco);
+    }
+    if (multiplicador === 2) duration = "4";
+    else if (multiplicador === 12) duration = "24";
+    else duration = "2";
+  }
+
+  const valor = produtos.reduce((acc, p) => acc + getPrecoMultiplicado(p, duration) * p.quantidade, 0);
 
   return (
     <div

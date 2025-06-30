@@ -1,5 +1,6 @@
 import React, { useRef, useEffect } from 'react';
-import { X, ChevronDown, ChevronUp, Star, Image as ImageIcon, Menu, List, User, LogOut, MessageCircle } from 'lucide-react';
+import { X, ChevronDown, ChevronUp, Star, Image as ImageIcon, Menu, List, User, LogOut, MessageCircle, GlobeLockIcon } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 
 interface ModalMenuProps {
   open: boolean;
@@ -8,6 +9,7 @@ interface ModalMenuProps {
 
 export default function ModalMenu({ open, onClose }: ModalMenuProps) {
   const modalRef = useRef<HTMLDivElement>(null);
+  const router = useRouter();
 
   // Fecha ao clicar fora do modal
   useEffect(() => {
@@ -38,7 +40,7 @@ export default function ModalMenu({ open, onClose }: ModalMenuProps) {
       >
         {/* Botão de fechar */}
         <button
-          className="absolute top-4 right-4 text-gray-400 hover:text-gray-700"
+          className="absolute top-4 right-4 text-gray-400 hover:text-gray-700 cursor-pointer"
           onClick={onClose}
           aria-label="Fechar"
         >
@@ -46,21 +48,27 @@ export default function ModalMenu({ open, onClose }: ModalMenuProps) {
         </button>
         {/* Grid de opções principais */}
         <div className="grid grid-cols-2 gap-4 mb-2 mt-12">
-          <button className="flex flex-col items-start justify-center gap-2 p-4 rounded-xl bg-orange-600 text-white font-semibold shadow hover:bg-orange-700 transition">
+          <button className="flex flex-col items-start justify-center gap-2 p-4 rounded-xl bg-orange-600 text-white font-semibold shadow hover:bg-orange-700 transition cursor-pointer">
             <Menu size={24} />
             <span className="text-sm text-left leading-tight">escolha onde anunciar</span>
           </button>
-          <button className="flex flex-col items-start justify-center gap-2 p-4 rounded-xl bg-gray-100 text-gray-700 font-semibold shadow hover:bg-gray-200 transition">
+          <button className="flex flex-col items-start justify-center gap-2 p-4 rounded-xl bg-gray-100 text-gray-700 font-semibold shadow hover:bg-gray-200 transition cursor-pointer">
             <List size={24} />
             <span className="text-sm text-left leading-tight">meus anúncios</span>
           </button>
-          <button className="flex flex-col items-start justify-center gap-2 p-4 rounded-xl bg-gray-100 text-gray-700 font-semibold shadow hover:bg-gray-200 transition">
+          <button className="flex flex-col items-start justify-center gap-2 p-4 rounded-xl bg-gray-100 text-gray-700 font-semibold shadow hover:bg-gray-200 transition cursor-pointer">
             <ImageIcon size={24} />
             <span className="text-sm text-left leading-tight">biblioteca de mídia</span>
           </button>
-          <button className="flex flex-col items-start justify-center gap-2 p-4 rounded-xl bg-gray-100 text-gray-700 font-semibold shadow hover:bg-gray-200 transition">
-            <Star size={24} />
-            <span className="text-sm text-left leading-tight">meus favoritos</span>
+          <button 
+            className="flex flex-col items-start justify-center gap-2 p-4 rounded-xl bg-gray-100 text-gray-700 font-semibold shadow hover:bg-gray-200 transition cursor-pointer"
+            onClick={() => {
+              router.push('/dashboard');
+              onClose();
+            }}
+          >
+            <GlobeLockIcon size={24} />
+            <span className="text-sm text-left leading-tight">Dashboard</span>
           </button>
         </div>
         {/* Accordions (simples, sem animação) */}
@@ -92,7 +100,7 @@ export default function ModalMenu({ open, onClose }: ModalMenuProps) {
           </div>
         </div>
         {/* Botão sair */}
-        <button className="flex items-center gap-2 text-red-600 font-semibold mt-4 hover:underline" onClick={onClose}>
+        <button className="flex items-center gap-2 text-red-600 font-semibold mt-4 hover:underline cursor-pointer" onClick={onClose}>
           <LogOut size={20} /> sair
         </button>
       </div>
@@ -106,7 +114,7 @@ function AccordionItem({ title }: { title: string }) {
   return (
     <div className="border rounded-lg">
       <button
-        className="flex items-center justify-between w-full px-4 py-3 text-gray-700 font-medium focus:outline-none"
+        className="flex items-center justify-between w-full px-4 py-3 text-gray-700 font-medium focus:outline-none cursor-pointer"
         onClick={() => setOpen(o => !o)}
         type="button"
       >

@@ -12,9 +12,14 @@ type Produto = {
   preco: number
   quantidade: number
   endereco: string
+  display: number
+  views: number
+  screens?: number
   duration_2?: boolean
   duration_4?: boolean
   duration_24?: boolean
+  selectedDuration?: string
+  precoMultiplicado?: number
 }
 
 type CartContextType = {
@@ -48,17 +53,18 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   const adicionarProduto = (produto: Produto) => {
     console.log("Adicionando produto:", produto);
     setProdutos((prev) => {
-      const existente = prev.find((p) => p.id === produto.id)
+      const existente = prev.find((p) => p.id === produto.id);
       if (existente) {
+        // Atualiza os campos do produto, mas mantém a quantidade original
         return prev.map((p) =>
           p.id === produto.id
-            ? { ...p, quantidade: p.quantidade + produto.quantidade }
+            ? { ...p, ...produto, quantidade: p.quantidade }
             : p
-        )
+        );
       }
-      return [...prev, produto]
-    })
-    toast.success(`${produto.nome} adicionado ao carrinho`)
+      return [...prev, produto];
+    });
+    // toast.success(`${produto.nome} adicionado ao carrinho`);
   }
 
   const removerProduto = (id: string) => {

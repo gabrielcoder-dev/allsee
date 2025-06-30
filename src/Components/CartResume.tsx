@@ -9,7 +9,7 @@ import {
   SelectValue,
 } from "@/Components/ui/select";
 import { Calendar } from "@/Components/ui/calendar";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Popover,
   PopoverContent,
@@ -18,19 +18,26 @@ import {
 import { Button } from "./ui/button";
 
 export default function CartResume() {
-  const { produtos, removerProduto } = useCart();
-
-  // Estado para duração selecionada
-  const [duration, setDuration] = useState("2");
-  const handleDurationChange = (value: string) => {
-    console.log('Duração selecionada:', value);
-    setDuration(value);
-  };
+  const { produtos, removerProduto, adicionarProduto } = useCart();
 
   // Valor inicial: menor duração disponível ou '2'
   const [startDate, setStartDate] = useState<Date | undefined>(new Date());
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [duration, setDuration] = useState("2");
+
+  useEffect(() => {
+    if (produtos.length > 0) {
+      const p = produtos[0];
+      let multiplicador = 1;
+      if (typeof p.precoMultiplicado === "number" && typeof p.preco === "number" && p.preco > 0) {
+        multiplicador = Math.round(p.precoMultiplicado / p.preco);
+      }
+      if (multiplicador === 2) setDuration("4");
+      else if (multiplicador === 12) setDuration("24");
+      else setDuration("2");
+    }
+  }, [produtos]);
 
   const durations = [
     { label: "2 semanas", value: "2" },
@@ -47,6 +54,24 @@ export default function CartResume() {
       setSelectedImage(file);
       setPreviewUrl(URL.createObjectURL(file));
     }
+  };
+
+  const handleDurationChange = (value: string) => {
+    setDuration(value);
+    produtos.forEach((item) => {
+      let precoMultiplicado = item.preco;
+      const durationsTrue = [item.duration_2, item.duration_4, item.duration_24].filter(Boolean).length;
+      if (durationsTrue > 1) {
+        if (value === "4") precoMultiplicado = item.preco * 2;
+        if (value === "24") precoMultiplicado = item.preco * 12;
+      }
+      adicionarProduto({
+        ...item,
+        selectedDuration: value,
+        precoMultiplicado,
+        quantidade: item.quantidade
+      });
+    });
   };
 
   return (
@@ -79,8 +104,8 @@ export default function CartResume() {
               ].filter(Boolean).length;
               let precoCalculado = item.preco;
               if (durationsTrue > 1) {
-                if (duration === "4") precoCalculado = item.preco * 2;
-                if (duration === "24") precoCalculado = item.preco * 12;
+                if (item.selectedDuration === "4") precoCalculado = item.preco * 2;
+                if (item.selectedDuration === "24") precoCalculado = item.preco * 12;
               }
               return (
                 <div
@@ -107,10 +132,12 @@ export default function CartResume() {
                         Endereço não disponível
                       </p>
                     )}
+
+                    
                     <div className="font-semibold text-green-700">
                       R${" "}
-                      {typeof precoCalculado === "number"
-                        ? precoCalculado.toLocaleString("pt-BR", {
+                      {typeof item.precoMultiplicado === "number"
+                        ? item.precoMultiplicado.toLocaleString("pt-BR", {
                             minimumFractionDigits: 2,
                           })
                         : "0,00"}{" "}
@@ -132,82 +159,100 @@ export default function CartResume() {
         {/* Painel lateral com resumo do plano */}
         {produtos.length > 0 && (
           <div className="w-full lg:w-1/2 bg-white rounded-lg shadow p-6 flex flex-col gap-6 border border-neutral-200">
-            {/* Configuração do plano */}
-            <div>
-              <h2 className="text-lg font-bold mb-2">Configuração do plano</h2>
-              <div className="flex gap-4 mb-2 items-end">
-                <div className="flex flex-col gap-1">
-                  <span className="block text-xs text-gray-500">duração</span>
-                  <Select value={duration} onValueChange={handleDurationChange}>
-                    <SelectTrigger className="w-32 bg-gray-50 rounded-lg px-3 py-2">
-                      <SelectValue placeholder="duração" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {durations.map((d) => (
-                        <SelectItem key={d.value} value={d.value}>
-                          {d.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <span className="block text-xs text-gray-500 mb-1">
-                    Início
-                  </span>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        className="bg-gray-50 rounded-lg px-3 py-2 flex items-center gap-2"
-                      >
-                        <CalendarIcon className="w-4 h-4 text-orange-500" />
-                        <span>
-                          {startDate
-                            ? startDate.toLocaleDateString("pt-BR")
-                            : "início"}
-                        </span>
-                        <ChevronDownIcon className="w-4 h-4" />
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0">
-                      <Calendar
-                        mode="single"
-                        selected={startDate}
-                        onSelect={setStartDate}
-                        initialFocus
-                      />
-                    </PopoverContent>
-                  </Popover>
-                </div>
+            {/* Bloco de duração como select global e início */}
+            <div className="flex gap-4 mb-2 items-end">
+              <div className="flex flex-col gap-1">
+                <span className="block text-xs text-gray-500">duração</span>
+                <Select value={duration} onValueChange={handleDurationChange}>
+                  <SelectTrigger className="w-32 bg-gray-50 rounded-lg px-3 py-2">
+                    <SelectValue placeholder="duração" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {durations.map((d) => (
+                      <SelectItem key={d.value} value={d.value}>
+                        {d.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <span className="block text-xs text-gray-500 mb-1">Início</span>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className="bg-gray-50 rounded-lg px-3 py-2 flex items-center gap-2"
+                    >
+                      <CalendarIcon className="w-4 h-4 text-orange-500" />
+                      <span>
+                        {startDate
+                          ? startDate.toLocaleDateString("pt-BR")
+                          : "início"}
+                      </span>
+                      <ChevronDownIcon className="w-4 h-4" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0">
+                    <Calendar
+                      mode="single"
+                      selected={startDate}
+                      onSelect={setStartDate}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
               </div>
             </div>
-
             {/* Performance projetada */}
             <div>
               <h2 className="text-lg font-bold mb-2">Performance projetada</h2>
               <div className="grid grid-cols-3 gap-2 text-center">
                 <div>
                   <span className="block text-xs text-gray-500">exibições</span>
-                  <span className="font-semibold">99,6 mil</span>
+                  <span className="font-bold">
+                    {(() => {
+                      let total = 0;
+                      produtos.forEach((p) => {
+                        let display = Number(p.display) || 0;
+                        const durationsTrue = [p.duration_2, p.duration_4, p.duration_24].filter(Boolean).length;
+                        if (durationsTrue > 1) {
+                          if (duration === "4") display = display * 2;
+                          if (duration === "24") display = display * 12;
+                        }
+                        total += display;
+                      });
+                      return total >= 1000
+                        ? (total / 1000).toLocaleString("pt-BR", { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + " mil"
+                        : total.toLocaleString("pt-BR");
+                    })()}
+                  </span>
                 </div>
                 <div>
                   <span className="block text-xs text-gray-500">alcance</span>
-                  <span className="font-semibold">218,9 mil</span>
-                </div>
-                <div>
-                  <span className="block text-xs text-gray-500">impacto</span>
-                  <span className="font-semibold">436,2 mil</span>
-                </div>
-                <div>
-                  <span className="block text-xs text-gray-500">
-                    frequência
+                  <span className="font-bold">
+                    {(() => {
+                      let total = 0;
+                      produtos.forEach((p) => {
+                        let views = Number(p.views) || 0;
+                        const durationsTrue = [p.duration_2, p.duration_4, p.duration_24].filter(Boolean).length;
+                        if (durationsTrue > 1) {
+                          if (duration === "4") views = views * 2;
+                          if (duration === "24") views = views * 12;
+                        }
+                        total += views;
+                      });
+                      return total >= 1000
+                        ? (total / 1000).toLocaleString("pt-BR", { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + " mil"
+                        : total.toLocaleString("pt-BR");
+                    })()}
                   </span>
-                  <span className="font-semibold">1.99</span>
                 </div>
                 <div>
                   <span className="block text-xs text-gray-500">telas</span>
-                  <span className="font-semibold">9</span>
+                  <span className="font-bold">
+                    {produtos.reduce((acc, p) => acc + (Number(p.screens) || 0), 0)}
+                  </span>
                 </div>
               </div>
             </div>
@@ -265,12 +310,8 @@ export default function CartResume() {
                   R${" "}
                   {produtos
                     .reduce((acc: number, item) => {
-                      const durationsTrue = [
-                        (item as any).duration_2,
-                        (item as any).duration_4,
-                        (item as any).duration_24,
-                      ].filter(Boolean).length;
                       let precoCalculado = item.preco;
+                      const durationsTrue = [item.duration_2, item.duration_4, item.duration_24].filter(Boolean).length;
                       if (durationsTrue > 1) {
                         if (duration === "4") precoCalculado = item.preco * 2;
                         if (duration === "24") precoCalculado = item.preco * 12;
@@ -297,12 +338,8 @@ export default function CartResume() {
                   R${" "}
                   {produtos
                     .reduce((acc: number, item) => {
-                      const durationsTrue = [
-                        (item as any).duration_2,
-                        (item as any).duration_4,
-                        (item as any).duration_24,
-                      ].filter(Boolean).length;
                       let precoCalculado = item.preco;
+                      const durationsTrue = [item.duration_2, item.duration_4, item.duration_24].filter(Boolean).length;
                       if (durationsTrue > 1) {
                         if (duration === "4") precoCalculado = item.preco * 2;
                         if (duration === "24") precoCalculado = item.preco * 12;

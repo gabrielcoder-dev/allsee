@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { createClient } from '@supabase/supabase-js'
 import { useCart } from '@/context/CartContext'
-import { ShoppingCartIcon, TrashIcon } from 'lucide-react'
+import { PlayIcon, ShoppingCartIcon, TrashIcon, User2 } from 'lucide-react'
 import ModalLogin from './ModalLogin'
 
 const supabase = createClient(
@@ -86,9 +86,19 @@ export default function GetAnunciosResults({ onAdicionarProduto, selectedDuratio
               anuncio.duration_24
             ].filter(Boolean).length;
             let precoCalculado = anuncio.price;
+            let displayCalculado = anuncio.display;
+            let viewsCalculado = anuncio.views;
             if (durationsTrue > 1) {
-              if (selectedDuration === '4') precoCalculado = anuncio.price * 2;
-              if (selectedDuration === '24') precoCalculado = anuncio.price * 12;
+              if (selectedDuration === '4') {
+                precoCalculado = anuncio.price * 2;
+                displayCalculado = anuncio.display * 2;
+                viewsCalculado = anuncio.views * 2;
+              }
+              if (selectedDuration === '24') {
+                precoCalculado = anuncio.price * 12;
+                displayCalculado = anuncio.display * 12;
+                viewsCalculado = anuncio.views * 12;
+              }
             }
             return (
               <div
@@ -114,12 +124,12 @@ export default function GetAnunciosResults({ onAdicionarProduto, selectedDuratio
                 <div className="text-gray-500 text-xs mb-1">{anuncio.address}</div>
                 <div className="flex gap-8 mb-1">
                   <div className="flex flex-col items-start">
-                    <span className="text-[10px] text-gray-500 font-medium lowercase flex items-center gap-1">exibições <span className="text-[10px]">&#9654;</span></span>
-                    <span className="font-bold text-base">{formatarMilhar(anuncio.display)}</span>
+                    <span className="text-[10px] text-gray-500 font-medium lowercase flex items-center gap-1">exibições <span className="text-[10px]"><PlayIcon className='w-3' /></span></span>
+                    <span className="font-bold text-base">{formatarMilhar(displayCalculado)}</span>
                   </div>
                   <div className="flex flex-col items-start">
-                    <span className="text-[10px] text-gray-500 font-medium lowercase flex items-center gap-1">alcance <span className="text-[10px]">&#128100;</span></span>
-                    <span className="font-bold text-base">{formatarMilhar(anuncio.views)}</span>
+                    <span className="text-[10px] text-gray-500 font-medium lowercase flex items-center gap-1">alcance <span className="text-[10px]"><User2 className='w-3' /></span></span>
+                    <span className="font-bold text-base">{formatarMilhar(viewsCalculado)}</span>
                   </div>
                 </div>
                 <div className="text-xs text-gray-800 mb-1 font-bold">Telas: {anuncio.screens}</div>
@@ -141,9 +151,14 @@ export default function GetAnunciosResults({ onAdicionarProduto, selectedDuratio
                         id: anuncio.id.toString(),
                         nome: anuncio.name,
                         preco: anuncio.price,
+                        precoMultiplicado: precoCalculado,
+                        selectedDuration: selectedDuration,
                         quantidade: 1,
                         image: anuncio.image,
                         endereco: anuncio.address,
+                        screens: anuncio.screens,
+                        display: anuncio.display,
+                        views: anuncio.views,
                         duration_2: anuncio.duration_2,
                         duration_4: anuncio.duration_4,
                         duration_24: anuncio.duration_24
