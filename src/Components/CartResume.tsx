@@ -30,7 +30,11 @@ export default function CartResume() {
     if (produtos.length > 0) {
       const p = produtos[0];
       let multiplicador = 1;
-      if (typeof p.precoMultiplicado === "number" && typeof p.preco === "number" && p.preco > 0) {
+      if (
+        typeof p.precoMultiplicado === "number" &&
+        typeof p.preco === "number" &&
+        p.preco > 0
+      ) {
         multiplicador = Math.round(p.precoMultiplicado / p.preco);
       }
       if (multiplicador === 2) setDuration("4");
@@ -60,7 +64,11 @@ export default function CartResume() {
     setDuration(value);
     produtos.forEach((item) => {
       let precoMultiplicado = item.preco;
-      const durationsTrue = [item.duration_2, item.duration_4, item.duration_24].filter(Boolean).length;
+      const durationsTrue = [
+        item.duration_2,
+        item.duration_4,
+        item.duration_24,
+      ].filter(Boolean).length;
       if (durationsTrue > 1) {
         if (value === "4") precoMultiplicado = item.preco * 2;
         if (value === "24") precoMultiplicado = item.preco * 12;
@@ -69,7 +77,7 @@ export default function CartResume() {
         ...item,
         selectedDuration: value,
         precoMultiplicado,
-        quantidade: item.quantidade
+        quantidade: item.quantidade,
       });
     });
   };
@@ -104,8 +112,10 @@ export default function CartResume() {
               ].filter(Boolean).length;
               let precoCalculado = item.preco;
               if (durationsTrue > 1) {
-                if (item.selectedDuration === "4") precoCalculado = item.preco * 2;
-                if (item.selectedDuration === "24") precoCalculado = item.preco * 12;
+                if (item.selectedDuration === "4")
+                  precoCalculado = item.preco * 2;
+                if (item.selectedDuration === "24")
+                  precoCalculado = item.preco * 12;
               }
               return (
                 <div
@@ -133,7 +143,6 @@ export default function CartResume() {
                       </p>
                     )}
 
-                    
                     <div className="font-semibold text-green-700">
                       R${" "}
                       {typeof item.precoMultiplicado === "number"
@@ -215,7 +224,11 @@ export default function CartResume() {
                       let total = 0;
                       produtos.forEach((p) => {
                         let display = Number(p.display) || 0;
-                        const durationsTrue = [p.duration_2, p.duration_4, p.duration_24].filter(Boolean).length;
+                        const durationsTrue = [
+                          p.duration_2,
+                          p.duration_4,
+                          p.duration_24,
+                        ].filter(Boolean).length;
                         if (durationsTrue > 1) {
                           if (duration === "4") display = display * 2;
                           if (duration === "24") display = display * 12;
@@ -223,7 +236,10 @@ export default function CartResume() {
                         total += display;
                       });
                       return total >= 1000
-                        ? (total / 1000).toLocaleString("pt-BR", { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + " mil"
+                        ? (total / 1000).toLocaleString("pt-BR", {
+                            minimumFractionDigits: 1,
+                            maximumFractionDigits: 1,
+                          }) + " mil"
                         : total.toLocaleString("pt-BR");
                     })()}
                   </span>
@@ -235,7 +251,11 @@ export default function CartResume() {
                       let total = 0;
                       produtos.forEach((p) => {
                         let views = Number(p.views) || 0;
-                        const durationsTrue = [p.duration_2, p.duration_4, p.duration_24].filter(Boolean).length;
+                        const durationsTrue = [
+                          p.duration_2,
+                          p.duration_4,
+                          p.duration_24,
+                        ].filter(Boolean).length;
                         if (durationsTrue > 1) {
                           if (duration === "4") views = views * 2;
                           if (duration === "24") views = views * 12;
@@ -243,7 +263,10 @@ export default function CartResume() {
                         total += views;
                       });
                       return total >= 1000
-                        ? (total / 1000).toLocaleString("pt-BR", { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + " mil"
+                        ? (total / 1000).toLocaleString("pt-BR", {
+                            minimumFractionDigits: 1,
+                            maximumFractionDigits: 1,
+                          }) + " mil"
                         : total.toLocaleString("pt-BR");
                     })()}
                   </span>
@@ -251,14 +274,17 @@ export default function CartResume() {
                 <div>
                   <span className="block text-xs text-gray-500">telas</span>
                   <span className="font-bold">
-                    {produtos.reduce((acc, p) => acc + (Number(p.screens) || 0), 0)}
+                    {produtos.reduce(
+                      (acc, p) => acc + (Number(p.screens) || 0),
+                      0
+                    )}
                   </span>
                 </div>
               </div>
             </div>
 
-            <div className="my-4+">
-              <span className="block text-lg font-bold mb-5">
+            <div className="flex flex-col">
+              <span className="block text-lg font-bold mb-3">
                 Carregar arte de exibição
               </span>
               <div className="flex items-center gap-4 relative">
@@ -299,6 +325,7 @@ export default function CartResume() {
                   </div>
                 )}
               </div>
+              <p className="text-xs text-gray-500 mt-3">Foto/Vídeo Máximo 40 Segundos, Proporção 1080x1920 px.</p>
             </div>
 
             {/* Valor */}
@@ -311,7 +338,11 @@ export default function CartResume() {
                   {produtos
                     .reduce((acc: number, item) => {
                       let precoCalculado = item.preco;
-                      const durationsTrue = [item.duration_2, item.duration_4, item.duration_24].filter(Boolean).length;
+                      const durationsTrue = [
+                        item.duration_2,
+                        item.duration_4,
+                        item.duration_24,
+                      ].filter(Boolean).length;
                       if (durationsTrue > 1) {
                         if (duration === "4") precoCalculado = item.preco * 2;
                         if (duration === "24") precoCalculado = item.preco * 12;
@@ -339,7 +370,11 @@ export default function CartResume() {
                   {produtos
                     .reduce((acc: number, item) => {
                       let precoCalculado = item.preco;
-                      const durationsTrue = [item.duration_2, item.duration_4, item.duration_24].filter(Boolean).length;
+                      const durationsTrue = [
+                        item.duration_2,
+                        item.duration_4,
+                        item.duration_24,
+                      ].filter(Boolean).length;
                       if (durationsTrue > 1) {
                         if (duration === "4") precoCalculado = item.preco * 2;
                         if (duration === "24") precoCalculado = item.preco * 12;
