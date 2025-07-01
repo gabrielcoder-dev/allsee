@@ -15,8 +15,11 @@ const PagamantosPart = () => {
   const { produtos } = useCart();
   // Calcular subtotal e total dinamicamente
   const subtotal = produtos.reduce(
-    (acc, item) =>
-      acc + (typeof item.preco === "number" ? item.preco * item.quantidade : 0),
+    (acc, item) => {
+      // Usar precoMultiplicado se disponível, senão usar preco * quantidade
+      const precoCalculado = item.precoMultiplicado || (typeof item.preco === "number" ? item.preco * item.quantidade : 0);
+      return acc + precoCalculado;
+    },
     0
   );
   const total = subtotal;
