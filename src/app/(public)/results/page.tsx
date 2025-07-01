@@ -21,10 +21,22 @@ const Page = () => {
     toast.success('Produto adicionado ao carrinho!')
   }
 
+  // Função para lidar com a busca do modal mobile
+  const handleSearch = (location: string, duration: string, startDate: Date | undefined) => {
+    // Aqui você pode implementar a lógica de busca se necessário
+    // Por enquanto, apenas atualiza a duração
+    setSelectedDuration(duration)
+    console.log('Busca realizada:', { location, duration, startDate })
+  }
+
   return (
     <div className="flex flex-col h-screen">
       <HeaderResultsDesktop onDurationChange={setSelectedDuration} selectedDuration={selectedDuration} />
-      <MobileHeader />
+      <MobileHeader 
+        onDurationChange={setSelectedDuration} 
+        selectedDuration={selectedDuration}
+        onSearch={handleSearch}
+      />
       {/* Área principal com scroll controlado */}
       <div className="flex flex-1 min-h-0 overflow-hidden xl:pl-16 justify-center xl:justify-between">
         <GetAnunciosResults onAdicionarProduto={handleAdicionarProduto} selectedDuration={selectedDuration} />

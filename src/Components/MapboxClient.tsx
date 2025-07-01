@@ -38,11 +38,17 @@ async function geocodeAddress(address: string): Promise<{ lat: number; lng: numb
 
 export default function Mapbox() {
   const center: LatLngTuple = [-15.5586, -54.2811]
-  const [mapHeight, setMapHeight] = useState<number | null>(null)
+  const [mapHeight, setMapHeight] = useState<number>(0)
   const [totens, setTotens] = useState<Totem[]>([])
   const [loading, setLoading] = useState(true)
+  const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  useEffect(() => {
+    if (!mounted) return
     function updateHeight() {
       const header = document.getElementById('header-price')
       const headerHeight = header ? header.offsetHeight : 64
@@ -64,7 +70,7 @@ export default function Mapbox() {
         window.visualViewport.removeEventListener('scroll', updateHeight)
       }
     }
-  }, [])
+  }, [mounted])
 
   useEffect(() => {
     async function fetchAndGeocode() {
@@ -87,10 +93,10 @@ export default function Mapbox() {
       setTotens(totensWithCoords.filter(Boolean) as Totem[])
       setLoading(false)
     }
-    fetchAndGeocode()
-  }, [])
+    if (mounted) fetchAndGeocode()
+  }, [mounted])
 
-  if (mapHeight === null) return null
+  if (!mounted || mapHeight === 0) return null
   if (loading) return <div className="hidden xl:flex w-[400px] flex-shrink-0 z-0 items-center justify-center" style={{ height: '100%' }}>Carregando totens no mapa...</div>
 
   return (

@@ -19,7 +19,17 @@ const orderOptions = [
   { label: 'alfabética', value: 'alphabetical' },
 ]
 
-export default function MobileHeader() {
+type MobileHeaderProps = {
+  onDurationChange?: (value: string) => void;
+  selectedDuration?: string;
+  onSearch?: (location: string, duration: string, startDate: Date | undefined) => void;
+}
+
+export default function MobileHeader({ 
+  onDurationChange, 
+  selectedDuration = '2',
+  onSearch 
+}: MobileHeaderProps) {
   const [userName, setUserName] = useState<string>('')
   const [location, setLocation] = useState('')
   const [order, setOrder] = useState('')
@@ -180,7 +190,12 @@ export default function MobileHeader() {
       </div>
 
       {showModal && (
-        <ModalHeaderMobile onClose={() => setShowModal(false)} />
+        <ModalHeaderMobile 
+          onClose={() => setShowModal(false)} 
+          onDurationChange={onDurationChange}
+          selectedDuration={selectedDuration}
+          onSearch={onSearch}
+        />
       )}
 
       {/* Modal de filtro */}

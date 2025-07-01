@@ -12,11 +12,28 @@ const durations = [
   { label: '24 semanas', value: '24' },
 ]
 
-export default function ModalHeaderMobile({ onClose }: { onClose: () => void }) {
+type ModalHeaderMobileProps = {
+  onClose: () => void;
+  onDurationChange?: (value: string) => void;
+  selectedDuration?: string;
+  onSearch?: (location: string, duration: string, startDate: Date | undefined) => void;
+}
+
+export default function ModalHeaderMobile({ 
+  onClose, 
+  onDurationChange, 
+  selectedDuration = '2',
+  onSearch 
+}: ModalHeaderMobileProps) {
   const [location, setLocation] = useState('')
-  const [duration, setDuration] = useState<string | undefined>(undefined)
+  const [duration, setDuration] = useState(selectedDuration)
   const [startDate, setStartDate] = useState<Date | undefined>(undefined)
   const [showCalendar, setShowCalendar] = useState(false)
+
+  // Atualiza a duração quando selectedDuration muda
+  useEffect(() => {
+    setDuration(selectedDuration)
+  }, [selectedDuration])
 
   // Fecha o calendário ao clicar fora dele
   useEffect(() => {
@@ -30,6 +47,20 @@ export default function ModalHeaderMobile({ onClose }: { onClose: () => void }) 
     document.addEventListener('mousedown', handle)
     return () => document.removeEventListener('mousedown', handle)
   }, [showCalendar])
+
+  const handleDurationChange = (value: string) => {
+    setDuration(value)
+    if (onDurationChange) {
+      onDurationChange(value)
+    }
+  }
+
+  const handleSearch = () => {
+    if (onSearch) {
+      onSearch(location, duration, startDate)
+    }
+    onClose()
+  }
 
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/30" onClick={onClose}>
@@ -55,7 +86,7 @@ export default function ModalHeaderMobile({ onClose }: { onClose: () => void }) 
           {/* Duração e Início */}
           <div className="flex gap-2">
             {/* Duração */}
-            <Select value={duration} onValueChange={setDuration}>
+            <Select value={duration} onValueChange={handleDurationChange}>
               <SelectTrigger className="w-1/2 bg-white border border-gray-200 rounded-lg px-3 py-2 text-base">
                 <SelectValue placeholder="duração" />
               </SelectTrigger>
@@ -85,7 +116,7 @@ export default function ModalHeaderMobile({ onClose }: { onClose: () => void }) 
           {/* Botão buscar */}
           <Button
             className="mt-2 w-full bg-orange-500 hover:bg-orange-600 text-white font-semibold rounded-lg py-2 text-base"
-            onClick={onClose}
+            onClick={handleSearch}
           >
             buscar
           </Button>
