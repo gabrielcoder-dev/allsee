@@ -2,13 +2,15 @@
 
 import { useState, useEffect } from 'react'
 import { FiLogOut, FiMap, FiList } from 'react-icons/fi'
-import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { ChevronLeft, ChevronRight, CheckCircle, RefreshCw, Repeat } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 
 type NavBarAdminProps = {
   onLogout?: () => void
   mobileOpen: boolean
   setMobileOpen: (value: boolean) => void
+  selectedMenu: string
+  setSelectedMenu: (value: string) => void
 }
 type NavBarAdminComponentProps = {
   onLogout?: () => void
@@ -16,7 +18,7 @@ type NavBarAdminComponentProps = {
   setMobileOpen: (value: boolean) => void
 }
 
-export default function NavBarAdmin({ onLogout, mobileOpen, setMobileOpen }: NavBarAdminProps) {
+export default function NavBarAdmin({ onLogout, mobileOpen, setMobileOpen, selectedMenu, setSelectedMenu }: NavBarAdminProps) {
   const [open, setOpen] = useState(true)
   const [userName, setUserName] = useState<string>('Usuário Admin')
 
@@ -93,15 +95,33 @@ export default function NavBarAdmin({ onLogout, mobileOpen, setMobileOpen }: Nav
           {/* Links */}
           <ul className="flex flex-col gap-3 mt-5">
             <li>
-              <a href="#" className="flex items-center gap-3 font-semibold px-6 py-3 text-orange-600 hover:bg-orange-50 rounded transition">
+              <a href="#" onClick={() => setSelectedMenu('anuncios')} className={`flex items-center gap-3 font-semibold px-6 py-3 text-orange-600 hover:bg-orange-50 rounded transition ${selectedMenu === 'anuncios' ? 'bg-orange-100' : ''}`}>
                 <FiList size={22} />
                 {isExpanded && <span>Anúncios</span>}
               </a>
             </li>
             <li>
-              <a href="#" className="flex items-center gap-3 font-semibold px-6 py-3 text-orange-600 hover:bg-orange-50 rounded transition">
+              <a href="#" onClick={() => setSelectedMenu('mapa')} className={`flex items-center gap-3 font-semibold px-6 py-3 text-orange-600 hover:bg-orange-50 rounded transition ${selectedMenu === 'mapa' ? 'bg-orange-100' : ''}`}>
                 <FiMap size={22} />
                 {isExpanded && <span>Mapa</span>}
+              </a>
+            </li>
+            <li>
+              <a href="#" onClick={() => setSelectedMenu('aprovacao')} className={`flex items-center gap-3 font-semibold px-6 py-3 text-orange-600 hover:bg-orange-50 rounded transition ${selectedMenu === 'aprovacao' ? 'bg-orange-100' : ''}`}>
+                <CheckCircle size={22} />
+                {isExpanded && <span>Aprovação</span>}
+              </a>
+            </li>
+            <li>
+              <a href="#" onClick={() => setSelectedMenu('andamento')} className={`flex items-center gap-3 font-semibold px-6 py-3 text-orange-600 hover:bg-orange-50 rounded transition ${selectedMenu === 'andamento' ? 'bg-orange-100' : ''}`}>
+                <RefreshCw size={22} />
+                {isExpanded && <span>Andamento</span>}
+              </a>
+            </li>
+            <li>
+              <a href="#" onClick={() => setSelectedMenu('substituicao')} className={`flex items-center gap-3 font-semibold px-6 py-3 text-orange-600 hover:bg-orange-50 rounded transition ${selectedMenu === 'substituicao' ? 'bg-orange-100' : ''}`}>
+                <Repeat size={22} />
+                {isExpanded && <span>Substituição</span>}
               </a>
             </li>
           </ul>
