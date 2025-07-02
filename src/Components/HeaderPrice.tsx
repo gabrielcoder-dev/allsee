@@ -10,11 +10,12 @@ export default function HeaderPrice() {
   const quantidade = produtos.reduce((acc, p) => acc + p.quantidade, 0);
 
   // Calcular valor total considerando a duração (igual CartResume)
-  const durationsTrue = (p: any) => [p.duration_2, p.duration_4, p.duration_24].filter(Boolean).length;
+  const durationsTrue = (p: any) => [p.duration_2, p.duration_4, p.duration_12, p.duration_24].filter(Boolean).length;
   const getPrecoMultiplicado = (p: any, duration: string) => {
     let preco = p.preco;
     if (durationsTrue(p) > 1) {
       if (duration === "4") preco = p.preco * 2;
+      if (duration === "12") preco = p.preco * 6;
       if (duration === "24") preco = p.preco * 12;
     }
     return preco;
@@ -29,6 +30,7 @@ export default function HeaderPrice() {
       multiplicador = Math.round(p.precoMultiplicado / p.preco);
     }
     if (multiplicador === 2) duration = "4";
+    else if (multiplicador === 6) duration = "12";
     else if (multiplicador === 12) duration = "24";
     else duration = "2";
   }

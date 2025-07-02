@@ -85,6 +85,7 @@ export default function ModalCreateAnuncios({
           price: Number(price),
           duration_2: duration.includes("2"),
           duration_4: duration.includes("4"),
+          duration_12: duration.includes("12"),
           duration_24: duration.includes("24"),
         },
       ]);
@@ -189,7 +190,7 @@ export default function ModalCreateAnuncios({
           />
           <span className="text-xs font-semibold text-gray-700 pl-1">Duração</span>
           <div className="flex flex-col gap-1">
-            {["2", "4", "24"].map((semana) => {
+            {["2", "4", "12", "24"].map((semana) => {
               const isActive = duration.includes(semana);
               return (
                 <div key={semana} className="flex items-center justify-between border rounded-lg px-3 py-1 text-sm">

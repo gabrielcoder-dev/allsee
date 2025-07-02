@@ -23,6 +23,7 @@ type Anuncio = {
   views: number
   duration_2: boolean
   duration_4: boolean
+  duration_12: boolean
   duration_24: boolean
 }
 
@@ -42,6 +43,7 @@ export default function GetAnunciosResults({ onAdicionarProduto, selectedDuratio
       setLoading(true)
       let durationColumn = 'duration_2';
       if (selectedDuration === '4') durationColumn = 'duration_4';
+      if (selectedDuration === '12') durationColumn = 'duration_12';
       if (selectedDuration === '24') durationColumn = 'duration_24';
       const { data, error } = await supabase
         .from('anuncios')
@@ -83,6 +85,7 @@ export default function GetAnunciosResults({ onAdicionarProduto, selectedDuratio
             const durationsTrue = [
               anuncio.duration_2,
               anuncio.duration_4,
+              anuncio.duration_12,
               anuncio.duration_24
             ].filter(Boolean).length;
             let precoCalculado = anuncio.price;
@@ -93,6 +96,11 @@ export default function GetAnunciosResults({ onAdicionarProduto, selectedDuratio
                 precoCalculado = anuncio.price * 2;
                 displayCalculado = anuncio.display * 2;
                 viewsCalculado = anuncio.views * 2;
+              }
+              if (selectedDuration === '12') {
+                precoCalculado = anuncio.price * 6;
+                displayCalculado = anuncio.display * 6;
+                viewsCalculado = anuncio.views * 6;
               }
               if (selectedDuration === '24') {
                 precoCalculado = anuncio.price * 12;
@@ -161,6 +169,7 @@ export default function GetAnunciosResults({ onAdicionarProduto, selectedDuratio
                         views: anuncio.views,
                         duration_2: anuncio.duration_2,
                         duration_4: anuncio.duration_4,
+                        duration_12: anuncio.duration_12,
                         duration_24: anuncio.duration_24
                       })
                     }

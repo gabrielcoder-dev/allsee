@@ -17,7 +17,7 @@ import {
 } from "@/Components/ui/popover";
 import { Button } from "./ui/button";
 
-export default function CartResume() {
+export default function CartResume({ onCartArtSelected }: { onCartArtSelected?: (selected: boolean) => void } = {}) {
   const { produtos, removerProduto, adicionarProduto } = useCart();
 
   // Valor inicial: menor duração disponível ou '2'
@@ -38,6 +38,7 @@ export default function CartResume() {
         multiplicador = Math.round(p.precoMultiplicado / p.preco);
       }
       if (multiplicador === 2) setDuration("4");
+      else if (multiplicador === 6) setDuration("12");
       else if (multiplicador === 12) setDuration("24");
       else setDuration("2");
     }
@@ -46,6 +47,7 @@ export default function CartResume() {
   const durations = [
     { label: "2 semanas", value: "2" },
     { label: "4 semanas", value: "4" },
+    { label: "12 semanas", value: "12" },
     { label: "24 semanas", value: "24" },
   ];
 
@@ -57,6 +59,7 @@ export default function CartResume() {
     if (file) {
       setSelectedImage(file);
       setPreviewUrl(URL.createObjectURL(file));
+      if (onCartArtSelected) onCartArtSelected(true);
     }
   };
 
@@ -67,10 +70,12 @@ export default function CartResume() {
       const durationsTrue = [
         item.duration_2,
         item.duration_4,
+        item.duration_12,
         item.duration_24,
       ].filter(Boolean).length;
       if (durationsTrue > 1) {
         if (value === "4") precoMultiplicado = item.preco * 2;
+        if (value === "12") precoMultiplicado = item.preco * 6;
         if (value === "24") precoMultiplicado = item.preco * 12;
       }
       adicionarProduto({
@@ -108,12 +113,15 @@ export default function CartResume() {
               const durationsTrue = [
                 (item as any).duration_2,
                 (item as any).duration_4,
+                (item as any).duration_12,
                 (item as any).duration_24,
               ].filter(Boolean).length;
               let precoCalculado = item.preco;
               if (durationsTrue > 1) {
                 if (item.selectedDuration === "4")
                   precoCalculado = item.preco * 2;
+                if (item.selectedDuration === "12")
+                  precoCalculado = item.preco * 6;
                 if (item.selectedDuration === "24")
                   precoCalculado = item.preco * 12;
               }
@@ -227,10 +235,12 @@ export default function CartResume() {
                         const durationsTrue = [
                           p.duration_2,
                           p.duration_4,
+                          p.duration_12,
                           p.duration_24,
                         ].filter(Boolean).length;
                         if (durationsTrue > 1) {
                           if (duration === "4") display = display * 2;
+                          if (duration === "12") display = display * 6;
                           if (duration === "24") display = display * 12;
                         }
                         total += display;
@@ -254,10 +264,12 @@ export default function CartResume() {
                         const durationsTrue = [
                           p.duration_2,
                           p.duration_4,
+                          p.duration_12,
                           p.duration_24,
                         ].filter(Boolean).length;
                         if (durationsTrue > 1) {
                           if (duration === "4") views = views * 2;
+                          if (duration === "12") views = views * 6;
                           if (duration === "24") views = views * 12;
                         }
                         total += views;
@@ -310,6 +322,7 @@ export default function CartResume() {
                       onClick={() => {
                         setPreviewUrl(null);
                         setSelectedImage(null);
+                        if (onCartArtSelected) onCartArtSelected(false);
                       }}
                       className="absolute -top-3 -right-3 w-6 h-6 flex  items-center justify-center  border border-gray-300 rounded-full bg-white text-xl font-bold cursor-pointer z-10"
                       aria-label="Remover arte"
@@ -341,11 +354,13 @@ export default function CartResume() {
                       const durationsTrue = [
                         item.duration_2,
                         item.duration_4,
+                        item.duration_12,
                         item.duration_24,
                       ].filter(Boolean).length;
                       if (durationsTrue > 1) {
-                        if (duration === "4") precoCalculado = item.preco * 2;
-                        if (duration === "24") precoCalculado = item.preco * 12;
+                        if (item.selectedDuration === "4") precoCalculado = item.preco * 2;
+                        if (item.selectedDuration === "12") precoCalculado = item.preco * 6;
+                        if (item.selectedDuration === "24") precoCalculado = item.preco * 12;
                       }
                       return (
                         acc +
@@ -373,11 +388,13 @@ export default function CartResume() {
                       const durationsTrue = [
                         item.duration_2,
                         item.duration_4,
+                        item.duration_12,
                         item.duration_24,
                       ].filter(Boolean).length;
                       if (durationsTrue > 1) {
-                        if (duration === "4") precoCalculado = item.preco * 2;
-                        if (duration === "24") precoCalculado = item.preco * 12;
+                        if (item.selectedDuration === "4") precoCalculado = item.preco * 2;
+                        if (item.selectedDuration === "12") precoCalculado = item.preco * 6;
+                        if (item.selectedDuration === "24") precoCalculado = item.preco * 12;
                       }
                       return (
                         acc +

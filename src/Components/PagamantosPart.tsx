@@ -10,22 +10,30 @@ import {
   SelectValue,
 } from "./ui/select";
 import { useCart } from "@/context/CartContext";
+import { SiPix } from "react-icons/si";
+import { FaRegCreditCard } from "react-icons/fa";
+import { MdCreditCard } from "react-icons/md";
+import { PiBarcodeBold } from "react-icons/pi";
 
 const PagamantosPart = () => {
   const { produtos } = useCart();
   // Calcular subtotal e total dinamicamente
-  const subtotal = produtos.reduce(
-    (acc, item) => {
-      // Usar precoMultiplicado se disponível, senão usar preco * quantidade
-      const precoCalculado = item.precoMultiplicado || (typeof item.preco === "number" ? item.preco * item.quantidade : 0);
-      return acc + precoCalculado;
-    },
-    0
-  );
+  const subtotal = produtos.reduce((acc, item) => {
+    // Usar precoMultiplicado se disponível, senão usar preco * quantidade
+    const precoCalculado =
+      item.precoMultiplicado ||
+      (typeof item.preco === "number" ? item.preco * item.quantidade : 0);
+    return acc + precoCalculado;
+  }, 0);
   const total = subtotal;
   const [openAccordion, setOpenAccordion] = useState<
     "fisica" | "juridica" | null
   >(null);
+
+  // Estado para controlar se deve mostrar métodos de pagamento
+  const [mostrarMetodos, setMostrarMetodos] = useState(false);
+  // Estado para o método escolhido
+  const [metodoEscolhido, setMetodoEscolhido] = useState<string | null>(null);
 
   // Estados dos campos do formulário Pessoa Física
   const [cpf, setCpf] = useState("");
@@ -72,6 +80,73 @@ const PagamantosPart = () => {
     cidadeJ &&
     estadoJ;
   const podeConcluir = todosFisica || todosJuridica;
+
+  if (mostrarMetodos && !metodoEscolhido) {
+    return (
+      <div className="flex flex-col items-center w-full h-full py-8 bg-[#fcfcfc] px-4 md:px-0">
+        <div className="max-w-2xl w-full mx-auto flex flex-col gap-10 items-center justify-center">
+          <h1 className="text-3xl font-bold mb-2">Método de pagamento</h1>
+          <div className="flex flex-row gap-4 w-full justify-center flex-wrap">
+            <Button
+              className="bg-orange-500 hover:bg-orange-600 text-white px-8 py-4 rounded-md flex-1 cursor-pointer"
+              type="button"
+              onClick={() => {}}
+            >
+              <span className="mr-2">
+                <SiPix size={22} />
+              </span>{" "}
+              pix
+            </Button>
+            <Button
+              className="bg-orange-500 hover:bg-orange-600 text-white px-8 py-4 rounded-md flex-1 cursor-pointer"
+              type="button"
+              onClick={() => {}}
+            >
+              <span className="mr-2">
+                <FaRegCreditCard size={22} />
+              </span>{" "}
+              cartão de crédito
+            </Button>
+            <Button
+              className="bg-orange-500 hover:bg-orange-600 text-white px-8 py-4 rounded-md flex-1 cursor-pointer"
+              type="button"
+              onClick={() => {}}
+            >
+              <span className="mr-2">
+                <MdCreditCard size={22} />
+              </span>{" "}
+              cartão de débito
+            </Button>
+            <Button
+              className="bg-orange-500 hover:bg-orange-600 text-white px-8 py-4 rounded-md flex-1 cursor-pointer"
+              type="button"
+              onClick={() => {}}
+            >
+              <span className="mr-2">
+                <PiBarcodeBold size={22} />
+              </span>{" "}
+              boleto
+            </Button>
+          </div>
+          <p className="text-xs text-gray-500 mt-6 text-center">
+            Ao criar seu pedido, você concorda com os{" "}
+            <a href="#" className="text-orange-600 underline">
+              Termos e Condições de Uso All see
+            </a>
+            .<br />
+            <span className="block mt-2">
+              Pagamento seguro com <b>Mercado Pago</b>
+            </span>
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (metodoEscolhido) {
+    // Aqui você pode adicionar o fluxo real de pagamento ou redirecionamento
+    return null;
+  }
 
   return (
     <div className="flex flex-col items-center w-full min-h-screen py-8 bg-[#fcfcfc] px-2 md:px-0">
@@ -340,9 +415,10 @@ const PagamantosPart = () => {
         {/* Botão concluir */}
         <div className="flex justify-end px-2 md:px-0">
           <Button
-            className="bg-orange-500 hover:bg-orange-600 text-white px-8 py-2 rounded-md"
+            className="bg-orange-500 hover:bg-orange-600 text-white px-8 py-2 rounded-md cursor-pointer"
             type="button"
             disabled={!podeConcluir}
+            onClick={() => setMostrarMetodos(true)}
           >
             concluir
           </Button>

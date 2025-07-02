@@ -17,6 +17,7 @@ type Produto = {
   screens?: number
   duration_2?: boolean
   duration_4?: boolean
+  duration_12?: boolean
   duration_24?: boolean
   selectedDuration?: string
   precoMultiplicado?: number
