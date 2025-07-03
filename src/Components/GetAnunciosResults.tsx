@@ -3,8 +3,9 @@
 import { useEffect, useState } from 'react'
 import { createClient } from '@supabase/supabase-js'
 import { useCart } from '@/context/CartContext'
-import { PlayIcon, ShoppingCartIcon, TrashIcon, User2 } from 'lucide-react'
+import { PlayIcon, ShoppingCartIcon, TrashIcon, User2, ZoomIn } from 'lucide-react'
 import ModalLogin from './ModalLogin'
+import ImageModal from './ImageModal'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -37,6 +38,7 @@ export default function GetAnunciosResults({ onAdicionarProduto, selectedDuratio
   const [anuncios, setAnuncios] = useState<Anuncio[]>([])
   const [loading, setLoading] = useState(true)
   const [showLoginModal, setShowLoginModal] = useState(false)
+  const [modalImage, setModalImage] = useState<{ image: string, name: string, address: string } | null>(null)
 
   useEffect(() => {
     async function fetchAnuncios() {
@@ -77,6 +79,9 @@ export default function GetAnunciosResults({ onAdicionarProduto, selectedDuratio
   return (
     <>
       {showLoginModal && <ModalLogin onClose={() => setShowLoginModal(false)} />}
+      {modalImage && (
+        <ImageModal imageUrl={modalImage.image} name={modalImage.name} address={modalImage.address} onClose={() => setModalImage(null)} />
+      )}
       <div className="flex-1 min-h-0 overflow-y-auto pr-2">
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6 p-4">
           {anuncios.map(anuncio => {
@@ -118,12 +123,16 @@ export default function GetAnunciosResults({ onAdicionarProduto, selectedDuratio
                   hover:shadow-xl
                 "
               >
-                <div className="rounded-lg overflow-hidden h-40 flex items-center justify-center bg-gray-100 mb-2">
+                <div className="rounded-lg overflow-hidden h-40 flex items-center justify-center bg-gray-100 mb-2 cursor-pointer relative group" onClick={() => setModalImage({ image: anuncio.image, name: anuncio.name, address: anuncio.address })}>
                   <img
                     src={anuncio.image}
                     alt={anuncio.name}
                     className="object-cover w-full h-full"
                   />
+                  {/* Overlay de hover */}
+                  <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                    <ZoomIn className="text-white w-6 h-6" />
+                  </div>
                 </div>
                 <div className="flex gap-2 mb-2">
                   <span className="bg-purple-600 text-white text-xs px-2 py-1 rounded font-medium">digital</span>
