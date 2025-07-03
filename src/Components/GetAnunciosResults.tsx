@@ -127,7 +127,7 @@ export default function GetAnunciosResults({ onAdicionarProduto, selectedDuratio
                   <img
                     src={anuncio.image}
                     alt={anuncio.name}
-                    className="object-cover w-full h-full"
+                    className="object-cover w-full h-40"
                   />
                   {/* Overlay de hover */}
                   <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
@@ -135,7 +135,7 @@ export default function GetAnunciosResults({ onAdicionarProduto, selectedDuratio
                   </div>
                 </div>
                 <div className="flex gap-2 mb-2">
-                  <span className="bg-purple-600 text-white text-xs px-2 py-1 rounded font-medium">digital</span>
+                  <span className="bg-purple-600 text-white text-xs px-2 py-1 rounded font-medium">Digital</span>
                 </div>
                 <h3 className="font-bold text-lg">{anuncio.name}</h3>
                 <div className="text-gray-500 text-xs mb-1">{anuncio.address}</div>

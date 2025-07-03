@@ -22,7 +22,21 @@ const ImageModal: React.FC<ImageModalProps> = ({ imageUrl, name, address, onClos
         >
           <X className='w-5' />
         </button>
-        <img src={imageUrl} alt={name} className="object-contain max-h-[400px] w-auto rounded mb-4" />
+        <img 
+          src={imageUrl} 
+          alt={name} 
+          className="object-contain max-h-[400px] w-auto rounded mb-4 shadow-lg"
+          loading="eager"
+          decoding="async"
+          style={{
+            imageRendering: 'auto',
+            imageSmoothingQuality: 'high'
+          } as React.CSSProperties}
+          onError={(e) => {
+            const target = e.target as HTMLImageElement;
+            target.style.display = 'none';
+          }}
+        />
         <div className="w-full text-left mt-2">
           <div className="font-semibold text-base mb-1">{name}</div>
           <div className="text-xs text-gray-500">{address}</div>
