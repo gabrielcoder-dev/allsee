@@ -13,11 +13,28 @@ export default function HeaderPrice() {
   const durationsTrue = (p: any) => [p.duration_2, p.duration_4, p.duration_12, p.duration_24].filter(Boolean).length;
   const getPrecoMultiplicado = (p: any, duration: string) => {
     let preco = p.preco;
+    // Lógica de desconto por semanas
+    const descontos: { [key: string]: number } = {
+      '4': 20,
+      '12': 60,
+      '24': 120,
+    };
+    let desconto = 0;
     if (durationsTrue(p) > 1) {
-      if (duration === "4") preco = p.preco * 2;
-      if (duration === "12") preco = p.preco * 6;
-      if (duration === "24") preco = p.preco * 12;
+      if (duration === "4") {
+        preco = p.preco * 2;
+        desconto = descontos['4'];
+      }
+      if (duration === "12") {
+        preco = p.preco * 6;
+        desconto = descontos['12'];
+      }
+      if (duration === "24") {
+        preco = p.preco * 12;
+        desconto = descontos['24'];
+      }
     }
+    preco = preco - desconto;
     return preco;
   };
 

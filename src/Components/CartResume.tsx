@@ -17,7 +17,7 @@ import {
 } from "@/Components/ui/popover";
 import { Button } from "./ui/button";
 
-export default function CartResume({ onCartArtSelected }: { onCartArtSelected?: (selected: boolean) => void } = {}) {
+export default function CartResume({ onCartArtSelected, onCampaignNameChange, artError = false, campaignError = false }: { onCartArtSelected?: (selected: boolean) => void, onCampaignNameChange?: (name: string) => void, artError?: boolean, campaignError?: boolean } = {}) {
   const { produtos, removerProduto, adicionarProduto } = useCart();
 
   // Valor inicial: menor duração disponível ou '2'
@@ -25,6 +25,7 @@ export default function CartResume({ onCartArtSelected }: { onCartArtSelected?: 
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [duration, setDuration] = useState("2");
+  const [campaignName, setCampaignName] = useState("");
 
   // Ao carregar o carrinho, setar o select global conforme o primeiro produto
   useEffect(() => {
@@ -66,11 +67,28 @@ export default function CartResume({ onCartArtSelected }: { onCartArtSelected?: 
       item.duration_12,
       item.duration_24,
     ].filter(Boolean).length;
+    // Lógica de desconto por semanas
+    const descontos: { [key: string]: number } = {
+      '4': 20,
+      '12': 60,
+      '24': 120,
+    };
+    let desconto = 0;
     if (durationsTrue > 1) {
-      if (duration === "4") preco = item.preco * 2;
-      if (duration === "12") preco = item.preco * 6;
-      if (duration === "24") preco = item.preco * 12;
+      if (duration === "4") {
+        preco = item.preco * 2;
+        desconto = descontos['4'];
+      }
+      if (duration === "12") {
+        preco = item.preco * 6;
+        desconto = descontos['12'];
+      }
+      if (duration === "24") {
+        preco = item.preco * 12;
+        desconto = descontos['24'];
+      }
     }
+    preco = preco - desconto;
     return preco;
   };
 
@@ -124,13 +142,32 @@ export default function CartResume({ onCartArtSelected }: { onCartArtSelected?: 
                       </p>
                     )}
 
-                    <div className="font-semibold text-green-700">
-                      R${" "}
-                      {precoCalculado.toLocaleString("pt-BR", {
-                        minimumFractionDigits: 2,
-                      })} x {item.quantidade}
-                      <span className="ml-2 text-xs text-gray-500">/ {duration} semana(s)</span>
-                    </div>
+                    {/* Preço original riscado e preço com desconto */}
+                    {(() => {
+                      let precoOriginal = item.preco;
+                      const durationsTrue = [
+                        item.duration_2,
+                        item.duration_4,
+                        item.duration_12,
+                        item.duration_24,
+                      ].filter(Boolean).length;
+                      if (durationsTrue > 1) {
+                        if (duration === "4") precoOriginal = item.preco * 2;
+                        if (duration === "12") precoOriginal = item.preco * 6;
+                        if (duration === "24") precoOriginal = item.preco * 12;
+                      }
+                      return (
+                        <div className="flex flex-col gap-1">
+                          {precoOriginal !== precoCalculado && (
+                            <span className="text-sm text-gray-400 line-through">R$ {Number(precoOriginal).toLocaleString("pt-BR", { minimumFractionDigits: 2 })} x {item.quantidade}</span>
+                          )}
+                          <span className="font-semibold text-green-700">
+                            R$ {precoCalculado.toLocaleString("pt-BR", { minimumFractionDigits: 2 })} x {item.quantidade}
+                            <span className="ml-2 text-xs text-gray-500">/ {duration} semana(s)</span>
+                          </span>
+                        </div>
+                      );
+                    })()}
                   </div>
                   <button
                     className="bg-red-500 hover:bg-red-700 text-white px-4 py-2 rounded-md cursor-pointer"
@@ -147,6 +184,21 @@ export default function CartResume({ onCartArtSelected }: { onCartArtSelected?: 
         {/* Painel lateral com resumo do plano */}
         {produtos.length > 0 && (
           <div className="w-full lg:w-1/2 bg-white rounded-lg shadow p-6 flex flex-col gap-6 border border-neutral-200">
+            {/* Input do nome da campanha */}
+            <div className="flex flex-col gap-1 mb-2">
+              <label htmlFor="campaign-name" className="block text-sm font-bold mb-1">Nome da campanha</label>
+              <input
+                id="campaign-name"
+                type="text"
+                className={`w-80 border text-sm rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500 ${campaignError ? 'border-red-500' : 'border-gray-300'}`}
+                placeholder="Digite o nome da campanha"
+                value={campaignName}
+                onChange={e => {
+                  setCampaignName(e.target.value);
+                  if (onCampaignNameChange) onCampaignNameChange(e.target.value);
+                }}
+              />
+            </div>
             {/* Bloco de duração como select global e início */}
             <div className="flex gap-4 mb-2 items-end">
               <div className="flex flex-col gap-1">
@@ -282,7 +334,7 @@ export default function CartResume({ onCartArtSelected }: { onCartArtSelected?: 
                     />
                     <label
                       htmlFor="upload-art"
-                      className="cursor-pointer border border-gray-300 px-4 py-2 rounded transition hover:bg-gray-50"
+                      className={`cursor-pointer border px-4 py-2 rounded transition hover:bg-gray-50 ${artError ? 'border-red-500' : 'border-gray-300'}`}
                     >
                       Selecionar arte
                     </label>
@@ -317,12 +369,32 @@ export default function CartResume({ onCartArtSelected }: { onCartArtSelected?: 
               <h2 className="text-lg font-bold mb-2">Valor</h2>
               <div className="flex justify-between items-center mb-1">
                 <span className="text-gray-600">Subtotal</span>
-                <span className="font-semibold">
-                  R${" "}
-                  {produtos
-                    .reduce((acc: number, item) => acc + calcularPreco(item) * item.quantidade, 0)
-                    .toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-                </span>
+                {(() => {
+                  let precoOriginal = produtos.reduce((acc, item) => {
+                    let preco = item.preco;
+                    const durationsTrue = [
+                      item.duration_2,
+                      item.duration_4,
+                      item.duration_12,
+                      item.duration_24,
+                    ].filter(Boolean).length;
+                    if (durationsTrue > 1) {
+                      if (duration === "4") preco = item.preco * 2;
+                      if (duration === "12") preco = item.preco * 6;
+                      if (duration === "24") preco = item.preco * 12;
+                    }
+                    return acc + preco * item.quantidade;
+                  }, 0);
+                  let precoComDesconto = produtos.reduce((acc, item) => acc + calcularPreco(item) * item.quantidade, 0);
+                  return (
+                    <span className="flex flex-col items-end">
+                      {precoOriginal !== precoComDesconto && (
+                        <span className="text-sm text-gray-400 line-through">R$ {precoOriginal.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</span>
+                      )}
+                      <span className="font-semibold text-black">R$ {precoComDesconto.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</span>
+                    </span>
+                  );
+                })()}
               </div>
               <a
                 href="#"

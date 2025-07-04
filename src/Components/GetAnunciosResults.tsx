@@ -93,26 +93,40 @@ export default function GetAnunciosResults({ onAdicionarProduto, selectedDuratio
               anuncio.duration_12,
               anuncio.duration_24
             ].filter(Boolean).length;
+
+            // Lógica de desconto por semanas
+            const descontos: { [key: string]: number } = {
+              '4': 20,
+              '12': 60,
+              '24': 120,
+            };
+
             let precoCalculado = anuncio.price;
             let displayCalculado = anuncio.display;
             let viewsCalculado = anuncio.views;
+            let desconto = 0;
+
             if (durationsTrue > 1) {
               if (selectedDuration === '4') {
                 precoCalculado = anuncio.price * 2;
                 displayCalculado = anuncio.display * 2;
                 viewsCalculado = anuncio.views * 2;
+                desconto = descontos['4'];
               }
               if (selectedDuration === '12') {
                 precoCalculado = anuncio.price * 6;
                 displayCalculado = anuncio.display * 6;
                 viewsCalculado = anuncio.views * 6;
+                desconto = descontos['12'];
               }
               if (selectedDuration === '24') {
                 precoCalculado = anuncio.price * 12;
                 displayCalculado = anuncio.display * 12;
                 viewsCalculado = anuncio.views * 12;
+                desconto = descontos['24'];
               }
             }
+            precoCalculado = precoCalculado - desconto;
             return (
               <div
                 key={anuncio.id}
@@ -150,7 +164,23 @@ export default function GetAnunciosResults({ onAdicionarProduto, selectedDuratio
                   </div>
                 </div>
                 <div className="text-xs text-gray-800 mb-1 font-bold">Telas: {anuncio.screens}</div>
-                <div className="text-lg font-bold mb-1 text-green-700">R$ {Number(precoCalculado).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
+                {/* Preço original riscado e preço com desconto */}
+                {(() => {
+                  let precoOriginal = anuncio.price;
+                  if (durationsTrue > 1) {
+                    if (selectedDuration === '4') precoOriginal = anuncio.price * 2;
+                    if (selectedDuration === '12') precoOriginal = anuncio.price * 6;
+                    if (selectedDuration === '24') precoOriginal = anuncio.price * 12;
+                  }
+                  return (
+                    <div className="mb-1 flex flex-col gap-1">
+                      {precoOriginal !== precoCalculado && (
+                        <span className="text-sm text-gray-400 line-through">R$ {Number(precoOriginal).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                      )}
+                      <span className="text-lg font-bold text-green-700">R$ {Number(precoCalculado).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                    </div>
+                  );
+                })()}
                 <div className="text-xs text-gray-500 mb-2">/ {selectedDuration} semana{selectedDuration === '24' || selectedDuration === '4' || selectedDuration === '2' ? (Number(selectedDuration) > 1 ? 's' : '') : ''}</div>
                 <button
                   className={`w-full cursor-pointer flex items-center justify-center gap-4 border rounded-lg py-2 text-base font-semibold transition ${estaNoCarrinho ? 'border-red-400 text-red-600 hover:bg-red-50' : 'border-green-400 text-green-600 hover:bg-green-50'}`}
