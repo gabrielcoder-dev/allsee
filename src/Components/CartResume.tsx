@@ -18,23 +18,19 @@ import {
 import { Button } from "./ui/button";
 
 export default function CartResume({ onCartArtSelected, onCampaignNameChange, artError = false, campaignError = false }: { onCartArtSelected?: (selected: boolean) => void, onCampaignNameChange?: (name: string) => void, artError?: boolean, campaignError?: boolean } = {}) {
-  const { produtos, removerProduto, adicionarProduto } = useCart();
+  const { produtos, removerProduto, adicionarProduto, selectedDurationGlobal, setSelectedDurationGlobal } = useCart();
 
-  // Valor inicial: menor duração disponível ou '2'
+  // Valor inicial: usar o estado global
   const [startDate, setStartDate] = useState<Date | undefined>(new Date());
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [duration, setDuration] = useState("2");
+  const [duration, setDuration] = useState(selectedDurationGlobal);
   const [campaignName, setCampaignName] = useState("");
 
-  // Ao carregar o carrinho, setar o select global conforme o primeiro produto
+  // Sincronizar duration local com o global
   useEffect(() => {
-    if (produtos.length > 0) {
-      const p = produtos[0];
-      if (p.selectedDuration) setDuration(p.selectedDuration);
-      else setDuration("2");
-    }
-  }, [produtos]);
+    setDuration(selectedDurationGlobal);
+  }, [selectedDurationGlobal]);
 
   const durations = [
     { label: "2 semanas", value: "2" },
@@ -57,6 +53,7 @@ export default function CartResume({ onCartArtSelected, onCampaignNameChange, ar
 
   const handleDurationChange = (value: string) => {
     setDuration(value);
+    setSelectedDurationGlobal(value);
   };
 
   const calcularPreco = (item: any) => {

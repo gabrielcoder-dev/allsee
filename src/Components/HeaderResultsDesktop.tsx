@@ -40,22 +40,16 @@ type Produto = {
   // Adicione outros campos conforme necessário para corresponder ao ModalCartTotten
 }
 
-type ResultsHeaderProps = {
-  onDurationChange?: (value: string) => void;
-  selectedDuration?: string;
-};
-
-const HeaderResultsDesktop = ({ onDurationChange, selectedDuration }: ResultsHeaderProps) => {
+const HeaderResultsDesktop = () => {
   const [userName, setUserName] = useState<string>('')
   const [location, setLocation] = useState('')
-  const [duration, setDuration] = useState(selectedDuration || '2')
   const [startDate, setStartDate] = useState<Date | undefined>(new Date())
   const [order, setOrder] = useState('')
   const [showFilter, setShowFilter] = useState(false)
   const [open, setOpen] = useState(false)
   const popoverRef = useRef<HTMLDivElement>(null)
   const router = useRouter()
-  const { produtos } = useCart()
+  const { produtos, selectedDurationGlobal, setSelectedDurationGlobal } = useCart()
   const totalNoCarrinho = produtos.reduce((acc, p) => acc + p.quantidade, 0)
   const [showMenuModal, setShowMenuModal] = useState(false)
 
@@ -84,11 +78,6 @@ const HeaderResultsDesktop = ({ onDurationChange, selectedDuration }: ResultsHea
     if (open) document.addEventListener('mousedown', handleClick)
     return () => document.removeEventListener('mousedown', handleClick)
   }, [open])
-
-  const handleDurationChange = (value: string) => {
-    setDuration(value);
-    if (onDurationChange) onDurationChange(value);
-  };
 
   return (
     <>
@@ -130,7 +119,7 @@ const HeaderResultsDesktop = ({ onDurationChange, selectedDuration }: ResultsHea
 
             <div className='flex-col hidden md:flex'>
               <span className="text-gray-500 mb-1 font-semibold">Duração</span>
-              <Select value={duration} onValueChange={handleDurationChange}>
+              <Select value={selectedDurationGlobal} onValueChange={setSelectedDurationGlobal}>
                 <SelectTrigger className="w-32 bg-gray-50 rounded-lg px-3 py-2">
                   <SelectValue placeholder="duração" />
                 </SelectTrigger>

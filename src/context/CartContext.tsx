@@ -24,17 +24,20 @@ type Produto = {
 }
 
 type CartContextType = {
-  produtos: Produto[]
-  adicionarProduto: (produto: Produto) => void
-  removerProduto: (id: string) => void
-  limparCarrinho: () => void
+  produtos: Produto[];
+  adicionarProduto: (produto: Produto) => void;
+  removerProduto: (id: string) => void;
+  limparCarrinho: () => void;
   atualizarProdutosComNovaDuracao: (anuncios: any[], selectedDuration: string) => void;
+  selectedDurationGlobal: string;
+  setSelectedDurationGlobal: (duration: string) => void;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined)
 
 export const CartProvider = ({ children }: { children: ReactNode }) => {
-  const [produtos, setProdutos] = useState<Produto[]>([])
+  const [produtos, setProdutos] = useState<Produto[]>([]);
+  const [selectedDurationGlobal, setSelectedDurationGlobal] = useState<string>("2");
 
   // 🔄 Carregar carrinho do localStorage
   useEffect(() => {
@@ -109,7 +112,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <CartContext.Provider value={{ produtos, adicionarProduto, removerProduto, limparCarrinho, atualizarProdutosComNovaDuracao }}>
+    <CartContext.Provider value={{ produtos, adicionarProduto, removerProduto, limparCarrinho, atualizarProdutosComNovaDuracao, selectedDurationGlobal, setSelectedDurationGlobal }}>
       {children}
     </CartContext.Provider>
   )

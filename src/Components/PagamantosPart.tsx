@@ -14,18 +14,70 @@ import { SiPix } from "react-icons/si";
 import { FaRegCreditCard } from "react-icons/fa";
 import { MdCreditCard } from "react-icons/md";
 import { PiBarcodeBold } from "react-icons/pi";
+import { useRouter } from "next/navigation";
+import { ArrowLeft } from "lucide-react";
 
 const PagamantosPart = () => {
-  const { produtos } = useCart();
-  // Calcular subtotal e total dinamicamente
-  const subtotal = produtos.reduce((acc, item) => {
-    // Usar precoMultiplicado se disponível, senão usar preco * quantidade
-    const precoCalculado =
-      item.precoMultiplicado ||
-      (typeof item.preco === "number" ? item.preco * item.quantidade : 0);
-    return acc + precoCalculado;
-  }, 0);
-  const total = subtotal;
+  const { produtos, selectedDurationGlobal } = useCart();
+  // Duração fixa igual ao padrão do carrinho
+  const duration = "2";
+
+  // Função de cálculo do preço original (sem desconto)
+  const calcularPrecoOriginal = (item: any) => {
+    // Calcular o preço original de acordo com a semana selecionada
+    let preco = item.preco;
+    const durationsTrue = [
+      item.duration_2,
+      item.duration_4,
+      item.duration_12,
+      item.duration_24,
+    ].filter(Boolean).length;
+    if (durationsTrue > 1) {
+      if (selectedDurationGlobal === "4") preco = item.preco * 2;
+      if (selectedDurationGlobal === "12") preco = item.preco * 6;
+      if (selectedDurationGlobal === "24") preco = item.preco * 12;
+    }
+    return typeof preco === "number" ? preco * item.quantidade : 0;
+  };
+
+  // Função de cálculo do preço com desconto (igual CartResume)
+  const calcularPrecoComDesconto = (item: any) => {
+    let preco = item.preco;
+    const durationsTrue = [
+      item.duration_2,
+      item.duration_4,
+      item.duration_12,
+      item.duration_24,
+    ].filter(Boolean).length;
+    // Lógica de desconto por semanas
+    const descontos: { [key: string]: number } = {
+      '4': 20,
+      '12': 60,
+      '24': 120,
+    };
+    let desconto = 0;
+    if (durationsTrue > 1) {
+      if (selectedDurationGlobal === "4") {
+        preco = item.preco * 2;
+        desconto = descontos['4'];
+      }
+      if (selectedDurationGlobal === "12") {
+        preco = item.preco * 6;
+        desconto = descontos['12'];
+      }
+      if (selectedDurationGlobal === "24") {
+        preco = item.preco * 12;
+        desconto = descontos['24'];
+      }
+    }
+    preco = preco - desconto;
+    return typeof preco === "number" ? preco * item.quantidade : 0;
+  };
+
+  // Subtotal (original) e total (com desconto)
+  const precoOriginal = produtos.reduce((acc, item) => acc + calcularPrecoOriginal(item), 0);
+  const precoComDesconto = produtos.reduce((acc, item) => acc + calcularPrecoComDesconto(item), 0);
+  const total = precoComDesconto;
   const [openAccordion, setOpenAccordion] = useState<
     "fisica" | "juridica" | null
   >(null);
@@ -80,6 +132,8 @@ const PagamantosPart = () => {
     cidadeJ &&
     estadoJ;
   const podeConcluir = todosFisica || todosJuridica;
+
+  const router = useRouter();
 
   if (mostrarMetodos && !metodoEscolhido) {
     return (
@@ -168,9 +222,11 @@ const PagamantosPart = () => {
           <div className="flex flex-col gap-2">
             <div className="flex justify-between items-center text-base">
               <span>Subtotal</span>
-              <span className="font-medium">
-                R${" "}
-                {subtotal.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+              <span className="flex flex-col items-end">
+                {precoOriginal !== precoComDesconto && (
+                  <span className="text-sm text-gray-400 line-through">R$ {precoOriginal.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</span>
+                )}
+                <span className="font-medium text-black">R$ {precoComDesconto.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</span>
               </span>
             </div>
             <a href="#" className="text-sm text-gray-700 underline">
@@ -181,7 +237,7 @@ const PagamantosPart = () => {
           <div className="flex justify-between items-center text-lg font-bold">
             <span>Total</span>
             <span className="text-black">
-              R$ {total.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+              R$ {precoComDesconto.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
             </span>
           </div>
         </div>
@@ -412,8 +468,16 @@ const PagamantosPart = () => {
           </div>
         </div>
 
-        {/* Botão concluir */}
-        <div className="flex justify-end px-2 md:px-0">
+        {/* Botão voltar e concluir */}
+        <div className="flex justify-between items-center px-2 md:px-0 mt-2">
+          <Button
+            className="bg-gray-200 hover:bg-gray-300 text-gray-800 px-8 py-2 rounded-md cursor-pointer"
+            type="button"
+            onClick={() => router.push("/resumo")}
+          >
+            <ArrowLeft />
+            Voltar
+          </Button>
           <Button
             className="bg-orange-500 hover:bg-orange-600 text-white px-8 py-2 rounded-md cursor-pointer"
             type="button"
