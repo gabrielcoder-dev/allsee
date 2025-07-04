@@ -40,7 +40,12 @@ type Produto = {
   // Adicione outros campos conforme necessário para corresponder ao ModalCartTotten
 }
 
-const HeaderResultsDesktop = () => {
+type HeaderResultsDesktopProps = {
+  onDurationChange?: (value: string) => void;
+  selectedDuration?: string;
+}
+
+const HeaderResultsDesktop = ({ onDurationChange, selectedDuration }: HeaderResultsDesktopProps) => {
   const [userName, setUserName] = useState<string>('')
   const [location, setLocation] = useState('')
   const [startDate, setStartDate] = useState<Date | undefined>(new Date())
@@ -49,7 +54,8 @@ const HeaderResultsDesktop = () => {
   const [open, setOpen] = useState(false)
   const popoverRef = useRef<HTMLDivElement>(null)
   const router = useRouter()
-  const { produtos, selectedDurationGlobal, setSelectedDurationGlobal } = useCart()
+  const { produtos } = useCart()
+  const durationValue = selectedDuration || '2'
   const totalNoCarrinho = produtos.reduce((acc, p) => acc + p.quantidade, 0)
   const [showMenuModal, setShowMenuModal] = useState(false)
 
@@ -119,7 +125,7 @@ const HeaderResultsDesktop = () => {
 
             <div className='flex-col hidden md:flex'>
               <span className="text-gray-500 mb-1 font-semibold">Duração</span>
-              <Select value={selectedDurationGlobal} onValueChange={setSelectedDurationGlobal}>
+              <Select value={durationValue} onValueChange={onDurationChange}>
                 <SelectTrigger className="w-32 bg-gray-50 rounded-lg px-3 py-2">
                   <SelectValue placeholder="duração" />
                 </SelectTrigger>

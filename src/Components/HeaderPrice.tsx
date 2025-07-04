@@ -4,7 +4,7 @@ import { useCart } from '@/context/CartContext';
 import { useRouter } from 'next/navigation';
 
 export default function HeaderPrice() {
-  const { produtos } = useCart();
+  const { produtos, selectedDurationGlobal } = useCart();
   const router = useRouter();
 
   const quantidade = produtos.reduce((acc, p) => acc + p.quantidade, 0);
@@ -35,22 +35,17 @@ export default function HeaderPrice() {
       }
     }
     preco = preco - desconto;
+    
+    console.log(`getPrecoMultiplicado - produto: ${p.nome}, duration: ${duration}, preco original: ${p.preco}, preco calculado: ${preco}, desconto: ${desconto}`);
+    
     return preco;
   };
 
-  // Buscar a duração padrão do carrinho (igual CartResume)
-  let duration = "2";
-  if (produtos.length > 0) {
-    const p = produtos[0];
-    let multiplicador = 1;
-    if (typeof p.precoMultiplicado === "number" && typeof p.preco === "number" && p.preco > 0) {
-      multiplicador = Math.round(p.precoMultiplicado / p.preco);
-    }
-    if (multiplicador === 2) duration = "4";
-    else if (multiplicador === 6) duration = "12";
-    else if (multiplicador === 12) duration = "24";
-    else duration = "2";
-  }
+  // Usar a duração global selecionada
+  const duration = selectedDurationGlobal || "2";
+  
+  console.log('HeaderPrice - selectedDurationGlobal:', selectedDurationGlobal);
+  console.log('HeaderPrice - duration:', duration);
 
   const valor = produtos.reduce((acc, p) => acc + getPrecoMultiplicado(p, duration) * p.quantidade, 0);
 
