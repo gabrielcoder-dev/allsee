@@ -28,6 +28,7 @@ type CartContextType = {
   adicionarProduto: (produto: Produto) => void
   removerProduto: (id: string) => void
   limparCarrinho: () => void
+  atualizarProdutosComNovaDuracao: (anuncios: any[], selectedDuration: string) => void;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined)
@@ -75,8 +76,40 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
 
   const limparCarrinho = () => setProdutos([])
 
+  // Função para atualizar produtos do carrinho ao trocar a duração
+  const atualizarProdutosComNovaDuracao: (anuncios: any[], selectedDuration: string) => void = (anuncios, selectedDuration) => {
+    setProdutos(produtosAntigos =>
+      produtosAntigos.map(produto => {
+        const anuncio = anuncios.find(a => a.id.toString() === produto.id);
+        if (!anuncio) return produto;
+        // Lógica de cálculo igual ao GetAnunciosResults
+        let precoCalculado = anuncio.price;
+        let desconto = 0;
+        const durationsTrue = [
+          anuncio.duration_2,
+          anuncio.duration_4,
+          anuncio.duration_12,
+          anuncio.duration_24
+        ].filter(Boolean).length;
+        const descontos = { '4': 20, '12': 60, '24': 120 };
+        if (durationsTrue > 1) {
+          if (selectedDuration === '4') precoCalculado = anuncio.price * 2;
+          if (selectedDuration === '12') precoCalculado = anuncio.price * 6;
+          if (selectedDuration === '24') precoCalculado = anuncio.price * 12;
+          desconto = descontos[selectedDuration as keyof typeof descontos] || 0;
+        }
+        precoCalculado = precoCalculado - desconto;
+        return {
+          ...produto,
+          precoMultiplicado: precoCalculado,
+          selectedDuration,
+        };
+      })
+    );
+  };
+
   return (
-    <CartContext.Provider value={{ produtos, adicionarProduto, removerProduto, limparCarrinho }}>
+    <CartContext.Provider value={{ produtos, adicionarProduto, removerProduto, limparCarrinho, atualizarProdutosComNovaDuracao }}>
       {children}
     </CartContext.Provider>
   )

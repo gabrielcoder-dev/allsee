@@ -34,7 +34,7 @@ type GetAnunciosResultsProps = {
 }
 
 export default function GetAnunciosResults({ onAdicionarProduto, selectedDuration = '2' }: GetAnunciosResultsProps) {
-  const { adicionarProduto, removerProduto, produtos } = useCart()
+  const { adicionarProduto, removerProduto, produtos, atualizarProdutosComNovaDuracao } = useCart()
   const [anuncios, setAnuncios] = useState<Anuncio[]>([])
   const [loading, setLoading] = useState(true)
   const [showLoginModal, setShowLoginModal] = useState(false)
@@ -65,6 +65,8 @@ export default function GetAnunciosResults({ onAdicionarProduto, selectedDuratio
           });
         });
         setAnuncios(data)
+        // Atualiza os produtos do carrinho com a nova duração
+        atualizarProdutosComNovaDuracao(data, selectedDuration);
       } else {
         console.error("Erro ao carregar anúncios:", error);
       }
