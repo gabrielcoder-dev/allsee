@@ -1,12 +1,18 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { atualizarStatusCompra } from '../../../lib/utils';
 
+import { Payment } from 'mercadopago';
+import { mercadoPagoClient } from '@/services/mercado-pago';
+
+const paymentClient = new Payment(mercadoPagoClient);
+
 // Mock ajustado: external_reference igual ao id recebido
 async function buscarPagamentoMercadoPago(paymentId: string) {
-  return {
-    status: 'approved',
-    external_reference: paymentId, // agora usa o id recebido
-  };
+  const payment = await paymentClient.get({
+    id: paymentId,
+  });
+
+  return payment;
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -15,7 +21,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     if (type === 'payment') {
       const pagamento = await buscarPagamentoMercadoPago(data.id);
-      if (pagamento.status === 'approved') {
+
+      if (pagamento.status === 'approved' && pagamento.external_reference) {
         await atualizarStatusCompra(pagamento.external_reference, 'pago');
       }
     }

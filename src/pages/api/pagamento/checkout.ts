@@ -1,9 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { MercadoPagoConfig, Preference } from 'mercadopago';
-
-const client = new MercadoPagoConfig({
-  accessToken: process.env.MERCADO_PAGO_ACCESS_TOKEN as string,
-});
+import { Preference } from 'mercadopago';
+import { mercadoPagoClient } from '@/services/mercado-pago';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
@@ -17,7 +14,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    const preference = new Preference(client);
+    const preference = new Preference(mercadoPagoClient);
     const result = await preference.create({
       body: {
         items: [
