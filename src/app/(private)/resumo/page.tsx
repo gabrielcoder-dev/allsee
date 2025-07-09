@@ -12,17 +12,41 @@ import { toast } from 'sonner'
 
 const page = () => {
   const router = useRouter();
-  const { produtos } = useCart();
-  const [isArtSelected, setIsArtSelected] = useState(false);
-  const [campaignName, setCampaignName] = useState("");
-  const [artError, setArtError] = useState(false);
-  const [campaignError, setCampaignError] = useState(false);
+  const { produtos, formData } = useCart();
+  const [artError, setArtError] = useState<string | undefined>(undefined);
+  const [campaignError, setCampaignError] = useState<string | undefined>(undefined);
+
+  const handleAvançar = () => {
+    let hasError = false;
+    if (!formData.isArtSelected) {
+      setArtError('Por favor, selecione uma arte para avançar.');
+      hasError = true;
+    } else {
+      setArtError(undefined);
+    }
+    if (!formData.campaignName.trim()) {
+      setCampaignError('Por favor, escolha um nome para a campanha.');
+      hasError = true;
+    } else {
+      setCampaignError(undefined);
+    }
+    if (hasError) {
+      if (!formData.isArtSelected && !formData.campaignName.trim()) {
+        toast.warning('Por favor, selecione uma arte e escolha um nome para a campanha.');
+      } else if (!formData.isArtSelected) {
+        toast.warning('Por favor, selecione uma arte para avançar.');
+      } else if (!formData.campaignName.trim()) {
+        toast.warning('Por favor, escolha um nome para a campanha.');
+      }
+      return;
+    }
+    router.push('/pagamento');
+  };
+
   return (
     <div className='h-screen flex flex-col'>
       <HeaderResume />
       <CartResume 
-        onCartArtSelected={setIsArtSelected} 
-        onCampaignNameChange={setCampaignName} 
         artError={artError}
         campaignError={campaignError}
       />
@@ -36,27 +60,7 @@ const page = () => {
         <button
           className='bg-orange-500 text-white px-4 py-2 rounded-md cursor-pointer disabled:bg-orange-300 disabled:cursor-not-allowed'
           disabled={produtos.length === 0}
-          onClick={() => {
-            let showArtError = false;
-            let showCampaignError = false;
-            if (!isArtSelected) showArtError = true;
-            if (!campaignName.trim()) showCampaignError = true;
-            setArtError(showArtError);
-            setCampaignError(showCampaignError);
-            if (showArtError && showCampaignError) {
-              toast.warning('Por favor, selecione uma arte e escolha um nome para a campanha.');
-              return;
-            }
-            if (showArtError) {
-              toast.warning('Por favor, selecione uma arte para avançar.');
-              return;
-            }
-            if (showCampaignError) {
-              toast.warning('Por favor, escolha um nome para a campanha.');
-              return;
-            }
-            router.push('/pagamento');
-          }}
+          onClick={handleAvançar}
         >
           Avançar
         </button>

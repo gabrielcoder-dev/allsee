@@ -17,20 +17,79 @@ import {
 } from "@/Components/ui/popover";
 import { Button } from "./ui/button";
 
-export default function CartResume({ onCartArtSelected, onCampaignNameChange, artError = false, campaignError = false }: { onCartArtSelected?: (selected: boolean) => void, onCampaignNameChange?: (name: string) => void, artError?: boolean, campaignError?: boolean } = {}) {
-  const { produtos, removerProduto, adicionarProduto, selectedDurationGlobal, setSelectedDurationGlobal } = useCart();
+// Função utilitária para formatar data em dd/MM/yyyy
+function formatDateBR(date: Date | null | undefined): string | null {
+  if (!date) return null;
+  const d = new Date(date);
+  const day = String(d.getDate()).padStart(2, '0');
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const year = d.getFullYear();
+  return `${day}/${month}/${year}`;
+}
 
-  // Valor inicial: usar o estado global
-  const [startDate, setStartDate] = useState<Date | undefined>(new Date());
+export default function CartResume({ onCartArtSelected, onCampaignNameChange, artError, campaignError }: {
+  onCartArtSelected?: (selected: boolean) => void,
+  onCampaignNameChange?: (name: string) => void,
+  artError?: string,
+  campaignError?: string
+} = {}) {
+  const { 
+    produtos, 
+    removerProduto, 
+    adicionarProduto, 
+    selectedDurationGlobal, 
+    setSelectedDurationGlobal,
+    formData,
+    updateFormData
+  } = useCart();
+
+  // Estados locais sincronizados com o contexto global
+  const [startDate, setStartDate] = useState<Date | undefined>(
+    formData.startDate ? new Date(formData.startDate) : new Date()
+  );
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(formData.previewUrl);
   const [duration, setDuration] = useState(selectedDurationGlobal);
-  const [campaignName, setCampaignName] = useState("");
+  const [campaignName, setCampaignName] = useState(formData.campaignName);
 
   // Sincronizar duration local com o global
   useEffect(() => {
     setDuration(selectedDurationGlobal);
   }, [selectedDurationGlobal]);
+
+  // Sincronizar dados do formulário com o contexto global
+  useEffect(() => {
+    if (formData.startDate) {
+      setStartDate(new Date(formData.startDate));
+    }
+    if (formData.previewUrl) {
+      setPreviewUrl(formData.previewUrl);
+    }
+    setCampaignName(formData.campaignName);
+  }, [formData]);
+
+  // Converter File para Base64 para armazenamento
+  const fileToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = error => reject(error);
+    });
+  };
+
+  // Converter Base64 para File (para quando precisar usar o arquivo)
+  const base64ToFile = (base64: string, filename: string): File => {
+    const arr = base64.split(',');
+    const mime = arr[0].match(/:(.*?);/)?.[1] || 'image/jpeg';
+    const bstr = atob(arr[1]);
+    let n = bstr.length;
+    const u8arr = new Uint8Array(n);
+    while (n--) {
+      u8arr[n] = bstr.charCodeAt(n);
+    }
+    return new File([u8arr], filename, { type: mime });
+  };
 
   const durations = [
     { label: "2 semanas", value: "2" },
@@ -42,11 +101,28 @@ export default function CartResume({ onCartArtSelected, onCampaignNameChange, ar
   // Debug: verificar se os produtos estão sendo carregados
   console.log("Produtos no carrinho:", produtos);
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       setSelectedImage(file);
-      setPreviewUrl(URL.createObjectURL(file));
+      const url = URL.createObjectURL(file);
+      setPreviewUrl(url);
+      
+      // Converter para Base64 e salvar no contexto
+      try {
+        const base64 = await fileToBase64(file);
+        updateFormData({
+          selectedImage: base64,
+          previewUrl: url,
+          isArtSelected: true
+        });
+        // Salva no localStorage
+        const formDataStorage = JSON.parse(localStorage.getItem('formData') || '{}');
+        localStorage.setItem('formData', JSON.stringify({ ...formDataStorage, selectedImage: base64, previewUrl: url, isArtSelected: true }));
+      } catch (error) {
+        console.error('Erro ao converter arquivo para Base64:', error);
+      }
+      
       if (onCartArtSelected) onCartArtSelected(true);
     }
   };
@@ -54,6 +130,43 @@ export default function CartResume({ onCartArtSelected, onCampaignNameChange, ar
   const handleDurationChange = (value: string) => {
     setDuration(value);
     setSelectedDurationGlobal(value);
+    // Salva no localStorage
+    const formDataStorage = JSON.parse(localStorage.getItem('formData') || '{}');
+    localStorage.setItem('formData', JSON.stringify({ ...formDataStorage, selectedDurationGlobal: value }));
+  };
+
+  const handleCampaignNameChange = (value: string) => {
+    setCampaignName(value);
+    updateFormData({ campaignName: value });
+    if (onCampaignNameChange) onCampaignNameChange(value);
+    // Salva no localStorage
+    const formDataStorage = JSON.parse(localStorage.getItem('formData') || '{}');
+    localStorage.setItem('formData', JSON.stringify({ ...formDataStorage, campaignName: value }));
+  };
+
+  const handleStartDateChange = (date: Date | undefined) => {
+    setStartDate(date);
+    const formatted = formatDateBR(date);
+    updateFormData({ 
+      startDate: formatted 
+    });
+    // Salva no localStorage
+    const formDataStorage = JSON.parse(localStorage.getItem('formData') || '{}');
+    localStorage.setItem('formData', JSON.stringify({ ...formDataStorage, startDate: formatted }));
+  };
+
+  const handleRemoveImage = () => {
+    setPreviewUrl(null);
+    setSelectedImage(null);
+    updateFormData({
+      selectedImage: null,
+      previewUrl: null,
+      isArtSelected: false
+    });
+    // Salva no localStorage
+    const formDataStorage = JSON.parse(localStorage.getItem('formData') || '{}');
+    localStorage.setItem('formData', JSON.stringify({ ...formDataStorage, selectedImage: null, previewUrl: null, isArtSelected: false }));
+    if (onCartArtSelected) onCartArtSelected(false);
   };
 
   const calcularPreco = (item: any) => {
@@ -96,6 +209,7 @@ export default function CartResume({ onCartArtSelected, onCampaignNameChange, ar
         <button
           onClick={() => {
             localStorage.removeItem("cart");
+            localStorage.removeItem("formData");
             window.location.reload();
           }}
           className="text-sm bg-red-500 text-white px-4 py-2 rounded-md cursor-pointer disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed"
@@ -187,19 +301,19 @@ export default function CartResume({ onCartArtSelected, onCampaignNameChange, ar
               <input
                 id="campaign-name"
                 type="text"
-                className={`w-80 border text-sm rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500 ${campaignError ? 'border-red-500' : 'border-gray-300'}`}
+                className={`w-80 border text-sm rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500`}
                 placeholder="Digite o nome da campanha"
                 value={campaignName}
-                onChange={e => {
-                  setCampaignName(e.target.value);
-                  if (onCampaignNameChange) onCampaignNameChange(e.target.value);
-                }}
+                onChange={e => handleCampaignNameChange(e.target.value)}
               />
+              {campaignError && (
+                <span className="text-red-500 text-xs mt-1 block">{campaignError}</span>
+              )}
             </div>
             {/* Bloco de duração como select global e início */}
             <div className="flex gap-4 mb-2 items-end">
               <div className="flex flex-col gap-1">
-                <span className="block text-xs text-gray-500">duração</span>
+                <label className="block text-xs text-gray-500 font-bold mb-1">Duração da campanha</label>
                 <Select value={duration} onValueChange={handleDurationChange}>
                   <SelectTrigger className="w-32 bg-gray-50 rounded-lg px-3 py-2">
                     <SelectValue placeholder="duração" />
@@ -234,7 +348,7 @@ export default function CartResume({ onCartArtSelected, onCampaignNameChange, ar
                     <Calendar
                       mode="single"
                       selected={startDate}
-                      onSelect={setStartDate}
+                      onSelect={handleStartDateChange}
                       initialFocus
                     />
                   </PopoverContent>
@@ -331,19 +445,18 @@ export default function CartResume({ onCartArtSelected, onCampaignNameChange, ar
                     />
                     <label
                       htmlFor="upload-art"
-                      className={`cursor-pointer border px-4 py-2 rounded transition hover:bg-gray-50 ${artError ? 'border-red-500' : 'border-gray-300'}`}
+                      className={`cursor-pointer border px-4 py-2 rounded transition hover:bg-gray-50`}
                     >
                       Selecionar arte
                     </label>
+                    {artError && (
+                      <span className="text-red-500 text-xs mt-1 block">{artError}</span>
+                    )}
                   </>
                 ) : (
                   <div className="relative flex justify-center items-center gap-4">
                     <button
-                      onClick={() => {
-                        setPreviewUrl(null);
-                        setSelectedImage(null);
-                        if (onCartArtSelected) onCartArtSelected(false);
-                      }}
+                      onClick={handleRemoveImage}
                       className="absolute -top-3 -right-3 w-6 h-6 flex  items-center justify-center  border border-gray-300 rounded-full bg-white text-xl font-bold cursor-pointer z-10"
                       aria-label="Remover arte"
                     >

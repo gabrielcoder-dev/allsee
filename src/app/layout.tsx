@@ -3,6 +3,9 @@ import { Montserrat } from "next/font/google";
 import "./globals.css";
 import { CartProvider } from "@/context/CartContext";
 import { Toaster } from 'sonner'
+import { SessionContextProvider } from '@supabase/auth-helpers-react';
+import { supabase } from '@/lib/supabase';
+import SupabaseProvider from './SupabaseProvider';
 
 const montserrat = Montserrat({
   subsets: ['cyrillic', 'latin'],
@@ -32,9 +35,11 @@ export default function RootLayout({
       >
 
         <Toaster richColors position="top-right" />
-        <CartProvider>
-          {children}
-        </CartProvider>
+        <SupabaseProvider>
+          <CartProvider>
+            {children}
+          </CartProvider>
+        </SupabaseProvider>
       </body>
     </html>
   );

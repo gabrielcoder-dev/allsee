@@ -38,7 +38,7 @@ export default function MobileHeader({
   const [showFilter, setShowFilter] = useState(false)
   const [open, setOpen] = useState(false)
   const popoverRef = useRef<HTMLDivElement>(null)
-  const { produtos } = useCart()
+  const { produtos, setSelectedDurationGlobal, selectedDurationGlobal } = useCart()
   const totalNoCarrinho = produtos.reduce((acc, p) => acc + p.quantidade, 0)
   const router = useRouter()
   const [showMenuModal, setShowMenuModal] = useState(false)
@@ -192,8 +192,8 @@ export default function MobileHeader({
       {showModal && (
         <ModalHeaderMobile 
           onClose={() => setShowModal(false)} 
-          onDurationChange={onDurationChange}
-          selectedDuration={selectedDuration}
+          onDurationChange={setSelectedDurationGlobal}
+          selectedDuration={selectedDurationGlobal}
           onSearch={onSearch}
         />
       )}

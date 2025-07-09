@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "./ui/button";
 import {
   Select,
@@ -16,15 +16,28 @@ import { MdCreditCard } from "react-icons/md";
 import { PiBarcodeBold } from "react-icons/pi";
 import { useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
+import { useUser } from "@supabase/auth-helpers-react";
 
 const PagamantosPart = () => {
-  const { produtos, selectedDurationGlobal } = useCart();
+  const user = useUser();
+  const { produtos, selectedDurationGlobal, formData, updateFormData } = useCart();
   // Duração fixa igual ao padrão do carrinho
   const duration = "2";
 
+  // Preencher automaticamente os campos quando a página carregar
+  useEffect(() => {
+    // Se já temos dados de pessoa física preenchidos, seleciona automaticamente
+    if (formData.cpf && formData.cep && formData.endereco) {
+      setOpenAccordion("fisica");
+    }
+    // Se já temos dados de pessoa jurídica preenchidos, seleciona automaticamente
+    else if (formData.cnpj && formData.razaoSocial) {
+      setOpenAccordion("juridica");
+    }
+  }, [formData]);
+
   // Função de cálculo do preço original (sem desconto)
   const calcularPrecoOriginal = (item: any) => {
-    // Calcular o preço original de acordo com a semana selecionada
     let preco = item.preco;
     const durationsTrue = [
       item.duration_2,
@@ -81,139 +94,132 @@ const PagamantosPart = () => {
   const [openAccordion, setOpenAccordion] = useState<
     "fisica" | "juridica" | null
   >(null);
+  const [carregando, setCarregando] = useState(false);
+  const [erro, setErro] = useState("");
 
-  // Estado para controlar se deve mostrar métodos de pagamento
-  const [mostrarMetodos, setMostrarMetodos] = useState(false);
-  // Estado para o método escolhido
-  const [metodoEscolhido, setMetodoEscolhido] = useState<string | null>(null);
+  // Função para checar se todos os campos obrigatórios estão preenchidos (exceto complemento)
+  const isFormValid = () => {
+    // Pessoa Física
+    if (openAccordion === "fisica") {
+      return (
+        !!formData.cpf &&
+        !!formData.telefone &&
+        !!formData.cep &&
+        !!formData.endereco &&
+        !!formData.numero &&
+        !!formData.bairro &&
+        !!formData.cidade &&
+        !!formData.estado
+      );
+    }
+    // Pessoa Jurídica
+    if (openAccordion === "juridica") {
+      return (
+        !!formData.cnpj &&
+        !!formData.razaoSocial &&
+        !!formData.segmento &&
+        !!formData.telefonej &&
+        !!formData.cepJ &&
+        !!formData.enderecoJ &&
+        !!formData.numeroJ &&
+        !!formData.bairroJ &&
+        !!formData.cidadeJ &&
+        !!formData.estadoJ
+      );
+    }
+    // Nenhum selecionado
+    return false;
+  };
 
-  // Estados dos campos do formulário Pessoa Física
-  const [cpf, setCpf] = useState("");
-  const [cep, setCep] = useState("");
-  const [endereco, setEndereco] = useState("");
-  const [numero, setNumero] = useState("");
-  const [bairro, setBairro] = useState("");
-  const [complemento, setComplemento] = useState("");
-  const [cidade, setCidade] = useState("");
-  const [estado, setEstado] = useState("");
+  const handleCheckout = async () => {
+    setErro("");
+    setCarregando(true);
+    console.log("Iniciando checkout, user:", user);
 
-  // Estados dos campos do formulário Pessoa Jurídica
-  const [cnpj, setCnpj] = useState("");
-  const [razaoSocial, setRazaoSocial] = useState("");
-  const [segmento, setSegmento] = useState("");
-  const [cepJ, setCepJ] = useState("");
-  const [enderecoJ, setEnderecoJ] = useState("");
-  const [numeroJ, setNumeroJ] = useState("");
-  const [bairroJ, setBairroJ] = useState("");
-  const [complementoJ, setComplementoJ] = useState("");
-  const [cidadeJ, setCidadeJ] = useState("");
-  const [estadoJ, setEstadoJ] = useState("");
+    // Verifica se o usuário está autenticado
+    if (!user?.id) {
+      setErro("Você precisa estar logado para concluir a compra.");
+      setCarregando(false);
+      return;
+    }
 
-  // Verifica se TODOS os campos de pessoa física foram preenchidos
-  const todosFisica =
-    cpf &&
-    cep &&
-    endereco &&
-    numero &&
-    bairro &&
-    complemento &&
-    cidade &&
-    estado;
-  // Verifica se TODOS os campos de pessoa jurídica foram preenchidos
-  const todosJuridica =
-    cnpj &&
-    razaoSocial &&
-    segmento &&
-    cepJ &&
-    enderecoJ &&
-    numeroJ &&
-    bairroJ &&
-    complementoJ &&
-    cidadeJ &&
-    estadoJ;
-  const podeConcluir = todosFisica || todosJuridica;
+    try {
+      // Mapeamento explícito: cada campo do frontend para a coluna da tabela order
+      const orderPayload = {
+        id_user: user.id, // id_user: id do usuário autenticado (agora sempre string e nunca null)
+        id_produto: produtos[0]?.id || null, // id_produto: id do produto selecionado (primeiro do carrinho)
+        nome_campanha: formData.campaignName || null, // nome_campanha: input de nome da campanha (CartResume)
+        duracao_campanha: selectedDurationGlobal || null, // duracao_campanha: valor do select de duração
+        inicio_campanha: formData.startDate || null, // inicio_campanha: valor do popover de data
+        arte_campanha: formData.selectedImage || null, // arte_campanha: arquivo selecionado no input de arte (base64 ou url)
+        cpf: formData.cpf || null, // cpf: input de CPF (PagamantosPart)
+        cnpj: formData.cnpj || null, // cnpj: input de CNPJ (PagamantosPart)
+        razao_social: formData.razaoSocial || null, // razao_social: input de razão social (PagamantosPart)
+        setor: formData.segmento || null, // setor: select de setor (PagamantosPart)
+        telefone: formData.telefone || formData.telefonej || null, // telefone: input de telefone (PF ou PJ)
+        cep: formData.cep || formData.cepJ || null, // cep: input de CEP (PF ou PJ)
+        endereco: formData.endereco || formData.enderecoJ || null, // endereco: input de endereço (PF ou PJ)
+        numero: formData.numero || formData.numeroJ || null, // numero: input de número (PF ou PJ)
+        bairro: formData.bairro || formData.bairroJ || null, // bairro: input de bairro (PF ou PJ)
+        complemento: formData.complemento || formData.complementoJ || null, // complemento: input de complemento (PF ou PJ)
+        cidade: formData.cidade || formData.cidadeJ || null, // cidade: input de cidade (PF ou PJ)
+        estado: formData.estado || formData.estadoJ || null, // estado: input de estado (PF ou PJ)
+      };
+      console.log("Payload do pedido:", orderPayload);
+
+      // 1. Criar order no banco
+      const orderRes = await fetch("/api/pagamento/criar-compra", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(orderPayload),
+      });
+      const orderData = await orderRes.json();
+      console.log("Resposta do backend:", orderData);
+      if (!orderData.id) {
+        setErro("Erro ao criar pedido");
+        setCarregando(false);
+        return;
+      }
+
+      // 2. Chamar checkout com orderId
+      const response = await fetch("/api/pagamento/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ total, orderId: orderData.id }),
+      });
+      const data = await response.json();
+      console.log("Resposta do checkout:", data);
+      if (data.init_point) {
+        window.location.href = data.init_point;
+      } else {
+        setErro("Erro ao iniciar pagamento");
+      }
+    } catch (e) {
+      setErro("Erro ao conectar ao servidor");
+      console.error("Erro no handleCheckout:", e);
+    } finally {
+      setCarregando(false);
+    }
+  };
 
   const router = useRouter();
 
-  if (mostrarMetodos && !metodoEscolhido) {
-    return (
-      <div className="flex flex-col items-center w-full h-full py-8 bg-[#fcfcfc] px-4 md:px-0">
-        <div className="max-w-2xl w-full mx-auto flex flex-col gap-10 items-center justify-center">
-          <h1 className="text-3xl font-bold mb-2">Método de pagamento</h1>
-          <div className="flex flex-row gap-4 w-full justify-center flex-wrap">
-            <Button
-              className="bg-orange-500 hover:bg-orange-600 text-white px-8 py-4 rounded-md flex-1 cursor-pointer"
-              type="button"
-              onClick={() => {}}
-            >
-              <span className="mr-2">
-                <SiPix size={22} />
-              </span>{" "}
-              pix
-            </Button>
-            <Button
-              className="bg-orange-500 hover:bg-orange-600 text-white px-8 py-4 rounded-md flex-1 cursor-pointer"
-              type="button"
-              onClick={() => {}}
-            >
-              <span className="mr-2">
-                <FaRegCreditCard size={22} />
-              </span>{" "}
-              cartão de crédito
-            </Button>
-            <Button
-              className="bg-orange-500 hover:bg-orange-600 text-white px-8 py-4 rounded-md flex-1 cursor-pointer"
-              type="button"
-              onClick={() => {}}
-            >
-              <span className="mr-2">
-                <MdCreditCard size={22} />
-              </span>{" "}
-              cartão de débito
-            </Button>
-            <Button
-              className="bg-orange-500 hover:bg-orange-600 text-white px-8 py-4 rounded-md flex-1 cursor-pointer"
-              type="button"
-              onClick={() => {}}
-            >
-              <span className="mr-2">
-                <PiBarcodeBold size={22} />
-              </span>{" "}
-              boleto
-            </Button>
-          </div>
-          <p className="text-xs text-gray-500 mt-6 text-center">
-            Ao criar seu pedido, você concorda com os{" "}
-            <a href="#" className="text-orange-600 underline">
-              Termos e Condições de Uso All see
-            </a>
-            .<br />
-            <span className="block mt-2">
-              Pagamento seguro com <b>Mercado Pago</b>
-            </span>
-          </p>
-        </div>
-      </div>
-    );
-  }
-
-  if (metodoEscolhido) {
-    // Aqui você pode adicionar o fluxo real de pagamento ou redirecionamento
-    return null;
-  }
+  // Remover qualquer referência a funções, estados ou variáveis que não existem mais (ex: handleConcluir, formData, campos de pessoa física/jurídica, nome de campanha, imagem, etc). Deixe apenas o fluxo de pagamento essencial e o que for necessário para funcionamento do componente.
 
   return (
     <div className="flex flex-col items-center w-full min-h-screen py-8 bg-[#fcfcfc] px-2 md:px-0">
       <div className="max-w-2xl w-full mx-auto flex flex-col gap-10">
+
         {/* Título e subtítulo */}
         <div className="text-center flex items-center justify-center flex-col gap-2 px-2 md:px-0">
           <h1 className="text-3xl font-bold">Pagamento</h1>
           <p className="text-gray-600 text-base w-64 lg:w-full">
             Você está a um passo de reservar seu lugar nas telas da Eletromidia!
             <br />
-            Confirme os valores e selecione a forma de pagamento
+            Confirme os valores e preencha os dados de faturamento
           </p>
         </div>
+
 
         {/* Resumo de valores */}
         <div className="bg-white rounded-xl shadow border border-gray-100 p-4 md:p-8 flex flex-col gap-6">
@@ -277,8 +283,17 @@ const PagamantosPart = () => {
                     type="text"
                     placeholder="CPF"
                     className="border rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-200"
-                    value={cpf}
-                    onChange={(e) => setCpf(e.target.value)}
+                    value={formData.cpf}
+                    onChange={(e) => updateFormData({ cpf: e.target.value })}
+                  />
+                </div>
+                <div className="grid grid-cols-1 gap-4">
+                  <input
+                    type="text"
+                    placeholder="Telefone"
+                    className="border rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-200"
+                    value={formData.telefone}
+                    onChange={(e) => updateFormData({ telefone: e.target.value })}
                   />
                 </div>
                 <hr />
@@ -287,8 +302,8 @@ const PagamantosPart = () => {
                     type="text"
                     placeholder="CEP"
                     className="border rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-200"
-                    value={cep}
-                    onChange={(e) => setCep(e.target.value)}
+                    value={formData.cep}
+                    onChange={(e) => updateFormData({ cep: e.target.value })}
                   />
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -296,15 +311,15 @@ const PagamantosPart = () => {
                     type="text"
                     placeholder="Endereço"
                     className="border rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-200"
-                    value={endereco}
-                    onChange={(e) => setEndereco(e.target.value)}
+                    value={formData.endereco}
+                    onChange={(e) => updateFormData({ endereco: e.target.value })}
                   />
                   <input
                     type="text"
                     placeholder="Número"
                     className="border rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-200"
-                    value={numero}
-                    onChange={(e) => setNumero(e.target.value)}
+                    value={formData.numero}
+                    onChange={(e) => updateFormData({ numero: e.target.value })}
                   />
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -312,15 +327,15 @@ const PagamantosPart = () => {
                     type="text"
                     placeholder="Bairro"
                     className="border rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-200"
-                    value={bairro}
-                    onChange={(e) => setBairro(e.target.value)}
+                    value={formData.bairro}
+                    onChange={(e) => updateFormData({ bairro: e.target.value })}
                   />
                   <input
                     type="text"
                     placeholder="Complemento"
                     className="border rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-200"
-                    value={complemento}
-                    onChange={(e) => setComplemento(e.target.value)}
+                    value={formData.complemento}
+                    onChange={(e) => updateFormData({ complemento: e.target.value })}
                   />
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -328,15 +343,15 @@ const PagamantosPart = () => {
                     type="text"
                     placeholder="Cidade"
                     className="border rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-200"
-                    value={cidade}
-                    onChange={(e) => setCidade(e.target.value)}
+                    value={formData.cidade}
+                    onChange={(e) => updateFormData({ cidade: e.target.value })}
                   />
                   <input
                     type="text"
                     placeholder="Estado"
                     className="border rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-200"
-                    value={estado}
-                    onChange={(e) => setEstado(e.target.value)}
+                    value={formData.estado}
+                    onChange={(e) => updateFormData({ estado: e.target.value })}
                   />
                 </div>
                 {/* <p className='text-center text-xs text-gray-500'>A NOTA FISCAL SERÁ ENCAMINHADA VIA WHATSAPP E E-MAIL</p> */}
@@ -371,19 +386,19 @@ const PagamantosPart = () => {
                     type="text"
                     placeholder="CNPJ"
                     className="border rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-200"
-                    value={cnpj}
-                    onChange={(e) => setCnpj(e.target.value)}
+                    value={formData.cnpj}
+                    onChange={(e) => updateFormData({ cnpj: e.target.value })}
                   />
                   <input
                     type="text"
                     placeholder="Razao Social"
                     className="border rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-200"
-                    value={razaoSocial}
-                    onChange={(e) => setRazaoSocial(e.target.value)}
+                    value={formData.razaoSocial}
+                    onChange={(e) => updateFormData({ razaoSocial: e.target.value })}
                   />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
-                  <Select value={segmento} onValueChange={setSegmento}>
+                  <Select value={formData.segmento} onValueChange={(value) => updateFormData({ segmento: value })}>
                     <SelectTrigger className="px-4 py-6">
                       <SelectValue placeholder="Setor/Segmento" />
                     </SelectTrigger>
@@ -395,11 +410,11 @@ const PagamantosPart = () => {
                     </SelectContent>
                   </Select>
                   <input
-                    type="number"
+                    type="text"
                     placeholder="Telefone"
                     className="border rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-200"
-                    value={numeroJ}
-                    onChange={(e) => setNumeroJ(e.target.value)}
+                    value={formData.telefonej}
+                    onChange={(e) => updateFormData({ telefonej: e.target.value })}
                   />
                 </div>
                 <hr />
@@ -408,8 +423,8 @@ const PagamantosPart = () => {
                     type="text"
                     placeholder="CEP"
                     className="border rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-200"
-                    value={cepJ}
-                    onChange={(e) => setCepJ(e.target.value)}
+                    value={formData.cepJ}
+                    onChange={(e) => updateFormData({ cepJ: e.target.value })}
                   />
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -417,15 +432,15 @@ const PagamantosPart = () => {
                     type="text"
                     placeholder="Endereço"
                     className="border rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-200"
-                    value={enderecoJ}
-                    onChange={(e) => setEnderecoJ(e.target.value)}
+                    value={formData.enderecoJ}
+                    onChange={(e) => updateFormData({ enderecoJ: e.target.value })}
                   />
                   <input
-                    type="number"
+                    type="text"
                     placeholder="Número"
                     className="border rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-200"
-                    value={numeroJ}
-                    onChange={(e) => setNumeroJ(e.target.value)}
+                    value={formData.numeroJ}
+                    onChange={(e) => updateFormData({ numeroJ: e.target.value })}
                   />
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -433,15 +448,15 @@ const PagamantosPart = () => {
                     type="text"
                     placeholder="Bairro"
                     className="border rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-200"
-                    value={bairroJ}
-                    onChange={(e) => setBairroJ(e.target.value)}
+                    value={formData.bairroJ}
+                    onChange={(e) => updateFormData({ bairroJ: e.target.value })}
                   />
                   <input
                     type="text"
                     placeholder="Complemento"
                     className="border rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-200"
-                    value={complementoJ}
-                    onChange={(e) => setComplementoJ(e.target.value)}
+                    value={formData.complementoJ}
+                    onChange={(e) => updateFormData({ complementoJ: e.target.value })}
                   />
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -449,15 +464,15 @@ const PagamantosPart = () => {
                     type="text"
                     placeholder="Cidade"
                     className="border rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-200"
-                    value={cidadeJ}
-                    onChange={(e) => setCidadeJ(e.target.value)}
+                    value={formData.cidadeJ}
+                    onChange={(e) => updateFormData({ cidadeJ: e.target.value })}
                   />
                   <input
                     type="text"
                     placeholder="Estado"
                     className="border rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-200"
-                    value={estado}
-                    onChange={(e) => setEstado(e.target.value)}
+                    value={formData.estadoJ}
+                    onChange={(e) => updateFormData({ estadoJ: e.target.value })}
                   />
                 </div>
                 <p className="text-center text-xs text-gray-500">
@@ -481,10 +496,10 @@ const PagamantosPart = () => {
           <Button
             className="bg-orange-500 hover:bg-orange-600 text-white px-8 py-2 rounded-md cursor-pointer"
             type="button"
-            disabled={!podeConcluir}
-            onClick={() => setMostrarMetodos(true)}
+            disabled={carregando || produtos.length === 0 || !isFormValid()}
+            onClick={handleCheckout}
           >
-            concluir
+            {carregando ? "Processando..." : "Concluir"}
           </Button>
         </div>
       </div>

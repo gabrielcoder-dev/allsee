@@ -54,7 +54,7 @@ const HeaderResultsDesktop = ({ onDurationChange, selectedDuration }: HeaderResu
   const [open, setOpen] = useState(false)
   const popoverRef = useRef<HTMLDivElement>(null)
   const router = useRouter()
-  const { produtos } = useCart()
+  const { produtos, setSelectedDurationGlobal, selectedDurationGlobal } = useCart()
   const durationValue = selectedDuration || '2'
   const totalNoCarrinho = produtos.reduce((acc, p) => acc + p.quantidade, 0)
   const [showMenuModal, setShowMenuModal] = useState(false)
@@ -124,8 +124,8 @@ const HeaderResultsDesktop = ({ onDurationChange, selectedDuration }: HeaderResu
             {/* Duração */}
 
             <div className='flex-col hidden md:flex'>
-              <span className="text-gray-500 mb-1 font-semibold">Duração</span>
-              <Select value={durationValue} onValueChange={onDurationChange}>
+              <span className="text-gray-500 mb-1 font-semibold">Duração da campanha</span>
+              <Select value={selectedDurationGlobal} onValueChange={setSelectedDurationGlobal}>
                 <SelectTrigger className="w-32 bg-gray-50 rounded-lg px-3 py-2">
                   <SelectValue placeholder="duração" />
                 </SelectTrigger>
