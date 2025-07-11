@@ -1,8 +1,8 @@
-import type { NextApiRequest, NextApiResponse } from 'next';
-import { atualizarStatusCompra } from '../../../lib/utils';
+import type { NextApiRequest, NextApiResponse } from "next";
+import { atualizarStatusCompra } from "../../../lib/utils";
 
-import { Payment } from 'mercadopago';
-import { mercadoPagoClient } from '@/services/mercado-pago';
+import { Payment } from "mercadopago";
+import { mercadoPagoClient } from "@/services/mercado-pago";
 
 const paymentClient = new Payment(mercadoPagoClient);
 
@@ -15,15 +15,18 @@ async function buscarPagamentoMercadoPago(paymentId: string) {
   return payment;
 }
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method === 'POST') {
+export default async function handler(
+  req: NextApiRequest,
+  res: NextApiResponse
+) {
+  console.log("Webhook recebido:", req.method, req.body, req.query);
+  if (req.method === "POST") {
     const { data, type } = req.body;
 
-    if (type === 'payment') {
+    if (type === "payment") {
       const pagamento = await buscarPagamentoMercadoPago(data.id);
-
-      if (pagamento.status === 'approved' && pagamento.external_reference) {
-        await atualizarStatusCompra(pagamento.external_reference, 'pago');
+      if (pagamento.status === "approved" && pagamento.external_reference) {
+        await atualizarStatusCompra(pagamento.external_reference, "pago");
       }
     }
 
@@ -31,4 +34,4 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   } else {
     res.status(405).end(); // Method Not Allowed
   }
-} 
+}

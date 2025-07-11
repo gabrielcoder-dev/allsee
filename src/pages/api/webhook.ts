@@ -1,12 +1,33 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { createClient } from '@supabase/supabase-js';
+import crypto from "crypto";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY! // Service Role Key para update
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+
+  const secret = process.env.MP_WEBHOOK_SECRET;
+  if (!secret) {
+    return res.status(500).json({ error: "Webhook secret not configured" });
+  }
+
+
+  const signature = req.headers["x-signature"] || req.headers["x-mercadopago-signature"];
+
+ 
+  const expectedSignature = crypto
+    .createHmac("sha256", secret)
+    .update(JSON.stringify(req.body))
+    .digest("hex");
+
+
+  if (signature !== expectedSignature) {
+    return res.status(401).json({ error: "Assinatura inválida" });
+  }
+
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Método não permitido' });
   }

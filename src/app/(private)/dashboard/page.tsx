@@ -5,9 +5,9 @@ import ModalCreateAnuncios from '@/Components/ModalCreateAnuncios'
 import NavBarAdmin from '@/Components/NavBarAdmin'
 import AnunciosAdminView from '@/Components/AnunciosAdminView'
 import MapAdmin from '@/Components/MapAdmin'
-import AproveitionAdmin from '@/Components/AproveitionAdmin'
 import ProgressAdmin from '@/Components/ProgressAdmin'
 import ReplacementAdmin from '@/Components/ReplacementAdmin'
+import AproveitionAdmin from '@/Components/AproveitionAdmin'
 
 const Page = () => {
   const [mobileOpen, setMobileOpen] = useState(false);

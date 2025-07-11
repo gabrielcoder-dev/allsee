@@ -1,0 +1,8 @@
+{
+  "cron": [
+    {
+      "path": "/api/admin/limpar-orders",
+      "schedule": "*/10 * * * *"
+    }
+  ]
+} 
