@@ -47,7 +47,7 @@ const AproveitionAdmin = () => {
   if (!orders.length) return <div>Nenhum pedido encontrado.</div>;
 
   return (
-    <div className="w-full h-full p-2 md:p-10">
+    <div className="w-full h-full p-2 md:p-10 overflow-auto">
       {orders.map((order) => (
         <div
           key={order.id}
