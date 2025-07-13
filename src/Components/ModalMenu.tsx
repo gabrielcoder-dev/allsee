@@ -52,7 +52,13 @@ export default function ModalMenu({ open, onClose }: ModalMenuProps) {
             <Menu size={24} />
             <span className="text-sm text-left leading-tight">escolha onde anunciar</span>
           </button>
-          <button className="flex flex-col items-start justify-center gap-2 p-4 rounded-xl bg-gray-100 text-gray-700 font-semibold shadow hover:bg-gray-200 transition cursor-pointer">
+          <button
+            className="flex flex-col items-start justify-center gap-2 p-4 rounded-xl bg-gray-100 text-gray-700 font-semibold shadow hover:bg-gray-200 transition cursor-pointer"
+            onClick={() => {
+              router.push('/meus-anuncios');
+              onClose();
+            }}
+          >
             <List size={24} />
             <span className="text-sm text-left leading-tight">meus anúncios</span>
           </button>

@@ -164,6 +164,7 @@ const PagamantosPart = () => {
         complemento: formData.complemento || formData.complementoJ || null, // complemento: input de complemento (PF ou PJ)
         cidade: formData.cidade || formData.cidadeJ || null, // cidade: input de cidade (PF ou PJ)
         estado: formData.estado || formData.estadoJ || null, // estado: input de estado (PF ou PJ)
+        preco: precoComDesconto, // preço total exibido no resumo de valores
       };
       console.log("Payload do pedido:", orderPayload);
 

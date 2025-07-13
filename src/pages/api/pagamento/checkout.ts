@@ -27,12 +27,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           },
         ],
         back_urls: {
-          success: `${process.env.NEXT_PUBLIC_BASE_URL}/pagamento/sucesso`,
-          failure: `${process.env.NEXT_PUBLIC_BASE_URL}/pagamento/erro`,
-          pending: `${process.env.NEXT_PUBLIC_BASE_URL}/pagamento/pendente`,
+          success: `${process.env.NEXT_PUBLIC_BASE_URL}/results`,
+          failure: `${process.env.NEXT_PUBLIC_BASE_URL}/results`,
+          pending: `${process.env.NEXT_PUBLIC_BASE_URL}/results`,
         },
         auto_return: 'approved',
-        external_reference: orderId, // <- Esse campo deve ser o id do pedido/compra do Supabase
+        external_reference: orderId,
       },
     });
     return res.status(200).json({ init_point: result.init_point });

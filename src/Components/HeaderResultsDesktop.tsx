@@ -124,7 +124,7 @@ const HeaderResultsDesktop = ({ onDurationChange, selectedDuration }: HeaderResu
             {/* Duração */}
 
             <div className='flex-col hidden md:flex'>
-              <span className="text-gray-500 mb-1 font-semibold">Duração da campanha</span>
+              <span className="text-gray-500 mb-1 font-semibold">Duração</span>
               <Select value={selectedDurationGlobal} onValueChange={setSelectedDurationGlobal}>
                 <SelectTrigger className="w-32 bg-gray-50 rounded-lg px-3 py-2">
                   <SelectValue placeholder="duração" />

@@ -59,8 +59,6 @@ export default function HeaderPrice() {
         <span> em seu carrinho</span>
         <span className="mx-2 text-gray-400">|</span>
         <span>Investimento: <span className="font-bold">R$ {valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span></span>
-        <span className="mx-2 text-gray-400">|</span>
-        <span className="text-sm text-gray-600">Duração da campanha: <span className="font-bold">{duration} semana(s)</span></span>
       </div>
       <div className="flex justify-end w-full md:w-auto pr-6 md:pr-0">
         <button
