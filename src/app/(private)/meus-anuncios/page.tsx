@@ -91,6 +91,21 @@ const page = () => {
     };
   }, [openMenuId]);
 
+  // Função utilitária para criar Date local a partir de yyyy-MM-dd
+  function parseLocalDateString(dateString: string) {
+    const [year, month, day] = dateString.split('-').map(Number);
+    return new Date(year, month - 1, day);
+  }
+  // Função utilitária para formatar data em dd/MM/yyyy
+  function formatDateBR(date: Date | null) {
+    if (!date) return null;
+    const d = new Date(date);
+    const day = String(d.getDate()).padStart(2, '0');
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const year = d.getFullYear();
+    return `${day}/${month}/${year}`;
+  }
+
   return (
     <div className="bg-white min-h-screen px-8 py-8">
       <div className="max-w-4xl mx-auto">
@@ -161,7 +176,7 @@ const page = () => {
                   <button className="ml-1 text-gray-400 hover:text-gray-600" title="Editar nome"><svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M15.232 5.232l3.536 3.536M9 13l6.586-6.586a2 2 0 1 1 2.828 2.828L11.828 15.828a4 4 0 0 1-1.414.828l-4.243 1.414 1.414-4.243a4 4 0 0 1 .828-1.414z"/></svg></button>
                 </div>
                 <div className="flex flex-wrap items-center gap-2 text-sm text-gray-600 mb-1">
-                  <span>Início: <span className="text-gray-800">{order.inicio_campanha ? new Date(order.inicio_campanha).toLocaleDateString('pt-BR') : '-'}</span></span>
+                  <span>Início: <span className="text-gray-800">{order.inicio_campanha ? formatDateBR(parseLocalDateString(order.inicio_campanha)) : '-'}</span></span>
                   <span>|</span>
                   <span>Período de Duração: <span className="text-blue-700 font-medium">{order.duracao_campanha ? `${order.duracao_campanha} semanas` : '-'}</span></span>
                 </div>
@@ -230,7 +245,7 @@ const page = () => {
                   </div>
                 </div>
                 <div className="mb-2 text-sm text-gray-700">
-                  <span className="block mb-1">Início: {selectedOrder.inicio_campanha ? new Date(selectedOrder.inicio_campanha).toLocaleDateString('pt-BR') : '-'}</span>
+                  <span className="block mb-1">Início: {selectedOrder.inicio_campanha ? formatDateBR(parseLocalDateString(selectedOrder.inicio_campanha)) : '-'}</span>
                   <span className="block mb-1">Duração: <span className="font-medium">{selectedOrder.duracao_campanha || '-'}</span></span>
                   <span className="block mb-1">Preço: <span className="font-medium">{selectedOrder.preco ? Number(selectedOrder.preco).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : '-'}</span></span>
                 </div>

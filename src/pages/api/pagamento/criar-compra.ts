@@ -13,6 +13,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   const dados = req.body;
 
+  // Garante que inicio_campanha será apenas yyyy-MM-dd
+  if (dados.inicio_campanha) {
+    dados.inicio_campanha = dados.inicio_campanha.substring(0, 10);
+  }
+
   console.log('Body recebido em criar-compra:', JSON.stringify(dados, null, 2));
 
   // Adiciona status pendente

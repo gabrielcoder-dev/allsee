@@ -27,6 +27,30 @@ function formatDateBR(date: Date | null | undefined): string | null {
   return `${day}/${month}/${year}`;
 }
 
+// Função para converter string yyyy-MM-dd para Date
+function parseISODateString(isoString: string): Date {
+  // Garante que a string está no formato yyyy-MM-dd
+  return new Date(isoString + 'T00:00:00');
+}
+
+// Função utilitária para criar Date local a partir de yyyy-MM-dd
+function parseLocalDateString(dateString: string): Date {
+  const [year, month, day] = dateString.split('-').map(Number);
+  return new Date(year, month - 1, day);
+}
+
+// Função para criar string UTC yyyy-MM-ddT00:00:00Z
+function toUTCDateString(date: Date): string {
+  const pad = (n: number) => n.toString().padStart(2, '0');
+  return `${date.getUTCFullYear()}-${pad(date.getUTCMonth() + 1)}-${pad(date.getUTCDate())}T00:00:00Z`;
+}
+
+// Função para criar Date em UTC a partir de yyyy-MM-dd
+function parseUTCDateString(dateString: string): Date {
+  const [year, month, day] = dateString.split('-').map(Number);
+  return new Date(Date.UTC(year, month - 1, day));
+}
+
 export default function CartResume({ onCartArtSelected, onCampaignNameChange, artError, campaignError }: {
   onCartArtSelected?: (selected: boolean) => void,
   onCampaignNameChange?: (name: string) => void,
@@ -44,8 +68,8 @@ export default function CartResume({ onCartArtSelected, onCampaignNameChange, ar
   } = useCart();
 
   // Estados locais sincronizados com o contexto global
-  const [startDate, setStartDate] = useState<Date | undefined>(
-    formData.startDate ? new Date(formData.startDate) : new Date()
+  const [startDate, setStartDate] = useState<string>(
+    formData.startDate ? formData.startDate : new Date().toISOString().split('T')[0]
   );
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(formData.previewUrl);
@@ -60,7 +84,7 @@ export default function CartResume({ onCartArtSelected, onCampaignNameChange, ar
   // Sincronizar dados do formulário com o contexto global
   useEffect(() => {
     if (formData.startDate) {
-      setStartDate(new Date(formData.startDate));
+      setStartDate(formData.startDate);
     }
     if (formData.previewUrl) {
       setPreviewUrl(formData.previewUrl);
@@ -145,14 +169,13 @@ export default function CartResume({ onCartArtSelected, onCampaignNameChange, ar
   };
 
   const handleStartDateChange = (date: Date | undefined) => {
-    setStartDate(date);
-    const formatted = formatDateBR(date);
-    updateFormData({ 
-      startDate: formatted 
-    });
+    if (!date) return;
+    const isoDateString = toUTCDateString(date);
+    setStartDate(isoDateString);
+    updateFormData({ startDate: isoDateString });
     // Salva no localStorage
     const formDataStorage = JSON.parse(localStorage.getItem('formData') || '{}');
-    localStorage.setItem('formData', JSON.stringify({ ...formDataStorage, startDate: formatted }));
+    localStorage.setItem('formData', JSON.stringify({ ...formDataStorage, startDate: isoDateString }));
   };
 
   const handleRemoveImage = () => {
@@ -313,7 +336,7 @@ export default function CartResume({ onCartArtSelected, onCampaignNameChange, ar
             {/* Bloco de duração como select global e início */}
             <div className="flex gap-4 mb-2 items-end">
               <div className="flex flex-col gap-1">
-                <label className="block text-xs text-gray-500 font-bold mb-1">Duração da campanha</label>
+                <label className="block text-xs text-gray-500 font-bold mb-1">Duração</label>
                 <Select value={duration} onValueChange={handleDurationChange}>
                   <SelectTrigger className="w-32 bg-gray-50 rounded-lg px-3 py-2">
                     <SelectValue placeholder="duração" />
@@ -328,7 +351,7 @@ export default function CartResume({ onCartArtSelected, onCampaignNameChange, ar
                 </Select>
               </div>
               <div>
-                <span className="block text-xs text-gray-500 mb-1">Início</span>
+                <span className="block text-xs text-gray-500 font-bold mb-1">Início</span>
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button
@@ -338,7 +361,7 @@ export default function CartResume({ onCartArtSelected, onCampaignNameChange, ar
                       <CalendarIcon className="w-4 h-4 text-orange-500" />
                       <span>
                         {startDate
-                          ? startDate.toLocaleDateString("pt-BR")
+                          ? formatDateBR(parseLocalDateString(startDate.split('T')[0]))
                           : "início"}
                       </span>
                       <ChevronDownIcon className="w-4 h-4" />
@@ -347,7 +370,7 @@ export default function CartResume({ onCartArtSelected, onCampaignNameChange, ar
                   <PopoverContent className="w-auto p-0">
                     <Calendar
                       mode="single"
-                      selected={startDate}
+                      selected={startDate ? parseLocalDateString(startDate.split('T')[0]) : undefined}
                       onSelect={handleStartDateChange}
                       initialFocus
                     />

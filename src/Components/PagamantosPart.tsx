@@ -150,7 +150,7 @@ const PagamantosPart = () => {
         id_produto: produtos[0]?.id || null, // id_produto: id do produto selecionado (primeiro do carrinho)
         nome_campanha: formData.campaignName || null, // nome_campanha: input de nome da campanha (CartResume)
         duracao_campanha: selectedDurationGlobal || null, // duracao_campanha: valor do select de duração
-        inicio_campanha: formData.startDate || null, // inicio_campanha: valor do popover de data
+        inicio_campanha: formData.startDate ? formData.startDate.split('T')[0] : null, // inicio_campanha: valor do popover de data, formato yyyy-MM-dd, igual ao exibido
         arte_campanha: formData.selectedImage || null, // arte_campanha: arquivo selecionado no input de arte (base64 ou url)
         cpf: formData.cpf || null, // cpf: input de CPF (PagamantosPart)
         cnpj: formData.cnpj || null, // cnpj: input de CNPJ (PagamantosPart)
@@ -161,11 +161,12 @@ const PagamantosPart = () => {
         endereco: formData.endereco || formData.enderecoJ || null, // endereco: input de endereço (PF ou PJ)
         numero: formData.numero || formData.numeroJ || null, // numero: input de número (PF ou PJ)
         bairro: formData.bairro || formData.bairroJ || null, // bairro: input de bairro (PF ou PJ)
-        complemento: formData.complemento || formData.complementoJ || null, // complemento: input de complemento (PF ou PJ)
+        complemento: formData.complemento || formData.complementoJ || null,
         cidade: formData.cidade || formData.cidadeJ || null, // cidade: input de cidade (PF ou PJ)
         estado: formData.estado || formData.estadoJ || null, // estado: input de estado (PF ou PJ)
         preco: precoComDesconto, // preço total exibido no resumo de valores
       };
+      console.log('Payload enviado para o backend:', orderPayload);
       console.log("Payload do pedido:", orderPayload);
 
       // 1. Criar order no banco
