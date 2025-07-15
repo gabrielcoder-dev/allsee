@@ -48,16 +48,21 @@ type HeaderResultsDesktopProps = {
 const HeaderResultsDesktop = ({ onDurationChange, selectedDuration }: HeaderResultsDesktopProps) => {
   const [userName, setUserName] = useState<string>('')
   const [location, setLocation] = useState('')
-  const [startDate, setStartDate] = useState<Date | undefined>(new Date())
+  // Remover o estado local de startDate
+  // const [startDate, setStartDate] = useState<Date | undefined>(new Date())
   const [order, setOrder] = useState('')
   const [showFilter, setShowFilter] = useState(false)
   const [open, setOpen] = useState(false)
   const popoverRef = useRef<HTMLDivElement>(null)
   const router = useRouter()
-  const { produtos, setSelectedDurationGlobal, selectedDurationGlobal } = useCart()
+  const { produtos, setSelectedDurationGlobal, selectedDurationGlobal, formData, updateFormData } = useCart()
   const durationValue = selectedDuration || '2'
   const totalNoCarrinho = produtos.reduce((acc, p) => acc + p.quantidade, 0)
   const [showMenuModal, setShowMenuModal] = useState(false)
+
+  // Novo: obter startDate do contexto global
+  const startDate = formData.startDate ? new Date(formData.startDate) : undefined
+  const today = new Date();
 
   useEffect(() => {
     const fetchUserName = async () => {
@@ -145,7 +150,7 @@ const HeaderResultsDesktop = ({ onDurationChange, selectedDuration }: HeaderResu
                 <Button variant="outline" className="bg-gray-50 rounded-lg px-3 py-2 flex items-center gap-2">
                   <CalendarIcon className="w-4 h-4 text-orange-500" />
                   <span>
-                    {startDate ? startDate.toLocaleDateString('pt-BR') : 'início'}
+                    {(startDate || today).toLocaleDateString('pt-BR')}
                   </span>
                   <ChevronDownIcon className="w-4 h-4" />
                 </Button>
@@ -154,7 +159,9 @@ const HeaderResultsDesktop = ({ onDurationChange, selectedDuration }: HeaderResu
                 <Calendar
                   mode="single"
                   selected={startDate}
-                  onSelect={setStartDate}
+                  onSelect={date => {
+                    if (date) updateFormData({ startDate: date.toISOString() });
+                  }}
                   initialFocus
                 />
               </PopoverContent>
