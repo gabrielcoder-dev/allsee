@@ -60,8 +60,20 @@ const HeaderResultsDesktop = ({ onDurationChange, selectedDuration }: HeaderResu
   const totalNoCarrinho = produtos.reduce((acc, p) => acc + p.quantidade, 0)
   const [showMenuModal, setShowMenuModal] = useState(false)
 
+  // Função para criar string yyyy-MM-dd
+  function toYMD(date: Date): string {
+    return date.toISOString().slice(0, 10);
+  }
+  // Função para parsear string yyyy-MM-dd para Date
+  function parseLocalDateString(dateString: string): Date {
+    const [year, month, day] = dateString.split('-').map(Number);
+    return new Date(year, month - 1, day);
+  }
+
   // Novo: obter startDate do contexto global
-  const startDate = formData.startDate ? new Date(formData.startDate) : undefined
+  const startDate = formData.startDate && /^\d{4}-\d{2}-\d{2}$/.test(formData.startDate)
+    ? parseLocalDateString(formData.startDate)
+    : undefined;
   const today = new Date();
 
   useEffect(() => {
@@ -150,7 +162,11 @@ const HeaderResultsDesktop = ({ onDurationChange, selectedDuration }: HeaderResu
                 <Button variant="outline" className="bg-gray-50 rounded-lg px-3 py-2 flex items-center gap-2">
                   <CalendarIcon className="w-4 h-4 text-orange-500" />
                   <span>
-                    {(startDate || today).toLocaleDateString('pt-BR')}
+                    {formData.startDate && /^\d{4}-\d{2}-\d{2}$/.test(formData.startDate)
+                      ? startDate && startDate instanceof Date
+                        ? startDate.toLocaleDateString('pt-BR')
+                        : 'início'
+                      : 'início'}
                   </span>
                   <ChevronDownIcon className="w-4 h-4" />
                 </Button>
@@ -160,7 +176,7 @@ const HeaderResultsDesktop = ({ onDurationChange, selectedDuration }: HeaderResu
                   mode="single"
                   selected={startDate}
                   onSelect={date => {
-                    if (date) updateFormData({ startDate: date.toISOString() });
+                    if (date) updateFormData({ startDate: toYMD(date) });
                   }}
                   initialFocus
                 />

@@ -5,6 +5,8 @@ import { Calendar } from '@/Components/ui/calendar'
 import { Button } from '@/Components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/Components/ui/select'
 import { CalendarIcon } from 'lucide-react'
+import { useCart } from '@/context/CartContext'
+import { Popover, PopoverContent, PopoverTrigger } from '@/Components/ui/popover'
 
 const durations = [
   { label: '2 semanas', value: '2' },
@@ -28,8 +30,11 @@ export default function ModalHeaderMobile({
 }: ModalHeaderMobileProps) {
   const [location, setLocation] = useState('')
   const [duration, setDuration] = useState(selectedDuration)
-  const [startDate, setStartDate] = useState<Date | undefined>(undefined)
   const [showCalendar, setShowCalendar] = useState(false)
+  const [startDate, setStartDate] = useState<Date | undefined>(undefined)
+
+  const { formData, updateFormData, setSelectedDurationGlobal } = useCart();
+  // const startDate = formData.startDate ? new Date(formData.startDate) : undefined; // This line is removed as startDate is now a state variable
 
   // Atualiza a duração quando selectedDuration muda
   useEffect(() => {
@@ -57,10 +62,31 @@ export default function ModalHeaderMobile({
   }
 
   const handleSearch = () => {
+    if (startDate) {
+      updateFormData({ startDate: startDate.toISOString().slice(0, 10) });
+    }
+    if (duration) {
+      setSelectedDurationGlobal(duration);
+    }
     if (onSearch) {
       onSearch(location, duration, startDate)
     }
     onClose()
+  }
+
+  // Função para criar string UTC yyyy-MM-ddT00:00:00Z
+  function toUTCDateString(date: Date): string {
+    const pad = (n: number) => n.toString().padStart(2, '0');
+    return `${date.getUTCFullYear()}-${pad(date.getUTCMonth() + 1)}-${pad(date.getUTCDate())}T00:00:00Z`;
+  }
+  // Função para criar string yyyy-MM-dd
+  function toYMD(date: Date): string {
+    return date.toISOString().slice(0, 10);
+  }
+  // Função para parsear string yyyy-MM-dd para Date
+  function parseLocalDateString(dateString: string): Date {
+    const [year, month, day] = dateString.split('-').map(Number);
+    return new Date(year, month - 1, day);
   }
 
   return (
@@ -98,20 +124,29 @@ export default function ModalHeaderMobile({
               </SelectContent>
             </Select>
             {/* Início */}
-            <div className="relative w-full flex justify-center">
-              <Button
-                type="button"
-                variant="outline"
-                className="w-full justify-between border border-gray-200 rounded-lg px-3 py-2 text-base"
-                onClick={() => setShowCalendar(true)}
-              >
-                <span className={startDate ? "text-gray-900" : "text-gray-500"}>
-                  {startDate
-                    ? startDate.toLocaleDateString('pt-BR')
-                    : 'início'}
-                </span>
-                <CalendarIcon className="w-4 h-4 ml-2 text-gray-500" />
-              </Button>
+            <div className="flex-col w-full">
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className="w-full bg-white border border-gray-200 rounded-lg px-3 py-2 flex items-center gap-2 shadow-none focus:ring-2 focus:ring-orange-200 focus:border-orange-400 text-base font-normal text-gray-700"
+                    style={{ justifyContent: 'flex-start' }}
+                  >
+                    <CalendarIcon className="w-5 h-5 text-orange-500" />
+                    <span className={startDate ? "text-gray-900" : "text-gray-500"}>
+                      {startDate ? startDate.toLocaleDateString('pt-BR') : 'início'}
+                    </span>
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0 border border-gray-200 rounded-lg shadow-lg mt-2">
+                  <Calendar
+                    mode="single"
+                    selected={startDate}
+                    onSelect={setStartDate}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
             </div>
           </div>
           {/* Botão buscar */}
@@ -134,10 +169,10 @@ export default function ModalHeaderMobile({
           >
             <Calendar
               mode="single"
-              selected={startDate}
+              selected={typeof startDate === 'string' ? parseLocalDateString(startDate) : undefined}
               onSelect={date => {
-                setStartDate(date)
-                setShowCalendar(false)
+                if (date) updateFormData({ startDate: toYMD(date) });
+                setShowCalendar(false);
               }}
               className="rounded-lg"
               captionLayout="dropdown"

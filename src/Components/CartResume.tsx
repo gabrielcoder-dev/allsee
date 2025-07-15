@@ -170,12 +170,13 @@ export default function CartResume({ onCartArtSelected, onCampaignNameChange, ar
 
   const handleStartDateChange = (date: Date | undefined) => {
     if (!date) return;
-    const isoDateString = toUTCDateString(date);
-    setStartDate(isoDateString);
-    updateFormData({ startDate: isoDateString });
+    // Salvar apenas yyyy-MM-dd
+    const ymd = date.toISOString().slice(0, 10);
+    setStartDate(ymd);
+    updateFormData({ startDate: ymd });
     // Salva no localStorage
     const formDataStorage = JSON.parse(localStorage.getItem('formData') || '{}');
-    localStorage.setItem('formData', JSON.stringify({ ...formDataStorage, startDate: isoDateString }));
+    localStorage.setItem('formData', JSON.stringify({ ...formDataStorage, startDate: ymd }));
   };
 
   const handleRemoveImage = () => {
@@ -360,8 +361,8 @@ export default function CartResume({ onCartArtSelected, onCampaignNameChange, ar
                     >
                       <CalendarIcon className="w-4 h-4 text-orange-500" />
                       <span>
-                        {startDate
-                          ? formatDateBR(parseLocalDateString(startDate.split('T')[0]))
+                        {startDate && /^\d{4}-\d{2}-\d{2}$/.test(startDate)
+                          ? formatDateBR(parseLocalDateString(startDate))
                           : "início"}
                       </span>
                       <ChevronDownIcon className="w-4 h-4" />
@@ -370,7 +371,7 @@ export default function CartResume({ onCartArtSelected, onCampaignNameChange, ar
                   <PopoverContent className="w-auto p-0">
                     <Calendar
                       mode="single"
-                      selected={startDate ? parseLocalDateString(startDate.split('T')[0]) : undefined}
+                      selected={startDate && /^\d{4}-\d{2}-\d{2}$/.test(startDate) ? parseLocalDateString(startDate) : undefined}
                       onSelect={handleStartDateChange}
                       initialFocus
                     />
