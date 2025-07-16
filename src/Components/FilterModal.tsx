@@ -8,10 +8,11 @@ const ambientes = [
 ]
 
 const tiposMidia = [
-  { label: 'Digital', icon:  <Monitor className="w-5 h-5" />}
+  { label: 'Digital', icon: <Monitor className="w-5 h-5" /> },
+  { label: 'Impresso', icon: <Printer className="w-5 h-5" /> },
 ]
 
-export default function FilterModal({ open, onClose }: { open: boolean, onClose: () => void }) {
+export default function FilterModal({ open, onClose, onFilter }: { open: boolean, onClose: () => void, onFilter?: (tipo: string | null, bairros: string[]) => void }) {
   const [selectedTipo, setSelectedTipo] = useState<string[]>([])
   const [selectedAmbientes, setSelectedAmbientes] = useState<string[]>([])
 
@@ -125,7 +126,10 @@ export default function FilterModal({ open, onClose }: { open: boolean, onClose:
           </button>
           <button
             className="flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white font-semibold rounded-lg px-6 py-2 text-base"
-            onClick={onClose}
+            onClick={() => {
+              if (onFilter) onFilter(selectedTipo[0] || null, selectedAmbientes);
+              onClose();
+            }}
             type="button"
           >
             filtrar

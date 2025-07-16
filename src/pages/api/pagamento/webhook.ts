@@ -24,9 +24,15 @@ export default async function handler(
     const { data, type } = req.body;
 
     if (type === "payment") {
-      const pagamento = await buscarPagamentoMercadoPago(data.id);
-      if (pagamento.status === "approved" && pagamento.external_reference) {
-        await atualizarStatusCompra(pagamento.external_reference, "pago");
+      try {
+        const pagamento = await buscarPagamentoMercadoPago(data.id);
+        if (pagamento.status === "approved" && pagamento.external_reference) {
+          await atualizarStatusCompra(pagamento.external_reference, "pago");
+        }
+      } catch (error) {
+        // Loga o erro, mas não interrompe o fluxo
+        console.error("Erro ao buscar pagamento:", error);
+        // Não retorne erro para o Mercado Pago!
       }
     }
 

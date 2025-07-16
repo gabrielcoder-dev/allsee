@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { createClient } from '@supabase/supabase-js'
-import { PlayIcon, ShoppingCartIcon, TrashIcon, User2 } from 'lucide-react'
+import { PlayIcon, ShoppingCartIcon, TrashIcon, User2, Monitor, Printer } from 'lucide-react'
 import ModalLogin from './ModalLogin'
 
 const supabase = createClient(
@@ -24,6 +24,7 @@ type Anuncio = {
   duration_4: boolean;
   duration_12: boolean;
   duration_24: boolean;
+  type_screen: 'digital' | 'impresso';
 }
 
 type GetAnunciosResultsProps = {
@@ -113,7 +114,15 @@ export default function GetAnunciosAdmin({ selectedDuration = '2' }: GetAnuncios
                   />
                 </div>
                 <div className="flex gap-2 mb-2">
-                  <span className="bg-purple-600 text-white text-xs px-2 py-1 rounded font-medium">digital</span>
+                  {anuncio.type_screen?.toLowerCase() === 'impresso' ? (
+                    <span className="bg-green-600 text-white text-xs px-2 py-1 rounded font-medium flex items-center gap-1">
+                      <Printer className="w-4 h-4 mr-1 inline" /> impresso
+                    </span>
+                  ) : (
+                    <span className="bg-purple-600 text-white text-xs px-2 py-1 rounded font-medium flex items-center gap-1">
+                      <Monitor className="w-4 h-4 mr-1 inline" /> digital
+                    </span>
+                  )}
                 </div>
                 <h3 className="font-bold text-lg">{anuncio.name}</h3>
                 <div className="text-gray-500 text-xs mb-1">{anuncio.address}</div>

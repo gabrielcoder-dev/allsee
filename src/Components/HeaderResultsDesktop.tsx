@@ -43,9 +43,10 @@ type Produto = {
 type HeaderResultsDesktopProps = {
   onDurationChange?: (value: string) => void;
   selectedDuration?: string;
+  onTipoMidiaChange?: (tipo: string | null, bairros: string[]) => void;
 }
 
-const HeaderResultsDesktop = ({ onDurationChange, selectedDuration }: HeaderResultsDesktopProps) => {
+const HeaderResultsDesktop = ({ onDurationChange, selectedDuration, onTipoMidiaChange }: HeaderResultsDesktopProps) => {
   const [userName, setUserName] = useState<string>('')
   const [location, setLocation] = useState('')
   // Remover o estado local de startDate
@@ -53,6 +54,7 @@ const HeaderResultsDesktop = ({ onDurationChange, selectedDuration }: HeaderResu
   const [order, setOrder] = useState('')
   const [showFilter, setShowFilter] = useState(false)
   const [open, setOpen] = useState(false)
+  const [tipoMidia, setTipoMidia] = useState<string | null>(null)
   const popoverRef = useRef<HTMLDivElement>(null)
   const router = useRouter()
   const { produtos, setSelectedDurationGlobal, selectedDurationGlobal, formData, updateFormData } = useCart()
@@ -256,7 +258,10 @@ const HeaderResultsDesktop = ({ onDurationChange, selectedDuration }: HeaderResu
         </div>
 
         {/* Modal de filtro */}
-        <FilterModal open={showFilter} onClose={() => setShowFilter(false)} />
+        <FilterModal open={showFilter} onClose={() => setShowFilter(false)} onFilter={(tipo, bairros) => {
+          setTipoMidia(tipo);
+          if (onTipoMidiaChange) onTipoMidiaChange(tipo, bairros);
+        }} />
         <ModalMenu open={showMenuModal} onClose={() => setShowMenuModal(false)} />
 
       </div>

@@ -29,6 +29,7 @@ export default function ModalCreateAnuncios({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [typeScreen, setTypeScreen] = useState<string>("Digital"); // Estado para tipo de mídia
 
   if (!open) return null;
 
@@ -87,6 +88,7 @@ export default function ModalCreateAnuncios({
           duration_4: duration.includes("4"),
           duration_12: duration.includes("12"),
           duration_24: duration.includes("24"),
+          type_screen: typeScreen, // Adiciona o tipo de mídia
         },
       ]);
 
@@ -102,6 +104,7 @@ export default function ModalCreateAnuncios({
       setVisualizacoes("");
       setPrice("");
       setDuration([]);
+      setTypeScreen("Digital"); // Reseta tipo de mídia
     } catch (err: any) {
       setError(err.message || "Erro ao cadastrar Totten.");
     } finally {
@@ -111,7 +114,7 @@ export default function ModalCreateAnuncios({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-      <div className="bg-white rounded-2xl shadow-xl p-6 w-full max-w-md mx-2 relative">
+      <div className="bg-white rounded-2xl shadow-xl p-4 sm:p-6 w-full max-w-lg sm:max-w-xl md:max-w-2xl mx-2 relative overflow-y-auto max-h-[90vh]">
         <button
           className="absolute top-3 right-3 p-2 rounded hover:bg-gray-100"
           onClick={onClose}
@@ -188,6 +191,27 @@ export default function ModalCreateAnuncios({
             min={0}
             step="0.01"
           />
+
+          {/* Tipo de mídia */}
+          <span className="text-xs font-semibold text-gray-700 pl-1 mt-2">Tipo de mídia</span>
+          <div className="flex gap-2 mb-2">
+            <button
+              type="button"
+              className={`flex-1 py-2 rounded-lg border font-semibold transition-colors duration-200 cursor-pointer ${typeScreen === 'Digital' ? 'border-orange-500 text-orange-500 bg-white' : 'border-gray-300 text-gray-700 bg-white'}`}
+              onClick={() => setTypeScreen('Digital')}
+              aria-pressed={typeScreen === 'Digital'}
+            >
+              Digital
+            </button>
+            <button
+              type="button"
+              className={`flex-1 py-2 rounded-lg border font-semibold transition-colors duration-200 cursor-pointer ${typeScreen === 'Impresso' ? 'border-orange-500 text-orange-500 bg-white' : 'border-gray-300 text-gray-700 bg-white'}`}
+              onClick={() => setTypeScreen('Impresso')}
+              aria-pressed={typeScreen === 'Impresso'}
+            >
+              Impresso
+            </button>
+          </div>
           <span className="text-xs font-semibold text-gray-700 pl-1">Duração</span>
           <div className="flex flex-col gap-1">
             {["2", "4", "12", "24"].map((semana) => {

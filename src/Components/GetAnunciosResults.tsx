@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { createClient } from '@supabase/supabase-js'
 import { useCart } from '@/context/CartContext'
-import { PlayIcon, ShoppingCartIcon, TrashIcon, User2, ZoomIn } from 'lucide-react'
+import { PlayIcon, ShoppingCartIcon, TrashIcon, User2, ZoomIn, Monitor, Printer } from 'lucide-react'
 import ModalLogin from './ModalLogin'
 import ImageModal from './ImageModal'
 
@@ -26,14 +26,17 @@ type Anuncio = {
   duration_4: boolean
   duration_12: boolean
   duration_24: boolean
+  type_screen: string;
 }
 
 type GetAnunciosResultsProps = {
   onAdicionarProduto?: (produto: Anuncio) => void;
   selectedDuration?: string;
+  tipoMidia?: string | null;
+  bairros?: string[];
 }
 
-export default function GetAnunciosResults({ onAdicionarProduto, selectedDuration = '2' }: GetAnunciosResultsProps) {
+export default function GetAnunciosResults({ onAdicionarProduto, selectedDuration = '2', tipoMidia, bairros }: GetAnunciosResultsProps) {
   const { adicionarProduto, removerProduto, produtos, atualizarProdutosComNovaDuracao } = useCart()
   const [anuncios, setAnuncios] = useState<Anuncio[]>([])
   const [loading, setLoading] = useState(true)
@@ -47,33 +50,36 @@ export default function GetAnunciosResults({ onAdicionarProduto, selectedDuratio
       if (selectedDuration === '4') durationColumn = 'duration_4';
       if (selectedDuration === '12') durationColumn = 'duration_12';
       if (selectedDuration === '24') durationColumn = 'duration_24';
-      const { data, error } = await supabase
+      let query = supabase
         .from('anuncios')
         .select('*')
         .eq(durationColumn, true)
-        .order('id', { ascending: false })
-      if (!error && data) {
-        console.log("Anúncios carregados do Supabase:", data);
-        // Verificar se todos os anúncios têm o campo address
-        data.forEach((anuncio, index) => {
-          console.log(`Anúncio ${index}:`, {
-            id: anuncio.id,
-            name: anuncio.name,
-            address: anuncio.address,
-            hasAddress: 'address' in anuncio,
-            addressType: typeof anuncio.address
-          });
-        });
-        setAnuncios(data)
-        // Atualiza os produtos do carrinho com a nova duração
-        atualizarProdutosComNovaDuracao(data, selectedDuration);
+        .order('id', { ascending: false });
+      if (tipoMidia) {
+        query = query.eq('type_screen', tipoMidia);
+      }
+      const { data, error } = await query;
+      // Garante que data e filteredData são arrays
+      const anunciosData: any[] = Array.isArray(data) ? data : [];
+      let filteredData: any[] = anunciosData;
+      if (!error) {
+        // Filtrar por bairros (address)
+        if (bairros && bairros.length > 0) {
+          filteredData = anunciosData.filter((anuncio: any) =>
+            bairros.some(bairro => anuncio.address?.toLowerCase().includes(bairro.toLowerCase()))
+          );
+        }
+        setAnuncios(filteredData)
+        atualizarProdutosComNovaDuracao(filteredData, selectedDuration);
       } else {
         console.error("Erro ao carregar anúncios:", error);
+        setAnuncios([]);
+        atualizarProdutosComNovaDuracao([], selectedDuration);
       }
       setLoading(false)
     }
     fetchAnuncios()
-  }, [selectedDuration])
+  }, [selectedDuration, tipoMidia, JSON.stringify(bairros)])
 
   if (loading) return <div>Carregando anúncios...</div>
   if (!anuncios.length) return <div>Nenhum anúncio encontrado.</div>
@@ -139,11 +145,11 @@ export default function GetAnunciosResults({ onAdicionarProduto, selectedDuratio
                   hover:shadow-xl
                 "
               >
-                <div className="rounded-lg overflow-hidden h-40 flex items-center justify-center bg-gray-100 mb-2 cursor-pointer relative group" onClick={() => setModalImage({ image: anuncio.image, name: anuncio.name, address: anuncio.address })}>
+                <div className="rounded-lg overflow-hidden h-48 flex items-center justify-center bg-gray-100 mb-2 cursor-pointer relative group" onClick={() => setModalImage({ image: anuncio.image, name: anuncio.name, address: anuncio.address })}>
                   <img
                     src={anuncio.image}
                     alt={anuncio.name}
-                    className="object-cover w-full h-40"
+                    className="object-cover w-full h-48"
                   />
                   {/* Overlay de hover */}
                   <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
@@ -151,7 +157,15 @@ export default function GetAnunciosResults({ onAdicionarProduto, selectedDuratio
                   </div>
                 </div>
                 <div className="flex gap-2 mb-2">
-                  <span className="bg-purple-600 text-white text-xs px-2 py-1 rounded font-medium">Digital</span>
+                  {anuncio.type_screen?.toLowerCase() === 'impresso' ? (
+                    <span className="bg-green-600 text-white text-xs px-2 py-1 rounded font-medium flex items-center gap-1">
+                      <Printer className="w-4 h-4 mr-1 inline" /> impresso
+                    </span>
+                  ) : (
+                    <span className="bg-purple-600 text-white text-xs px-2 py-1 rounded font-medium flex items-center gap-1">
+                      <Monitor className="w-4 h-4 mr-1 inline" /> digital
+                    </span>
+                  )}
                 </div>
                 <h3 className="font-bold text-lg">{anuncio.name}</h3>
                 <div className="text-gray-500 text-xs mb-1">{anuncio.address}</div>

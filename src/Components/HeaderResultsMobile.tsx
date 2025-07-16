@@ -23,12 +23,14 @@ type MobileHeaderProps = {
   onDurationChange?: (value: string) => void;
   selectedDuration?: string;
   onSearch?: (location: string, duration: string, startDate: Date | undefined) => void;
+  onTipoMidiaChange?: (tipo: string | null, bairros: string[]) => void;
 }
 
 export default function MobileHeader({ 
   onDurationChange, 
   selectedDuration = '2',
-  onSearch 
+  onSearch,
+  onTipoMidiaChange
 }: MobileHeaderProps) {
   const [userName, setUserName] = useState<string>('')
   const [location, setLocation] = useState('')
@@ -37,6 +39,7 @@ export default function MobileHeader({
   const [showModal, setShowModal] = useState(false)
   const [showFilter, setShowFilter] = useState(false)
   const [open, setOpen] = useState(false)
+  const [tipoMidia, setTipoMidia] = useState<string | null>(null)
   const popoverRef = useRef<HTMLDivElement>(null)
   const { produtos, setSelectedDurationGlobal, selectedDurationGlobal } = useCart()
   const totalNoCarrinho = produtos.reduce((acc, p) => acc + p.quantidade, 0)
@@ -199,7 +202,10 @@ export default function MobileHeader({
       )}
 
       {/* Modal de filtro */}
-      <FilterModal open={showFilter} onClose={() => setShowFilter(false)} />
+      <FilterModal open={showFilter} onClose={() => setShowFilter(false)} onFilter={(tipo, bairros) => {
+        setTipoMidia(tipo);
+        if (onTipoMidiaChange) onTipoMidiaChange(tipo, bairros);
+      }} />
 
       <ModalMenu open={showMenuModal} onClose={() => setShowMenuModal(false)} />
     </>

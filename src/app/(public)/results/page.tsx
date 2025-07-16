@@ -15,6 +15,8 @@ const Mapbox = dynamic(() => import('@/Components/MapboxClient'), { ssr: false }
 const Page = () => {
   const { selectedDurationGlobal, setSelectedDurationGlobal } = useCart();
   const [produtos, setProdutos] = useState<any[]>([]);
+  const [tipoMidia, setTipoMidia] = useState<string | null>(null);
+  const [bairros, setBairros] = useState<string[]>([]);
 
   // Função para adicionar produto ao carrinho
   function handleAdicionarProduto(produto: any) {
@@ -30,15 +32,16 @@ const Page = () => {
 
   return (
     <div className="flex flex-col h-screen">
-      <HeaderResultsDesktop onDurationChange={setSelectedDurationGlobal} selectedDuration={selectedDurationGlobal} />
+      <HeaderResultsDesktop onDurationChange={setSelectedDurationGlobal} selectedDuration={selectedDurationGlobal} onTipoMidiaChange={(tipo, bairros) => { setTipoMidia(tipo); setBairros(bairros); }} />
       <MobileHeader 
         onDurationChange={setSelectedDurationGlobal} 
         selectedDuration={selectedDurationGlobal}
         onSearch={handleSearch}
+        onTipoMidiaChange={(tipo, bairros) => { setTipoMidia(tipo); setBairros(bairros); }}
       />
       {/* Área principal com scroll controlado */}
       <div className="flex flex-1 min-h-0 overflow-hidden xl:pl-16 justify-center xl:justify-between">
-        <GetAnunciosResults onAdicionarProduto={handleAdicionarProduto} selectedDuration={selectedDurationGlobal} />
+        <GetAnunciosResults onAdicionarProduto={handleAdicionarProduto} selectedDuration={selectedDurationGlobal} tipoMidia={tipoMidia} bairros={bairros} />
         <Mapbox />
       </div>
 
