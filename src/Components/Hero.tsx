@@ -10,7 +10,7 @@ const Hero = () => {
       {/* left content */}
       <div className='w-full flex mt-32 md:mt-24 flex-col gap-8 md:w-xl'>
         <button className='border border-orange-600 p-2 w-full md:w-72 rounded-3xl text-orange-600 font-semibold'>
-          Anuncie com nossos Tottens
+          Anuncie com nossos Totens
         </button>
 
         <h2 className='text-3xl md:text-5xl font-semibold'>

@@ -75,7 +75,7 @@ export default function Mapbox() {
   useEffect(() => {
     async function fetchAndGeocode() {
       setLoading(true)
-      const { data, error } = await supabase.from('totten').select('*')
+      const { data, error } = await supabase.from('toten').select('*')
       if (error || !data) {
         setTotens([])
         setLoading(false)

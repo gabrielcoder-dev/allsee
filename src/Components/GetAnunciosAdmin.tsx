@@ -1,9 +1,11 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { createClient } from '@supabase/supabase-js'
-import { PlayIcon, ShoppingCartIcon, TrashIcon, User2, Monitor, Printer } from 'lucide-react'
+import { PlayIcon, ShoppingCartIcon, TrashIcon, User2, Monitor, Printer, Pencil } from 'lucide-react'
 import ModalLogin from './ModalLogin'
+import ModalCreateAnuncios from './ModalCreateAnuncios'
+import ConfirmDeleteModal from './ConfirmDeleteModal'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -29,15 +31,20 @@ type Anuncio = {
 
 type GetAnunciosResultsProps = {
   selectedDuration?: string;
+  onFetchAnunciosRef?: (ref: () => Promise<void>) => void;
 }
 
-export default function GetAnunciosAdmin({ selectedDuration = '2' }: GetAnunciosResultsProps) {
+export default function GetAnunciosAdmin({ selectedDuration = '2', onFetchAnunciosRef }: GetAnunciosResultsProps) {
   const [anuncios, setAnuncios] = useState<Anuncio[]>([])
   const [loading, setLoading] = useState(true)
   const [removingId, setRemovingId] = useState<number | null>(null)
   const [showLoginModal, setShowLoginModal] = useState(false)
+  const [anuncioEditando, setAnuncioEditando] = useState<Anuncio | null>(null)
+  const [showEditModal, setShowEditModal] = useState(false)
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [totemToDelete, setTotemToDelete] = useState<Anuncio | null>(null)
 
-  async function fetchAnuncios() {
+  const fetchAnuncios = useCallback(async () => {
     setLoading(true)
     let durationColumn = 'duration_2';
     if (selectedDuration === '4') durationColumn = 'duration_4';
@@ -65,11 +72,18 @@ export default function GetAnunciosAdmin({ selectedDuration = '2' }: GetAnuncios
       console.error("Erro ao carregar anúncios:", error);
     }
     setLoading(false)
-  }
+  }, [selectedDuration])
 
   useEffect(() => {
     fetchAnuncios()
   }, [selectedDuration])
+
+  // Expor a função fetchAnuncios para o componente pai
+  useEffect(() => {
+    if (onFetchAnunciosRef) {
+      onFetchAnunciosRef(fetchAnuncios)
+    }
+  }, [onFetchAnunciosRef, fetchAnuncios])
 
   async function removerTotem(id: number) {
     setRemovingId(id)
@@ -87,26 +101,53 @@ export default function GetAnunciosAdmin({ selectedDuration = '2' }: GetAnuncios
     setRemovingId(null)
   }
 
+  function handleDeleteClick(anuncio: Anuncio) {
+    setTotemToDelete(anuncio)
+    setShowDeleteModal(true)
+  }
+
+  function handleConfirmDelete() {
+    if (totemToDelete) {
+      removerTotem(totemToDelete.id)
+    }
+  }
+
   if (loading) return <div>Carregando anúncios...</div>
   if (!anuncios.length) return <div>Nenhum anúncio encontrado.</div>
 
   return (
     <>
       {showLoginModal && <ModalLogin onClose={() => setShowLoginModal(false)} />}
+      {showEditModal && anuncioEditando && (
+        <ModalCreateAnuncios
+          open={showEditModal}
+          onClose={() => { setShowEditModal(false); setAnuncioEditando(null); }}
+          anuncio={anuncioEditando}
+          onSaved={fetchAnuncios}
+        />
+      )}
+      {showDeleteModal && totemToDelete && (
+        <ConfirmDeleteModal
+          isOpen={showDeleteModal}
+          onClose={() => { setShowDeleteModal(false); setTotemToDelete(null); }}
+          onConfirm={handleConfirmDelete}
+          totemName={totemToDelete.name}
+        />
+      )}
       <div className="flex-1 min-h-0 overflow-y-auto pr-2">
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6 p-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 p-2 md:p-4">
           {anuncios.map(anuncio => {
             return (
               <div
                 key={anuncio.id}
                 className="
-                  bg-white rounded-2xl shadow-lg border border-gray-100 p-3 flex flex-col gap-1
-                  w-full max-w-xl h-[440px]
-                  transition-all
+                  bg-white rounded-xl md:rounded-2xl shadow-lg border border-gray-100 p-3 md:p-4 flex flex-col gap-2 md:gap-3
+                  w-full h-auto min-h-[400px] md:min-h-[440px]
+                  transition-all duration-200
                   hover:shadow-xl
                 "
               >
-                <div className="rounded-lg overflow-hidden h-40 flex items-center justify-center bg-gray-100 mb-2">
+                <div className="rounded-lg overflow-hidden h-28 md:h-32 flex items-center justify-center bg-gray-100 mb-2">
                   <img
                     src={anuncio.image}
                     alt={anuncio.name}
@@ -116,37 +157,47 @@ export default function GetAnunciosAdmin({ selectedDuration = '2' }: GetAnuncios
                 <div className="flex gap-2 mb-2">
                   {anuncio.type_screen?.toLowerCase() === 'impresso' ? (
                     <span className="bg-green-600 text-white text-xs px-2 py-1 rounded font-medium flex items-center gap-1">
-                      <Printer className="w-4 h-4 mr-1 inline" /> impresso
+                      <Printer className="w-3 h-3 mr-1 inline" /> impresso
                     </span>
                   ) : (
                     <span className="bg-purple-600 text-white text-xs px-2 py-1 rounded font-medium flex items-center gap-1">
-                      <Monitor className="w-4 h-4 mr-1 inline" /> digital
+                      <Monitor className="w-3 h-3 mr-1 inline" /> digital
                     </span>
                   )}
                 </div>
-                <h3 className="font-bold text-lg">{anuncio.name}</h3>
-                <div className="text-gray-500 text-xs mb-1">{anuncio.address}</div>
-                <div className="flex gap-8 mb-1">
+                <h3 className="font-bold text-base md:text-lg line-clamp-2">{anuncio.name}</h3>
+                <div className="text-gray-500 text-xs mb-1 break-words">{anuncio.address}</div>
+                <div className="flex gap-4 md:gap-8 mb-1">
                   <div className="flex flex-col items-start">
                     <span className="text-[10px] text-gray-500 font-medium lowercase flex items-center gap-1">exibições <span className="text-[10px]"><PlayIcon className='w-3' /></span></span>
-                    <span className="font-bold text-base">{formatarMilhar(anuncio.display)}</span>
+                    <span className="font-bold text-sm md:text-base">{formatarMilhar(anuncio.display)}</span>
                   </div>
                   <div className="flex flex-col items-start">
                     <span className="text-[10px] text-gray-500 font-medium lowercase flex items-center gap-1">alcance <span className="text-[10px]"><User2 className='w-3' /></span></span>
-                    <span className="font-bold text-base">{formatarMilhar(anuncio.views)}</span>
+                    <span className="font-bold text-sm md:text-base">{formatarMilhar(anuncio.views)}</span>
                   </div>
                 </div>
                 <div className="text-xs text-gray-800 mb-1 font-bold">Telas: {anuncio.screens}</div>
-                <div className="text-lg font-bold mb-1 text-green-700">R$ {Number(anuncio.price).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
+                <div className="text-base md:text-lg font-bold mb-1 text-green-700">R$ {Number(anuncio.price).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
                 <div className="text-xs text-gray-500 mb-2">/ {selectedDuration} semana{selectedDuration === '24' || selectedDuration === '4' || selectedDuration === '2' ? (Number(selectedDuration) > 1 ? 's' : '') : ''}</div>
-                <button
-                  className={`w-full cursor-pointer flex items-center justify-center gap-4 border rounded-lg py-2 text-base font-semibold transition border-red-400 text-red-600 hover:bg-red-50 ${removingId === anuncio.id ? 'opacity-50 pointer-events-none' : ''}`}
-                  onClick={() => removerTotem(anuncio.id)}
-                  disabled={removingId === anuncio.id}
-                >
-                  {removingId === anuncio.id ? 'Removendo...' : 'Remover totem'}
-                  <TrashIcon className="inline w-4 h-4 ml-2" />
-                </button>
+                <div className="flex gap-2 mt-auto">
+                  <button
+                    className={`flex-1 cursor-pointer flex items-center justify-center gap-2 border rounded-lg py-2 text-xs md:text-sm font-semibold transition border-red-400 text-red-600 hover:bg-red-50 ${removingId === anuncio.id ? 'opacity-50 pointer-events-none' : ''}`}
+                    onClick={() => handleDeleteClick(anuncio)}
+                    disabled={removingId === anuncio.id}
+                  >
+                    <span className="hidden sm:inline">{removingId === anuncio.id ? 'Removendo...' : 'Remover'}</span>
+                    <span className="sm:hidden">{removingId === anuncio.id ? '...' : 'Remover'}</span>
+                    <TrashIcon className="inline w-3 h-3 md:w-4 md:h-4" />
+                  </button>
+                  <button
+                    className="w-10 md:w-12 flex items-center justify-center border rounded-lg py-2 text-xs md:text-sm font-semibold transition border-blue-400 text-blue-600 hover:bg-blue-50"
+                    title="Editar"
+                    onClick={() => { setAnuncioEditando(anuncio); setShowEditModal(true); }}
+                  >
+                    <Pencil className="inline w-3 h-3 md:w-4 md:h-4" />
+                  </button>
+                </div>
               </div>
             )
           })}

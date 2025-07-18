@@ -43,74 +43,84 @@ const AproveitionAdmin = () => {
     document.body.removeChild(a);
   };
 
-  if (loading) return <div>Carregando pedidos...</div>;
-  if (!orders.length) return <div>Nenhum pedido encontrado.</div>;
+  if (loading) return <div className="p-4">Carregando pedidos...</div>;
+  if (!orders.length) return <div className="p-4">Nenhum pedido encontrado.</div>;
 
   return (
-    <div className="w-full h-full p-2 md:p-10 overflow-auto">
-      {orders.map((order) => (
-        <div
-          key={order.id}
-          className="flex flex-row flex-wrap items-center gap-2 justify-between border border-gray-300 rounded-2xl p-2 mb-4 bg-white"
-        >
-          <div className="flex gap-2 items-center min-w-[120px]">
-            {order.arte_campanha ? (
-              order.arte_campanha.startsWith("data:image") || order.arte_campanha.match(/\.(jpg|jpeg|png|gif|bmp|webp)$/i) ? (
-                <img
-                  src={order.arte_campanha}
-                  alt={`Arte do pedido ${order.id}`}
-                  className="w-20 sm:w-24 md:w-32 rounded-2xl object-cover"
-                />
-              ) : isVideo(order.arte_campanha) ? (
-                <video
-                  src={order.arte_campanha}
-                  className="w-20 sm:w-24 md:w-32 rounded-2xl object-cover"
-                  controls={false}
-                  preload="metadata"
-                />
+    <div className="w-full h-full p-3 md:p-6 overflow-auto">
+      <h2 className="text-2xl md:text-3xl font-bold text-orange-600 mb-4 md:mb-6">Aprovação de Pedidos</h2>
+      <div className="space-y-3 md:space-y-4">
+        {orders.map((order) => (
+          <div
+            key={order.id}
+            className="flex flex-col md:flex-row md:items-center gap-3 md:gap-4 justify-between border border-gray-300 rounded-xl md:rounded-2xl p-3 md:p-4 bg-white shadow-sm"
+          >
+            <div className="flex items-center gap-3 md:gap-4 min-w-0 flex-1">
+              {order.arte_campanha ? (
+                order.arte_campanha.startsWith("data:image") || order.arte_campanha.match(/\.(jpg|jpeg|png|gif|bmp|webp)$/i) ? (
+                  <img
+                    src={order.arte_campanha}
+                    alt={`Arte do pedido ${order.id}`}
+                    className="w-16 h-16 md:w-24 md:h-24 rounded-lg md:rounded-xl object-cover flex-shrink-0"
+                  />
+                ) : isVideo(order.arte_campanha) ? (
+                  <video
+                    src={order.arte_campanha}
+                    className="w-16 h-16 md:w-24 md:h-24 rounded-lg md:rounded-xl object-cover flex-shrink-0"
+                    controls={false}
+                    preload="metadata"
+                  />
+                ) : (
+                  <Image
+                    src={order.arte_campanha}
+                    alt={`Arte do pedido ${order.id}`}
+                    width={96}
+                    height={96}
+                    className="w-16 h-16 md:w-24 md:h-24 rounded-lg md:rounded-xl object-cover flex-shrink-0"
+                  />
+                )
               ) : (
-                <Image
-                  src={order.arte_campanha}
-                  alt={`Arte do pedido ${order.id}`}
-                  width={128}
-                  height={96}
-                  className="w-20 sm:w-24 md:w-32 rounded-2xl object-cover"
-                />
-              )
-            ) : (
-              <div className="w-20 sm:w-24 md:w-32 h-20 sm:h-24 md:h-32 bg-gray-200 rounded-2xl flex items-center justify-center text-gray-400">
-                Sem imagem
+                <div className="w-16 h-16 md:w-24 md:h-24 bg-gray-200 rounded-lg md:rounded-xl flex items-center justify-center text-gray-400 flex-shrink-0">
+                  <span className="text-xs md:text-sm">Sem imagem</span>
+                </div>
+              )}
+              <div className="flex flex-col md:flex-row items-start md:items-center gap-2 md:gap-4 min-w-0 flex-1">
+                <div className="flex items-center gap-2 md:gap-4">
+                  <button
+                    className="text-gray-500 hover:text-orange-600 text-sm md:text-base font-medium transition-colors"
+                    onClick={() => order.arte_campanha && handleDownload(order.arte_campanha, order.id)}
+                  >
+                    Baixar
+                  </button>
+                  <button
+                    className="text-gray-500 hover:text-orange-600 text-sm md:text-base font-medium transition-colors"
+                    onClick={() => order.arte_campanha && setModalFile({ url: order.arte_campanha, id: order.id })}
+                  >
+                    Assistir
+                  </button>
+                </div>
+                <span className="text-sm md:text-base font-bold text-gray-700">Pedido #{order.id}</span>
               </div>
-            )}
-            <div className="flex items-center gap-2 sm:gap-4">
-              <p
-                className="text-gray-500 cursor-pointer hover:text-orange-600 text-xl sm:text-sm md:text-base"
-                onClick={() => order.arte_campanha && handleDownload(order.arte_campanha, order.id)}
-              >
-                Baixar
-              </p>
-              <p
-                className="text-gray-500 cursor-pointer hover:text-orange-600 text-xl sm:text-sm md:text-base"
-                onClick={() => order.arte_campanha && setModalFile({ url: order.arte_campanha, id: order.id })}
-              >
-                Assistir
-              </p>
+            </div>
+            <div className="flex items-center gap-2 md:gap-3 flex-shrink-0">
+              <button className="bg-green-500 hover:bg-green-600 cursor-pointer text-white rounded-lg md:rounded-xl px-3 py-2 font-bold text-xs md:text-sm transition-colors min-w-[70px]">
+                Aprovar
+              </button>
+              <button className="bg-red-500 hover:bg-red-600 cursor-pointer text-white rounded-lg md:rounded-xl px-3 py-2 font-bold text-xs md:text-sm transition-colors min-w-[70px]">
+                Recusar
+              </button>
             </div>
           </div>
-          <div className="flex items-center gap-2 sm:gap-4 p-2 min-w-[160px] w-auto justify-center">
-            <p className="mx-2 my-2 md:my-0 text-center md:text-left min-w-[80px] font-bold">Detalhes</p>
-            <button className="bg-green-500 cursor-pointer text-white rounded-2xl px-3 py-2 font-bold text-xs sm:text-sm md:text-base min-w-[70px]">Aprovar</button>
-            <button className="bg-red-500 cursor-pointer text-white rounded-2xl px-3 py-2 font-bold text-xs sm:text-sm md:text-base min-w-[70px]">Recusar</button>
-          </div>
-        </div>
-      ))}
+        ))}
+      </div>
+      
       {/* Modal para assistir arquivo */}
       {modalFile && (
-        <div className="fixed inset-0 z-[9999] flex items-end justify-center md:items-center md:justify-center">
-          <div className="absolute inset-0 bg-gray-500 opacity-50" onClick={() => setModalFile(null)}></div>
-          <div className="relative bg-white rounded-2xl shadow-2xl p-7 max-w-2xl w-full flex flex-col items-center opacity-100 z-10" onClick={e => e.stopPropagation()}>
+        <div className="fixed inset-0 z-[9999] flex items-end justify-center md:items-center md:justify-center p-4">
+          <div className="absolute inset-0 bg-black/50" onClick={() => setModalFile(null)}></div>
+          <div className="relative bg-white rounded-xl md:rounded-2xl shadow-2xl p-4 md:p-7 max-w-2xl w-full flex flex-col items-center opacity-100 z-10" onClick={e => e.stopPropagation()}>
             <button
-              className="absolute top-2 cursor-pointer right-2 text-gray-400 hover:text-gray-700 text-xl font-bold"
+              className="absolute top-2 right-2 cursor-pointer text-gray-400 hover:text-gray-700 text-xl font-bold p-2"
               onClick={() => setModalFile(null)}
               aria-label="Fechar"
             >
@@ -120,13 +130,13 @@ const AproveitionAdmin = () => {
               <img
                 src={modalFile.url}
                 alt={`Arquivo do pedido ${modalFile.id}`}
-                className="object-contain max-h-[400px] w-auto rounded mb-4 shadow-lg"
+                className="object-contain max-h-[300px] md:max-h-[400px] w-auto rounded mb-4 shadow-lg"
               />
             ) : isVideo(modalFile.url) ? (
               <video
                 src={modalFile.url}
                 controls
-                className="object-contain max-h-[400px] w-auto rounded mb-4 shadow-lg"
+                className="object-contain max-h-[300px] md:max-h-[400px] w-auto rounded mb-4 shadow-lg"
                 autoPlay
               />
             ) : (
@@ -135,11 +145,11 @@ const AproveitionAdmin = () => {
                 alt={`Arquivo do pedido ${modalFile.id}`}
                 width={400}
                 height={400}
-                className="object-contain max-h-[400px] w-auto rounded mb-4 shadow-lg"
+                className="object-contain max-h-[300px] md:max-h-[400px] w-auto rounded mb-4 shadow-lg"
               />
             )}
             <button
-              className="bg-orange-500 hover:bg-orange-600 text-white rounded-2xl px-4 py-2 font-bold text-base mt-2"
+              className="bg-orange-500 hover:bg-orange-600 text-white rounded-lg md:rounded-xl px-4 py-2 font-bold text-sm md:text-base mt-2 transition-colors"
               onClick={() => handleDownload(modalFile.url, modalFile.id)}
             >
               Baixar arquivo

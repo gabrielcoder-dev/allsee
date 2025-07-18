@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import ModalCreateAnuncios from '@/Components/ModalCreateAnuncios'
 import NavBarAdmin from '@/Components/NavBarAdmin'
 import AnunciosAdminView from '@/Components/AnunciosAdminView'
@@ -12,6 +12,18 @@ import AproveitionAdmin from '@/Components/AproveitionAdmin'
 const Page = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [selectedMenu, setSelectedMenu] = useState('anuncios');
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768)
+    }
+    
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [])
 
   let ContentComponent;
   switch (selectedMenu) {
@@ -32,14 +44,18 @@ const Page = () => {
   }
 
   return (
-    <div className='h-screen flex'>
+    <div className='h-screen flex overflow-hidden'>
       <NavBarAdmin 
         mobileOpen={mobileOpen} 
         setMobileOpen={setMobileOpen} 
         selectedMenu={selectedMenu}
         setSelectedMenu={setSelectedMenu}
       />
-      {ContentComponent}
+      <main className={`flex-1 overflow-y-auto transition-all duration-300 ${
+        isMobile ? 'w-full' : 'ml-0'
+      }`}>
+        {ContentComponent}
+      </main>
     </div>
   )
 }

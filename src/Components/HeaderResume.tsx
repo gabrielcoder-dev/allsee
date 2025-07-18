@@ -28,7 +28,7 @@ const orderOptions = [
   { label: 'alfabética', value: 'alphabetical' },
 ]
 
-// Certifique-se de que este tipo corresponde ao tipo Produto usado em ModalCartTotten
+// Certifique-se de que este tipo corresponde ao tipo Produto usado em ModalCartToten
 type Produto = {
   id: string
   name: string
@@ -38,7 +38,7 @@ type Produto = {
   quantity: number
   duration: string
   screens: number
-  // Adicione outros campos conforme necessário para corresponder ao ModalCartTotten
+  // Adicione outros campos conforme necessário para corresponder ao ModalCartToten
 }
 
 export const HeaderResume = () => {

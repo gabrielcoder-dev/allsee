@@ -37,7 +37,7 @@ type Produto = {
   quantity: number
   duration: string
   screens: number
-  // Adicione outros campos conforme necessário para corresponder ao ModalCartTotten
+  // Adicione outros campos conforme necessário para corresponder ao ModalCartToten
 }
 
 type HeaderResultsDesktopProps = {
