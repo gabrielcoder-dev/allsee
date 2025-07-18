@@ -32,7 +32,7 @@ export default function ConfirmDeleteModal({ isOpen, onClose, onConfirm, totemNa
             </div>
             <div className="flex-1">
               <p className="text-sm sm:text-base text-gray-700 font-medium">
-                Tem certeza que quer excluir esse totem?
+                Tem certeza que deseja excluir esse totem?
               </p>
               {totemName && (
                 <p className="text-xs sm:text-sm text-gray-500 mt-1">
