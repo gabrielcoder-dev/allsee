@@ -24,8 +24,6 @@ const durations = [
 const orderOptions = [
   { label: '$ menor para maior', value: 'price-asc' },
   { label: '$ maior para menor', value: 'price-desc' },
-  { label: 'distância', value: 'distance' },
-  { label: 'alfabética', value: 'alphabetical' },
 ]
 
 // Certifique-se de que este tipo corresponde ao tipo Produto usado em ModalCartToten

@@ -34,14 +34,29 @@ type GetAnunciosResultsProps = {
   selectedDuration?: string;
   tipoMidia?: string | null;
   bairros?: string[];
+  orderBy?: string;
 }
 
-export default function GetAnunciosResults({ onAdicionarProduto, selectedDuration = '2', tipoMidia, bairros }: GetAnunciosResultsProps) {
+export default function GetAnunciosResults({ onAdicionarProduto, selectedDuration = '2', tipoMidia, bairros, orderBy }: GetAnunciosResultsProps) {
   const { adicionarProduto, removerProduto, produtos, atualizarProdutosComNovaDuracao } = useCart()
   const [anuncios, setAnuncios] = useState<Anuncio[]>([])
   const [loading, setLoading] = useState(true)
   const [showLoginModal, setShowLoginModal] = useState(false)
   const [modalImage, setModalImage] = useState<{ image: string, name: string, address: string } | null>(null)
+
+  // Função para ordenar anúncios
+  const ordenarAnuncios = (anuncios: Anuncio[], orderBy: string) => {
+    if (!orderBy) return anuncios;
+    
+    return [...anuncios].sort((a, b) => {
+      if (orderBy === 'price-asc') {
+        return a.price - b.price;
+      } else if (orderBy === 'price-desc') {
+        return b.price - a.price;
+      }
+      return 0;
+    });
+  };
 
   useEffect(() => {
     async function fetchAnuncios() {
@@ -69,8 +84,10 @@ export default function GetAnunciosResults({ onAdicionarProduto, selectedDuratio
             bairros.some(bairro => anuncio.address?.toLowerCase().includes(bairro.toLowerCase()))
           );
         }
-        setAnuncios(filteredData)
-        atualizarProdutosComNovaDuracao(filteredData, selectedDuration);
+        // Aplicar ordenação
+        const anunciosOrdenados = ordenarAnuncios(filteredData, orderBy || '');
+        setAnuncios(anunciosOrdenados)
+        atualizarProdutosComNovaDuracao(anunciosOrdenados, selectedDuration);
       } else {
         console.error("Erro ao carregar anúncios:", error);
         setAnuncios([]);
@@ -79,7 +96,7 @@ export default function GetAnunciosResults({ onAdicionarProduto, selectedDuratio
       setLoading(false)
     }
     fetchAnuncios()
-  }, [selectedDuration, tipoMidia, JSON.stringify(bairros)])
+  }, [selectedDuration, tipoMidia, JSON.stringify(bairros), orderBy])
 
   if (loading) return <div>Carregando anúncios...</div>
   if (!anuncios.length) return <div>Nenhum anúncio encontrado.</div>

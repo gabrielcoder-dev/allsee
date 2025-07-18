@@ -24,8 +24,6 @@ const durations = [
 const orderOptions = [
   { label: '$ menor para maior', value: 'price-asc' },
   { label: '$ maior para menor', value: 'price-desc' },
-  { label: 'distância', value: 'distance' },
-  { label: 'alfabética', value: 'alphabetical' },
 ]
 
 type Produto = {
@@ -44,14 +42,15 @@ type HeaderResultsDesktopProps = {
   onDurationChange?: (value: string) => void;
   selectedDuration?: string;
   onTipoMidiaChange?: (tipo: string | null, bairros: string[]) => void;
+  orderBy?: string;
+  onOrderChange?: (order: string) => void;
 }
 
-const HeaderResultsDesktop = ({ onDurationChange, selectedDuration, onTipoMidiaChange }: HeaderResultsDesktopProps) => {
+const HeaderResultsDesktop = ({ onDurationChange, selectedDuration, onTipoMidiaChange, orderBy, onOrderChange }: HeaderResultsDesktopProps) => {
   const [userName, setUserName] = useState<string>('')
   const [location, setLocation] = useState('')
   // Remover o estado local de startDate
   // const [startDate, setStartDate] = useState<Date | undefined>(new Date())
-  const [order, setOrder] = useState('')
   const [showFilter, setShowFilter] = useState(false)
   const [open, setOpen] = useState(false)
   const [tipoMidia, setTipoMidia] = useState<string | null>(null)
@@ -194,7 +193,7 @@ const HeaderResultsDesktop = ({ onDurationChange, selectedDuration, onTipoMidiaC
           className="flex items-center gap-1 text-gray-600 font-medium px-2 py-1 rounded hover:bg-gray-100"
           onClick={() => setOpen(o => !o)}
         >
-          {orderOptions.find(opt => opt.value === order)?.label || 'ordenar'}
+          ordenar
           <ChevronDownIcon className="w-4 h-4" />
         </button>
         {open && (
@@ -203,10 +202,10 @@ const HeaderResultsDesktop = ({ onDurationChange, selectedDuration, onTipoMidiaC
               <button
                 key={opt.value}
                 className={`w-full text-left px-4 py-2 hover:bg-gray-100 text-sm ${
-                  order === opt.value ? 'font-semibold text-orange-600' : 'text-gray-900'
+                  orderBy === opt.value ? 'font-semibold text-orange-600' : 'text-gray-900'
                 }`}
                 onClick={() => {
-                  setOrder(opt.value)
+                  onOrderChange?.(opt.value)
                   setOpen(false)
                 }}
                 type="button"

@@ -17,6 +17,7 @@ const Page = () => {
   const [produtos, setProdutos] = useState<any[]>([]);
   const [tipoMidia, setTipoMidia] = useState<string | null>(null);
   const [bairros, setBairros] = useState<string[]>([]);
+  const [orderBy, setOrderBy] = useState<string>('');
 
   // Função para adicionar produto ao carrinho
   function handleAdicionarProduto(produto: any) {
@@ -32,16 +33,30 @@ const Page = () => {
 
   return (
     <div className="flex flex-col h-screen">
-      <HeaderResultsDesktop onDurationChange={setSelectedDurationGlobal} selectedDuration={selectedDurationGlobal} onTipoMidiaChange={(tipo, bairros) => { setTipoMidia(tipo); setBairros(bairros); }} />
+      <HeaderResultsDesktop 
+        onDurationChange={setSelectedDurationGlobal} 
+        selectedDuration={selectedDurationGlobal} 
+        onTipoMidiaChange={(tipo, bairros) => { setTipoMidia(tipo); setBairros(bairros); }}
+        orderBy={orderBy}
+        onOrderChange={setOrderBy}
+      />
       <MobileHeader 
         onDurationChange={setSelectedDurationGlobal} 
         selectedDuration={selectedDurationGlobal}
         onSearch={handleSearch}
         onTipoMidiaChange={(tipo, bairros) => { setTipoMidia(tipo); setBairros(bairros); }}
+        orderBy={orderBy}
+        onOrderChange={setOrderBy}
       />
       {/* Área principal com scroll controlado */}
       <div className="flex flex-1 min-h-0 overflow-hidden xl:pl-16 justify-center xl:justify-between">
-        <GetAnunciosResults onAdicionarProduto={handleAdicionarProduto} selectedDuration={selectedDurationGlobal} tipoMidia={tipoMidia} bairros={bairros} />
+        <GetAnunciosResults 
+          onAdicionarProduto={handleAdicionarProduto} 
+          selectedDuration={selectedDurationGlobal} 
+          tipoMidia={tipoMidia} 
+          bairros={bairros}
+          orderBy={orderBy}
+        />
         <Mapbox />
       </div>
 

@@ -15,8 +15,6 @@ import ModalMenu from './ModalMenu'
 const orderOptions = [
   { label: '$ menor para maior', value: 'price-asc' },
   { label: '$ maior para menor', value: 'price-desc' },
-  { label: 'distância', value: 'distance' },
-  { label: 'alfabética', value: 'alphabetical' },
 ]
 
 type MobileHeaderProps = {
@@ -24,17 +22,21 @@ type MobileHeaderProps = {
   selectedDuration?: string;
   onSearch?: (location: string, duration: string, startDate: Date | undefined) => void;
   onTipoMidiaChange?: (tipo: string | null, bairros: string[]) => void;
+  orderBy?: string;
+  onOrderChange?: (order: string) => void;
 }
 
 export default function MobileHeader({ 
   onDurationChange, 
   selectedDuration = '2',
   onSearch,
-  onTipoMidiaChange
+  onTipoMidiaChange,
+  orderBy,
+  onOrderChange
 }: MobileHeaderProps) {
   const [userName, setUserName] = useState<string>('')
   const [location, setLocation] = useState('')
-  const [order, setOrder] = useState('')
+
   const [showTopBar, setShowTopBar] = useState(true)
   const [showModal, setShowModal] = useState(false)
   const [showFilter, setShowFilter] = useState(false)
@@ -157,7 +159,7 @@ export default function MobileHeader({
                     className="flex items-center gap-1 text-gray-600 font-medium px-2 py-1 rounded hover:bg-gray-100"
                     onClick={() => setOpen(o => !o)}
                   >
-                    {orderOptions.find(opt => opt.value === order)?.label || 'ordenar'}
+                    ordenar
                     <ChevronDownIcon className="w-4 h-4" />
                   </button>
                   {open && (
@@ -166,10 +168,10 @@ export default function MobileHeader({
                         <button
                           key={opt.value}
                           className={`w-full text-left px-4 py-2 hover:bg-gray-100 text-sm ${
-                            order === opt.value ? 'font-semibold text-orange-600' : 'text-gray-900'
+                            orderBy === opt.value ? 'font-semibold text-orange-600' : 'text-gray-900'
                           }`}
                           onClick={() => {
-                            setOrder(opt.value)
+                            onOrderChange?.(opt.value)
                             setOpen(false)
                           }}
                           type="button"
