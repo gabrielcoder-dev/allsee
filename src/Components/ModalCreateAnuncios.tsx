@@ -37,6 +37,7 @@ export default function ModalCreateAnuncios({
 
   useEffect(() => {
     if (anuncio) {
+      console.log("Editando anúncio:", anuncio);
       setName(anuncio.name || "");
       setImageUrl(anuncio.image || "");
       setAddress(anuncio.address || "");
@@ -44,7 +45,9 @@ export default function ModalCreateAnuncios({
       setExibicoes(anuncio.display ? String(anuncio.display) : "");
       setVisualizacoes(anuncio.views ? String(anuncio.views) : "");
       setPrice(anuncio.price ? String(anuncio.price) : "");
-      setTypeScreen(anuncio.type_screen === 'impresso' ? 'Impresso' : 'Digital');
+      const tipoMidia = anuncio.type_screen === 'impresso' ? 'Impresso' : 'Digital';
+      console.log("Tipo de mídia do anúncio:", anuncio.type_screen, "->", tipoMidia);
+      setTypeScreen(tipoMidia);
       const dur: string[] = [];
       if (anuncio.duration_2) dur.push("2");
       if (anuncio.duration_4) dur.push("4");
@@ -117,24 +120,31 @@ export default function ModalCreateAnuncios({
 
       if (anuncio && anuncio.id) {
         // UPDATE
-        const { error: updateError } = await supabase
+        const updateData = {
+          name,
+          image: imgUrl,
+          address,
+          screens: Number(screens),
+          display: typeScreen === 'Impresso' ? 'fixo' : Number(exibicoes),
+          views: Number(visualizacoes),
+          price: Number(price),
+          duration_2: duration.includes("2"),
+          duration_4: duration.includes("4"),
+          duration_12: duration.includes("12"),
+          duration_24: duration.includes("24"),
+          type_screen: typeScreen.toLowerCase(),
+        };
+        console.log("Dados atuais do anúncio:", anuncio);
+        console.log("Dados que serão atualizados:", updateData);
+        console.log("Atualizando anúncio:", { id: anuncio.id, updateData });
+        const { data: updateResult, error: updateError } = await supabase
           .from("anuncios")
-          .update({
-            name,
-            image: imgUrl,
-            address,
-            screens: Number(screens),
-            display: typeScreen === 'Impresso' ? 'fixo' : Number(exibicoes),
-            views: Number(visualizacoes),
-            price: Number(price),
-            duration_2: duration.includes("2"),
-            duration_4: duration.includes("4"),
-            duration_12: duration.includes("12"),
-            duration_24: duration.includes("24"),
-            type_screen: typeScreen.toLowerCase(),
-          })
-          .eq("id", anuncio.id);
+          .update(updateData)
+          .eq("id", anuncio.id)
+          .select();
+        console.log("Resultado da atualização:", { updateResult, updateError });
         if (updateError) throw updateError;
+        console.log("Totem atualizado com sucesso:", { id: anuncio.id, type_screen: typeScreen.toLowerCase() });
         toast.success("Totem atualizado com sucesso!");
       } else {
         // INSERT
@@ -157,9 +167,14 @@ export default function ModalCreateAnuncios({
         if (insertError) throw insertError;
         toast.success("Totem cadastrado com sucesso!");
       }
-      if (onSaved) onSaved();
-      onClose();
+              console.log("Chamando onSaved...");
+        if (onSaved) {
+          console.log("Executando onSaved...");
+          onSaved();
+        }
+        onClose();
     } catch (err: any) {
+      console.error("Erro ao salvar totem:", err);
       setError(err.message || "Erro ao salvar Totem.");
     } finally {
       setLoading(false);

@@ -46,14 +46,23 @@ export default function GetAnunciosAdmin({ selectedDuration = '2', onFetchAnunci
 
   const fetchAnuncios = useCallback(async () => {
     setLoading(true)
+    console.log("Buscando anúncios com selectedDuration:", selectedDuration);
     let durationColumn = 'duration_2';
     if (selectedDuration === '4') durationColumn = 'duration_4';
     if (selectedDuration === '12') durationColumn = 'duration_12';
     if (selectedDuration === '24') durationColumn = 'duration_24';
+    console.log("Usando coluna de duração:", durationColumn);
+    
+    // Primeiro, vamos verificar a estrutura da tabela
+    const { data: tableInfo, error: tableError } = await supabase
+      .from('anuncios')
+      .select('*')
+      .limit(1);
+    console.log("Estrutura da tabela (primeiro registro):", tableInfo);
+    
     const { data, error } = await supabase
       .from('anuncios')
       .select('*')
-      .eq(durationColumn, true)
       .order('id', { ascending: false })
     if (!error && data) {
       console.log("Anúncios carregados do Supabase:", data);
@@ -63,6 +72,10 @@ export default function GetAnunciosAdmin({ selectedDuration = '2', onFetchAnunci
           id: anuncio.id,
           name: anuncio.name,
           address: anuncio.address,
+          type_screen: anuncio.type_screen,
+          display: anuncio.display,
+          views: anuncio.views,
+          price: anuncio.price,
           hasAddress: 'address' in anuncio,
           addressType: typeof anuncio.address
         });
@@ -123,7 +136,10 @@ export default function GetAnunciosAdmin({ selectedDuration = '2', onFetchAnunci
           open={showEditModal}
           onClose={() => { setShowEditModal(false); setAnuncioEditando(null); }}
           anuncio={anuncioEditando}
-          onSaved={fetchAnuncios}
+          onSaved={() => {
+            console.log("onSaved chamado, recarregando anúncios...");
+            fetchAnuncios();
+          }}
         />
       )}
       {showDeleteModal && totemToDelete && (
