@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import HeaderResultsDesktop from '@/Components/HeaderResultsDesktop'
 import HeaderResultsMobile from '@/Components/HeaderResultsMobile'
 import CartResume from '@/Components/CartResume'
@@ -9,12 +9,41 @@ import { HeaderResume } from '@/Components/HeaderResume'
 import { useRouter } from 'next/navigation'
 import { useCart } from '@/context/CartContext'
 import { toast } from 'sonner'
+import { supabase } from '@/lib/supabase'
 
 const page = () => {
   const router = useRouter();
-  const { produtos, formData } = useCart();
+  const { produtos, formData, removerProduto } = useCart();
   const [artError, setArtError] = useState<string | undefined>(undefined);
   const [campaignError, setCampaignError] = useState<string | undefined>(undefined);
+
+  // Validação automática dos itens do carrinho ao abrir a página
+  useEffect(() => {
+    async function validarCarrinho() {
+      if (produtos.length === 0) return;
+      // Busca todos os anúncios válidos do banco
+      const { data: anuncios, error } = await supabase
+        .from('anuncios')
+        .select('id');
+      if (error) {
+        console.error('Erro ao validar carrinho:', error);
+        return;
+      }
+      const idsValidos = (anuncios || []).map((a: any) => a.id.toString());
+      let algumRemovido = false;
+      produtos.forEach((produto) => {
+        if (!idsValidos.includes(produto.id)) {
+          removerProduto(produto.id);
+          algumRemovido = true;
+        }
+      });
+      if (algumRemovido) {
+        toast.warning('Alguns itens do seu carrinho não estão mais disponíveis e foram removidos.');
+      }
+    }
+    validarCarrinho();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleAvançar = () => {
     let hasError = false;
