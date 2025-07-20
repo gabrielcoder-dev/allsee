@@ -189,7 +189,13 @@ export default function GetAnunciosResults({ onAdicionarProduto, selectedDuratio
                 <div className="flex gap-8 mb-1">
                   <div className="flex flex-col items-start">
                     <span className="text-[10px] text-gray-500 font-medium lowercase flex items-center gap-1">exibições <span className="text-[10px]"><PlayIcon className='w-3' /></span></span>
-                    <span className="font-bold text-base">{formatarMilhar(displayCalculado)}</span>
+                    <span className="font-bold text-base">
+                      {String(anuncio.display) === 'fixo'
+                        ? 'fixo'
+                        : anuncio.type_screen === 'digital'
+                          ? formatarMilhar(displayCalculado)
+                          : formatarMilhar(Number(anuncio.display) && !isNaN(Number(anuncio.display)) ? Number(anuncio.display) : 0)}
+                    </span>
                   </div>
                   <div className="flex flex-col items-start">
                     <span className="text-[10px] text-gray-500 font-medium lowercase flex items-center gap-1">alcance <span className="text-[10px]"><User2 className='w-3' /></span></span>
@@ -242,7 +248,8 @@ export default function GetAnunciosResults({ onAdicionarProduto, selectedDuratio
                         duration_2: anuncio.duration_2,
                         duration_4: anuncio.duration_4,
                         duration_12: anuncio.duration_12,
-                        duration_24: anuncio.duration_24
+                        duration_24: anuncio.duration_24,
+                        type_screen: anuncio.type_screen && anuncio.type_screen.trim() ? anuncio.type_screen : 'digital',
                       })
                     }
                   }}

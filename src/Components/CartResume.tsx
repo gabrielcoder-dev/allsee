@@ -1,6 +1,6 @@
 "use client";
 import { useCart } from "@/context/CartContext";
-import { ArrowLeft, CalendarIcon, ChevronDownIcon, X } from "lucide-react";
+import { ArrowLeft, CalendarIcon, ChevronDownIcon, X, Trash } from "lucide-react";
 import {
   Select,
   SelectTrigger,
@@ -51,6 +51,42 @@ function parseUTCDateString(dateString: string): Date {
   return new Date(Date.UTC(year, month - 1, day));
 }
 
+// Badge organizado para type_screen
+const renderTypeScreenBadge = (type: string | undefined) => {
+  const t = type?.toLowerCase();
+  if (t === 'impresso') {
+    return (
+      <span className="bg-green-600 text-white text-xs px-3 py-1 rounded font-medium flex items-center gap-1">
+        <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 mr-1 inline" fill="none" viewBox="0 0 24 24" stroke="currentColor"><rect x="6" y="9" width="12" height="6" rx="1" stroke="currentColor" strokeWidth="2"/><rect x="9" y="3" width="6" height="6" rx="1" stroke="currentColor" strokeWidth="2"/><rect x="9" y="17" width="6" height="4" rx="1" stroke="currentColor" strokeWidth="2"/></svg>
+        impresso
+      </span>
+    );
+  } else if (t === 'digital') {
+    return (
+      <span className="bg-purple-600 text-white text-xs px-3 py-1 rounded font-medium flex items-center gap-1">
+        <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 mr-1 inline" fill="none" viewBox="0 0 24 24" stroke="currentColor"><rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" strokeWidth="2"/><rect x="8" y="19" width="8" height="2" rx="1" stroke="currentColor" strokeWidth="2"/></svg>
+        digital
+      </span>
+    );
+  } else if (t) {
+    // Badge para outros tipos
+    return (
+      <span className="bg-gray-500 text-white text-xs px-3 py-1 rounded font-medium flex items-center gap-1">
+        <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 mr-1 inline" fill="none" viewBox="0 0 24 24" stroke="currentColor"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2"/></svg>
+        {t}
+      </span>
+    );
+  } else {
+    // Caso não informado
+    return (
+      <span className="bg-gray-300 text-gray-700 text-xs px-3 py-1 rounded font-medium flex items-center gap-1">
+        <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 mr-1 inline" fill="none" viewBox="0 0 24 24" stroke="currentColor"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2"/></svg>
+        tipo não informado
+      </span>
+    );
+  }
+};
+
 export default function CartResume({ onCartArtSelected, onCampaignNameChange, artError, campaignError }: {
   onCartArtSelected?: (selected: boolean) => void,
   onCampaignNameChange?: (name: string) => void,
@@ -75,6 +111,7 @@ export default function CartResume({ onCartArtSelected, onCampaignNameChange, ar
   const [previewUrl, setPreviewUrl] = useState<string | null>(formData.previewUrl);
   const [duration, setDuration] = useState(selectedDurationGlobal);
   const [campaignName, setCampaignName] = useState(formData.campaignName);
+  const [openGroups, setOpenGroups] = useState<{ [key: string]: boolean }>({ impresso: true, digital: true });
 
   // Sincronizar duration local com o global
   useEffect(() => {
@@ -236,7 +273,7 @@ export default function CartResume({ onCartArtSelected, onCampaignNameChange, ar
             localStorage.removeItem("formData");
             window.location.reload();
           }}
-          className="text-sm bg-red-500 text-white px-4 py-2 rounded-md cursor-pointer disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed"
+          className="text-sm text-red-500 underline px-4 py-2 rounded-md cursor-pointer disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed"
           disabled={produtos.length === 0}
         >
           Limpar carrinho
@@ -247,69 +284,70 @@ export default function CartResume({ onCartArtSelected, onCampaignNameChange, ar
           {produtos.length === 0 ? (
             <p>Nenhum produto adicionado.</p>
           ) : (
-            produtos.map((item) => {
-              console.log("Item individual:", item);
-              // Lógica de cálculo de preço igual ao HeaderResults/GetAnunciosResults
-              let precoCalculado = calcularPreco(item);
+            ['impresso', 'digital'].map((tipo) => {
+              const itensTipo = produtos.filter((item) => (item.type_screen?.toLowerCase() || 'digital') === tipo);
+              if (itensTipo.length === 0) return null;
+              const isOpen = openGroups[tipo];
+              const pontosLabel = itensTipo.length === 1 ? 'ponto' : 'pontos';
               return (
                 <div
-                  key={item.id}
-                  className="border p-4 mb-3 rounded-lg flex sm:flex-row justify-between items-center bg-white shadow-sm"
+                  key={tipo}
+                  className="mb-2 rounded-sm border bg-[#f7f9fb] transition-all duration-300"
+                  style={{ overflow: 'hidden' }}
                 >
-                  <div className="flex flex-col gap-2 flex-1 min-w-0 mb-3 sm:mb-0">
-                    <div className="flex items-center gap-2">
-                      {item.image && (
-                        <img
-                          src={item.image}
-                          alt={item.nome}
-                          className="w-12 h-12 object-cover rounded"
-                        />
-                      )}
-                      <h3 className="font-semibold text-lg">{item.nome}</h3>
-                    </div>
-                    {item.endereco ? (
-                      <p className="text-sm text-gray-600 break-words">
-                        {item.endereco}
-                      </p>
-                    ) : (
-                      <p className="text-sm text-red-500">
-                        Endereço não disponível
-                      </p>
-                    )}
-
-                    {/* Preço original riscado e preço com desconto */}
-                    {(() => {
-                      let precoOriginal = item.preco;
-                      const durationsTrue = [
-                        item.duration_2,
-                        item.duration_4,
-                        item.duration_12,
-                        item.duration_24,
-                      ].filter(Boolean).length;
-                      if (durationsTrue > 1) {
-                        if (duration === "4") precoOriginal = item.preco * 2;
-                        if (duration === "12") precoOriginal = item.preco * 6;
-                        if (duration === "24") precoOriginal = item.preco * 12;
-                      }
-                      return (
-                        <div className="flex flex-col gap-1">
-                          {precoOriginal !== precoCalculado && (
-                            <span className="text-sm text-gray-400 line-through">R$ {Number(precoOriginal).toLocaleString("pt-BR", { minimumFractionDigits: 2 })} x {item.quantidade}</span>
-                          )}
-                          <span className="font-semibold text-green-700">
-                            R$ {precoCalculado.toLocaleString("pt-BR", { minimumFractionDigits: 2 })} x {item.quantidade}
-                            <span className="ml-2 text-xs text-gray-500">/ {duration} semana(s)</span>
-                          </span>
-                        </div>
-                      );
-                    })()}
-                  </div>
-                  <button
-                    className="bg-red-500 hover:bg-red-700 text-white px-4 py-2 rounded-md cursor-pointer"
-                    onClick={() => removerProduto(item.id)}
+                  <div
+                    className={`flex items-center justify-between px-5 py-4 bg-white cursor-pointer select-none transition-colors duration-200 rounded-t-xl`}
+                    onClick={() => setOpenGroups((prev) => ({ ...prev, [tipo]: !prev[tipo] }))}
                   >
-                    Remover
-                  </button>
+                    <span className="font-medium text-base capitalize text-[#3b4252] tracking-tight">
+                      {tipo} ({itensTipo.length} {pontosLabel})
+                    </span>
+                    <button
+                      className="rounded-full p-1 hover:bg-gray-200 transition"
+                      tabIndex={-1}
+                      aria-label={isOpen ? `Fechar ${tipo}` : `Abrir ${tipo}`}
+                      onClick={e => { e.stopPropagation(); setOpenGroups((prev) => ({ ...prev, [tipo]: !prev[tipo] })); }}
+                    >
+                      <svg className={`w-4 h-4 text-gray-500 transition-transform duration-300 ${isOpen ? 'rotate-180' : 'rotate-0'}`} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
+                    </button>
+                  </div>
+                  <div
+                    className={`transition-all duration-300 ${isOpen ? 'max-h-[1000px] opacity-100' : 'max-h-0 opacity-0'} bg-[#f7f9fb]`}
+                    style={{ overflow: 'hidden' }}
+                  >
+                    {isOpen && (
+                      <div className="p-4 space-y-3">
+                        {itensTipo.map((item) => {
+                          let precoCalculado = calcularPreco(item);
+                          return (
+                            <div key={item.id} className="bg-white border border-neutral-200 rounded-lg flex flex-col gap-2 p-3 md:flex-row md:items-center md:gap-0 relative">
+                              <div className="flex-1">
+                                <div className="flex items-center gap-2 mb-1">
+                                  {renderTypeScreenBadge(item.type_screen)}
+                                  <h3 className="font-medium text-base text-[#3b4252]">{item.nome}</h3>
+                                </div>
+                                <div className="text-xs text-gray-600 mb-1">{item.endereco}</div>
+                                <div className="flex items-center gap-4 mt-1">
+                                  <span className="text-base font-semibold text-green-700">R$ {precoCalculado.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</span>
+                                  <span className="text-xs text-gray-500">/ {duration} semana(s)</span>
+                                </div>
+                              </div>
+                              <button
+                                className="md:absolute md:top-1/2 md:-translate-y-1/2 md:right-6 cursor-pointer ml-auto rounded-full bg-[#fee2e2] hover:bg-red-200 transition p-2 px-2 flex items-center justify-center"
+                                onClick={() => removerProduto(item.id)}
+                                title="Remover"
+                                style={{ minWidth: 56, minHeight: 56 }}
+                              >
+                          
+                                  <Trash className="w-5 h-5 text-red-700 font-bold" />
+                               
+                              </button>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
                 </div>
               );
             })
@@ -386,29 +424,36 @@ export default function CartResume({ onCartArtSelected, onCampaignNameChange, ar
                 <div>
                   <span className="block text-xs text-gray-500">exibições</span>
                   <span className="font-bold">
-                    {(() => {
-                      let total = 0;
-                      produtos.forEach((p) => {
-                        let display = Number(p.display) || 0;
-                        const durationsTrue = [
-                          p.duration_2,
-                          p.duration_4,
-                          p.duration_12,
-                          p.duration_24,
-                        ].filter(Boolean).length;
-                        if (durationsTrue > 1) {
-                          if (duration === "4") display = display * 2;
-                          if (duration === "12") display = display * 6;
-                          if (duration === "24") display = display * 12;
-                        }
-                        total += display;
-                      });
-                      return total >= 1000
-                        ? (total / 1000).toLocaleString("pt-BR", {
-                            minimumFractionDigits: 1,
-                            maximumFractionDigits: 1,
-                          }) + " mil"
-                        : total.toLocaleString("pt-BR");
+                    {((): string => {
+                      const temDigital = produtos.some((p: any) => (p.type_screen?.toLowerCase?.() || 'digital') === 'digital');
+                      if (!temDigital) {
+                        return 'fixo';
+                      } else {
+                        let total = 0;
+                        produtos.forEach((p: any) => {
+                          if ((p.type_screen?.toLowerCase?.() || 'digital') === 'digital') {
+                            let display = Number(p.display) || 0;
+                            const durationsTrue = [
+                              p.duration_2,
+                              p.duration_4,
+                              p.duration_12,
+                              p.duration_24,
+                            ].filter(Boolean).length;
+                            if (durationsTrue > 1) {
+                              if (duration === "4") display = display * 2;
+                              if (duration === "12") display = display * 6;
+                              if (duration === "24") display = display * 12;
+                            }
+                            total += display;
+                          }
+                        });
+                        return total >= 1000
+                          ? (total / 1000).toLocaleString("pt-BR", {
+                              minimumFractionDigits: 1,
+                              maximumFractionDigits: 1,
+                            }) + " mil"
+                          : total.toLocaleString("pt-BR");
+                      }
                     })()}
                   </span>
                 </div>

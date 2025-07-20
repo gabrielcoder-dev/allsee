@@ -186,11 +186,19 @@ export default function GetAnunciosAdmin({ selectedDuration = '2', onFetchAnunci
                 <div className="flex gap-4 md:gap-8 mb-1">
                   <div className="flex flex-col items-start">
                     <span className="text-[10px] text-gray-500 font-medium lowercase flex items-center gap-1">exibições <span className="text-[10px]"><PlayIcon className='w-3' /></span></span>
-                    <span className="font-bold text-sm md:text-base">{formatarMilhar(anuncio.display)}</span>
+                    <span className="font-bold text-sm md:text-base">
+                      {anuncio.type_screen === 'digital'
+                        ? formatarMilhar(calcularDisplayPorSemana(anuncio, selectedDuration))
+                        : formatarMilhar(anuncio.display)}
+                    </span>
                   </div>
                   <div className="flex flex-col items-start">
                     <span className="text-[10px] text-gray-500 font-medium lowercase flex items-center gap-1">alcance <span className="text-[10px]"><User2 className='w-3' /></span></span>
-                    <span className="font-bold text-sm md:text-base">{formatarMilhar(anuncio.views)}</span>
+                    <span className="font-bold text-sm md:text-base">
+                      {anuncio.type_screen === 'digital'
+                        ? formatarMilhar(calcularViewsPorSemana(anuncio, selectedDuration))
+                        : formatarMilhar(anuncio.views)}
+                    </span>
                   </div>
                 </div>
                 <div className="text-xs text-gray-800 mb-1 font-bold">Telas: {anuncio.screens}</div>
@@ -228,4 +236,36 @@ function formatarMilhar(valor: number) {
     return (valor / 1000).toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + ' mil';
   }
   return valor?.toLocaleString('pt-BR');
+}
+
+function calcularDisplayPorSemana(anuncio: any, selectedDuration: string) {
+  const durationsTrue = [
+    anuncio.duration_2,
+    anuncio.duration_4,
+    anuncio.duration_12,
+    anuncio.duration_24
+  ].filter(Boolean).length;
+  let display = anuncio.display;
+  if (anuncio.type_screen === 'digital' && durationsTrue > 1) {
+    if (selectedDuration === '4') display = display * 2;
+    if (selectedDuration === '12') display = display * 6;
+    if (selectedDuration === '24') display = display * 12;
+  }
+  return display;
+}
+
+function calcularViewsPorSemana(anuncio: any, selectedDuration: string) {
+  const durationsTrue = [
+    anuncio.duration_2,
+    anuncio.duration_4,
+    anuncio.duration_12,
+    anuncio.duration_24
+  ].filter(Boolean).length;
+  let views = anuncio.views;
+  if (anuncio.type_screen === 'digital' && durationsTrue > 1) {
+    if (selectedDuration === '4') views = views * 2;
+    if (selectedDuration === '12') views = views * 6;
+    if (selectedDuration === '24') views = views * 12;
+  }
+  return views;
 }

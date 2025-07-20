@@ -19,6 +19,7 @@ type Produto = {
   duration_24?: boolean
   selectedDuration?: string
   precoMultiplicado?: number
+  type_screen: string
 }
 
 type FormData = {
