@@ -9,7 +9,7 @@ import {
   SelectValue,
 } from "@/Components/ui/select";
 import { Calendar } from "@/Components/ui/calendar";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   Popover,
   PopoverContent,
@@ -112,6 +112,7 @@ export default function CartResume({ onCartArtSelected, onCampaignNameChange, ar
   const [duration, setDuration] = useState(selectedDurationGlobal);
   const [campaignName, setCampaignName] = useState(formData.campaignName);
   const [openGroups, setOpenGroups] = useState<{ [key: string]: boolean }>({ impresso: true, digital: true });
+  const [videoThumbnail, setVideoThumbnail] = useState<string | null>(null);
 
   // Sincronizar duration local com o global
   useEffect(() => {
@@ -152,6 +153,45 @@ export default function CartResume({ onCartArtSelected, onCampaignNameChange, ar
     return new File([u8arr], filename, { type: mime });
   };
 
+  // Função para gerar thumbnail de vídeo
+  const generateVideoThumbnail = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const video = document.createElement('video');
+      video.preload = 'metadata';
+      video.muted = true;
+      video.src = URL.createObjectURL(file);
+      video.playsInline = true;
+      video.onloadeddata = () => {
+        // Tenta capturar o frame do tempo 1s, se possível
+        if (video.duration < 1) {
+          captureFrame(0);
+        } else {
+          video.currentTime = 1;
+        }
+      };
+      video.onseeked = () => {
+        captureFrame(video.currentTime);
+      };
+      video.onerror = () => {
+        reject('Erro ao carregar vídeo');
+      };
+      function captureFrame(time: number) {
+        const canvas = document.createElement('canvas');
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+          const imageUrl = canvas.toDataURL('image/png');
+          resolve(imageUrl);
+        } else {
+          reject('Erro ao criar contexto do canvas');
+        }
+        URL.revokeObjectURL(video.src);
+      }
+    });
+  };
+
   const durations = [
     { label: "2 semanas", value: "2" },
     { label: "4 semanas", value: "4" },
@@ -165,25 +205,52 @@ export default function CartResume({ onCartArtSelected, onCampaignNameChange, ar
   const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      // Limite de tamanho (5MB para imagem, 10MB para vídeo)
+      const isVideo = file.type.startsWith("video/");
+      const maxSize = isVideo ? 10 * 1024 * 1024 : 5 * 1024 * 1024; // 10MB ou 5MB
+
+      if (file.size > maxSize) {
+        alert(`O arquivo é muito grande. O limite é de ${isVideo ? "10MB para vídeos" : "5MB para imagens"}.`);
+        return;
+      }
+
       setSelectedImage(file);
       const url = URL.createObjectURL(file);
       setPreviewUrl(url);
-      
-      // Converter para Base64 e salvar no contexto
-      try {
-        const base64 = await fileToBase64(file);
+
+      if (!isVideo) {
+        setVideoThumbnail(null);
+        // Salva imagem em base64 no localStorage
+        try {
+          const base64 = await fileToBase64(file);
+          updateFormData({
+            selectedImage: base64,
+            previewUrl: url,
+            isArtSelected: true
+          });
+          const formDataStorage = JSON.parse(localStorage.getItem('formData') || '{}');
+          localStorage.setItem('formData', JSON.stringify({ ...formDataStorage, selectedImage: base64, previewUrl: url, isArtSelected: true }));
+        } catch (error) {
+          console.error('Erro ao converter arquivo para Base64:', error);
+        }
+      } else {
+        // Para vídeo, salva apenas previewUrl e flag no contexto/localStorage
         updateFormData({
-          selectedImage: base64,
+          selectedImage: null,
           previewUrl: url,
           isArtSelected: true
         });
-        // Salva no localStorage
         const formDataStorage = JSON.parse(localStorage.getItem('formData') || '{}');
-        localStorage.setItem('formData', JSON.stringify({ ...formDataStorage, selectedImage: base64, previewUrl: url, isArtSelected: true }));
-      } catch (error) {
-        console.error('Erro ao converter arquivo para Base64:', error);
+        localStorage.setItem('formData', JSON.stringify({ ...formDataStorage, selectedImage: null, previewUrl: url, isArtSelected: true }));
+        // Gerar thumbnail do vídeo
+        try {
+          const thumbnail = await generateVideoThumbnail(file);
+          setVideoThumbnail(thumbnail);
+        } catch (err) {
+          setVideoThumbnail(null);
+        }
       }
-      
+
       if (onCartArtSelected) onCartArtSelected(true);
     }
   };
@@ -531,11 +598,20 @@ export default function CartResume({ onCartArtSelected, onCampaignNameChange, ar
                     >
                       <X className="w-4" />
                     </button>
-                    <img
-                      src={previewUrl}
-                      alt="Arte selecionada"
-                      className="w-12 h-12 object-cover rounded"
-                    />
+                    {/* Se for vídeo e tiver thumbnail, mostra a thumbnail. Senão, mostra previewUrl */}
+                    {selectedImage && selectedImage.type && selectedImage.type.startsWith('video/') && videoThumbnail ? (
+                      <img
+                        src={videoThumbnail}
+                        alt="Thumbnail do vídeo"
+                        className="w-12 h-12 object-cover rounded"
+                      />
+                    ) : (
+                      <img
+                        src={previewUrl}
+                        alt="Arte selecionada"
+                        className="w-12 h-12 object-cover rounded"
+                      />
+                    )}
                     <span>Arte selecionada</span>
                   </div>
                 )}
