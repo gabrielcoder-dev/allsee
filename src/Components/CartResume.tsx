@@ -507,7 +507,7 @@ export default function CartResume({ onCartArtSelected, onCampaignNameChange, ar
                   <>
                     <input
                       type="file"
-                      accept="image/*"
+                      accept="image/*,video/*"
                       id="upload-art"
                       className="hidden"
                       onChange={handleImageChange}
