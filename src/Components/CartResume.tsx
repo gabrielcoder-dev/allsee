@@ -205,12 +205,12 @@ export default function CartResume({ onCartArtSelected, onCampaignNameChange, ar
   const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      // Limite de tamanho (5MB para imagem, 10MB para vídeo)
+      // Limite de tamanho (5MB para imagem, 1GB para vídeo)
       const isVideo = file.type.startsWith("video/");
-      const maxSize = isVideo ? 10 * 1024 * 1024 : 5 * 1024 * 1024; // 10MB ou 5MB
+      const maxSize = isVideo ? 1 * 1024 * 1024 * 1024 : 5 * 1024 * 1024; // 1GB ou 5MB
 
       if (file.size > maxSize) {
-        alert(`O arquivo é muito grande. O limite é de ${isVideo ? "10MB para vídeos" : "5MB para imagens"}.`);
+        alert(`O arquivo é muito grande. O limite é de ${isVideo ? "1GB para vídeos" : "5MB para imagens"}.`);
         return;
       }
 

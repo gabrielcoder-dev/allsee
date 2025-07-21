@@ -108,7 +108,7 @@ export default function GetAnunciosResults({ onAdicionarProduto, selectedDuratio
         <ImageModal imageUrl={modalImage.image} name={modalImage.name} address={modalImage.address} onClose={() => setModalImage(null)} />
       )}
       <div className="flex-1 min-h-0 overflow-y-auto pr-2">
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6 p-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6 p-4 pb-32 md:pb-12">
           {anuncios.map(anuncio => {
             const estaNoCarrinho = produtos.some(p => p.id === anuncio.id.toString())
             // Lógica de cálculo de preço
