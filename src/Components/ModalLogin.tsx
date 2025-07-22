@@ -46,7 +46,7 @@ export default function ModalLogin({ onClose }: { onClose: () => void }) {
         onClick={e => e.stopPropagation()}
       >
         <button className="absolute top-3 right-3 cursor-pointer" onClick={onClose}><X className="w-5 text-gray-600 hover:text-black" /></button>
-        <h2 className="text-2xl font-semibold mb-6 text-center">
+        <h2 className="text-xl font-semibold mb-6 text-center">
          Cadastre ou Entre com Google
         </h2>
         <button
