@@ -22,7 +22,7 @@ export default function ModalLogin({ onClose }: { onClose: () => void }) {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/results`
+          redirectTo: "https://allsee-pi.vercel.app/results"
         }
       })
       if (error) {
