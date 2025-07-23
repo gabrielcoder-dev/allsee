@@ -7,6 +7,7 @@ import 'leaflet/dist/leaflet.css'
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { orangePinIcon } from './CustomMarkerIcon';
+import MiniAnuncioCard from './MiniAnuncioCard';
 
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: require('leaflet/dist/images/marker-icon-2x.png'),
@@ -130,11 +131,8 @@ export default function Mapbox() {
         />
         {markers.map((marker) => (
           <Marker key={marker.id} position={[marker.lat, marker.lng]} icon={orangePinIcon}>
-            <Popup>
-              <strong>{marker.anuncio?.name || marker.anuncio?.nome || marker.anuncio_id}</strong><br />
-              {marker.anuncio?.adress || marker.anuncio?.endereco || ''}<br />
-              Preço: {marker.anuncio?.price || ''}<br />
-              Duração: {marker.anuncio?.duration || ''}
+            <Popup minWidth={260} maxWidth={300} closeButton={true}>
+              <MiniAnuncioCard anuncio={marker.anuncio} />
             </Popup>
           </Marker>
         ))}

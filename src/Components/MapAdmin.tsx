@@ -5,6 +5,8 @@ import { MapContainer, TileLayer, useMapEvents, Marker, Popup } from 'react-leaf
 import 'leaflet/dist/leaflet.css';
 import { supabase } from '../lib/supabase';
 import { orangePinIcon } from './CustomMarkerIcon';
+import { X } from 'lucide-react';
+import MiniAnuncioCard from './MiniAnuncioCard';
 
 // Componente para capturar clique no mapa
 function MapClickHandler({ onMapClick }: { onMapClick: (lat: number, lng: number) => void }) {
@@ -90,49 +92,86 @@ const MapAdmin = () => {
   };
 
   return (
-    <div style={{ width: '100vw', height: '100vh' }}>
-      <MapContainer center={[-15.5556, -54.2811]} zoom={13} style={{ width: '100%', height: '100%' }}>
-        <TileLayer
-          attribution='&copy; <a href="https://osm.org/copyright">OpenStreetMap</a> contributors'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        />
-        <MapClickHandler onMapClick={handleMapClick} />
-        {/* Renderizar markers */}
-        {markers.map((marker: any) => (
-          <Marker key={marker.id} position={[marker.lat, marker.lng]} icon={orangePinIcon}>
-            <Popup>
-              <strong>{marker.anuncio?.name || marker.anuncio?.nome || marker.anuncio_id}</strong><br />
-              {marker.anuncio?.adress || marker.anuncio?.endereco || ''}<br />
-              Preço: {marker.anuncio?.price || ''}<br />
-              Duração: {marker.anuncio?.duration || ''}<br />
-              <button onClick={() => handleRemoveMarker(marker.id)} style={{ marginTop: 8, color: 'red' }}>
-                Remover marker
-              </button>
-            </Popup>
-          </Marker>
-        ))}
-      </MapContainer>
+    <div className="w-full h-full relative">
+      <div className="absolute inset-0 z-0">
+        <MapContainer center={[-15.5556, -54.2811]} zoom={13} style={{ width: '100%', height: '100%' }}>
+          <TileLayer
+            attribution='&copy; <a href="https://osm.org/copyright">OpenStreetMap</a> contributors'
+            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          />
+          <MapClickHandler onMapClick={handleMapClick} />
+          {/* Renderizar markers */}
+          {markers.map((marker: any) => (
+            <Marker key={marker.id} position={[marker.lat, marker.lng]} icon={orangePinIcon}>
+              <Popup minWidth={260} maxWidth={300} closeButton={true}>
+                <MiniAnuncioCard anuncio={marker.anuncio} />
+                <button onClick={() => handleRemoveMarker(marker.id)} className="w-full mt-2 text-xs text-red-600 border border-red-300 rounded px-2 py-1 hover:bg-red-50">Remover marker</button>
+              </Popup>
+            </Marker>
+          ))}
+        </MapContainer>
+      </div>
       {/* Modal simples */}
       {modalOpen && (
-        <div style={{
-          position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh',
-          background: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000
-        }}>
-          <div style={{ background: '#fff', borderRadius: 8, padding: 24, minWidth: 320, maxHeight: '80vh', overflowY: 'auto' }}>
-            <h2 style={{ marginBottom: 16 }}>Selecione um anúncio</h2>
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/40 p-2 sm:p-4">
+          <div className="bg-white rounded-2xl shadow-xl p-3 sm:p-4 md:p-6 w-full max-w-5xl relative overflow-y-auto max-h-[95vh] sm:max-h-[90vh]">
+            <button
+              className="absolute top-2 right-2 sm:top-3 sm:right-3 cursor-pointer p-1.5 sm:p-2"
+              onClick={handleCloseModal}
+            >
+              <X />
+            </button>
+            <h2 className="text-lg sm:text-xl md:text-2xl font-bold mb-3 sm:mb-4 pr-8">Selecione um anúncio</h2>
             {loading ? <p>Carregando anúncios...</p> : (
-              <ul>
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6 p-2">
                 {anuncios.map((anuncio: any) => (
-                  <li key={anuncio.id} style={{ marginBottom: 8, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <span>{anuncio.name || anuncio.nome || anuncio.id}</span>
-                    <button onClick={() => handleAddMarker(anuncio.id)} style={{ marginLeft: 12 }}>
-                      Adicionar marker aqui
+                  <div
+                    key={anuncio.id}
+                    className="bg-white rounded-2xl shadow-lg border border-gray-100 p-3 flex flex-col gap-1 w-full max-w-xl h-[440px] transition-all hover:shadow-xl"
+                  >
+                    <div className="rounded-lg overflow-hidden h-32 flex items-center justify-center bg-gray-100 mb-2">
+                      <img
+                        src={anuncio.image}
+                        alt={anuncio.name || anuncio.nome}
+                        className="object-cover w-full h-32"
+                      />
+                    </div>
+                    <div className="flex gap-2 mb-2">
+                      {anuncio.type_screen?.toLowerCase() === 'impresso' ? (
+                        <span className="bg-green-600 text-white text-xs px-2 py-1 rounded font-medium flex items-center gap-1">
+                          impresso
+                        </span>
+                      ) : (
+                        <span className="bg-purple-600 text-white text-xs px-2 py-1 rounded font-medium flex items-center gap-1">
+                          digital
+                        </span>
+                      )}
+                    </div>
+                    <h3 className="font-bold text-lg line-clamp-2">{anuncio.name || anuncio.nome}</h3>
+                    <div className="text-gray-500 text-xs mb-1 break-words">{anuncio.address || anuncio.adress || anuncio.endereco}</div>
+                    <div className="flex gap-8 mb-1">
+                      <div className="flex flex-col items-start">
+                        <span className="text-[10px] text-gray-500 font-medium lowercase flex items-center gap-1">exibições</span>
+                        <span className="font-bold text-base">{anuncio.display || anuncio.screens || '1'}</span>
+                      </div>
+                      <div className="flex flex-col items-start">
+                        <span className="text-[10px] text-gray-500 font-medium lowercase flex items-center gap-1">alcance</span>
+                        <span className="font-bold text-base">{anuncio.views || anuncio.alcance || '-'}</span>
+                      </div>
+                    </div>
+                    <div className="text-xs text-gray-800 mb-1 font-bold">Telas: {anuncio.screens || 1}</div>
+                    <div className="text-lg font-bold mb-1 text-green-700">R$ {Number(anuncio.price).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
+                    <div className="text-xs text-gray-500 mb-2">/ 2 semanas</div>
+                    <button
+                      className="w-full cursor-pointer flex items-center justify-center gap-4 border rounded-lg py-2 text-base font-semibold transition border-green-400 text-green-600 hover:bg-green-50 mt-auto"
+                      onClick={() => handleAddMarker(anuncio.id)}
+                    >
+                      adicionar marker
                     </button>
-                  </li>
+                  </div>
                 ))}
-              </ul>
+              </div>
             )}
-            <button onClick={handleCloseModal} style={{ marginTop: 16 }}>Fechar</button>
           </div>
         </div>
       )}
