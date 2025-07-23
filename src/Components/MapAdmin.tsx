@@ -154,32 +154,27 @@ const MapAdmin = () => {
               eventHandlers={{
                 click: () => handleMarkerClick(marker),
               }}
-            />
+            >
+              {selectedMarker && selectedMarker.id === marker.id && (
+                <Popup
+                  minWidth={260}
+                  maxWidth={300}
+                >
+                  <MiniAnuncioCard
+                    anuncio={selectedMarker.anuncio}
+                    actionButton={
+                      <button
+                        onClick={() => { handleRemoveMarker(selectedMarker.id); setSelectedMarker(null); }}
+                        className="w-full text-xs text-red-600 border border-red-300 rounded px-2 py-1 hover:bg-red-50"
+                      >
+                        Remover marker
+                      </button>
+                    }
+                  />
+                </Popup>
+              )}
+            </Marker>
           ))}
-          {/* Card customizado sobre o mapa */}
-          {selectedMarker && (() => {
-            const pos = latLngToContainerPoint(selectedMarker.lat, selectedMarker.lng);
-            if (!pos) return null;
-            return (
-              <div
-                id="mini-anuncio-card-popup"
-                className="absolute z-[9999]"
-                style={{ left: pos.left - 135, top: pos.top - 260 }}
-              >
-                <MiniAnuncioCard
-                  anuncio={selectedMarker.anuncio}
-                  actionButton={
-                    <button
-                      onClick={() => { handleRemoveMarker(selectedMarker.id); setSelectedMarker(null); }}
-                      className="w-full text-xs text-red-600 border border-red-300 rounded px-2 py-1 hover:bg-red-50"
-                    >
-                      Remover marker
-                    </button>
-                  }
-                />
-              </div>
-            );
-          })()}
         </MapWithRef>
       </div>
       {/* Modal simples */}

@@ -131,7 +131,7 @@ export default function Mapbox() {
         />
         {markers.map((marker) => (
           <Marker key={marker.id} position={[marker.lat, marker.lng]} icon={orangePinIcon}>
-            <Popup minWidth={260} maxWidth={300} closeButton={true}>
+            <Popup minWidth={260} maxWidth={300}>
               <MiniAnuncioCard anuncio={marker.anuncio} />
             </Popup>
           </Marker>
