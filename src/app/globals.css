@@ -143,3 +143,8 @@
   -webkit-line-clamp: 3;
 }
 
+.custom-orange-marker {
+  background: none !important;
+  border: none !important;
+}
+

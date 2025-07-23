@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { MapContainer, TileLayer, useMapEvents, Marker, Popup } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import { supabase } from '../lib/supabase';
+import { orangePinIcon } from './CustomMarkerIcon';
 
 // Componente para capturar clique no mapa
 function MapClickHandler({ onMapClick }: { onMapClick: (lat: number, lng: number) => void }) {
@@ -98,7 +99,7 @@ const MapAdmin = () => {
         <MapClickHandler onMapClick={handleMapClick} />
         {/* Renderizar markers */}
         {markers.map((marker: any) => (
-          <Marker key={marker.id} position={[marker.lat, marker.lng]}>
+          <Marker key={marker.id} position={[marker.lat, marker.lng]} icon={orangePinIcon}>
             <Popup>
               <strong>{marker.anuncio?.name || marker.anuncio?.nome || marker.anuncio_id}</strong><br />
               {marker.anuncio?.adress || marker.anuncio?.endereco || ''}<br />
