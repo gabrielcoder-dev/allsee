@@ -1,6 +1,6 @@
 import React from 'react';
 
-export default function MiniAnuncioCard({ anuncio }: { anuncio: any }) {
+export default function MiniAnuncioCard({ anuncio, actionButton }: { anuncio: any, actionButton?: React.ReactNode }) {
   return (
     <div className="bg-white rounded-xl shadow border border-gray-100 p-2 flex flex-col gap-1 w-[250px] min-w-[200px] max-w-[270px]">
       <div className="rounded-lg overflow-hidden h-16 flex items-center justify-center bg-gray-100 mb-1">
@@ -36,6 +36,7 @@ export default function MiniAnuncioCard({ anuncio }: { anuncio: any }) {
       <div className="text-xs text-gray-800 mb-1 font-bold">Telas: {anuncio.screens || 1}</div>
       <div className="text-base font-bold mb-1 text-green-700">R$ {Number(anuncio.price).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
       <div className="text-xs text-gray-500 mb-1">/ 2 semanas</div>
+      {actionButton && <div className="mt-2">{actionButton}</div>}
     </div>
   );
 } 

@@ -166,13 +166,17 @@ const MapAdmin = () => {
                 className="absolute z-[9999]"
                 style={{ left: pos.left - 135, top: pos.top - 260 }}
               >
-                <MiniAnuncioCard anuncio={selectedMarker.anuncio} />
-                <button
-                  onClick={() => { handleRemoveMarker(selectedMarker.id); setSelectedMarker(null); }}
-                  className="w-full mt-2 text-xs text-red-600 border border-red-300 rounded px-2 py-1 hover:bg-red-50"
-                >
-                  Remover marker
-                </button>
+                <MiniAnuncioCard
+                  anuncio={selectedMarker.anuncio}
+                  actionButton={
+                    <button
+                      onClick={() => { handleRemoveMarker(selectedMarker.id); setSelectedMarker(null); }}
+                      className="w-full text-xs text-red-600 border border-red-300 rounded px-2 py-1 hover:bg-red-50"
+                    >
+                      Remover marker
+                    </button>
+                  }
+                />
               </div>
             );
           })()}
