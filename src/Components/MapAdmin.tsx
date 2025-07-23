@@ -7,6 +7,7 @@ import { supabase } from '../lib/supabase';
 import { orangePinIcon } from './CustomMarkerIcon';
 import { X } from 'lucide-react';
 import MiniAnuncioCard from './MiniAnuncioCard';
+import L, { Map as MapType, LeafletEvent } from 'leaflet';
 
 // Componente para capturar clique no mapa
 function MapClickHandler({ onMapClick }: { onMapClick: (lat: number, lng: number) => void }) {
@@ -18,12 +19,25 @@ function MapClickHandler({ onMapClick }: { onMapClick: (lat: number, lng: number
   return null;
 }
 
+function MapWithRef({ mapRef, children, ...props }: any) {
+  return (
+    <MapContainer
+      {...props}
+      whenReady={(e: any) => { mapRef.current = e.target; }}
+    >
+      {children}
+    </MapContainer>
+  );
+}
+
 const MapAdmin = () => {
   const [modalOpen, setModalOpen] = useState(false);
   const [clickCoords, setClickCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [anuncios, setAnuncios] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [markers, setMarkers] = useState<any[]>([]);
+  const [selectedMarker, setSelectedMarker] = useState<any | null>(null);
+  const mapRef = useRef<MapType | null>(null);
 
   // Buscar anúncios do Supabase
   useEffect(() => {
@@ -91,10 +105,41 @@ const MapAdmin = () => {
     if (!error && data) setMarkers(data);
   };
 
+  // Função para converter lat/lng para pixel no mapa
+  function latLngToContainerPoint(lat: number, lng: number): { left: number; top: number } | null {
+    if (!mapRef.current) return null;
+    const map = mapRef.current;
+    const point = map.latLngToContainerPoint(L.latLng(lat, lng));
+    return { left: point.x, top: point.y };
+  }
+
+  // Handler para clicar no marker
+  const handleMarkerClick = (marker: any) => {
+    setSelectedMarker(marker);
+  };
+
+  // Handler para clicar fora do card
+  useEffect(() => {
+    if (!selectedMarker) return;
+    function handleClickOutside(e: MouseEvent) {
+      const card = document.getElementById('mini-anuncio-card-popup');
+      if (card && !card.contains(e.target as Node)) {
+        setSelectedMarker(null);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [selectedMarker]);
+
   return (
     <div className="w-full h-full relative">
       <div className="absolute inset-0 z-0">
-        <MapContainer center={[-15.5556, -54.2811]} zoom={13} style={{ width: '100%', height: '100%' }}>
+        <MapWithRef
+          mapRef={mapRef}
+          center={[-15.5556, -54.2811]}
+          zoom={13}
+          style={{ width: '100%', height: '100%' }}
+        >
           <TileLayer
             attribution='&copy; <a href="https://osm.org/copyright">OpenStreetMap</a> contributors'
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -102,14 +147,36 @@ const MapAdmin = () => {
           <MapClickHandler onMapClick={handleMapClick} />
           {/* Renderizar markers */}
           {markers.map((marker: any) => (
-            <Marker key={marker.id} position={[marker.lat, marker.lng]} icon={orangePinIcon}>
-              <Popup minWidth={260} maxWidth={300} closeButton={true}>
-                <MiniAnuncioCard anuncio={marker.anuncio} />
-                <button onClick={() => handleRemoveMarker(marker.id)} className="w-full mt-2 text-xs text-red-600 border border-red-300 rounded px-2 py-1 hover:bg-red-50">Remover marker</button>
-              </Popup>
-            </Marker>
+            <Marker
+              key={marker.id}
+              position={[marker.lat, marker.lng]}
+              icon={orangePinIcon}
+              eventHandlers={{
+                click: () => handleMarkerClick(marker),
+              }}
+            />
           ))}
-        </MapContainer>
+          {/* Card customizado sobre o mapa */}
+          {selectedMarker && (() => {
+            const pos = latLngToContainerPoint(selectedMarker.lat, selectedMarker.lng);
+            if (!pos) return null;
+            return (
+              <div
+                id="mini-anuncio-card-popup"
+                className="absolute z-[9999]"
+                style={{ left: pos.left - 135, top: pos.top - 260 }}
+              >
+                <MiniAnuncioCard anuncio={selectedMarker.anuncio} />
+                <button
+                  onClick={() => { handleRemoveMarker(selectedMarker.id); setSelectedMarker(null); }}
+                  className="w-full mt-2 text-xs text-red-600 border border-red-300 rounded px-2 py-1 hover:bg-red-50"
+                >
+                  Remover marker
+                </button>
+              </div>
+            );
+          })()}
+        </MapWithRef>
       </div>
       {/* Modal simples */}
       {modalOpen && (
