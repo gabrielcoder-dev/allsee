@@ -36,10 +36,26 @@ async function geocodeAddress(address: string): Promise<{ lat: number; lng: numb
   return null
 }
 
+type MarkerType = {
+  id: number;
+  anuncio_id: number;
+  lat: number;
+  lng: number;
+  anuncio: {
+    id: number;
+    name?: string;
+    nome?: string;
+    adress?: string;
+    endereco?: string;
+    price?: number;
+    duration?: number;
+  };
+};
+
 export default function Mapbox() {
   const center: LatLngTuple = [-15.5586, -54.2811]
   const [mapHeight, setMapHeight] = useState<number>(0)
-  const [totens, setTotens] = useState<Totem[]>([])
+  const [markers, setMarkers] = useState<MarkerType[]>([])
   const [loading, setLoading] = useState(true)
   const [mounted, setMounted] = useState(false)
 
@@ -73,27 +89,25 @@ export default function Mapbox() {
   }, [mounted])
 
   useEffect(() => {
-    async function fetchAndGeocode() {
+    async function fetchMarkers() {
       setLoading(true)
-      const { data, error } = await supabase.from('toten').select('*')
+      const { data, error } = await supabase
+        .from('markers')
+        .select('id, anuncio_id, lat, lng, anuncio:anuncio_id(*)')
       if (error || !data) {
-        setTotens([])
+        setMarkers([])
         setLoading(false)
         return
       }
-      const totensWithCoords = await Promise.all(
-        data.map(async (totem: Totem) => {
-          const coords = await geocodeAddress(totem.adress)
-          if (!coords) {
-            console.warn(`Endereço não encontrado para o totem: ${totem.name} (${totem.adress})`)
-          }
-          return coords ? { ...totem, ...coords } : null
-        })
-      )
-      setTotens(totensWithCoords.filter(Boolean) as Totem[])
+      // Corrigir: garantir que anuncio seja objeto, não array
+      const markersFixed = data.map((marker: any) => ({
+        ...marker,
+        anuncio: Array.isArray(marker.anuncio) ? marker.anuncio[0] : marker.anuncio
+      }));
+      setMarkers(markersFixed)
       setLoading(false)
     }
-    if (mounted) fetchAndGeocode()
+    if (mounted) fetchMarkers()
   }, [mounted])
 
   if (!mounted || mapHeight === 0) return null
@@ -113,13 +127,13 @@ export default function Mapbox() {
           attribution='&copy; <a href="https://osm.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
-        {totens.map((totem) => (
-          <Marker key={totem.id} position={[totem.lat!, totem.lng!] as LatLngTuple}>
+        {markers.map((marker) => (
+          <Marker key={marker.id} position={[marker.lat, marker.lng]}>
             <Popup>
-              <strong>{totem.name}</strong><br />
-              {totem.adress}<br />
-              Preço: {totem.price}<br />
-              Duração: {totem.duration}
+              <strong>{marker.anuncio?.name || marker.anuncio?.nome || marker.anuncio_id}</strong><br />
+              {marker.anuncio?.adress || marker.anuncio?.endereco || ''}<br />
+              Preço: {marker.anuncio?.price || ''}<br />
+              Duração: {marker.anuncio?.duration || ''}
             </Popup>
           </Marker>
         ))}
