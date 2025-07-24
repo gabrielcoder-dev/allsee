@@ -157,7 +157,7 @@ const MapAdmin = () => {
             >
               {selectedMarker && selectedMarker.id === marker.id && (
                 <Popup
-                  minWidth={260}
+                  minWidth={200}
                   maxWidth={300}
                 >
                   <MiniAnuncioCard
