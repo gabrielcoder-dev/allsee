@@ -69,49 +69,49 @@ export default function MiniAnuncioCard({ anuncio, actionButton }: { anuncio: an
 
   return (
     <div
-      className="bg-white rounded-xl shadow border border-gray-100 p-2 flex flex-col gap-1 w-[250px] min-w-[200px] max-w-[270px]  cursor-pointer"
+      className="bg-white rounded-xl shadow border border-gray-100 p-1.5 flex flex-col gap-1 w-[200px] min-w-[160px] max-w-[220px] cursor-pointer"
     >
-      <div className="rounded-lg overflow-hidden h-16 flex items-center justify-center bg-gray-100 mb-1">
+      <div className="rounded-lg overflow-hidden h-12 flex items-center justify-center bg-gray-100 mb-1">
         <img
           src={anuncio.image}
           alt={anuncio.name || anuncio.nome}
-          className="object-cover w-full h-16"
+          className="object-cover w-full h-12"
         />
       </div>
       <div className="flex gap-2 mb-1">
         {anuncio.type_screen?.toLowerCase() === 'impresso' ? (
-          <span className="bg-green-600 text-white text-xs px-2 py-1 rounded font-medium flex items-center gap-1">
+          <span className="bg-green-600 text-white text-[10px] px-1.5 py-0.5 rounded font-medium flex items-center gap-1">
             impresso
           </span>
         ) : (
-          <span className="bg-purple-600 text-white text-xs px-2 py-1 rounded font-medium flex items-center gap-1">
+          <span className="bg-purple-600 text-white text-[10px] px-1.5 py-0.5 rounded font-medium flex items-center gap-1">
             digital
           </span>
         )}
       </div>
-      <h3 className="font-bold text-base line-clamp-2 mb-1">{anuncio.name || anuncio.nome}</h3>
+      <h3 className="font-bold text-sm line-clamp-2 mb-1">{anuncio.name || anuncio.nome}</h3>
       <div className="text-gray-500 text-xs mb-1 break-words">{anuncio.address || anuncio.adress || anuncio.endereco}</div>
       <div className="flex gap-4 mb-1">
         <div className="flex flex-col items-start">
-          <span className="text-[10px] text-gray-500 font-medium lowercase">exibições</span>
-          <span className="font-bold text-sm">{anuncio.display || anuncio.screens || '1'}</span>
+          <span className="text-[9px] text-gray-500 font-medium lowercase">exibições</span>
+          <span className="font-bold text-xs">{anuncio.display || anuncio.screens || '1'}</span>
         </div>
         <div className="flex flex-col items-start">
-          <span className="text-[10px] text-gray-500 font-medium lowercase">alcance</span>
-          <span className="font-bold text-sm">{anuncio.views || anuncio.alcance || '-'}</span>
+          <span className="text-[9px] text-gray-500 font-medium lowercase">alcance</span>
+          <span className="font-bold text-xs">{anuncio.views || anuncio.alcance || '-'}</span>
         </div>
       </div>
-      <div className="text-xs text-gray-800 mb-1 font-bold">Telas: {anuncio.screens || 1}</div>
+      <div className="text-[11px] text-gray-800 mb-1 font-bold">Telas: {anuncio.screens || 1}</div>
       {/* Preço original riscado e preço com desconto */}
       <div className="mb-1 flex flex-col gap-1">
         {precoOriginal !== precoCalculado && (
-          <span className="text-sm text-gray-400 line-through">R$ {Number(precoOriginal).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}{selectedDuration !== '2' && ` x${selectedDuration === '4' ? 2 : selectedDuration === '12' ? 6 : selectedDuration === '24' ? 12 : 1}`}</span>
+          <span className="text-xs text-gray-400 line-through">R$ {Number(precoOriginal).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}{selectedDuration !== '2' && ` x${selectedDuration === '4' ? 2 : selectedDuration === '12' ? 6 : selectedDuration === '24' ? 12 : 1}`}</span>
         )}
-        <span className="text-base font-bold text-green-700">R$ {Number(precoCalculado).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+        <span className="text-sm font-bold text-green-700">R$ {Number(precoCalculado).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
       </div>
-      <div className="text-xs text-gray-500 mb-1">/ {selectedDuration} semana{Number(selectedDuration) > 1 ? 's' : ''}</div>
+      <div className="text-[11px] text-gray-500 mb-1">/ {selectedDuration} semana{Number(selectedDuration) > 1 ? 's' : ''}</div>
       <button
-        className={`w-full cursor-pointer flex items-center justify-center gap-2 border rounded-lg py-1 text-sm font-semibold transition ${estaNoCarrinho ? 'border-red-400 text-red-600 hover:bg-red-50' : 'border-green-400 text-green-600 hover:bg-green-50'}`}
+        className={`w-full cursor-pointer flex items-center justify-center gap-2 border rounded-lg py-1 text-xs font-semibold transition ${estaNoCarrinho ? 'border-red-400 text-red-600 hover:bg-red-50' : 'border-green-400 text-green-600 hover:bg-green-50'}`}
         onClick={handleClick}
       >
         {estaNoCarrinho ? (
