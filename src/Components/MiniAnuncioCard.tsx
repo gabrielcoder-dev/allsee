@@ -2,7 +2,7 @@ import React from 'react';
 import { ShoppingCartIcon, TrashIcon } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
 
-export default function MiniAnuncioCard({ anuncio, actionButton }: { anuncio: any, actionButton?: React.ReactNode }) {
+export default function MiniAnuncioCard({ anuncio, actionButton, showPointer }: { anuncio: any, actionButton?: React.ReactNode, showPointer?: boolean }) {
   const { adicionarProduto, removerProduto, produtos, selectedDurationGlobal } = useCart();
   // Checa se já está no carrinho
   const estaNoCarrinho = produtos.some((p) => p.id === (anuncio.id?.toString() || anuncio.id));
@@ -69,8 +69,13 @@ export default function MiniAnuncioCard({ anuncio, actionButton }: { anuncio: an
 
   return (
     <div
-      className="bg-white rounded-xl shadow border border-gray-100 p-2 flex flex-col gap-1 w-[250px] min-w-[200px] max-w-[270px]  cursor-pointer"
+      className="bg-white rounded-xl shadow border border-gray-100 p-2 flex flex-col gap-1 w-[250px] min-w-[200px] max-w-[270px] cursor-pointer relative"
     >
+      {showPointer && (
+        <div className="absolute left-1/2 -top-2 transform -translate-x-1/2">
+          <div style={{ width: 0, height: 0, borderLeft: '12px solid transparent', borderRight: '12px solid transparent', borderBottom: '12px solid #fff', filter: 'drop-shadow(0 2px 2px rgba(0,0,0,0.08))' }} />
+        </div>
+      )}
       <div className="rounded-lg overflow-hidden h-16 flex items-center justify-center bg-gray-100 mb-1">
         <img
           src={anuncio.image}
