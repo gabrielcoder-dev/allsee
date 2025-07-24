@@ -3,15 +3,43 @@ import { ShoppingCartIcon, TrashIcon } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
 
 export default function MiniAnuncioCard({ anuncio, actionButton }: { anuncio: any, actionButton?: React.ReactNode }) {
-  const { adicionarProduto, removerProduto, produtos } = useCart();
+  const { adicionarProduto, removerProduto, produtos, selectedDurationGlobal } = useCart();
   // Checa se já está no carrinho
   const estaNoCarrinho = produtos.some((p) => p.id === (anuncio.id?.toString() || anuncio.id));
-  // Duração padrão para MiniAnuncioCard
-  const selectedDuration = '2';
+  // Duração selecionada global
+  const selectedDuration = selectedDurationGlobal || '2';
 
-  // Preço e campos mínimos
-  const preco = anuncio.price || anuncio.preco || 0;
-  const precoMultiplicado = preco; // Sem desconto para 2 semanas
+  // Lógica de desconto por semanas (igual GetAnunciosResults)
+  const descontos: { [key: string]: number } = {
+    '4': 20,
+    '12': 60,
+    '24': 120,
+  };
+  const durationsTrue = [
+    anuncio.duration_2,
+    anuncio.duration_4,
+    anuncio.duration_12,
+    anuncio.duration_24
+  ].filter(Boolean).length;
+
+  let precoOriginal = anuncio.price || anuncio.preco || 0;
+  let precoCalculado = precoOriginal;
+  let desconto = 0;
+  if (durationsTrue > 1) {
+    if (selectedDuration === '4') {
+      precoCalculado = precoOriginal * 2;
+      desconto = descontos['4'];
+    }
+    if (selectedDuration === '12') {
+      precoCalculado = precoOriginal * 6;
+      desconto = descontos['12'];
+    }
+    if (selectedDuration === '24') {
+      precoCalculado = precoOriginal * 12;
+      desconto = descontos['24'];
+    }
+  }
+  precoCalculado = precoCalculado - desconto;
 
   // Handler do botão
   const handleClick = () => {
@@ -21,8 +49,8 @@ export default function MiniAnuncioCard({ anuncio, actionButton }: { anuncio: an
       adicionarProduto({
         id: anuncio.id?.toString() || anuncio.id,
         nome: anuncio.name || anuncio.nome,
-        preco: preco,
-        precoMultiplicado: precoMultiplicado,
+        preco: precoOriginal,
+        precoMultiplicado: precoCalculado,
         selectedDuration: selectedDuration,
         quantidade: 1,
         image: anuncio.image,
@@ -72,8 +100,14 @@ export default function MiniAnuncioCard({ anuncio, actionButton }: { anuncio: an
         </div>
       </div>
       <div className="text-xs text-gray-800 mb-1 font-bold">Telas: {anuncio.screens || 1}</div>
-      <div className="text-base font-bold mb-1 text-green-700">R$ {Number(anuncio.price).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
-      <div className="text-xs text-gray-500 mb-1">/ 2 semanas</div>
+      {/* Preço original riscado e preço com desconto */}
+      <div className="mb-1 flex flex-col gap-1">
+        {precoOriginal !== precoCalculado && (
+          <span className="text-sm text-gray-400 line-through">R$ {Number(precoOriginal).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}{selectedDuration !== '2' && ` x${selectedDuration === '4' ? 2 : selectedDuration === '12' ? 6 : selectedDuration === '24' ? 12 : 1}`}</span>
+        )}
+        <span className="text-base font-bold text-green-700">R$ {Number(precoCalculado).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+      </div>
+      <div className="text-xs text-gray-500 mb-1">/ {selectedDuration} semana{Number(selectedDuration) > 1 ? 's' : ''}</div>
       <button
         className={`w-full cursor-pointer flex items-center justify-center gap-2 border rounded-lg py-1 text-sm font-semibold transition ${estaNoCarrinho ? 'border-red-400 text-red-600 hover:bg-red-50' : 'border-green-400 text-green-600 hover:bg-green-50'}`}
         onClick={handleClick}
