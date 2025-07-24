@@ -1,10 +1,10 @@
 'use client'
 
-import { MapContainer, TileLayer, Marker, useMap } from 'react-leaflet'
+import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet'
 import type { LatLngTuple } from 'leaflet'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { orangePinIcon } from './CustomMarkerIcon';
 import MiniAnuncioCard from './MiniAnuncioCard';
@@ -54,73 +54,12 @@ type MarkerType = {
   };
 };
 
-function MarkerWithHoverCard({ marker, onHover, onLeave, isOpen }: any) {
-  const markerRef = useRef<any>(null);
-  const map = useMap();
-  const [pos, setPos] = useState<{ left: number; top: number } | null>(null);
-  const cardRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (isOpen && markerRef.current) {
-      const latlng = L.latLng(marker.lat, marker.lng);
-      const point = map.latLngToContainerPoint(latlng);
-      setPos({ left: point.x, top: point.y });
-    }
-  }, [isOpen, map, marker.lat, marker.lng]);
-
-  // Fecha o card só se mouse sair do marker e do card
-  function handleCardMouseLeave(e: React.MouseEvent) {
-    // Se mouse saiu para dentro do marker, não fecha
-    if (markerRef.current) {
-      const markerEl = markerRef.current._icon;
-      if (markerEl && markerEl.contains(e.relatedTarget as Node)) return;
-    }
-    onLeave();
-  }
-
-  return (
-    <>
-      <Marker
-        ref={markerRef}
-        position={[marker.lat, marker.lng]}
-        icon={orangePinIcon}
-        eventHandlers={{
-          mouseover: onHover,
-          mouseout: (e: any) => {
-            // Se mouseout for para o card, não fecha
-            if (cardRef.current && cardRef.current.contains(e.originalEvent.relatedTarget)) return;
-            onLeave();
-          },
-        }}
-      />
-      {isOpen && pos && (
-        <div
-          ref={cardRef}
-          style={{
-            position: 'absolute',
-            left: pos.left,
-            top: pos.top - 10,
-            zIndex: 1000,
-            transform: 'translate(-50%, -100%)',
-            pointerEvents: 'auto',
-          }}
-          onMouseEnter={onHover}
-          onMouseLeave={handleCardMouseLeave}
-        >
-          <MiniAnuncioCard anuncio={marker.anuncio} />
-        </div>
-      )}
-    </>
-  );
-}
-
 export default function Mapbox() {
   const center: LatLngTuple = [-15.5586, -54.2811]
   const [mapHeight, setMapHeight] = useState<number>(0)
   const [markers, setMarkers] = useState<MarkerType[]>([])
   const [loading, setLoading] = useState(true)
   const [mounted, setMounted] = useState(false)
-  const [hoveredMarkerId, setHoveredMarkerId] = useState<number | null>(null);
 
   useEffect(() => {
     setMounted(true)
@@ -178,7 +117,7 @@ export default function Mapbox() {
 
   return (
     <div
-      className="hidden xl:flex w-[400px] flex-shrink-0 z-0 relative"
+      className="hidden xl:flex w-[400px] flex-shrink-0 z-0"
       style={{ height: `${mapHeight}px`, background: '#fff' }}
     >
       <MapContainer
@@ -191,13 +130,15 @@ export default function Mapbox() {
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
         {markers.map((marker) => (
-          <MarkerWithHoverCard
+          <Marker
             key={marker.id}
-            marker={marker}
-            isOpen={hoveredMarkerId === marker.id}
-            onHover={() => setHoveredMarkerId(marker.id)}
-            onLeave={() => setHoveredMarkerId((current) => current === marker.id ? null : current)}
-          />
+            position={[marker.lat, marker.lng]}
+            icon={orangePinIcon}
+          >
+            <Popup minWidth={260} maxWidth={300}>
+              <MiniAnuncioCard anuncio={marker.anuncio} />
+            </Popup>
+          </Marker>
         ))}
       </MapContainer>
     </div>
