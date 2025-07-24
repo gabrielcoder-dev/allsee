@@ -60,6 +60,7 @@ export default function Mapbox() {
   const [markers, setMarkers] = useState<MarkerType[]>([])
   const [loading, setLoading] = useState(true)
   const [mounted, setMounted] = useState(false)
+  const [openPopupMarkerId, setOpenPopupMarkerId] = useState<number | null>(null);
 
   useEffect(() => {
     setMounted(true)
@@ -130,10 +131,21 @@ export default function Mapbox() {
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
         {markers.map((marker) => (
-          <Marker key={marker.id} position={[marker.lat, marker.lng]} icon={orangePinIcon}>
-            <Popup minWidth={260} maxWidth={300}>
-              <MiniAnuncioCard anuncio={marker.anuncio} />
-            </Popup>
+          <Marker
+            key={marker.id}
+            position={[marker.lat, marker.lng]}
+            icon={orangePinIcon}
+            eventHandlers={{
+              click: () => setOpenPopupMarkerId(marker.id),
+              mouseover: () => setOpenPopupMarkerId(marker.id),
+              mouseout: () => setOpenPopupMarkerId((current) => current === marker.id ? null : current),
+            }}
+          >
+            {openPopupMarkerId === marker.id && (
+              <Popup minWidth={260} maxWidth={300} autoPan={false}>
+                <MiniAnuncioCard anuncio={marker.anuncio} />
+              </Popup>
+            )}
           </Marker>
         ))}
       </MapContainer>

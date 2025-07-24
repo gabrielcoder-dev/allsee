@@ -69,7 +69,7 @@ export default function MiniAnuncioCard({ anuncio, actionButton }: { anuncio: an
 
   return (
     <div
-      className="bg-white rounded-xl shadow border border-gray-100 p-2 flex flex-col gap-1 w-[250px] min-w-[200px] max-w-[270px] transition-all duration-200 hover:shadow-xl hover:scale-[1.03] hover:border-green-400 cursor-pointer"
+      className="bg-white rounded-xl shadow border border-gray-100 p-2 flex flex-col gap-1 w-[250px] min-w-[200px] max-w-[270px]  cursor-pointer"
     >
       <div className="rounded-lg overflow-hidden h-16 flex items-center justify-center bg-gray-100 mb-1">
         <img
