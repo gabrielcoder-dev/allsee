@@ -2,7 +2,7 @@ import React from 'react';
 import { ShoppingCartIcon, TrashIcon } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
 
-export default function MiniAnuncioCard({ anuncio, actionButton }: { anuncio: any, actionButton?: React.ReactNode }) {
+export default function MiniAnuncioCard({ anuncio, actionButton, hideAddButton }: { anuncio: any, actionButton?: React.ReactNode, hideAddButton?: boolean }) {
   const { adicionarProduto, removerProduto, produtos, selectedDurationGlobal } = useCart();
   // Checa se já está no carrinho
   const estaNoCarrinho = produtos.some((p) => p.id === (anuncio.id?.toString() || anuncio.id));
@@ -110,20 +110,22 @@ export default function MiniAnuncioCard({ anuncio, actionButton }: { anuncio: an
         <span className="text-sm font-bold text-green-700">R$ {Number(precoCalculado).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
       </div>
       <div className="text-[11px] text-gray-500 mb-1">/ {selectedDuration} semana{Number(selectedDuration) > 1 ? 's' : ''}</div>
-      <button
-        className={`w-full cursor-pointer flex items-center justify-center gap-2 border rounded-lg py-1 text-xs font-semibold transition ${estaNoCarrinho ? 'border-red-400 text-red-600 hover:bg-red-50' : 'border-green-400 text-green-600 hover:bg-green-50'}`}
-        onClick={handleClick}
-      >
-        {estaNoCarrinho ? (
-          <>
-            remover ponto <TrashIcon className="inline w-4 h-4 mr-1" />
-          </>
-        ) : (
-          <>
-            adicionar ponto <ShoppingCartIcon className="inline w-4 h-4 mr-1" />
-          </>
-        )}
-      </button>
+      {!hideAddButton && (
+        <button
+          className={`w-full cursor-pointer flex items-center justify-center gap-2 border rounded-lg py-1 text-xs font-semibold transition ${estaNoCarrinho ? 'border-red-400 text-red-600 hover:bg-red-50' : 'border-green-400 text-green-600 hover:bg-green-50'}`}
+          onClick={handleClick}
+        >
+          {estaNoCarrinho ? (
+            <>
+              remover ponto <TrashIcon className="inline w-4 h-4 mr-1" />
+            </>
+          ) : (
+            <>
+              adicionar ponto <ShoppingCartIcon className="inline w-4 h-4 mr-1" />
+            </>
+          )}
+        </button>
+      )}
       {actionButton && <div className="mt-2">{actionButton}</div>}
     </div>
   );
