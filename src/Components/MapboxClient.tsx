@@ -107,7 +107,7 @@ function MarkerWithHoverCard({ marker, onHover, onLeave, isOpen }: any) {
           onMouseEnter={onHover}
           onMouseLeave={handleCardMouseLeave}
         >
-          <MiniAnuncioCard anuncio={marker.anuncio} showPointer={true} />
+          <MiniAnuncioCard anuncio={marker.anuncio} />
         </div>
       )}
     </>
