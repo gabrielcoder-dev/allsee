@@ -132,7 +132,10 @@ const HeaderResultsDesktop = ({ onDurationChange, selectedDuration, onTipoMidiaC
                 placeholder="Ex.: Bairro Castelândia"
                 className="bg-transparent outline-none flex-1 w-72 text-sm"
                 value={location}
-                onChange={e => setLocation(e.target.value)}
+                onChange={e => {
+                  setLocation(e.target.value);
+                  if (onTipoMidiaChange) onTipoMidiaChange(null, e.target.value ? [e.target.value] : []);
+                }}
               />
 
             </div>

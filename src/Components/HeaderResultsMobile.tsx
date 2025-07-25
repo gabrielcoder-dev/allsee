@@ -142,8 +142,10 @@ export default function MobileHeader({
                   placeholder="Ex.: Bairro Castelândia"
                   className="bg-transparent outline-none w-full text-sm"
                   value={location}
-                  disabled
-                  onChange={e => setLocation(e.target.value)}
+                  onChange={e => {
+                    setLocation(e.target.value);
+                    if (onTipoMidiaChange) onTipoMidiaChange(null, e.target.value ? [e.target.value] : []);
+                  }}
                   onFocus={() => setShowModal(true)}
                 />
               </div>
