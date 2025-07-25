@@ -180,17 +180,23 @@ const MapAdmin = () => {
       </div>
       {/* Modal simples */}
       {modalOpen && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/40 p-2 sm:p-4">
-          <div className="bg-white rounded-2xl shadow-xl p-3 sm:p-4 md:p-6 w-full max-w-5xl relative overflow-y-auto max-h-[95vh] sm:max-h-[90vh]">
+        <div
+          className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/40 p-2 sm:p-4"
+          onClick={handleCloseModal}
+        >
+          <div
+            className="bg-white rounded-2xl shadow-xl p-3 sm:p-4 md:p-6 w-full max-w-5xl relative max-h-[95vh] sm:max-h-[90vh] flex flex-col"
+            onClick={e => e.stopPropagation()}
+          >
             <button
-              className="absolute top-2 right-2 sm:top-3 sm:right-3 cursor-pointer p-1.5 sm:p-2"
+              className="absolute top-2 right-2 sm:top-3 z-50 sm:right-3 cursor-pointer p-1.5 sm:p-2"
               onClick={handleCloseModal}
             >
               <X />
             </button>
-            <h2 className="text-lg sm:text-xl md:text-2xl font-bold mb-3 sm:mb-4 pr-8">Selecione um anúncio</h2>
+            <h2 className="text-lg sm:text-xl md:text-2xl font-bold mb-3 sm:mb-4 pr-8 sticky top-0 bg-white z-10">Selecione um anúncio</h2>
             {loading ? <p>Carregando anúncios...</p> : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6 p-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6 p-2 overflow-y-auto flex-1 max-h-[65vh]">
                 {anuncios.filter((anuncio: any) => !markers.some((marker: any) => marker.anuncio_id === anuncio.id)).length === 0 ? (
                   <div className="col-span-full text-center text-gray-500 text-lg font-semibold py-12">
                     Não há totens ou todos estão adicionados
