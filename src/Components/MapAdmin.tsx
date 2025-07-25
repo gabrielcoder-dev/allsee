@@ -185,18 +185,18 @@ const MapAdmin = () => {
           onClick={handleCloseModal}
         >
           <div
-            className="bg-white rounded-2xl shadow-xl p-3 sm:p-4 md:p-6 w-full max-w-5xl relative max-h-[95vh] sm:max-h-[90vh] flex flex-col"
+            className="bg-white rounded-2xl shadow-xl p-1.5 sm:p-4 md:p-6 w-full max-w-[98vw] sm:max-w-5xl relative max-h-[98vh] sm:max-h-[90vh] flex flex-col"
             onClick={e => e.stopPropagation()}
           >
             <button
-              className="absolute top-2 right-2 sm:top-3 z-50 sm:right-3 cursor-pointer p-1.5 sm:p-2"
+              className="absolute top-2 right-2 sm:top-3 z-50 sm:right-3 cursor-pointer p-2"
               onClick={handleCloseModal}
             >
               <X />
             </button>
             <h2 className="text-lg sm:text-xl md:text-2xl font-bold mb-3 sm:mb-4 pr-8 sticky top-0 bg-white z-10">Selecione um anúncio</h2>
             {loading ? <p>Carregando anúncios...</p> : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6 p-2 overflow-y-auto flex-1 max-h-[65vh]">
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6 p-1 sm:p-2 overflow-y-auto flex-1 max-h-[70vh] sm:max-h-[65vh]">
                 {anuncios.filter((anuncio: any) => !markers.some((marker: any) => marker.anuncio_id === anuncio.id)).length === 0 ? (
                   <div className="col-span-full text-center text-gray-500 text-lg font-semibold py-12">
                     Não há totens ou todos estão adicionados
@@ -207,13 +207,13 @@ const MapAdmin = () => {
                     .map((anuncio: any) => (
                       <div
                         key={anuncio.id}
-                        className="bg-white rounded-2xl shadow-lg border border-gray-100 p-3 flex flex-col gap-1 w-full max-w-xl h-[440px] transition-all hover:shadow-xl"
+                        className="bg-white rounded-2xl shadow-lg border border-gray-100 p-2 sm:p-3 flex flex-col gap-1 w-full max-w-full sm:max-w-xl h-[400px] sm:h-[440px] transition-all hover:shadow-xl"
                       >
-                        <div className="rounded-lg overflow-hidden h-32 flex items-center justify-center bg-gray-100 mb-2">
+                        <div className="rounded-lg overflow-hidden h-28 sm:h-32 flex items-center justify-center bg-gray-100 mb-2">
                           <img
                             src={anuncio.image}
                             alt={anuncio.name || anuncio.nome}
-                            className="object-cover w-full h-32"
+                            className="object-cover w-full h-28 sm:h-32"
                           />
                         </div>
                         <div className="flex gap-2 mb-2">
@@ -227,9 +227,9 @@ const MapAdmin = () => {
                             </span>
                           )}
                         </div>
-                        <h3 className="font-bold text-lg line-clamp-2">{anuncio.name || anuncio.nome}</h3>
+                        <h3 className="font-bold text-base sm:text-lg line-clamp-2">{anuncio.name || anuncio.nome}</h3>
                         <div className="text-gray-500 text-xs mb-1 break-words">{anuncio.address || anuncio.adress || anuncio.endereco}</div>
-                        <div className="flex gap-8 mb-1">
+                        <div className="flex gap-4 sm:gap-8 mb-1">
                           <div className="flex flex-col items-start">
                             <span className="text-[10px] text-gray-500 font-medium lowercase flex items-center gap-1">exibições</span>
                             <span className="font-bold text-base">{anuncio.display || anuncio.screens || '1'}</span>
