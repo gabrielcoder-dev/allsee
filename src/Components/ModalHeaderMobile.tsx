@@ -20,13 +20,15 @@ type ModalHeaderMobileProps = {
   onDurationChange?: (value: string) => void;
   selectedDuration?: string;
   onSearch?: (location: string, duration: string, startDate: Date | undefined) => void;
+  onTipoMidiaChange?: (tipo: string | null, bairros: string[]) => void;
 }
 
 export default function ModalHeaderMobile({ 
   onClose, 
   onDurationChange, 
   selectedDuration = '2',
-  onSearch 
+  onSearch,
+  onTipoMidiaChange
 }: ModalHeaderMobileProps) {
   const [location, setLocation] = useState('')
   const [duration, setDuration] = useState(selectedDuration)
@@ -65,8 +67,11 @@ export default function ModalHeaderMobile({
     if (startDate) {
       updateFormData({ startDate: startDate.toISOString().slice(0, 10) });
     }
-    if (duration) {
-      setSelectedDurationGlobal(duration);
+    if (onTipoMidiaChange) {
+      onTipoMidiaChange(null, location ? [location] : []);
+    }
+    if (onDurationChange) {
+      onDurationChange(duration);
     }
     if (onSearch) {
       onSearch(location, duration, startDate)
@@ -113,7 +118,7 @@ export default function ModalHeaderMobile({
           {/* Duração e Início */}
           <div className="flex gap-2">
             {/* Duração */}
-            <Select value={duration} onValueChange={handleDurationChange}>
+            <Select value={duration} onValueChange={setDuration}>
               <SelectTrigger className="w-1/2 bg-white border border-gray-200 rounded-lg px-3 py-2 text-base">
                 <SelectValue placeholder="duração" />
               </SelectTrigger>

@@ -202,6 +202,7 @@ export default function MobileHeader({
           onDurationChange={setSelectedDurationGlobal}
           selectedDuration={selectedDurationGlobal}
           onSearch={onSearch}
+          onTipoMidiaChange={onTipoMidiaChange}
         />
       )}
 
