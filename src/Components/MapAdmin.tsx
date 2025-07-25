@@ -191,54 +191,60 @@ const MapAdmin = () => {
             <h2 className="text-lg sm:text-xl md:text-2xl font-bold mb-3 sm:mb-4 pr-8">Selecione um anúncio</h2>
             {loading ? <p>Carregando anúncios...</p> : (
               <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6 p-2">
-                {anuncios
-                  .filter((anuncio: any) => !markers.some((marker: any) => marker.anuncio_id === anuncio.id))
-                  .map((anuncio: any) => (
-                    <div
-                      key={anuncio.id}
-                      className="bg-white rounded-2xl shadow-lg border border-gray-100 p-3 flex flex-col gap-1 w-full max-w-xl h-[440px] transition-all hover:shadow-xl"
-                    >
-                      <div className="rounded-lg overflow-hidden h-32 flex items-center justify-center bg-gray-100 mb-2">
-                        <img
-                          src={anuncio.image}
-                          alt={anuncio.name || anuncio.nome}
-                          className="object-cover w-full h-32"
-                        />
-                      </div>
-                      <div className="flex gap-2 mb-2">
-                        {anuncio.type_screen?.toLowerCase() === 'impresso' ? (
-                          <span className="bg-green-600 text-white text-xs px-2 py-1 rounded font-medium flex items-center gap-1">
-                            impresso
-                          </span>
-                        ) : (
-                          <span className="bg-purple-600 text-white text-xs px-2 py-1 rounded font-medium flex items-center gap-1">
-                            digital
-                          </span>
-                        )}
-                      </div>
-                      <h3 className="font-bold text-lg line-clamp-2">{anuncio.name || anuncio.nome}</h3>
-                      <div className="text-gray-500 text-xs mb-1 break-words">{anuncio.address || anuncio.adress || anuncio.endereco}</div>
-                      <div className="flex gap-8 mb-1">
-                        <div className="flex flex-col items-start">
-                          <span className="text-[10px] text-gray-500 font-medium lowercase flex items-center gap-1">exibições</span>
-                          <span className="font-bold text-base">{anuncio.display || anuncio.screens || '1'}</span>
-                        </div>
-                        <div className="flex flex-col items-start">
-                          <span className="text-[10px] text-gray-500 font-medium lowercase flex items-center gap-1">alcance</span>
-                          <span className="font-bold text-base">{anuncio.views || anuncio.alcance || '-'}</span>
-                        </div>
-                      </div>
-                      <div className="text-xs text-gray-800 mb-1 font-bold">Telas: {anuncio.screens || 1}</div>
-                      <div className="text-lg font-bold mb-1 text-green-700">R$ {Number(anuncio.price).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
-                      <div className="text-xs text-gray-500 mb-2">/ 2 semanas</div>
-                      <button
-                        className="w-full cursor-pointer flex items-center justify-center gap-4 border rounded-lg py-2 text-base font-semibold transition border-green-400 text-green-600 hover:bg-green-50 mt-auto"
-                        onClick={() => handleAddMarker(anuncio.id)}
+                {anuncios.filter((anuncio: any) => !markers.some((marker: any) => marker.anuncio_id === anuncio.id)).length === 0 ? (
+                  <div className="col-span-full text-center text-gray-500 text-lg font-semibold py-12">
+                    Não há totens ou todos estão adicionados
+                  </div>
+                ) : (
+                  anuncios
+                    .filter((anuncio: any) => !markers.some((marker: any) => marker.anuncio_id === anuncio.id))
+                    .map((anuncio: any) => (
+                      <div
+                        key={anuncio.id}
+                        className="bg-white rounded-2xl shadow-lg border border-gray-100 p-3 flex flex-col gap-1 w-full max-w-xl h-[440px] transition-all hover:shadow-xl"
                       >
-                        adicionar marker
-                      </button>
-                    </div>
-                  ))}
+                        <div className="rounded-lg overflow-hidden h-32 flex items-center justify-center bg-gray-100 mb-2">
+                          <img
+                            src={anuncio.image}
+                            alt={anuncio.name || anuncio.nome}
+                            className="object-cover w-full h-32"
+                          />
+                        </div>
+                        <div className="flex gap-2 mb-2">
+                          {anuncio.type_screen?.toLowerCase() === 'impresso' ? (
+                            <span className="bg-green-600 text-white text-xs px-2 py-1 rounded font-medium flex items-center gap-1">
+                              impresso
+                            </span>
+                          ) : (
+                            <span className="bg-purple-600 text-white text-xs px-2 py-1 rounded font-medium flex items-center gap-1">
+                              digital
+                            </span>
+                          )}
+                        </div>
+                        <h3 className="font-bold text-lg line-clamp-2">{anuncio.name || anuncio.nome}</h3>
+                        <div className="text-gray-500 text-xs mb-1 break-words">{anuncio.address || anuncio.adress || anuncio.endereco}</div>
+                        <div className="flex gap-8 mb-1">
+                          <div className="flex flex-col items-start">
+                            <span className="text-[10px] text-gray-500 font-medium lowercase flex items-center gap-1">exibições</span>
+                            <span className="font-bold text-base">{anuncio.display || anuncio.screens || '1'}</span>
+                          </div>
+                          <div className="flex flex-col items-start">
+                            <span className="text-[10px] text-gray-500 font-medium lowercase flex items-center gap-1">alcance</span>
+                            <span className="font-bold text-base">{anuncio.views || anuncio.alcance || '-'}</span>
+                          </div>
+                        </div>
+                        <div className="text-xs text-gray-800 mb-1 font-bold">Telas: {anuncio.screens || 1}</div>
+                        <div className="text-lg font-bold mb-1 text-green-700">R$ {Number(anuncio.price).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
+                        <div className="text-xs text-gray-500 mb-2">/ 2 semanas</div>
+                        <button
+                          className="w-full cursor-pointer flex items-center justify-center gap-4 border rounded-lg py-2 text-base font-semibold transition border-green-400 text-green-600 hover:bg-green-50 mt-auto"
+                          onClick={() => handleAddMarker(anuncio.id)}
+                        >
+                          adicionar marker
+                        </button>
+                      </div>
+                    ))
+                )}
               </div>
             )}
           </div>
