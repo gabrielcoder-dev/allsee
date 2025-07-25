@@ -35,9 +35,10 @@ type GetAnunciosResultsProps = {
   tipoMidia?: string | null;
   bairros?: string[];
   orderBy?: string;
+  onChangeAnunciosFiltrados?: (anuncios: Anuncio[]) => void; // NOVO
 }
 
-export default function GetAnunciosResults({ onAdicionarProduto, selectedDuration = '2', tipoMidia, bairros, orderBy }: GetAnunciosResultsProps) {
+export default function GetAnunciosResults({ onAdicionarProduto, selectedDuration = '2', tipoMidia, bairros, orderBy, onChangeAnunciosFiltrados }: GetAnunciosResultsProps) {
   const { adicionarProduto, removerProduto, produtos, atualizarProdutosComNovaDuracao } = useCart()
   const [anuncios, setAnuncios] = useState<Anuncio[]>([])
   const [loading, setLoading] = useState(true)
@@ -88,10 +89,12 @@ export default function GetAnunciosResults({ onAdicionarProduto, selectedDuratio
         const anunciosOrdenados = ordenarAnuncios(filteredData, orderBy || '');
         setAnuncios(anunciosOrdenados)
         atualizarProdutosComNovaDuracao(anunciosOrdenados, selectedDuration);
+        if (onChangeAnunciosFiltrados) onChangeAnunciosFiltrados(anunciosOrdenados); // NOVO
       } else {
         console.error("Erro ao carregar anúncios:", error);
         setAnuncios([]);
         atualizarProdutosComNovaDuracao([], selectedDuration);
+        if (onChangeAnunciosFiltrados) onChangeAnunciosFiltrados([]); // NOVO
       }
       setLoading(false)
     }

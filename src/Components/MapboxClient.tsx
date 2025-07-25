@@ -1,10 +1,10 @@
 'use client'
 
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet'
-import type { LatLngTuple } from 'leaflet'
+import type { LatLngTuple, LeafletEvent } from 'leaflet'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import { orangePinIcon } from './CustomMarkerIcon';
 import MiniAnuncioCard from './MiniAnuncioCard';
@@ -54,12 +54,13 @@ type MarkerType = {
   };
 };
 
-export default function Mapbox() {
+export default function Mapbox({ anunciosFiltrados }: { anunciosFiltrados?: any[] }) {
   const center: LatLngTuple = [-15.5586, -54.2811]
   const [mapHeight, setMapHeight] = useState<number>(0)
   const [markers, setMarkers] = useState<MarkerType[]>([])
   const [loading, setLoading] = useState(true)
   const [mounted, setMounted] = useState(false)
+  const mapRef = useRef<any>(null);
 
   useEffect(() => {
     setMounted(true)
@@ -112,6 +113,20 @@ export default function Mapbox() {
     if (mounted) fetchMarkers()
   }, [mounted])
 
+  // Filtrar markers pelos anunciosFiltrados
+  const filteredMarkers = anunciosFiltrados && anunciosFiltrados.length > 0
+    ? markers.filter(m => anunciosFiltrados.some(a => a.id === m.anuncio_id))
+    : markers;
+
+  // Ajustar o centro/zoom do mapa para os markers filtrados
+  useEffect(() => {
+    if (!mapRef.current || !filteredMarkers.length) return;
+    const group = L.featureGroup(filteredMarkers.map(m => L.marker([m.lat, m.lng])));
+    try {
+      mapRef.current.fitBounds(group.getBounds(), { padding: [50, 50] });
+    } catch {}
+  }, [filteredMarkers]);
+
   if (!mounted || mapHeight === 0) return null
   if (loading) return <div className="hidden xl:flex w-[400px] flex-shrink-0 z-0 items-center justify-center" style={{ height: '100%' }}>Carregando totens no mapa...</div>
 
@@ -124,12 +139,13 @@ export default function Mapbox() {
         center={center}
         zoom={13}
         style={{ width: '100%', height: '100%' }}
+        whenReady={() => {}}
       >
         <TileLayer
           attribution='&copy; <a href="https://osm.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
-        {markers.map((marker) => (
+        {filteredMarkers.map((marker) => (
           <Marker
             key={marker.id}
             position={[marker.lat, marker.lng]}

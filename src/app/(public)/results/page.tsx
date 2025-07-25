@@ -18,6 +18,7 @@ const Page = () => {
   const [tipoMidia, setTipoMidia] = useState<string | null>(null);
   const [bairros, setBairros] = useState<string[]>([]);
   const [orderBy, setOrderBy] = useState<string>('');
+  const [anunciosFiltrados, setAnunciosFiltrados] = useState<any[]>([]); // NOVO
 
   // Função para adicionar produto ao carrinho
   function handleAdicionarProduto(produto: any) {
@@ -56,8 +57,9 @@ const Page = () => {
           tipoMidia={tipoMidia} 
           bairros={bairros}
           orderBy={orderBy}
+          onChangeAnunciosFiltrados={setAnunciosFiltrados} // NOVO
         />
-        <Mapbox />
+        <Mapbox anunciosFiltrados={anunciosFiltrados} />
       </div>
 
       <HeaderPrice />
