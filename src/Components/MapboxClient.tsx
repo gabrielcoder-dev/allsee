@@ -113,10 +113,10 @@ export default function Mapbox({ anunciosFiltrados }: { anunciosFiltrados?: any[
     if (mounted) fetchMarkers()
   }, [mounted])
 
-  // Filtrar markers pelos anunciosFiltrados
+  // Filtrar markers pelos anunciosFiltrados (apenas para zoom)
   const filteredMarkers = anunciosFiltrados && anunciosFiltrados.length > 0
     ? markers.filter(m => anunciosFiltrados.some(a => a.id === m.anuncio_id))
-    : markers;
+    : [];
 
   // Ajustar o centro/zoom do mapa para os markers filtrados
   useEffect(() => {
@@ -145,7 +145,7 @@ export default function Mapbox({ anunciosFiltrados }: { anunciosFiltrados?: any[
           attribution='&copy; <a href="https://osm.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
-        {filteredMarkers.map((marker) => (
+        {markers.map((marker) => (
           <Marker
             key={marker.id}
             position={[marker.lat, marker.lng]}
