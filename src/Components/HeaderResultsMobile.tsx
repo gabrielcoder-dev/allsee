@@ -11,7 +11,6 @@ import FilterModal from '@/Components/FilterModal'
 import { useCart } from '@/context/CartContext'
 import { useRouter } from 'next/navigation'
 import ModalMenu from './ModalMenu'
-import { useCitySearch } from '@/hooks/useCitySearch'
 
 const orderOptions = [
   { label: '$ menor para maior', value: 'price-asc' },
@@ -25,7 +24,6 @@ type MobileHeaderProps = {
   onTipoMidiaChange?: (tipo: string | null, bairros: string[]) => void;
   orderBy?: string;
   onOrderChange?: (order: string) => void;
-  onCityFound?: (coords: { lat: number; lng: number }) => void;
 }
 
 export default function MobileHeader({ 
@@ -34,8 +32,7 @@ export default function MobileHeader({
   onSearch,
   onTipoMidiaChange,
   orderBy,
-  onOrderChange,
-  onCityFound
+  onOrderChange
 }: MobileHeaderProps) {
   const [userName, setUserName] = useState<string>('')
 
@@ -44,14 +41,12 @@ export default function MobileHeader({
   const [showFilter, setShowFilter] = useState(false)
   const [open, setOpen] = useState(false)
   const [tipoMidia, setTipoMidia] = useState<string | null>(null)
+  const [location, setLocation] = useState('')
   const popoverRef = useRef<HTMLDivElement>(null)
   const { produtos, setSelectedDurationGlobal, selectedDurationGlobal } = useCart()
   const totalNoCarrinho = produtos.reduce((acc, p) => acc + p.quantidade, 0)
   const router = useRouter()
   const [showMenuModal, setShowMenuModal] = useState(false)
-  
-  // Hook de busca automática de cidade
-  const { searchTerm, setSearchTerm, isSearching, lastResult, error } = useCitySearch(2000)
 
   // Top bar show/hide on scroll
   useEffect(() => {
@@ -84,20 +79,7 @@ export default function MobileHeader({
     return () => document.removeEventListener('mousedown', handleClick)
   }, [open])
 
-  // Notificar quando uma cidade é encontrada
-  useEffect(() => {
-    if (lastResult) {
-      // Navegar no mapa se a função estiver disponível
-      if ((window as any).navigateToCity) {
-        (window as any).navigateToCity({ lat: lastResult.lat, lng: lastResult.lng });
-      }
-      
-      // Notificar o componente pai
-      if (onCityFound) {
-        onCityFound({ lat: lastResult.lat, lng: lastResult.lng })
-      }
-    }
-  }, [lastResult, onCityFound])
+
 
   return (
     <>
@@ -156,24 +138,18 @@ export default function MobileHeader({
                 <div className="flex items-center gap-1">
                   <MapPinIcon className="w-4 h-5 text-gray-600" />
                   <span className="text-gray-500 mb-1 font-semibold">Endereço ou região</span>
-                  {isSearching && (
-                    <span className="text-xs text-blue-500 ml-2">Buscando...</span>
-                  )}
                 </div>
                 <input
                   type="text"
                   placeholder="Ex.: Bairro Castelândia"
                   className="bg-transparent outline-none w-full text-sm"
-                  value={searchTerm}
+                  value={location}
                   onChange={e => {
-                    setSearchTerm(e.target.value);
+                    setLocation(e.target.value);
                     if (onTipoMidiaChange) onTipoMidiaChange(null, e.target.value ? [e.target.value] : []);
                   }}
                   onFocus={() => setShowModal(true)}
                 />
-                {error && (
-                  <span className="text-xs text-red-500 mt-1">{error}</span>
-                )}
               </div>
               <Search className="w-5 h-5 text-gray-500 cursor-pointer lg:hidden" />
             </div>
