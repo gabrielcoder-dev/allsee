@@ -62,6 +62,7 @@ export default function Mapbox({ anunciosFiltrados, onCityFound }: { anunciosFil
   const [loading, setLoading] = useState(true)
   const [mounted, setMounted] = useState(false)
   const [highlightedMarkerId, setHighlightedMarkerId] = useState<number | null>(null)
+  const [isSearchingCity, setIsSearchingCity] = useState(false)
   const mapRef = useRef<any>(null);
 
   // Função para navegar para uma cidade
@@ -83,8 +84,8 @@ export default function Mapbox({ anunciosFiltrados, onCityFound }: { anunciosFil
         return distance <= 50; // 50km de raio
       });
 
-      // Só navegar se houver markers próximos
-      if (hasNearbyMarkers) {
+      // Só navegar se houver markers próximos E se for uma pesquisa ativa
+      if (hasNearbyMarkers && isSearchingCity) {
         mapRef.current.setView([coords.lat, coords.lng], 14);
       }
       // Se não houver markers próximos, o mapa permanece onde está
@@ -100,6 +101,7 @@ export default function Mapbox({ anunciosFiltrados, onCityFound }: { anunciosFil
   useEffect(() => {
     if (mounted) {
       (window as any).navigateToCity = navigateToCity;
+      (window as any).setIsSearchingCity = setIsSearchingCity;
     }
   }, [mounted, navigateToCity]);
 
@@ -154,15 +156,6 @@ export default function Mapbox({ anunciosFiltrados, onCityFound }: { anunciosFil
     ? markers.filter(m => anunciosFiltrados.some(a => a.id === m.anuncio_id))
     : [];
 
-  // Ajustar o centro/zoom do mapa para os markers filtrados
-  useEffect(() => {
-    if (!mapRef.current || !filteredMarkers.length) return;
-    const group = L.featureGroup(filteredMarkers.map(m => L.marker([m.lat, m.lng])));
-    try {
-      mapRef.current.fitBounds(group.getBounds(), { padding: [50, 50] });
-    } catch {}
-  }, [filteredMarkers]);
-
   // Navegar para cidade quando encontrada
   useEffect(() => {
     if (onCityFound) {
@@ -183,17 +176,15 @@ export default function Mapbox({ anunciosFiltrados, onCityFound }: { anunciosFil
     }
   }, [mounted]);
 
-  // Garantir que o mapa volte para Primavera do Leste quando os markers forem carregados
+  // Garantir que o mapa sempre fique em Primavera do Leste por padrão
   useEffect(() => {
-    if (mounted && !loading && markers.length > 0 && mapRef.current) {
-      // Se não há filtros ativos, voltar para Primavera do Leste
-      if (!anunciosFiltrados || anunciosFiltrados.length === 0) {
-        setTimeout(() => {
-          mapRef.current.setView([-15.5586, -54.2811], 13);
-        }, 200);
-      }
+    if (mounted && !loading && mapRef.current && !isSearchingCity) {
+      // Sempre voltar para Primavera do Leste quando não há pesquisa específica
+      setTimeout(() => {
+        mapRef.current.setView([-15.5586, -54.2811], 13);
+      }, 300);
     }
-  }, [mounted, loading, markers, anunciosFiltrados]);
+  }, [mounted, loading, markers, isSearchingCity]);
 
   if (!mounted || mapHeight === 0) return null
   if (loading) return <div className="hidden xl:flex w-[400px] flex-shrink-0 z-0 items-center justify-center" style={{ height: '100%' }}>Carregando totens no mapa...</div>

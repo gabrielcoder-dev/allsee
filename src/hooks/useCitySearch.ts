@@ -81,6 +81,10 @@ export function useCitySearch(delay: number = 2000) {
       setLastResult(null)
       // Quando o campo estiver vazio, navegar para Primavera do Leste
       if ((window as any).navigateToCity) {
+        // Indicar que não há pesquisa ativa
+        if ((window as any).setIsSearchingCity) {
+          (window as any).setIsSearchingCity(false);
+        }
         (window as any).navigateToCity(PRIMAVERA_DO_LESTE_COORDS);
       }
       return
@@ -103,6 +107,10 @@ export function useCitySearch(delay: number = 2000) {
         
         setLastResult(finalResult)
         setError('')
+        // Indicar que há uma pesquisa ativa
+        if ((window as any).setIsSearchingCity) {
+          (window as any).setIsSearchingCity(true);
+        }
         // NÃO navegar automaticamente para a cidade encontrada
         // A navegação só acontecerá se houver markers nessa cidade
       } else {
@@ -113,14 +121,26 @@ export function useCitySearch(delay: number = 2000) {
           // Se contém cidade com markers, não mostrar erro
           setError('')
           setLastResult(null)
+          // Indicar que há uma pesquisa ativa
+          if ((window as any).setIsSearchingCity) {
+            (window as any).setIsSearchingCity(true);
+          }
         } else {
           setError('Cidade não encontrada. Tente novamente.')
           setLastResult(null)
+          // Indicar que não há pesquisa ativa
+          if ((window as any).setIsSearchingCity) {
+            (window as any).setIsSearchingCity(false);
+          }
         }
       }
     } catch (error) {
       setError('Erro ao buscar cidade. Tente novamente.')
       setLastResult(null)
+      // Indicar que não há pesquisa ativa
+      if ((window as any).setIsSearchingCity) {
+        (window as any).setIsSearchingCity(false);
+      }
     } finally {
       setIsSearching(false)
     }
@@ -149,6 +169,10 @@ export function useCitySearch(delay: number = 2000) {
       setLastResult(null)
       // Navegar para Primavera do Leste quando o campo ficar vazio
       if ((window as any).navigateToCity) {
+        // Indicar que não há pesquisa ativa
+        if ((window as any).setIsSearchingCity) {
+          (window as any).setIsSearchingCity(false);
+        }
         (window as any).navigateToCity(PRIMAVERA_DO_LESTE_COORDS);
       }
     }
