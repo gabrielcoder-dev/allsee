@@ -50,6 +50,25 @@ async function checkIfSpecificTotem(address: string): Promise<{ isSpecificTotem:
   }
 }
 
+// Função para verificar se o endereço contém o nome de uma cidade com markers
+async function checkIfAddressContainsCityWithMarkers(address: string): Promise<boolean> {
+  try {
+    const { data, error } = await fetch('/api/check-city-in-address', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ address })
+    }).then(res => res.json())
+
+    if (error || !data) {
+      return false
+    }
+
+    return data.hasCityWithMarkers
+  } catch (error) {
+    return false
+  }
+}
+
 export function useCitySearch(delay: number = 2000) {
   const [searchTerm, setSearchTerm] = useState('')
   const [isSearching, setIsSearching] = useState(false)
@@ -72,6 +91,7 @@ export function useCitySearch(delay: number = 2000) {
 
     try {
       const result = await geocodeCity(term)
+      
       if (result) {
         // Verificar se é um totem específico
         const totemCheck = await checkIfSpecificTotem(term)
@@ -86,8 +106,17 @@ export function useCitySearch(delay: number = 2000) {
         // NÃO navegar automaticamente para a cidade encontrada
         // A navegação só acontecerá se houver markers nessa cidade
       } else {
-        setError('Cidade não encontrada. Tente novamente.')
-        setLastResult(null)
+        // Se a geocodificação falhou, verificar se o endereço contém uma cidade com markers
+        const hasCityWithMarkers = await checkIfAddressContainsCityWithMarkers(term)
+        
+        if (hasCityWithMarkers) {
+          // Se contém cidade com markers, não mostrar erro
+          setError('')
+          setLastResult(null)
+        } else {
+          setError('Cidade não encontrada. Tente novamente.')
+          setLastResult(null)
+        }
       }
     } catch (error) {
       setError('Erro ao buscar cidade. Tente novamente.')
