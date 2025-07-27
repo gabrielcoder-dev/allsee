@@ -6,6 +6,9 @@ type CitySearchResult = {
   displayName: string
 }
 
+// Coordenadas de Primavera do Leste, MT
+const PRIMAVERA_DO_LESTE_COORDS = { lat: -15.5586, lng: -54.2811 }
+
 async function geocodeCity(cityName: string): Promise<CitySearchResult | null> {
   try {
     const response = await fetch(
@@ -36,6 +39,10 @@ export function useCitySearch(delay: number = 2000) {
     if (!term.trim()) {
       setError('')
       setLastResult(null)
+      // Quando o campo estiver vazio, navegar para Primavera do Leste
+      if ((window as any).navigateToCity) {
+        (window as any).navigateToCity(PRIMAVERA_DO_LESTE_COORDS);
+      }
       return
     }
 
@@ -47,6 +54,8 @@ export function useCitySearch(delay: number = 2000) {
       if (result) {
         setLastResult(result)
         setError('')
+        // NÃO navegar automaticamente para a cidade encontrada
+        // A navegação só acontecerá se houver markers nessa cidade
       } else {
         setError('Cidade não encontrada. Tente novamente.')
         setLastResult(null)
@@ -64,6 +73,11 @@ export function useCitySearch(delay: number = 2000) {
     const timeoutId = setTimeout(() => {
       if (searchTerm.trim()) {
         searchCity(searchTerm)
+      } else {
+        // Quando o campo estiver vazio, navegar para Primavera do Leste
+        if ((window as any).navigateToCity) {
+          (window as any).navigateToCity(PRIMAVERA_DO_LESTE_COORDS);
+        }
       }
     }, delay)
 

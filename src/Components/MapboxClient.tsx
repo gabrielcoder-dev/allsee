@@ -66,7 +66,21 @@ export default function Mapbox({ anunciosFiltrados, onCityFound }: { anunciosFil
   // Função para navegar para uma cidade
   const navigateToCity = (coords: { lat: number; lng: number }) => {
     if (mapRef.current) {
-      mapRef.current.setView([coords.lat, coords.lng], 12);
+      // Verificar se há markers próximos à cidade (dentro de 50km)
+      const hasNearbyMarkers = markers.some(marker => {
+        const distance = Math.sqrt(
+          Math.pow(marker.lat - coords.lat, 2) + 
+          Math.pow(marker.lng - coords.lng, 2)
+        ) * 111; // Aproximadamente 111km por grau
+        return distance <= 50; // 50km de raio
+      });
+
+      // Só navegar se houver markers próximos
+      if (hasNearbyMarkers) {
+        mapRef.current.setView([coords.lat, coords.lng], 12);
+      }
+      // Se não houver markers próximos, o mapa permanece onde está
+      // e o GetAnunciosResults mostrará "totem não encontrado"
     }
   };
 

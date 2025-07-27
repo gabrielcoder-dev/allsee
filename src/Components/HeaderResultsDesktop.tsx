@@ -97,10 +97,8 @@ const HeaderResultsDesktop = ({ onDurationChange, selectedDuration, onTipoMidiaC
   // Notificar quando uma cidade é encontrada
   useEffect(() => {
     if (lastResult) {
-      // Navegar no mapa se a função estiver disponível
-      if ((window as any).navigateToCity) {
-        (window as any).navigateToCity({ lat: lastResult.lat, lng: lastResult.lng });
-      }
+      // NÃO navegar automaticamente para a cidade encontrada
+      // A navegação só acontecerá se houver markers nessa cidade
       
       // Notificar o componente pai
       if (onCityFound) {
