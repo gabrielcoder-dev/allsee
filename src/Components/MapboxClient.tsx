@@ -8,6 +8,7 @@ import { useEffect, useState, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import { orangePinIcon } from './CustomMarkerIcon';
 import MiniAnuncioCard from './MiniAnuncioCard';
+import CitySearch from './CitySearch';
 
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: require('leaflet/dist/images/marker-icon-2x.png'),
@@ -140,10 +141,16 @@ export default function Mapbox({ anunciosFiltrados }: { anunciosFiltrados?: any[
         zoom={13}
         style={{ width: '100%', height: '100%' }}
         whenReady={() => {}}
+        ref={mapRef}
       >
         <TileLayer
           attribution='&copy; <a href="https://osm.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+        />
+        <CitySearch 
+          onCityFound={(coords) => {
+            console.log('Cidade encontrada:', coords)
+          }}
         />
         {markers.map((marker) => (
           <Marker
