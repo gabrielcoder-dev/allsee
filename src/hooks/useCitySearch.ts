@@ -57,6 +57,7 @@ async function geocodeCity(cityName: string): Promise<CitySearchResult | null> {
 // Função para verificar se o endereço corresponde a um totem específico
 async function checkIfSpecificTotem(address: string): Promise<{ isSpecificTotem: boolean; totemId?: number }> {
   try {
+    console.log('Verificando totem específico para:', address);
     const { data, error } = await fetch('/api/check-totem-address', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -64,11 +65,14 @@ async function checkIfSpecificTotem(address: string): Promise<{ isSpecificTotem:
     }).then(res => res.json())
 
     if (error || !data) {
+      console.log('Nenhum totem específico encontrado');
       return { isSpecificTotem: false }
     }
 
+    console.log('Totem específico encontrado:', data);
     return { isSpecificTotem: true, totemId: data.totemId }
   } catch (error) {
+    console.log('Erro ao verificar totem específico:', error);
     return { isSpecificTotem: false }
   }
 }
@@ -92,7 +96,7 @@ async function checkIfAddressContainsCityWithMarkers(address: string): Promise<b
   }
 }
 
-export function useCitySearch(delay: number = 2000) {
+export function useCitySearch(delay: number = 0) {
   const [searchTerm, setSearchTerm] = useState('')
   const [isSearching, setIsSearching] = useState(false)
   const [lastResult, setLastResult] = useState<CitySearchResult | null>(null)
@@ -136,8 +140,8 @@ export function useCitySearch(delay: number = 2000) {
         }
         // Navegar para a cidade encontrada
         if ((window as any).navigateToCity) {
-          console.log('Navegando para cidade:', result);
-          (window as any).navigateToCity(result);
+          console.log('Navegando para cidade:', result, 'totemId:', totemCheck.totemId);
+          (window as any).navigateToCity(result, totemCheck.totemId);
         }
       } else {
         // Se a geocodificação falhou, verificar se o endereço contém uma cidade com markers
@@ -151,10 +155,13 @@ export function useCitySearch(delay: number = 2000) {
           if ((window as any).setIsSearchingCity) {
             (window as any).setIsSearchingCity(true);
           }
+          // Verificar se é um totem específico
+          const totemCheck = await checkIfSpecificTotem(term);
           // Tentar geocodificar a cidade para navegar
           const cityResult = await geocodeCity(term);
           if (cityResult && (window as any).navigateToCity) {
-            (window as any).navigateToCity(cityResult);
+            console.log('Navegando para cidade com markers:', cityResult, 'totemId:', totemCheck.totemId);
+            (window as any).navigateToCity(cityResult, totemCheck.totemId);
           }
         } else {
           setError('Cidade não encontrada. Tente novamente.')

@@ -90,7 +90,10 @@ export default function Mapbox({ anunciosFiltrados, onCityFound }: { anunciosFil
       // Navegar se houver markers próximos
       if (hasNearbyMarkers) {
         console.log('Navegando para:', coords.lat, coords.lng);
-        mapRef.current.setView([coords.lat, coords.lng], 14);
+        mapRef.current.setView([coords.lat, coords.lng], 14, {
+          animate: true,
+          duration: 1.5 // 1.5 segundos de transição suave
+        });
       }
       // Se não houver markers próximos, o mapa permanece onde está
       // e o GetAnunciosResults mostrará "totem não encontrado"
