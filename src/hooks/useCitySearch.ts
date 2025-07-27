@@ -13,20 +13,27 @@ const PRIMAVERA_DO_LESTE_COORDS = { lat: -15.5586, lng: -54.2811 }
 
 async function geocodeCity(cityName: string): Promise<CitySearchResult | null> {
   try {
+    console.log('Geocodificando:', cityName);
+    
     // Buscar com o termo exato primeiro
     let response = await fetch(
       `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(cityName)}&limit=1&addressdetails=1&countrycodes=br`
     )
     let data = await response.json()
     
+    console.log('Resultado da busca exata:', data);
+    
     // Se não encontrou com o termo exato, tentar com termo parcial
     if (!data || data.length === 0) {
+      console.log('Tentando busca parcial...');
       // Adicionar wildcard para busca parcial
       const partialSearch = `${cityName}*`
       response = await fetch(
         `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(partialSearch)}&limit=5&addressdetails=1&countrycodes=br`
       )
       data = await response.json()
+      
+      console.log('Resultado da busca parcial:', data);
       
       // Filtrar resultados que contêm o termo buscado
       if (data && data.length > 0) {
@@ -35,6 +42,7 @@ async function geocodeCity(cityName: string): Promise<CitySearchResult | null> {
         )
         if (filteredData.length > 0) {
           data = [filteredData[0]] // Pegar o primeiro resultado filtrado
+          console.log('Resultado filtrado:', data[0]);
         }
       }
     }
@@ -47,6 +55,8 @@ async function geocodeCity(cityName: string): Promise<CitySearchResult | null> {
         displayName: data[0].display_name
       }
     }
+    
+    console.log('Nenhuma cidade encontrada para:', cityName);
     return null
   } catch (error) {
     console.error('Erro ao buscar cidade:', error)
@@ -121,15 +131,30 @@ export function useCitySearch(delay: number = 0) {
     setError('')
 
     try {
+      // Primeiro verificar se é um totem específico
+      const totemCheck = await checkIfSpecificTotem(term)
+      
+      if (totemCheck.isSpecificTotem && totemCheck.totemId) {
+        console.log('Totem específico encontrado, navegando diretamente...');
+        // Se for um totem específico, navegar diretamente sem geocodificar
+        if ((window as any).navigateToCity) {
+          // Usar coordenadas padrão da cidade (será ajustado pelo mapa)
+          const cityCoords = { lat: -15.5586, lng: -54.2811 }; // Coordenadas padrão
+          (window as any).navigateToCity(cityCoords, totemCheck.totemId);
+        }
+        setLastResult({ lat: -15.5586, lng: -54.2811, displayName: term, isSpecificTotem: true, totemId: totemCheck.totemId });
+        setError('');
+        return;
+      }
+      
+      // Se não for totem específico, tentar geocodificar
       const result = await geocodeCity(term)
       
       if (result) {
-        // Verificar se é um totem específico
-        const totemCheck = await checkIfSpecificTotem(term)
         const finalResult = {
           ...result,
-          isSpecificTotem: totemCheck.isSpecificTotem,
-          totemId: totemCheck.totemId
+          isSpecificTotem: false,
+          totemId: undefined
         }
         
         setLastResult(finalResult)
@@ -140,8 +165,8 @@ export function useCitySearch(delay: number = 0) {
         }
         // Navegar para a cidade encontrada
         if ((window as any).navigateToCity) {
-          console.log('Navegando para cidade:', result, 'totemId:', totemCheck.totemId);
-          (window as any).navigateToCity(result, totemCheck.totemId);
+          console.log('Navegando para cidade:', result);
+          (window as any).navigateToCity(result);
         }
       } else {
         // Se a geocodificação falhou, verificar se o endereço contém uma cidade com markers

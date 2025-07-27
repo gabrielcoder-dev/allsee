@@ -25,9 +25,23 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     console.log('Resultados encontrados:', data);
+    console.log('Endereço buscado:', address);
 
     if (data && data.length > 0) {
-      console.log('Totem encontrado:', data[0]);
+      // Tentar encontrar uma correspondência mais precisa
+      const exactMatch = data.find(totem => 
+        totem.adress?.toLowerCase().includes(address.toLowerCase()) ||
+        totem.endereco?.toLowerCase().includes(address.toLowerCase()) ||
+        totem.name?.toLowerCase().includes(address.toLowerCase())
+      );
+      
+      if (exactMatch) {
+        console.log('Totem encontrado (match exato):', exactMatch);
+        return res.status(200).json({ data: { isSpecificTotem: true, totemId: exactMatch.id } })
+      }
+      
+      // Se não encontrou match exato, usar o primeiro resultado
+      console.log('Totem encontrado (primeiro resultado):', data[0]);
       return res.status(200).json({ data: { isSpecificTotem: true, totemId: data[0].id } })
     }
 

@@ -69,11 +69,23 @@ export default function Mapbox({ anunciosFiltrados, onCityFound }: { anunciosFil
   const navigateToCity = (coords: { lat: number; lng: number }, totemId?: number) => {
     console.log('navigateToCity chamada com:', coords, 'totemId:', totemId);
     if (mapRef.current) {
-      // Se for um totem específico, destacar o marker
+      // Se for um totem específico, destacar o marker e navegar para ele
       if (totemId) {
+        console.log('Destacando totem específico:', totemId);
         setHighlightedMarkerId(totemId)
         // Remover o destaque após 5 segundos
         setTimeout(() => setHighlightedMarkerId(null), 5000)
+        
+        // Encontrar as coordenadas do totem específico
+        const totemMarker = markers.find(marker => marker.id === totemId);
+        if (totemMarker) {
+          console.log('Navegando para totem específico:', totemMarker.lat, totemMarker.lng);
+          mapRef.current.setView([totemMarker.lat, totemMarker.lng], 16, {
+            animate: true,
+            duration: 1.5
+          });
+          return; // Sair da função pois já navegou para o totem
+        }
       }
 
       // Verificar se há markers próximos à cidade (dentro de 50km)
