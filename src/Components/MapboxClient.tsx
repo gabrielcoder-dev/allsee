@@ -164,11 +164,13 @@ export default function Mapbox({ anunciosFiltrados, onCityFound }: { anunciosFil
         navigateToCity(coords, coords.totemId);
         onCityFound(coords);
       };
-      
-      // Expor a função globalmente para que os headers possam usar
-      (window as any).navigateToCity = navigateToCity;
     }
   }, [onCityFound]);
+
+  // Expor a função globalmente para que os headers possam usar
+  useEffect(() => {
+    (window as any).navigateToCity = navigateToCity;
+  }, [navigateToCity]);
 
   if (!mounted || mapHeight === 0) return null
   if (loading) return <div className="hidden xl:flex w-[400px] flex-shrink-0 z-0 items-center justify-center" style={{ height: '100%' }}>Carregando totens no mapa...</div>

@@ -142,6 +142,20 @@ export function useCitySearch(delay: number = 2000) {
     return () => clearTimeout(timeoutId)
   }, [searchTerm, delay, searchCity])
 
+  // Efeito adicional para garantir que quando searchTerm ficar vazio, volte para Primavera do Leste
+  useEffect(() => {
+    if (!searchTerm.trim()) {
+      setError('')
+      setLastResult(null)
+      // Navegar para Primavera do Leste quando o campo ficar vazio
+      setTimeout(() => {
+        if ((window as any).navigateToCity) {
+          (window as any).navigateToCity(PRIMAVERA_DO_LESTE_COORDS);
+        }
+      }, 100); // Pequeno delay para garantir que a função esteja disponível
+    }
+  }, [searchTerm])
+
   return {
     searchTerm,
     setSearchTerm,
