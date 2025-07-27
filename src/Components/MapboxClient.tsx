@@ -96,8 +96,14 @@ export default function Mapbox({ anunciosFiltrados, onCityFound }: { anunciosFil
     setMounted(true)
   }, [])
 
+  // Expor a função globalmente imediatamente quando o componente montar
   useEffect(() => {
-    if (!mounted) return
+    if (mounted) {
+      (window as any).navigateToCity = navigateToCity;
+    }
+  }, [mounted, navigateToCity]);
+
+  useEffect(() => {
     function updateHeight() {
       const header = document.getElementById('header-price')
       const headerHeight = header ? header.offsetHeight : 64
@@ -167,10 +173,27 @@ export default function Mapbox({ anunciosFiltrados, onCityFound }: { anunciosFil
     }
   }, [onCityFound]);
 
-  // Expor a função globalmente para que os headers possam usar
+  // Garantir que o mapa sempre inicie em Primavera do Leste
   useEffect(() => {
-    (window as any).navigateToCity = navigateToCity;
-  }, [navigateToCity]);
+    if (mounted && mapRef.current) {
+      // Pequeno delay para garantir que o mapa esteja pronto
+      setTimeout(() => {
+        mapRef.current.setView([-15.5586, -54.2811], 13);
+      }, 100);
+    }
+  }, [mounted]);
+
+  // Garantir que o mapa volte para Primavera do Leste quando os markers forem carregados
+  useEffect(() => {
+    if (mounted && !loading && markers.length > 0 && mapRef.current) {
+      // Se não há filtros ativos, voltar para Primavera do Leste
+      if (!anunciosFiltrados || anunciosFiltrados.length === 0) {
+        setTimeout(() => {
+          mapRef.current.setView([-15.5586, -54.2811], 13);
+        }, 200);
+      }
+    }
+  }, [mounted, loading, markers, anunciosFiltrados]);
 
   if (!mounted || mapHeight === 0) return null
   if (loading) return <div className="hidden xl:flex w-[400px] flex-shrink-0 z-0 items-center justify-center" style={{ height: '100%' }}>Carregando totens no mapa...</div>

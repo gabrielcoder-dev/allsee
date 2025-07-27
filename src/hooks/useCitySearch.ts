@@ -132,12 +132,12 @@ export function useCitySearch(delay: number = 2000) {
       if (searchTerm.trim()) {
         searchCity(searchTerm)
       } else {
-        // Quando o campo estiver vazio, navegar para Primavera do Leste
+        // Quando o campo estiver vazio, navegar imediatamente para Primavera do Leste
         if ((window as any).navigateToCity) {
           (window as any).navigateToCity(PRIMAVERA_DO_LESTE_COORDS);
         }
       }
-    }, delay)
+    }, searchTerm.trim() ? delay : 0) // Sem delay quando o campo estiver vazio
 
     return () => clearTimeout(timeoutId)
   }, [searchTerm, delay, searchCity])
@@ -148,11 +148,9 @@ export function useCitySearch(delay: number = 2000) {
       setError('')
       setLastResult(null)
       // Navegar para Primavera do Leste quando o campo ficar vazio
-      setTimeout(() => {
-        if ((window as any).navigateToCity) {
-          (window as any).navigateToCity(PRIMAVERA_DO_LESTE_COORDS);
-        }
-      }, 100); // Pequeno delay para garantir que a função esteja disponível
+      if ((window as any).navigateToCity) {
+        (window as any).navigateToCity(PRIMAVERA_DO_LESTE_COORDS);
+      }
     }
   }, [searchTerm])
 
