@@ -34,7 +34,7 @@ const Page = () => {
   }
 
   // Função para lidar com cidade encontrada
-  const handleCityFound = (coords: { lat: number; lng: number }) => {
+  const handleCityFound = (coords: { lat: number; lng: number; totemId?: number }) => {
     console.log('Cidade encontrada:', coords)
     // Aqui você pode adicionar lógica adicional se necessário
   }

@@ -54,18 +54,26 @@ type MarkerType = {
   };
 };
 
-export default function Mapbox({ anunciosFiltrados, onCityFound }: { anunciosFiltrados?: any[], onCityFound?: (coords: { lat: number; lng: number }) => void }) {
+export default function Mapbox({ anunciosFiltrados, onCityFound }: { anunciosFiltrados?: any[], onCityFound?: (coords: { lat: number; lng: number; totemId?: number }) => void }) {
   // Coordenadas de Primavera do Leste, MT (coordenadas mais precisas)
   const center: LatLngTuple = [-15.5586, -54.2811]
   const [mapHeight, setMapHeight] = useState<number>(0)
   const [markers, setMarkers] = useState<MarkerType[]>([])
   const [loading, setLoading] = useState(true)
   const [mounted, setMounted] = useState(false)
+  const [highlightedMarkerId, setHighlightedMarkerId] = useState<number | null>(null)
   const mapRef = useRef<any>(null);
 
   // Função para navegar para uma cidade
-  const navigateToCity = (coords: { lat: number; lng: number }) => {
+  const navigateToCity = (coords: { lat: number; lng: number }, totemId?: number) => {
     if (mapRef.current) {
+      // Se for um totem específico, destacar o marker
+      if (totemId) {
+        setHighlightedMarkerId(totemId)
+        // Remover o destaque após 5 segundos
+        setTimeout(() => setHighlightedMarkerId(null), 5000)
+      }
+
       // Verificar se há markers próximos à cidade (dentro de 50km)
       const hasNearbyMarkers = markers.some(marker => {
         const distance = Math.sqrt(
@@ -152,8 +160,8 @@ export default function Mapbox({ anunciosFiltrados, onCityFound }: { anunciosFil
   // Navegar para cidade quando encontrada
   useEffect(() => {
     if (onCityFound) {
-      const handleCityFound = (coords: { lat: number; lng: number }) => {
-        navigateToCity(coords);
+      const handleCityFound = (coords: { lat: number; lng: number; totemId?: number }) => {
+        navigateToCity(coords, coords.totemId);
         onCityFound(coords);
       };
       
@@ -186,7 +194,14 @@ export default function Mapbox({ anunciosFiltrados, onCityFound }: { anunciosFil
           <Marker
             key={marker.id}
             position={[marker.lat, marker.lng]}
-            icon={orangePinIcon}
+            icon={highlightedMarkerId === marker.id ? 
+              L.divIcon({
+                className: 'highlighted-marker',
+                html: '<div style="background: #ff6b35; border: 3px solid #fff; border-radius: 50%; width: 20px; height: 20px; box-shadow: 0 0 10px rgba(255,107,53,0.8);"></div>',
+                iconSize: [20, 20],
+                iconAnchor: [10, 10]
+              }) : orangePinIcon
+            }
           >
             <Popup minWidth={200} maxWidth={300}>
               <MiniAnuncioCard anuncio={marker.anuncio} />

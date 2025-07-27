@@ -45,7 +45,7 @@ type HeaderResultsDesktopProps = {
   onTipoMidiaChange?: (tipo: string | null, bairros: string[]) => void;
   orderBy?: string;
   onOrderChange?: (order: string) => void;
-  onCityFound?: (coords: { lat: number; lng: number }) => void;
+  onCityFound?: (coords: { lat: number; lng: number; totemId?: number }) => void;
 }
 
 const HeaderResultsDesktop = ({ onDurationChange, selectedDuration, onTipoMidiaChange, orderBy, onOrderChange, onCityFound }: HeaderResultsDesktopProps) => {
@@ -102,7 +102,11 @@ const HeaderResultsDesktop = ({ onDurationChange, selectedDuration, onTipoMidiaC
       
       // Notificar o componente pai
       if (onCityFound) {
-        onCityFound({ lat: lastResult.lat, lng: lastResult.lng })
+        onCityFound({ 
+          lat: lastResult.lat, 
+          lng: lastResult.lng,
+          totemId: lastResult.totemId 
+        })
       }
     }
   }, [lastResult, onCityFound])

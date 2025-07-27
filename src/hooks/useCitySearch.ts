@@ -4,6 +4,8 @@ type CitySearchResult = {
   lat: number
   lng: number
   displayName: string
+  isSpecificTotem?: boolean
+  totemId?: number
 }
 
 // Coordenadas de Primavera do Leste, MT
@@ -26,6 +28,25 @@ async function geocodeCity(cityName: string): Promise<CitySearchResult | null> {
   } catch (error) {
     console.error('Erro ao buscar cidade:', error)
     return null
+  }
+}
+
+// Função para verificar se o endereço corresponde a um totem específico
+async function checkIfSpecificTotem(address: string): Promise<{ isSpecificTotem: boolean; totemId?: number }> {
+  try {
+    const { data, error } = await fetch('/api/check-totem-address', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ address })
+    }).then(res => res.json())
+
+    if (error || !data) {
+      return { isSpecificTotem: false }
+    }
+
+    return { isSpecificTotem: true, totemId: data.totemId }
+  } catch (error) {
+    return { isSpecificTotem: false }
   }
 }
 
@@ -52,7 +73,15 @@ export function useCitySearch(delay: number = 2000) {
     try {
       const result = await geocodeCity(term)
       if (result) {
-        setLastResult(result)
+        // Verificar se é um totem específico
+        const totemCheck = await checkIfSpecificTotem(term)
+        const finalResult = {
+          ...result,
+          isSpecificTotem: totemCheck.isSpecificTotem,
+          totemId: totemCheck.totemId
+        }
+        
+        setLastResult(finalResult)
         setError('')
         // NÃO navegar automaticamente para a cidade encontrada
         // A navegação só acontecerá se houver markers nessa cidade
