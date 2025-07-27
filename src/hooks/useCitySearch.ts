@@ -111,8 +111,11 @@ export function useCitySearch(delay: number = 2000) {
         if ((window as any).setIsSearchingCity) {
           (window as any).setIsSearchingCity(true);
         }
-        // NÃO navegar automaticamente para a cidade encontrada
-        // A navegação só acontecerá se houver markers nessa cidade
+        // Navegar para a cidade encontrada
+        if ((window as any).navigateToCity) {
+          console.log('Navegando para cidade:', result);
+          (window as any).navigateToCity(result);
+        }
       } else {
         // Se a geocodificação falhou, verificar se o endereço contém uma cidade com markers
         const hasCityWithMarkers = await checkIfAddressContainsCityWithMarkers(term)
@@ -124,6 +127,11 @@ export function useCitySearch(delay: number = 2000) {
           // Indicar que há uma pesquisa ativa
           if ((window as any).setIsSearchingCity) {
             (window as any).setIsSearchingCity(true);
+          }
+          // Tentar geocodificar a cidade para navegar
+          const cityResult = await geocodeCity(term);
+          if (cityResult && (window as any).navigateToCity) {
+            (window as any).navigateToCity(cityResult);
           }
         } else {
           setError('Cidade não encontrada. Tente novamente.')

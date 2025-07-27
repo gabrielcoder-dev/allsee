@@ -67,6 +67,7 @@ export default function Mapbox({ anunciosFiltrados, onCityFound }: { anunciosFil
 
   // Função para navegar para uma cidade
   const navigateToCity = (coords: { lat: number; lng: number }, totemId?: number) => {
+    console.log('navigateToCity chamada com:', coords, 'totemId:', totemId);
     if (mapRef.current) {
       // Se for um totem específico, destacar o marker
       if (totemId) {
@@ -84,8 +85,11 @@ export default function Mapbox({ anunciosFiltrados, onCityFound }: { anunciosFil
         return distance <= 50; // 50km de raio
       });
 
-      // Só navegar se houver markers próximos E se for uma pesquisa ativa
-      if (hasNearbyMarkers && isSearchingCity) {
+      console.log('Markers próximos encontrados:', hasNearbyMarkers);
+
+      // Navegar se houver markers próximos
+      if (hasNearbyMarkers) {
+        console.log('Navegando para:', coords.lat, coords.lng);
         mapRef.current.setView([coords.lat, coords.lng], 14);
       }
       // Se não houver markers próximos, o mapa permanece onde está
