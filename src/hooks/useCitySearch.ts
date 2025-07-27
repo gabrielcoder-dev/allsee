@@ -9,7 +9,7 @@ type CitySearchResult = {
 async function geocodeCity(cityName: string): Promise<CitySearchResult | null> {
   try {
     const response = await fetch(
-      `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(cityName)}&limit=1&addressdetails=1`
+      `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(cityName)}&limit=1&addressdetails=1&countrycodes=br`
     )
     const data = await response.json()
     if (data && data.length > 0) {
