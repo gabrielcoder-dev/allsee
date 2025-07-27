@@ -108,9 +108,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     ]
 
     // Verificar se o endereço contém alguma cidade com markers
-    const hasCityWithMarkers = citiesWithMarkers.some(city => 
-      address.toLowerCase().includes(city.toLowerCase())
-    )
+    const hasCityWithMarkers = citiesWithMarkers.some(city => {
+      const cityLower = city.toLowerCase()
+      const addressLower = address.toLowerCase()
+      
+      // Verificar se o endereço contém a cidade completa
+      if (addressLower.includes(cityLower)) {
+        return true
+      }
+      
+      // Verificar se o endereço contém parte do nome da cidade
+      const cityWords = cityLower.split(' ')
+      return cityWords.some(word => 
+        word.length > 2 && addressLower.includes(word)
+      )
+    })
 
     return res.status(200).json({ 
       data: { 

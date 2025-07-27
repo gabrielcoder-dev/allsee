@@ -13,11 +13,34 @@ const PRIMAVERA_DO_LESTE_COORDS = { lat: -15.5586, lng: -54.2811 }
 
 async function geocodeCity(cityName: string): Promise<CitySearchResult | null> {
   try {
-    const response = await fetch(
+    // Buscar com o termo exato primeiro
+    let response = await fetch(
       `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(cityName)}&limit=1&addressdetails=1&countrycodes=br`
     )
-    const data = await response.json()
+    let data = await response.json()
+    
+    // Se não encontrou com o termo exato, tentar com termo parcial
+    if (!data || data.length === 0) {
+      // Adicionar wildcard para busca parcial
+      const partialSearch = `${cityName}*`
+      response = await fetch(
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(partialSearch)}&limit=5&addressdetails=1&countrycodes=br`
+      )
+      data = await response.json()
+      
+      // Filtrar resultados que contêm o termo buscado
+      if (data && data.length > 0) {
+        const filteredData = data.filter((item: any) => 
+          item.display_name.toLowerCase().includes(cityName.toLowerCase())
+        )
+        if (filteredData.length > 0) {
+          data = [filteredData[0]] // Pegar o primeiro resultado filtrado
+        }
+      }
+    }
+    
     if (data && data.length > 0) {
+      console.log('Cidade encontrada:', data[0].display_name, 'para busca:', cityName);
       return { 
         lat: parseFloat(data[0].lat), 
         lng: parseFloat(data[0].lon),

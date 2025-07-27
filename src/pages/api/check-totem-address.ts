@@ -17,7 +17,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const { data, error } = await supabase
       .from('anuncios')
       .select('id, name, adress, endereco')
-      .or(`adress.ilike.%${address}%,endereco.ilike.%${address}%`)
+      .or(`adress.ilike.%${address}%,endereco.ilike.%${address}%,name.ilike.%${address}%`) // Case-insensitive search
 
     if (error) {
       console.error('Erro ao buscar totem:', error)
