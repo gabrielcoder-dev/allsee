@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import HeaderResultsDesktop from '@/Components/HeaderResultsDesktop'
 import MobileHeader from '@/Components/HeaderResultsMobile'
 import HeaderPrice from '@/Components/HeaderPrice'
@@ -56,7 +56,6 @@ const Page = () => {
         onTipoMidiaChange={(tipo, bairros) => { setTipoMidia(tipo); setBairros(bairros); }}
         orderBy={orderBy}
         onOrderChange={setOrderBy}
-        onCityFound={handleCityFound}
       />
       {/* Área principal com scroll controlado */}
       <div className="flex flex-1 min-h-0 overflow-hidden xl:pl-16 justify-center xl:justify-between">
