@@ -19,6 +19,7 @@ const Page = () => {
   const [bairros, setBairros] = useState<string[]>([]);
   const [orderBy, setOrderBy] = useState<string>('');
   const [anunciosFiltrados, setAnunciosFiltrados] = useState<any[]>([]); // NOVO
+  const mapRef = useRef<any>(null);
 
   // Função para adicionar produto ao carrinho
   function handleAdicionarProduto(produto: any) {
@@ -32,6 +33,12 @@ const Page = () => {
     console.log('Busca realizada:', { location, duration, startDate })
   }
 
+  // Função para lidar com cidade encontrada
+  const handleCityFound = (coords: { lat: number; lng: number }) => {
+    console.log('Cidade encontrada:', coords)
+    // Aqui você pode adicionar lógica adicional se necessário
+  }
+
   return (
     <div className="flex flex-col h-screen">
       <HeaderResultsDesktop 
@@ -40,6 +47,7 @@ const Page = () => {
         onTipoMidiaChange={(tipo, bairros) => { setTipoMidia(tipo); setBairros(bairros); }}
         orderBy={orderBy}
         onOrderChange={setOrderBy}
+        onCityFound={handleCityFound}
       />
       <MobileHeader 
         onDurationChange={setSelectedDurationGlobal} 
@@ -48,6 +56,7 @@ const Page = () => {
         onTipoMidiaChange={(tipo, bairros) => { setTipoMidia(tipo); setBairros(bairros); }}
         orderBy={orderBy}
         onOrderChange={setOrderBy}
+        onCityFound={handleCityFound}
       />
       {/* Área principal com scroll controlado */}
       <div className="flex flex-1 min-h-0 overflow-hidden xl:pl-16 justify-center xl:justify-between">
@@ -59,7 +68,7 @@ const Page = () => {
           orderBy={orderBy}
           onChangeAnunciosFiltrados={setAnunciosFiltrados} // NOVO
         />
-        <Mapbox anunciosFiltrados={anunciosFiltrados} />
+        <Mapbox anunciosFiltrados={anunciosFiltrados} onCityFound={handleCityFound} />
       </div>
 
       <HeaderPrice />

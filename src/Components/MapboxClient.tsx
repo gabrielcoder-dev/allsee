@@ -8,7 +8,6 @@ import { useEffect, useState, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import { orangePinIcon } from './CustomMarkerIcon';
 import MiniAnuncioCard from './MiniAnuncioCard';
-import CitySearch from './CitySearch';
 
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: require('leaflet/dist/images/marker-icon-2x.png'),
@@ -55,13 +54,20 @@ type MarkerType = {
   };
 };
 
-export default function Mapbox({ anunciosFiltrados }: { anunciosFiltrados?: any[] }) {
+export default function Mapbox({ anunciosFiltrados, onCityFound }: { anunciosFiltrados?: any[], onCityFound?: (coords: { lat: number; lng: number }) => void }) {
   const center: LatLngTuple = [-15.5586, -54.2811]
   const [mapHeight, setMapHeight] = useState<number>(0)
   const [markers, setMarkers] = useState<MarkerType[]>([])
   const [loading, setLoading] = useState(true)
   const [mounted, setMounted] = useState(false)
   const mapRef = useRef<any>(null);
+
+  // Função para navegar para uma cidade
+  const navigateToCity = (coords: { lat: number; lng: number }) => {
+    if (mapRef.current) {
+      mapRef.current.setView([coords.lat, coords.lng], 12);
+    }
+  };
 
   useEffect(() => {
     setMounted(true)
@@ -128,6 +134,19 @@ export default function Mapbox({ anunciosFiltrados }: { anunciosFiltrados?: any[
     } catch {}
   }, [filteredMarkers]);
 
+  // Navegar para cidade quando encontrada
+  useEffect(() => {
+    if (onCityFound) {
+      const handleCityFound = (coords: { lat: number; lng: number }) => {
+        navigateToCity(coords);
+        onCityFound(coords);
+      };
+      
+      // Expor a função globalmente para que os headers possam usar
+      (window as any).navigateToCity = navigateToCity;
+    }
+  }, [onCityFound]);
+
   if (!mounted || mapHeight === 0) return null
   if (loading) return <div className="hidden xl:flex w-[400px] flex-shrink-0 z-0 items-center justify-center" style={{ height: '100%' }}>Carregando totens no mapa...</div>
 
@@ -147,11 +166,7 @@ export default function Mapbox({ anunciosFiltrados }: { anunciosFiltrados?: any[
           attribution='&copy; <a href="https://osm.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
-        <CitySearch 
-          onCityFound={(coords) => {
-            console.log('Cidade encontrada:', coords)
-          }}
-        />
+
         {markers.map((marker) => (
           <Marker
             key={marker.id}

@@ -13,6 +13,7 @@ import FilterModal from '@/Components/FilterModal'
 import { useRouter } from 'next/navigation'
 import { useCart } from '@/context/CartContext'
 import ModalMenu from './ModalMenu'
+import { useCitySearch } from '@/hooks/useCitySearch'
 
 const durations = [
   { label: '2 semanas', value: '2' },
@@ -44,13 +45,11 @@ type HeaderResultsDesktopProps = {
   onTipoMidiaChange?: (tipo: string | null, bairros: string[]) => void;
   orderBy?: string;
   onOrderChange?: (order: string) => void;
+  onCityFound?: (coords: { lat: number; lng: number }) => void;
 }
 
-const HeaderResultsDesktop = ({ onDurationChange, selectedDuration, onTipoMidiaChange, orderBy, onOrderChange }: HeaderResultsDesktopProps) => {
+const HeaderResultsDesktop = ({ onDurationChange, selectedDuration, onTipoMidiaChange, orderBy, onOrderChange, onCityFound }: HeaderResultsDesktopProps) => {
   const [userName, setUserName] = useState<string>('')
-  const [location, setLocation] = useState('')
-  // Remover o estado local de startDate
-  // const [startDate, setStartDate] = useState<Date | undefined>(new Date())
   const [showFilter, setShowFilter] = useState(false)
   const [open, setOpen] = useState(false)
   const [tipoMidia, setTipoMidia] = useState<string | null>(null)
@@ -60,6 +59,9 @@ const HeaderResultsDesktop = ({ onDurationChange, selectedDuration, onTipoMidiaC
   const durationValue = selectedDuration || '2'
   const totalNoCarrinho = produtos.reduce((acc, p) => acc + p.quantidade, 0)
   const [showMenuModal, setShowMenuModal] = useState(false)
+  
+  // Hook de busca automática de cidade
+  const { searchTerm, setSearchTerm, isSearching, lastResult, error } = useCitySearch(2000)
 
   // Função para criar string yyyy-MM-dd
   function toYMD(date: Date): string {
@@ -91,6 +93,21 @@ const HeaderResultsDesktop = ({ onDurationChange, selectedDuration, onTipoMidiaC
   useEffect(() => {
     console.log('showMenuModal changed:', showMenuModal)
   }, [showMenuModal])
+
+  // Notificar quando uma cidade é encontrada
+  useEffect(() => {
+    if (lastResult) {
+      // Navegar no mapa se a função estiver disponível
+      if ((window as any).navigateToCity) {
+        (window as any).navigateToCity({ lat: lastResult.lat, lng: lastResult.lng });
+      }
+      
+      // Notificar o componente pai
+      if (onCityFound) {
+        onCityFound({ lat: lastResult.lat, lng: lastResult.lng })
+      }
+    }
+  }, [lastResult, onCityFound])
 
   // Fecha ao clicar fora
   useEffect(() => {
@@ -125,19 +142,24 @@ const HeaderResultsDesktop = ({ onDurationChange, selectedDuration, onTipoMidiaC
               <div className="flex items-center gap-1">
                 <MapPinIcon className="w-4 h-5 text-orange-500" />
                 <span className="text-gray-500 mb-1 font-semibold">Endereço ou região</span>
+                {isSearching && (
+                  <span className="text-xs text-blue-500 ml-2">Buscando...</span>
+                )}
               </div>
 
               <input
                 type="text"
                 placeholder="Ex.: Bairro Castelândia"
                 className="bg-transparent outline-none flex-1 w-72 text-sm"
-                value={location}
+                value={searchTerm}
                 onChange={e => {
-                  setLocation(e.target.value);
+                  setSearchTerm(e.target.value);
                   if (onTipoMidiaChange) onTipoMidiaChange(null, e.target.value ? [e.target.value] : []);
                 }}
               />
-
+              {error && (
+                <span className="text-xs text-red-500 mt-1">{error}</span>
+              )}
             </div>
             <Search className="w-5 h-5 text-gray-500 cursor-pointer lg:hidden" />
             </div>
