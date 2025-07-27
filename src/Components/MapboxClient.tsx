@@ -55,6 +55,7 @@ type MarkerType = {
 };
 
 export default function Mapbox({ anunciosFiltrados, onCityFound }: { anunciosFiltrados?: any[], onCityFound?: (coords: { lat: number; lng: number }) => void }) {
+  // Coordenadas de Primavera do Leste, MT
   const center: LatLngTuple = [-15.5586, -54.2811]
   const [mapHeight, setMapHeight] = useState<number>(0)
   const [markers, setMarkers] = useState<MarkerType[]>([])
