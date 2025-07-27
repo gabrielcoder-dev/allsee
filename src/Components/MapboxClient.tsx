@@ -55,7 +55,7 @@ type MarkerType = {
 };
 
 export default function Mapbox({ anunciosFiltrados, onCityFound }: { anunciosFiltrados?: any[], onCityFound?: (coords: { lat: number; lng: number }) => void }) {
-  // Coordenadas de Primavera do Leste, MT
+  // Coordenadas de Primavera do Leste, MT (coordenadas mais precisas)
   const center: LatLngTuple = [-15.5586, -54.2811]
   const [mapHeight, setMapHeight] = useState<number>(0)
   const [markers, setMarkers] = useState<MarkerType[]>([])
@@ -156,13 +156,13 @@ export default function Mapbox({ anunciosFiltrados, onCityFound }: { anunciosFil
       className="hidden xl:flex w-[400px] flex-shrink-0 z-0"
       style={{ height: `${mapHeight}px`, background: '#fff' }}
     >
-      <MapContainer
-        center={center}
-        zoom={13}
-        style={{ width: '100%', height: '100%' }}
-        whenReady={() => {}}
-        ref={mapRef}
-      >
+             <MapContainer
+         center={center}
+         zoom={10}
+         style={{ width: '100%', height: '100%' }}
+         whenReady={() => {}}
+         ref={mapRef}
+       >
         <TileLayer
           attribution='&copy; <a href="https://osm.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
