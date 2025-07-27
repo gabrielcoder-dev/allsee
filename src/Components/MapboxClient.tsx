@@ -77,7 +77,7 @@ export default function Mapbox({ anunciosFiltrados, onCityFound }: { anunciosFil
 
       // Só navegar se houver markers próximos
       if (hasNearbyMarkers) {
-        mapRef.current.setView([coords.lat, coords.lng], 12);
+        mapRef.current.setView([coords.lat, coords.lng], 14);
       }
       // Se não houver markers próximos, o mapa permanece onde está
       // e o GetAnunciosResults mostrará "totem não encontrado"
@@ -172,7 +172,7 @@ export default function Mapbox({ anunciosFiltrados, onCityFound }: { anunciosFil
     >
              <MapContainer
          center={center}
-         zoom={10}
+         zoom={13}
          style={{ width: '100%', height: '100%' }}
          whenReady={() => {}}
          ref={mapRef}
