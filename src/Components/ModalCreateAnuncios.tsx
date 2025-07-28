@@ -27,11 +27,11 @@ export default function ModalCreateAnuncios({
   const [image, setImage] = useState<File | null>(null);
   const [imageUrl, setImageUrl] = useState("");
   const [address, setAddress] = useState("");
-  const [screens, setScreens] = useState(1);
-  const [price, setPrice] = useState(0);
-  const [duration, setDuration] = useState("2");
-  const [display, setDisplay] = useState(0);
-  const [views, setViews] = useState(0);
+  const [screens, setScreens] = useState("");
+  const [price, setPrice] = useState("");
+  const [duration, setDuration] = useState<string[]>([]);
+  const [display, setDisplay] = useState("");
+  const [views, setViews] = useState("");
   const [duration_2, setDuration_2] = useState(false);
   const [duration_4, setDuration_4] = useState(false);
   const [duration_12, setDuration_12] = useState(false);
@@ -39,6 +39,8 @@ export default function ModalCreateAnuncios({
   const [type_screen, setType_screen] = useState<'digital' | 'impresso'>('digital');
   const [selectedNicho, setSelectedNicho] = useState<NichoOption | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
 
   const nichoOptions = [
     { value: 'restaurante' as NichoOption, label: 'Restaurante' },
@@ -50,18 +52,22 @@ export default function ModalCreateAnuncios({
 
   useEffect(() => {
     if (anuncio) {
-      console.log("Editando anúncio:", anuncio);
       setName(anuncio.name || "");
       setImageUrl(anuncio.image || "");
       setAddress(anuncio.address || "");
-      setScreens(anuncio.screens ? String(anuncio.screens) : "1");
-      setExibicoes(anuncio.display ? String(anuncio.display) : "0");
-      setVisualizacoes(anuncio.views ? String(anuncio.views) : "0");
-      setPrice(anuncio.price ? String(anuncio.price) : "0");
+      setScreens(anuncio.screens ? String(anuncio.screens) : "");
+      setDisplay(anuncio.display ? String(anuncio.display) : "");
+      setViews(anuncio.views ? String(anuncio.views) : "");
+      setPrice(anuncio.price ? String(anuncio.price) : "");
       setSelectedNicho(anuncio.nicho || null);
-      const tipoMidia = anuncio.type_screen === 'impresso' ? 'Impresso' : 'Digital';
-      console.log("Tipo de mídia do anúncio:", anuncio.type_screen, "->", tipoMidia);
-      setTypeScreen(tipoMidia);
+      const tipoMidia = anuncio.type_screen === 'impresso' ? 'impresso' : 'digital';
+      setType_screen(tipoMidia);
+      setDuration_2(anuncio.duration_2 || false);
+      setDuration_4(anuncio.duration_4 || false);
+      setDuration_12(anuncio.duration_12 || false);
+      setDuration_24(anuncio.duration_24 || false);
+      
+      // Converter as durações para array
       const dur: string[] = [];
       if (anuncio.duration_2) dur.push("2");
       if (anuncio.duration_4) dur.push("4");
@@ -69,29 +75,34 @@ export default function ModalCreateAnuncios({
       if (anuncio.duration_24) dur.push("24");
       setDuration(dur);
     } else {
+      // Reset para novo anúncio
       setName("");
       setImage(null);
       setImageUrl("");
       setAddress("");
       setScreens("");
-      setExibicoes("");
-      setVisualizacoes("");
+      setDisplay("");
+      setViews("");
       setPrice("");
       setDuration([]);
-      setTypeScreen("Digital");
+      setType_screen('digital');
       setSelectedNicho(null);
+      setDuration_2(false);
+      setDuration_4(false);
+      setDuration_12(false);
+      setDuration_24(false);
     }
-  }, [anuncio, open]);
+  }, [anuncio]);
 
   // Efeito para atualizar exibições quando o tipo de mídia muda
   useEffect(() => {
-    if (typeScreen === 'Impresso') {
-      setExibicoes('fixo');
+    if (type_screen === 'impresso') {
+      setDisplay('fixo');
     } else if (!anuncio) {
       // Se não for edição, limpa o campo para digital
-      setExibicoes('');
+      setDisplay('');
     }
-  }, [typeScreen, anuncio]);
+  }, [type_screen, anuncio]);
 
   if (!open) return null;
 
@@ -110,7 +121,7 @@ export default function ModalCreateAnuncios({
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setLoading(true);
+    setIsSubmitting(true);
     setError(null);
     setSuccess(false);
     let imgUrl = imageUrl;
@@ -135,51 +146,52 @@ export default function ModalCreateAnuncios({
 
       if (anuncio && anuncio.id) {
         // UPDATE
-        const updateData = {
+        const anuncioData = {
           name,
-          image: imgUrl,
+          image: imageUrl,
           address,
           screens: Number(screens),
-          display: typeScreen === 'Impresso' ? 'fixo' : Number(exibicoes),
-          views: Number(visualizacoes),
+          display: type_screen === 'impresso' ? 'fixo' : Number(display),
+          views: Number(views),
           price: Number(price),
           duration_2: duration.includes("2"),
           duration_4: duration.includes("4"),
           duration_12: duration.includes("12"),
           duration_24: duration.includes("24"),
-          type_screen: typeScreen.toLowerCase(),
+          type_screen: type_screen,
           nicho: selectedNicho,
         };
         console.log("Dados atuais do anúncio:", anuncio);
-        console.log("Dados que serão atualizados:", updateData);
-        console.log("Atualizando anúncio:", { id: anuncio.id, updateData });
+        console.log("Dados que serão atualizados:", anuncioData);
+        console.log("Atualizando anúncio:", { id: anuncio.id, anuncioData });
         const { data: updateResult, error: updateError } = await supabase
           .from("anuncios")
-          .update(updateData)
+          .update(anuncioData)
           .eq("id", anuncio.id)
           .select();
         console.log("Resultado da atualização:", { updateResult, updateError });
         if (updateError) throw updateError;
-        console.log("Totem atualizado com sucesso:", { id: anuncio.id, type_screen: typeScreen.toLowerCase() });
+        console.log("Totem atualizado com sucesso:", { id: anuncio.id, type_screen: type_screen.toLowerCase() });
         toast.success("Totem atualizado com sucesso!");
       } else {
         // INSERT
+        const anuncioData = {
+          name,
+          image: imageUrl,
+          address,
+          screens: Number(screens),
+          display: type_screen === 'impresso' ? 'fixo' : Number(display),
+          views: Number(views),
+          price: Number(price),
+          duration_2: duration.includes("2"),
+          duration_4: duration.includes("4"),
+          duration_12: duration.includes("12"),
+          duration_24: duration.includes("24"),
+          type_screen: type_screen,
+          nicho: selectedNicho,
+        };
         const { error: insertError } = await supabase.from("anuncios").insert([
-          {
-            name,
-            image: imgUrl,
-            address,
-            screens: Number(screens),
-            display: typeScreen === 'Impresso' ? 'fixo' : Number(exibicoes),
-            views: Number(visualizacoes),
-            price: Number(price),
-            duration_2: duration.includes("2"),
-            duration_4: duration.includes("4"),
-            duration_12: duration.includes("12"),
-            duration_24: duration.includes("24"),
-            type_screen: typeScreen.toLowerCase(),
-            nicho: selectedNicho,
-          },
+          anuncioData,
         ]);
         if (insertError) throw insertError;
         toast.success("Totem cadastrado com sucesso!");
@@ -194,7 +206,7 @@ export default function ModalCreateAnuncios({
       console.error("Erro ao salvar totem:", err);
       setError(err.message || "Erro ao salvar Totem.");
     } finally {
-      setLoading(false);
+      setIsSubmitting(false);
     }
   }
 
@@ -249,21 +261,21 @@ export default function ModalCreateAnuncios({
           />
           <div className="flex gap-2">
             <input
-              type={typeScreen === 'Impresso' ? 'text' : 'number'}
+              type={type_screen === 'impresso' ? 'text' : 'number'}
               placeholder="Exibições"
-              className={`border rounded-lg px-2 sm:px-3 py-2 w-1/2 text-sm sm:text-base ${typeScreen === 'Impresso' ? 'bg-gray-100 cursor-not-allowed' : ''}`}
-              value={exibicoes}
-              onChange={(e) => setExibicoes(e.target.value)}
+              className={`border rounded-lg px-2 sm:px-3 py-2 w-1/2 text-sm sm:text-base ${type_screen === 'impresso' ? 'bg-gray-100 cursor-not-allowed' : ''}`}
+              value={display}
+              onChange={(e) => setDisplay(e.target.value)}
               required
               min={0}
-              disabled={typeScreen === 'Impresso'}
+              disabled={type_screen === 'impresso'}
             />
             <input
               type="number"
               placeholder="Visualizações"
               className="border rounded-lg px-2 sm:px-3 py-2 w-1/2 text-sm sm:text-base"
-              value={visualizacoes}
-              onChange={(e) => setVisualizacoes(e.target.value)}
+              value={views}
+              onChange={(e) => setViews(e.target.value)}
               required
               min={0}
             />
@@ -285,17 +297,17 @@ export default function ModalCreateAnuncios({
           <div className="flex gap-2 mb-2">
             <button
               type="button"
-              className={`flex-1 py-2 rounded-lg border font-semibold transition-colors duration-200 cursor-pointer text-sm sm:text-base ${typeScreen === 'Digital' ? 'border-orange-500 text-orange-500 bg-white' : 'border-gray-300 text-gray-700 bg-white'}`}
-              onClick={() => setTypeScreen('Digital')}
-              aria-pressed={typeScreen === 'Digital'}
+              className={`flex-1 py-2 rounded-lg border font-semibold transition-colors duration-200 cursor-pointer text-sm sm:text-base ${type_screen === 'digital' ? 'border-orange-500 text-orange-500 bg-white' : 'border-gray-300 text-gray-700 bg-white'}`}
+              onClick={() => setType_screen('digital')}
+              aria-pressed={type_screen === 'digital'}
             >
               Digital
             </button>
             <button
               type="button"
-              className={`flex-1 py-2 rounded-lg border font-semibold transition-colors duration-200 cursor-pointer text-sm sm:text-base ${typeScreen === 'Impresso' ? 'border-orange-500 text-orange-500 bg-white' : 'border-gray-300 text-gray-700 bg-white'}`}
-              onClick={() => setTypeScreen('Impresso')}
-              aria-pressed={typeScreen === 'Impresso'}
+              className={`flex-1 py-2 rounded-lg border font-semibold transition-colors duration-200 cursor-pointer text-sm sm:text-base ${type_screen === 'impresso' ? 'border-orange-500 text-orange-500 bg-white' : 'border-gray-300 text-gray-700 bg-white'}`}
+              onClick={() => setType_screen('impresso')}
+              aria-pressed={type_screen === 'impresso'}
             >
               Impresso
             </button>
@@ -348,9 +360,9 @@ export default function ModalCreateAnuncios({
           <button
             type="submit"
             className="bg-orange-500 hover:bg-orange-600 text-white font-semibold rounded-lg py-2 sm:py-3 mt-2 text-sm sm:text-base"
-            disabled={loading}
+            disabled={isSubmitting}
           >
-            {loading ? "Salvando..." : anuncio ? "Atualizar" : "Cadastrar"}
+            {isSubmitting ? "Salvando..." : anuncio ? "Atualizar" : "Cadastrar"}
           </button>
           {error && <div className="text-red-500 text-xs sm:text-sm">{error}</div>}
         </form>
