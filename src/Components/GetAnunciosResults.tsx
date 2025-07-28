@@ -36,10 +36,11 @@ type GetAnunciosResultsProps = {
   tipoMidia?: string | null;
   bairros?: string[];
   orderBy?: string;
-  onChangeAnunciosFiltrados?: (anuncios: Anuncio[]) => void; // NOVO
+  onChangeAnunciosFiltrados?: (anuncios: Anuncio[]) => void;
+  userNicho?: string | null;
 }
 
-export default function GetAnunciosResults({ onAdicionarProduto, selectedDuration = '2', tipoMidia, bairros, orderBy, onChangeAnunciosFiltrados }: GetAnunciosResultsProps) {
+export default function GetAnunciosResults({ onAdicionarProduto, selectedDuration = '2', tipoMidia, bairros, orderBy, onChangeAnunciosFiltrados, userNicho }: GetAnunciosResultsProps) {
   const { adicionarProduto, removerProduto, produtos, atualizarProdutosComNovaDuracao } = useCart()
   const [anuncios, setAnuncios] = useState<Anuncio[]>([])
   const [loading, setLoading] = useState(true)
@@ -80,9 +81,18 @@ export default function GetAnunciosResults({ onAdicionarProduto, selectedDuratio
       const anunciosData: any[] = Array.isArray(data) ? data : [];
       let filteredData: any[] = anunciosData;
       if (!error) {
+        // Filtrar por nicho do usuário
+        if (userNicho && userNicho !== 'outro') {
+          // Se o usuário tem nicho específico (não é 'outro'), excluir totens do mesmo nicho
+          filteredData = anunciosData.filter((anuncio: any) => 
+            anuncio.nicho !== userNicho
+          );
+        }
+        // Se userNicho é 'outro' ou null, mostrar todos os totens
+        
         // Filtrar por bairros (address)
         if (bairros && bairros.length > 0) {
-          filteredData = anunciosData.filter((anuncio: any) =>
+          filteredData = filteredData.filter((anuncio: any) =>
             bairros.some(bairro => anuncio.address?.toLowerCase().includes(bairro.toLowerCase()))
           );
         }
@@ -90,20 +100,42 @@ export default function GetAnunciosResults({ onAdicionarProduto, selectedDuratio
         const anunciosOrdenados = ordenarAnuncios(filteredData, orderBy || '');
         setAnuncios(anunciosOrdenados)
         atualizarProdutosComNovaDuracao(anunciosOrdenados, selectedDuration);
-        if (onChangeAnunciosFiltrados) onChangeAnunciosFiltrados(anunciosOrdenados); // NOVO
+        if (onChangeAnunciosFiltrados) onChangeAnunciosFiltrados(anunciosOrdenados);
       } else {
         console.error("Erro ao carregar anúncios:", error);
         setAnuncios([]);
         atualizarProdutosComNovaDuracao([], selectedDuration);
-        if (onChangeAnunciosFiltrados) onChangeAnunciosFiltrados([]); // NOVO
+        if (onChangeAnunciosFiltrados) onChangeAnunciosFiltrados([]);
       }
       setLoading(false)
     }
     fetchAnuncios()
-  }, [selectedDuration, tipoMidia, JSON.stringify(bairros), orderBy])
+  }, [selectedDuration, tipoMidia, JSON.stringify(bairros), orderBy, userNicho])
 
   if (loading) return <div>Carregando anúncios...</div>
-  if (!anuncios.length) return <div>Nenhum anúncio encontrado.</div>
+  if (!anuncios.length) {
+    if (userNicho && userNicho !== 'outro') {
+      return (
+        <div className="flex-1 min-h-0 overflow-y-auto pr-2">
+          <div className="flex flex-col items-center justify-center h-full text-center p-8">
+            <div className="bg-orange-50 border border-orange-200 rounded-lg p-6 max-w-md">
+              <h3 className="text-lg font-semibold text-orange-800 mb-2">
+                Nenhum totem disponível
+              </h3>
+              <p className="text-orange-700 mb-4">
+                Não há totens disponíveis para o seu nicho ({userNicho}). 
+                Os totens do mesmo nicho não são exibidos para evitar concorrência.
+              </p>
+              <p className="text-sm text-orange-600">
+                Você pode alterar seu nicho no perfil para ver mais opções.
+              </p>
+            </div>
+          </div>
+        </div>
+      );
+    }
+    return <div>Nenhum anúncio encontrado.</div>
+  }
 
   return (
     <>

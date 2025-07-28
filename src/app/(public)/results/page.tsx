@@ -31,26 +31,37 @@ const Page = () => {
   // Estados para o modal de nicho
   const [showNichoModal, setShowNichoModal] = useState(false);
   const [isFirstTimeUser, setIsFirstTimeUser] = useState(false);
+  const [userNicho, setUserNicho] = useState<string | null>(null);
 
   // Função para adicionar produto ao carrinho
   function handleAdicionarProduto(produto: any) {
-    setProdutos(prev => [...prev, produto])
-    toast.success('Produto adicionado ao carrinho!')
+    setProdutos(prev => [...prev, produto]);
   }
 
-  // Função para lidar com a busca do modal mobile
-  const handleSearch = (location: string, duration: string, startDate: Date | undefined) => {
-    setSelectedDurationGlobal(duration);
-    console.log('Busca realizada:', { location, duration, startDate })
+  // Função para remover produto do carrinho
+  function handleRemoverProduto(produtoId: number) {
+    setProdutos(prev => prev.filter(p => p.id !== produtoId));
   }
 
-  // Função para lidar com cidade encontrada
+  // Função para limpar carrinho
+  function handleLimparCarrinho() {
+    setProdutos([]);
+  }
+
+  // Função para buscar coordenadas da cidade
   const handleCityFound = (coords: { lat: number; lng: number; totemId?: number }) => {
-    console.log('Cidade encontrada:', coords)
-    // Aqui você pode adicionar lógica adicional se necessário
-  }
+    if (mapRef.current) {
+      mapRef.current.setView([coords.lat, coords.lng], 15);
+    }
+  };
 
-  // Verificar se é o primeiro acesso do usuário
+  // Função para busca
+  const handleSearch = (location: string, duration: string, startDate: Date | undefined) => {
+    // Implementar lógica de busca se necessário
+    console.log('Busca:', { location, duration, startDate });
+  };
+
+  // Verificar se é o primeiro acesso do usuário e obter o nicho
   useEffect(() => {
     const checkFirstTimeUser = async () => {
       try {
@@ -68,6 +79,9 @@ const Page = () => {
           if (!profile || !profile.nicho) {
             setIsFirstTimeUser(true)
             setShowNichoModal(true)
+          } else {
+            // Se tem nicho, salvar para usar no filtro
+            setUserNicho(profile.nicho)
           }
         }
       } catch (error) {
@@ -79,16 +93,34 @@ const Page = () => {
   }, [])
 
   // Função chamada quando o nicho é selecionado
-  const handleNichoSelected = () => {
+  const handleNichoSelected = async () => {
     setShowNichoModal(false)
     setIsFirstTimeUser(false)
+    
+    // Buscar o nicho atualizado do usuário
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('nicho')
+          .eq('id', user.id)
+          .single()
+        
+        if (profile?.nicho) {
+          setUserNicho(profile.nicho)
+        }
+      }
+    } catch (error) {
+      console.error('Erro ao buscar nicho atualizado:', error)
+    }
   }
 
   return (
     <div className="flex flex-col h-screen">
       <HeaderResultsDesktop 
         onDurationChange={setSelectedDurationGlobal} 
-        selectedDuration={selectedDurationGlobal} 
+        selectedDuration={selectedDurationGlobal}
         onTipoMidiaChange={(tipo, bairros) => { setTipoMidia(tipo); setBairros(bairros); }}
         orderBy={orderBy}
         onOrderChange={setOrderBy}
@@ -111,6 +143,7 @@ const Page = () => {
           bairros={bairros}
           orderBy={orderBy}
           onChangeAnunciosFiltrados={setAnunciosFiltrados} // NOVO
+          userNicho={userNicho}
         />
         <Mapbox anunciosFiltrados={anunciosFiltrados} onCityFound={handleCityFound} />
       </div>
