@@ -10,7 +10,7 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
 
-type NichoOption = 'restaurante' | 'academia' | 'comercio' | 'outro'
+type NichoOption = 'restaurante' | 'academia' | 'comercio' | 'padaria' | 'outro'
 
 export default function ModalCreateAnuncios({
   open,
@@ -27,23 +27,26 @@ export default function ModalCreateAnuncios({
   const [image, setImage] = useState<File | null>(null);
   const [imageUrl, setImageUrl] = useState("");
   const [address, setAddress] = useState("");
-  const [screens, setScreens] = useState("");
-  const [exibicoes, setExibicoes] = useState("");
-  const [visualizacoes, setVisualizacoes] = useState("");
-  const [price, setPrice] = useState("");
-  const [duration, setDuration] = useState<string[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState(false);
-  const [typeScreen, setTypeScreen] = useState<string>("Digital");
+  const [screens, setScreens] = useState(1);
+  const [price, setPrice] = useState(0);
+  const [duration, setDuration] = useState("2");
+  const [display, setDisplay] = useState(0);
+  const [views, setViews] = useState(0);
+  const [duration_2, setDuration_2] = useState(false);
+  const [duration_4, setDuration_4] = useState(false);
+  const [duration_12, setDuration_12] = useState(false);
+  const [duration_24, setDuration_24] = useState(false);
+  const [type_screen, setType_screen] = useState<'digital' | 'impresso'>('digital');
   const [selectedNicho, setSelectedNicho] = useState<NichoOption | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const nichoOptions = [
-    { id: 'restaurante', label: 'Restaurante' },
-    { id: 'academia', label: 'Academia' },
-    { id: 'comercio', label: 'Comércio' },
-    { id: 'outro', label: 'Outro' }
-  ] as const
+    { value: 'restaurante' as NichoOption, label: 'Restaurante' },
+    { value: 'academia' as NichoOption, label: 'Academia' },
+    { value: 'comercio' as NichoOption, label: 'Comércio' },
+    { value: 'padaria' as NichoOption, label: 'Padaria' },
+    { value: 'outro' as NichoOption, label: 'Outro' }
+  ];
 
   useEffect(() => {
     if (anuncio) {
@@ -51,10 +54,10 @@ export default function ModalCreateAnuncios({
       setName(anuncio.name || "");
       setImageUrl(anuncio.image || "");
       setAddress(anuncio.address || "");
-      setScreens(anuncio.screens ? String(anuncio.screens) : "");
-      setExibicoes(anuncio.display ? String(anuncio.display) : "");
-      setVisualizacoes(anuncio.views ? String(anuncio.views) : "");
-      setPrice(anuncio.price ? String(anuncio.price) : "");
+      setScreens(anuncio.screens ? String(anuncio.screens) : "1");
+      setExibicoes(anuncio.display ? String(anuncio.display) : "0");
+      setVisualizacoes(anuncio.views ? String(anuncio.views) : "0");
+      setPrice(anuncio.price ? String(anuncio.price) : "0");
       setSelectedNicho(anuncio.nicho || null);
       const tipoMidia = anuncio.type_screen === 'impresso' ? 'Impresso' : 'Digital';
       console.log("Tipo de mídia do anúncio:", anuncio.type_screen, "->", tipoMidia);
@@ -302,12 +305,12 @@ export default function ModalCreateAnuncios({
           <span className="text-xs font-semibold text-gray-700 pl-1 mt-2">Nicho</span>
           <div className="flex flex-col gap-1">
             {nichoOptions.map((option) => (
-              <label key={option.id} className="flex items-center text-sm sm:text-base">
+              <label key={option.value} className="flex items-center text-sm sm:text-base">
                 <input
                   type="radio"
-                  value={option.id}
-                  checked={selectedNicho === option.id}
-                  onChange={() => setSelectedNicho(option.id as NichoOption)}
+                  value={option.value}
+                  checked={selectedNicho === option.value}
+                  onChange={() => setSelectedNicho(option.value as NichoOption)}
                   className="mr-2"
                 />
                 {option.label}

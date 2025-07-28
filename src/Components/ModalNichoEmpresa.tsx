@@ -9,23 +9,27 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 )
 
-type NichoOption = 'restaurante' | 'academia' | 'comercio' | 'outro'
+type NichoOption = 'restaurante' | 'academia' | 'comercio' | 'padaria' | 'outro'
 
-interface ModalNichoEmpresaProps {
-  isOpen: boolean
-  onNichoSelected: () => void
-}
-
-export default function ModalNichoEmpresa({ isOpen, onNichoSelected }: ModalNichoEmpresaProps) {
-  const [selectedNicho, setSelectedNicho] = useState<NichoOption | null>(null)
-  const [loading, setLoading] = useState(false)
+export default function ModalNichoEmpresa({
+  open,
+  onClose,
+  onNichoSelected
+}: {
+  open: boolean;
+  onClose: () => void;
+  onNichoSelected: () => void;
+}) {
+  const [selectedNicho, setSelectedNicho] = useState<NichoOption | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const nichoOptions = [
-    { id: 'restaurante', label: 'Restaurante' },
-    { id: 'academia', label: 'Academia' },
-    { id: 'comercio', label: 'Comércio' },
-    { id: 'outro', label: 'Outro' }
-  ] as const
+    { value: 'restaurante' as NichoOption, label: 'Restaurante' },
+    { value: 'academia' as NichoOption, label: 'Academia' },
+    { value: 'comercio' as NichoOption, label: 'Comércio' },
+    { value: 'padaria' as NichoOption, label: 'Padaria' },
+    { value: 'outro' as NichoOption, label: 'Outro' }
+  ];
 
   const handleNichoSelect = (nicho: NichoOption) => {
     setSelectedNicho(nicho)
@@ -37,7 +41,7 @@ export default function ModalNichoEmpresa({ isOpen, onNichoSelected }: ModalNich
       return
     }
 
-    setLoading(true)
+    setIsSubmitting(true)
     try {
       // Pegar o usuário atual
       const { data: { user }, error: userError } = await supabase.auth.getUser()
@@ -88,11 +92,11 @@ export default function ModalNichoEmpresa({ isOpen, onNichoSelected }: ModalNich
       console.error('Erro:', error)
       toast.error("Erro ao salvar nicho")
     } finally {
-      setLoading(false)
+      setIsSubmitting(false)
     }
   }
 
-  if (!isOpen) return null
+  if (!open) return null
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
@@ -104,10 +108,10 @@ export default function ModalNichoEmpresa({ isOpen, onNichoSelected }: ModalNich
         <div className="space-y-3 mb-6">
           {nichoOptions.map((option) => (
             <button
-              key={option.id}
-              onClick={() => handleNichoSelect(option.id)}
+              key={option.value}
+              onClick={() => handleNichoSelect(option.value)}
               className={`w-full p-4 text-left rounded-lg border-2 transition-all ${
-                selectedNicho === option.id
+                selectedNicho === option.value
                   ? 'border-orange-500 bg-orange-50 text-orange-700'
                   : 'border-gray-200 hover:border-gray-300'
               }`}
@@ -119,10 +123,10 @@ export default function ModalNichoEmpresa({ isOpen, onNichoSelected }: ModalNich
 
         <button
           onClick={handleContinue}
-          disabled={!selectedNicho || loading}
+          disabled={!selectedNicho || isSubmitting}
           className="w-full bg-orange-600 text-white font-semibold py-3 rounded-lg hover:bg-orange-500 transition disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {loading ? "Salvando..." : "Continuar"}
+          {isSubmitting ? "Salvando..." : "Continuar"}
         </button>
       </div>
     </div>

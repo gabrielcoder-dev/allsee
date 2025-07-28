@@ -12,7 +12,7 @@ DROP TABLE IF EXISTS public.profiles;
 
 CREATE TABLE public.profiles (
     id UUID REFERENCES auth.users(id) ON DELETE CASCADE PRIMARY KEY,
-    nicho TEXT CHECK (nicho IN ('restaurante', 'academia', 'comercio', 'outro')),
+    nicho TEXT CHECK (nicho IN ('restaurante', 'academia', 'comercio', 'padaria', 'outro')),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
