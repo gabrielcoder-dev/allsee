@@ -5,7 +5,6 @@
 -- Esta tabela armazena o nicho da empresa de cada usuário
 CREATE TABLE IF NOT EXISTS public.profiles (
     id UUID REFERENCES auth.users(id) ON DELETE CASCADE PRIMARY KEY, -- ID do usuário (vem do auth.users)
-    email TEXT, -- Email do usuário
     nicho TEXT CHECK (nicho IN ('restaurante', 'academia', 'comercio', 'outro')), -- Nicho escolhido
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
@@ -45,8 +44,8 @@ CREATE TRIGGER update_profiles_updated_at
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$
 BEGIN
-    INSERT INTO public.profiles (id, email)
-    VALUES (NEW.id, NEW.email);
+    INSERT INTO public.profiles (id)
+    VALUES (NEW.id);
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
