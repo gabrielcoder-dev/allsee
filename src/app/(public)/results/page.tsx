@@ -153,8 +153,9 @@ const Page = () => {
       <ToastContainer />
       
       {/* Modal de nicho da empresa - obrigatório para primeiro acesso */}
-      <ModalNichoEmpresa 
-        isOpen={showNichoModal}
+      <ModalNichoEmpresa
+        open={showNichoModal}
+        onClose={() => setShowNichoModal(false)}
         onNichoSelected={handleNichoSelected}
       />
     </div>
