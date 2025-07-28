@@ -8,7 +8,14 @@ import dynamic from 'next/dynamic'
 import GetAnunciosResults from '@/Components/GetAnunciosResults'
 import { ToastContainer, toast } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
-import { useCart } from '@/context/CartContext';
+import { useCart } from '@/context/CartContext'
+import ModalNichoEmpresa from '@/Components/ModalNichoEmpresa'
+import { createClient } from '@supabase/supabase-js'
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+)
 
 const Mapbox = dynamic(() => import('@/Components/MapboxClient'), { ssr: false })
 
@@ -20,6 +27,10 @@ const Page = () => {
   const [orderBy, setOrderBy] = useState<string>('');
   const [anunciosFiltrados, setAnunciosFiltrados] = useState<any[]>([]); // NOVO
   const mapRef = useRef<any>(null);
+  
+  // Estados para o modal de nicho
+  const [showNichoModal, setShowNichoModal] = useState(false);
+  const [isFirstTimeUser, setIsFirstTimeUser] = useState(false);
 
   // Função para adicionar produto ao carrinho
   function handleAdicionarProduto(produto: any) {
@@ -37,6 +48,40 @@ const Page = () => {
   const handleCityFound = (coords: { lat: number; lng: number; totemId?: number }) => {
     console.log('Cidade encontrada:', coords)
     // Aqui você pode adicionar lógica adicional se necessário
+  }
+
+  // Verificar se é o primeiro acesso do usuário
+  useEffect(() => {
+    const checkFirstTimeUser = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser()
+        
+        if (user) {
+          // Verificar se já existe um profile com nicho
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('nicho')
+            .eq('id', user.id)
+            .single()
+
+          // Se não existe profile ou não tem nicho, é primeiro acesso
+          if (!profile || !profile.nicho) {
+            setIsFirstTimeUser(true)
+            setShowNichoModal(true)
+          }
+        }
+      } catch (error) {
+        console.error('Erro ao verificar primeiro acesso:', error)
+      }
+    }
+
+    checkFirstTimeUser()
+  }, [])
+
+  // Função chamada quando o nicho é selecionado
+  const handleNichoSelected = () => {
+    setShowNichoModal(false)
+    setIsFirstTimeUser(false)
   }
 
   return (
@@ -73,6 +118,12 @@ const Page = () => {
       <HeaderPrice />
 
       <ToastContainer />
+      
+      {/* Modal de nicho da empresa - obrigatório para primeiro acesso */}
+      <ModalNichoEmpresa 
+        isOpen={showNichoModal}
+        onNichoSelected={handleNichoSelected}
+      />
     </div>
   )
 }
