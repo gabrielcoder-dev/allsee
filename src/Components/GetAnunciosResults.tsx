@@ -27,6 +27,7 @@ type Anuncio = {
   duration_12: boolean
   duration_24: boolean
   type_screen: string;
+  nicho?: 'restaurante' | 'academia' | 'comercio' | 'outro';
 }
 
 type GetAnunciosResultsProps = {

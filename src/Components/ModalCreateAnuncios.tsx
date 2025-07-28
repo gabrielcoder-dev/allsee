@@ -10,6 +10,8 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
 
+type NichoOption = 'restaurante' | 'academia' | 'comercio' | 'outro'
+
 export default function ModalCreateAnuncios({
   open,
   onClose,
@@ -33,7 +35,15 @@ export default function ModalCreateAnuncios({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
-  const [typeScreen, setTypeScreen] = useState<string>("Digital"); // Estado para tipo de mídia
+  const [typeScreen, setTypeScreen] = useState<string>("Digital");
+  const [selectedNicho, setSelectedNicho] = useState<NichoOption | null>(null);
+
+  const nichoOptions = [
+    { id: 'restaurante', label: 'Restaurante' },
+    { id: 'academia', label: 'Academia' },
+    { id: 'comercio', label: 'Comércio' },
+    { id: 'outro', label: 'Outro' }
+  ] as const
 
   useEffect(() => {
     if (anuncio) {
@@ -45,6 +55,7 @@ export default function ModalCreateAnuncios({
       setExibicoes(anuncio.display ? String(anuncio.display) : "");
       setVisualizacoes(anuncio.views ? String(anuncio.views) : "");
       setPrice(anuncio.price ? String(anuncio.price) : "");
+      setSelectedNicho(anuncio.nicho || null);
       const tipoMidia = anuncio.type_screen === 'impresso' ? 'Impresso' : 'Digital';
       console.log("Tipo de mídia do anúncio:", anuncio.type_screen, "->", tipoMidia);
       setTypeScreen(tipoMidia);
@@ -65,6 +76,7 @@ export default function ModalCreateAnuncios({
       setPrice("");
       setDuration([]);
       setTypeScreen("Digital");
+      setSelectedNicho(null);
     }
   }, [anuncio, open]);
 
@@ -133,6 +145,7 @@ export default function ModalCreateAnuncios({
           duration_12: duration.includes("12"),
           duration_24: duration.includes("24"),
           type_screen: typeScreen.toLowerCase(),
+          nicho: selectedNicho,
         };
         console.log("Dados atuais do anúncio:", anuncio);
         console.log("Dados que serão atualizados:", updateData);
@@ -162,6 +175,7 @@ export default function ModalCreateAnuncios({
             duration_12: duration.includes("12"),
             duration_24: duration.includes("24"),
             type_screen: typeScreen.toLowerCase(),
+            nicho: selectedNicho,
           },
         ]);
         if (insertError) throw insertError;
@@ -283,6 +297,24 @@ export default function ModalCreateAnuncios({
               Impresso
             </button>
           </div>
+
+          {/* Nicho */}
+          <span className="text-xs font-semibold text-gray-700 pl-1 mt-2">Nicho</span>
+          <div className="flex flex-col gap-1">
+            {nichoOptions.map((option) => (
+              <label key={option.id} className="flex items-center text-sm sm:text-base">
+                <input
+                  type="radio"
+                  value={option.id}
+                  checked={selectedNicho === option.id}
+                  onChange={() => setSelectedNicho(option.id as NichoOption)}
+                  className="mr-2"
+                />
+                {option.label}
+              </label>
+            ))}
+          </div>
+
           <span className="text-xs font-semibold text-gray-700 pl-1">Duração</span>
           <div className="flex flex-col gap-1">
             {["2", "4", "12", "24"].map((semana) => {
