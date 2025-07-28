@@ -72,9 +72,7 @@ export default function ModalNichoEmpresa({ isOpen, onNichoSelected }: ModalNich
           .from('profiles')
           .insert([{
             id: user.id,
-            nicho: selectedNicho,
-            email: user.email,
-            created_at: new Date().toISOString()
+            nicho: selectedNicho
           }])
 
         if (insertError) {

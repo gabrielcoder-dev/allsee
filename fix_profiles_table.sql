@@ -12,7 +12,6 @@ DROP TABLE IF EXISTS public.profiles;
 
 CREATE TABLE public.profiles (
     id UUID REFERENCES auth.users(id) ON DELETE CASCADE PRIMARY KEY,
-    email TEXT,
     nicho TEXT CHECK (nicho IN ('restaurante', 'academia', 'comercio', 'outro')),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
@@ -52,8 +51,8 @@ CREATE TRIGGER update_profiles_updated_at
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$
 BEGIN
-    INSERT INTO public.profiles (id, email)
-    VALUES (NEW.id, NEW.email);
+    INSERT INTO public.profiles (id)
+    VALUES (NEW.id);
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
