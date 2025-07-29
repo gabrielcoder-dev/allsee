@@ -315,7 +315,7 @@ export default function ModalCreateAnuncios({
           </div>
 
           {/* Nicho */}
-          <span className="text-xs font-semibold text-gray-700 pl-1 mt-2">Nicho</span>
+          <span className="text-xs font-semibold text-gray-700 pl-1 mt-2">Segmento</span>
           <div className="flex flex-col gap-1">
             {nichoOptions.map((option) => (
               <label key={option.value} className="flex items-center text-sm sm:text-base">

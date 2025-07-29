@@ -103,7 +103,7 @@ export default function ModalNichoEmpresa({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
       <div className="bg-white rounded-md relative flex flex-col p-8 shadow-lg w-96 max-w-full mx-4">
         <h2 className="text-xl font-semibold mb-6 text-center">
-          Escolha o nicho da sua empresa
+          Escolha o segmento da sua empresa!
         </h2>
         
         <div className="space-y-3 mb-6">
