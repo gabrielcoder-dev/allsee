@@ -5,7 +5,7 @@
 -- Esta tabela armazena o nicho da empresa de cada usuário
 CREATE TABLE IF NOT EXISTS public.profiles (
     id UUID REFERENCES auth.users(id) ON DELETE CASCADE PRIMARY KEY, -- ID do usuário (vem do auth.users)
-    nicho TEXT CHECK (nicho IN ('restaurante', 'academia', 'comercio', 'padaria', 'outro')), -- Nicho escolhido
+    nicho TEXT CHECK (nicho IN ('restaurante', 'academia', 'mercado', 'padaria', 'banco', 'outro')), -- Nicho escolhido
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );

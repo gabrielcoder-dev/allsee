@@ -405,7 +405,8 @@ const PagamantosPart = () => {
                       <SelectValue placeholder="Setor/Segmento" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="comercio">Comércio</SelectItem>
+                      <SelectItem value="mercado">Mercado</SelectItem>
+                <SelectItem value="banco">Banco</SelectItem>
                       <SelectItem value="servicos">Serviços</SelectItem>
                       <SelectItem value="industria">Indústria</SelectItem>
                       <SelectItem value="outros">Outros</SelectItem>

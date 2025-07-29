@@ -3,7 +3,7 @@
 
 -- Adicionar a coluna nicho na tabela anuncios
 ALTER TABLE public.anuncios 
-ADD COLUMN IF NOT EXISTS nicho TEXT CHECK (nicho IN ('restaurante', 'academia', 'comercio', 'padaria', 'outro'));
+ADD COLUMN IF NOT EXISTS nicho TEXT CHECK (nicho IN ('restaurante', 'academia', 'mercado', 'padaria', 'banco', 'outro'));
 
 -- Verificar se a coluna foi adicionada
 SELECT column_name, data_type, is_nullable 

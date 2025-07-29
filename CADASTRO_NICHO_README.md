@@ -15,7 +15,7 @@
 
 ### 3. Banco de Dados
 - **Tabela**: `profiles`
-- **Coluna**: `nicho` (restaurante, academia, comercio, outro)
+- **Coluna**: `nicho` (restaurante, academia, mercado, padaria, banco, outro)
 - **Script**: `create_profiles_table.sql`
 
 ## Como testar:
@@ -50,7 +50,7 @@ WHERE id = 'seu-user-id';
 CREATE TABLE profiles (
     id UUID PRIMARY KEY REFERENCES auth.users(id), -- ID do usuário (vem automaticamente do auth.users)
     email TEXT, -- Email do usuário
-    nicho TEXT CHECK (nicho IN ('restaurante', 'academia', 'comercio', 'outro')), -- Nicho escolhido
+    nicho TEXT CHECK (nicho IN ('restaurante', 'academia', 'mercado', 'padaria', 'banco', 'outro')), -- Nicho escolhido
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );

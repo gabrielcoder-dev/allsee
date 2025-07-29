@@ -9,7 +9,7 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 )
 
-type NichoOption = 'restaurante' | 'academia' | 'comercio' | 'padaria' | 'outro'
+type NichoOption = 'restaurante' | 'academia' | 'mercado' | 'padaria' | 'banco' | 'outro'
 
 export default function ModalNichoEmpresa({
   open,
@@ -26,8 +26,9 @@ export default function ModalNichoEmpresa({
   const nichoOptions = [
     { value: 'restaurante' as NichoOption, label: 'Restaurante' },
     { value: 'academia' as NichoOption, label: 'Academia' },
-    { value: 'comercio' as NichoOption, label: 'Comércio' },
+    { value: 'mercado' as NichoOption, label: 'Mercado' },
     { value: 'padaria' as NichoOption, label: 'Padaria' },
+    { value: 'banco' as NichoOption, label: 'Banco' },
     { value: 'outro' as NichoOption, label: 'Outro' }
   ];
 
