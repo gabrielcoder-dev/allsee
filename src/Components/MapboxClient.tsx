@@ -51,10 +51,15 @@ type MarkerType = {
     endereco?: string;
     price?: number;
     duration?: number;
+    nicho?: string;
   };
 };
 
-export default function Mapbox({ anunciosFiltrados, onCityFound }: { anunciosFiltrados?: any[], onCityFound?: (coords: { lat: number; lng: number; totemId?: number }) => void }) {
+export default function Mapbox({ anunciosFiltrados, onCityFound, userNicho }: { 
+  anunciosFiltrados?: any[], 
+  onCityFound?: (coords: { lat: number; lng: number; totemId?: number }) => void,
+  userNicho?: string | null 
+}) {
   // Coordenadas de Primavera do Leste, MT (coordenadas mais precisas)
   const center: LatLngTuple = [-15.5586, -54.2811]
   const [mapHeight, setMapHeight] = useState<number>(0)
@@ -175,6 +180,17 @@ export default function Mapbox({ anunciosFiltrados, onCityFound }: { anunciosFil
     ? markers.filter(m => anunciosFiltrados.some(a => a.id === m.anuncio_id))
     : [];
 
+  // Filtrar markers baseado no nicho do usuário
+  const markersToDisplay = markers.filter(marker => {
+    // Se não há userNicho ou é 'outro', mostrar todos os markers
+    if (!userNicho || userNicho === 'outro') {
+      return true;
+    }
+    
+    // Se o usuário tem nicho específico, excluir markers do mesmo nicho
+    return marker.anuncio?.nicho !== userNicho;
+  });
+
   // Navegar para cidade quando encontrada
   useEffect(() => {
     if (onCityFound) {
@@ -225,7 +241,7 @@ export default function Mapbox({ anunciosFiltrados, onCityFound }: { anunciosFil
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
 
-        {markers.map((marker) => (
+        {markersToDisplay.map((marker) => (
           <Marker
             key={marker.id}
             position={[marker.lat, marker.lng]}

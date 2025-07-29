@@ -145,7 +145,7 @@ const Page = () => {
           onChangeAnunciosFiltrados={setAnunciosFiltrados} // NOVO
           userNicho={userNicho}
         />
-        <Mapbox anunciosFiltrados={anunciosFiltrados} onCityFound={handleCityFound} />
+        <Mapbox anunciosFiltrados={anunciosFiltrados} onCityFound={handleCityFound} userNicho={userNicho} />
       </div>
 
       <HeaderPrice />
