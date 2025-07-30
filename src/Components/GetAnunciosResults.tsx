@@ -74,9 +74,11 @@ export default function GetAnunciosResults({ onAdicionarProduto, selectedDuratio
         .eq(durationColumn, true)
         .order('id', { ascending: false });
       if (tipoMidia) {
+        console.log('Filtrando por tipo de mídia:', tipoMidia);
         query = query.eq('type_screen', tipoMidia);
       }
       const { data, error } = await query;
+      console.log('Query result:', { data, error, tipoMidia });
       // Garante que data e filteredData são arrays
       const anunciosData: any[] = Array.isArray(data) ? data : [];
       let filteredData: any[] = anunciosData;
@@ -111,6 +113,11 @@ export default function GetAnunciosResults({ onAdicionarProduto, selectedDuratio
     }
     fetchAnuncios()
   }, [selectedDuration, tipoMidia, JSON.stringify(bairros), orderBy, userNicho])
+
+  // Debug: log when tipoMidia changes
+  useEffect(() => {
+    console.log('GetAnunciosResults - tipoMidia changed:', tipoMidia);
+  }, [tipoMidia])
 
   if (loading) return <div>Carregando anúncios...</div>
   if (!anuncios.length) {

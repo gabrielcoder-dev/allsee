@@ -285,6 +285,8 @@ const HeaderResultsDesktop = ({ onDurationChange, selectedDuration, onTipoMidiaC
 
         {/* Modal de filtro */}
         <FilterModal open={showFilter} onClose={() => setShowFilter(false)} onFilter={(tipo, bairros) => {
+          console.log('HeaderResultsDesktop - tipo recebido:', tipo);
+          console.log('HeaderResultsDesktop - bairros recebidos:', bairros);
           setTipoMidia(tipo);
           if (onTipoMidiaChange) onTipoMidiaChange(tipo, bairros);
         }} />

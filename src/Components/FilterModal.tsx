@@ -8,8 +8,8 @@ const ambientes = [
 ]
 
 const tiposMidia = [
-  { label: 'Digital', icon: <Monitor className="w-5 h-5" /> },
-  { label: 'Impresso', icon: <Printer className="w-5 h-5" /> },
+  { label: 'Digital', value: 'digital', icon: <Monitor className="w-5 h-5" /> },
+  { label: 'Impresso', value: 'impresso', icon: <Printer className="w-5 h-5" /> },
 ]
 
 export default function FilterModal({ open, onClose, onFilter }: { open: boolean, onClose: () => void, onFilter?: (tipo: string | null, bairros: string[]) => void }) {
@@ -19,9 +19,12 @@ export default function FilterModal({ open, onClose, onFilter }: { open: boolean
   if (!open) return null
 
   const toggleTipo = (tipo: string) => {
-    setSelectedTipo(prev =>
-      prev.includes(tipo) ? prev.filter(t => t !== tipo) : [...prev, tipo]
-    )
+    console.log('Toggle tipo:', tipo);
+    setSelectedTipo(prev => {
+      const newSelection = prev.includes(tipo) ? [] : [tipo];
+      console.log('Nova seleção:', newSelection);
+      return newSelection;
+    })
   }
 
   const toggleAmbiente = (amb: string) => {
@@ -39,6 +42,7 @@ export default function FilterModal({ open, onClose, onFilter }: { open: boolean
   }
 
   const limparFiltro = () => {
+    console.log('Limpando filtro');
     setSelectedTipo([])
     setSelectedAmbientes([])
   }
@@ -74,9 +78,9 @@ export default function FilterModal({ open, onClose, onFilter }: { open: boolean
                 <button
                   key={tipo.label}
                   className={`flex items-center gap-2 px-4 py-2 rounded-full border text-sm
-                    ${selectedTipo.includes(tipo.label) ? 'bg-gray-900 text-white border-gray-900' : 'bg-white border-gray-300 text-gray-900'}
+                    ${selectedTipo.includes(tipo.value) ? 'bg-gray-900 text-white border-gray-900' : 'bg-white border-gray-300 text-gray-900'}
                   `}
-                  onClick={() => toggleTipo(tipo.label)}
+                  onClick={() => toggleTipo(tipo.value)}
                   type="button"
                 >
                   {tipo.icon}
@@ -127,6 +131,8 @@ export default function FilterModal({ open, onClose, onFilter }: { open: boolean
           <button
             className="flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white font-semibold rounded-lg px-6 py-2 text-base"
             onClick={() => {
+              console.log('FilterModal - selectedTipo:', selectedTipo);
+              console.log('FilterModal - selectedAmbientes:', selectedAmbientes);
               if (onFilter) onFilter(selectedTipo[0] || null, selectedAmbientes);
               onClose();
             }}

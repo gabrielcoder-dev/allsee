@@ -121,7 +121,12 @@ const Page = () => {
       <HeaderResultsDesktop 
         onDurationChange={setSelectedDurationGlobal} 
         selectedDuration={selectedDurationGlobal}
-        onTipoMidiaChange={(tipo, bairros) => { setTipoMidia(tipo); setBairros(bairros); }}
+        onTipoMidiaChange={(tipo, bairros) => { 
+          console.log('Results page - tipo recebido:', tipo);
+          console.log('Results page - bairros recebidos:', bairros);
+          setTipoMidia(tipo); 
+          setBairros(bairros); 
+        }}
         orderBy={orderBy}
         onOrderChange={setOrderBy}
         onCityFound={handleCityFound}
@@ -130,7 +135,12 @@ const Page = () => {
         onDurationChange={setSelectedDurationGlobal} 
         selectedDuration={selectedDurationGlobal}
         onSearch={handleSearch}
-        onTipoMidiaChange={(tipo, bairros) => { setTipoMidia(tipo); setBairros(bairros); }}
+        onTipoMidiaChange={(tipo, bairros) => { 
+          console.log('Results page - tipo recebido:', tipo);
+          console.log('Results page - bairros recebidos:', bairros);
+          setTipoMidia(tipo); 
+          setBairros(bairros); 
+        }}
         orderBy={orderBy}
         onOrderChange={setOrderBy}
       />
