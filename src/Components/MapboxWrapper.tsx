@@ -21,12 +21,13 @@ type MapboxWrapperProps = {
   onCityFound?: (coords: { lat: number; lng: number; totemId?: number }) => void
   userNicho?: string | null
   specificTotemId?: number | null
+  isFullscreen?: boolean
 }
 
-export default function MapboxWrapper({ anunciosFiltrados, onCityFound, userNicho, specificTotemId }: MapboxWrapperProps) {
+export default function MapboxWrapper({ anunciosFiltrados, onCityFound, userNicho, specificTotemId, isFullscreen = false }: MapboxWrapperProps) {
   return (
     <Suspense fallback={
-      <div className="hidden xl:flex w-[400px] flex-shrink-0 z-0 items-center justify-center map-loading" style={{ height: '100vh' }}>
+      <div className={`${isFullscreen ? 'w-full' : 'hidden xl:flex w-[400px]'} flex-shrink-0 z-0 items-center justify-center map-loading`} style={{ height: '100vh' }}>
         <div className="flex flex-col items-center gap-2">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500"></div>
           <span className="text-sm text-gray-600">Carregando mapa...</span>
@@ -38,6 +39,7 @@ export default function MapboxWrapper({ anunciosFiltrados, onCityFound, userNich
         onCityFound={onCityFound}
         userNicho={userNicho}
         specificTotemId={specificTotemId}
+        isFullscreen={isFullscreen}
       />
     </Suspense>
   )

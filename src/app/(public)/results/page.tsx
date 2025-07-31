@@ -11,6 +11,7 @@ import 'react-toastify/dist/ReactToastify.css'
 import { useCart } from '@/context/CartContext'
 import ModalNichoEmpresa from '@/Components/ModalNichoEmpresa'
 import { createClient } from '@supabase/supabase-js'
+import { MapIcon, PanelLeftIcon } from 'lucide-react'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -33,6 +34,7 @@ const Page = () => {
   const [showNichoModal, setShowNichoModal] = useState(false);
   const [isFirstTimeUser, setIsFirstTimeUser] = useState(false);
   const [userNicho, setUserNicho] = useState<string | null>(null);
+  const [isMapFullscreen, setIsMapFullscreen] = useState(false)
 
   // Função para adicionar produto ao carrinho
   function handleAdicionarProduto(produto: any) {
@@ -64,9 +66,13 @@ const Page = () => {
 
   // Função para lidar com totem específico encontrado
   const handleSpecificTotemFound = (totemId: number) => {
-    console.log('🎯 Totem específico encontrado na página:', totemId);
-    setSpecificTotemId(totemId);
-  };
+    setSpecificTotemId(totemId)
+  }
+
+  // Função para alternar entre mapa lateral e mapa em tela cheia
+  const toggleMapView = () => {
+    setIsMapFullscreen(!isMapFullscreen)
+  }
 
   // Limpar specificTotemId quando bairros mudar (usuário digitou algo novo)
   useEffect(() => {
@@ -155,18 +161,51 @@ const Page = () => {
         onOrderChange={setOrderBy}
       />
       {/* Área principal com scroll controlado */}
-      <div className="flex flex-1 min-h-0 overflow-hidden xl:pl-16 justify-center xl:justify-between">
-        <GetAnunciosResults 
-          onAdicionarProduto={handleAdicionarProduto} 
-          selectedDuration={selectedDurationGlobal} 
-          tipoMidia={tipoMidia} 
-          bairros={bairros}
-          orderBy={orderBy}
-          onChangeAnunciosFiltrados={setAnunciosFiltrados} // NOVO
-          userNicho={userNicho}
-          onSpecificTotemFound={handleSpecificTotemFound}
-        />
-        <Mapbox anunciosFiltrados={anunciosFiltrados} onCityFound={handleCityFound} userNicho={userNicho} specificTotemId={specificTotemId} />
+      <div className="flex flex-1 min-h-0 overflow-hidden xl:pl-16 justify-center xl:justify-between relative">
+        {/* Botão de alternância do mapa */}
+        <button
+          onClick={toggleMapView}
+          className={`absolute z-50 bg-white hover:bg-gray-50 border border-gray-200 rounded-lg px-4 py-2 shadow-md flex items-center gap-2 text-sm font-medium transition-colors ${
+            isMapFullscreen ? 'top-4 right-4' : 'top-4 right-4 xl:right-[420px]'
+          }`}
+        >
+          {isMapFullscreen ? (
+            <>
+              <PanelLeftIcon className="w-4 h-4" />
+              Ver em lateral
+            </>
+          ) : (
+            <>
+              <MapIcon className="w-4 h-4" />
+              Ver em mapa
+            </>
+          )}
+        </button>
+
+        {/* Conteúdo principal */}
+        <div className={`flex flex-1 ${isMapFullscreen ? 'hidden' : 'block'}`}>
+          <GetAnunciosResults 
+            onAdicionarProduto={handleAdicionarProduto} 
+            selectedDuration={selectedDurationGlobal} 
+            tipoMidia={tipoMidia} 
+            bairros={bairros}
+            orderBy={orderBy}
+            onChangeAnunciosFiltrados={setAnunciosFiltrados}
+            userNicho={userNicho}
+            onSpecificTotemFound={handleSpecificTotemFound}
+          />
+        </div>
+
+        {/* Mapa */}
+        <div className={`${isMapFullscreen ? 'w-full' : 'hidden xl:block w-[400px]'}`}>
+          <Mapbox 
+            anunciosFiltrados={anunciosFiltrados} 
+            onCityFound={handleCityFound} 
+            userNicho={userNicho} 
+            specificTotemId={specificTotemId}
+            isFullscreen={isMapFullscreen}
+          />
+        </div>
       </div>
 
       <HeaderPrice />

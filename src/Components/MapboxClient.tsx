@@ -166,10 +166,11 @@ function MapController({
   return null;
 }
 
-export default function Mapbox({ anunciosFiltrados, onCityFound, userNicho }: { 
+export default function Mapbox({ anunciosFiltrados, onCityFound, userNicho, isFullscreen = false }: { 
   anunciosFiltrados?: any[], 
   onCityFound?: (coords: { lat: number; lng: number; totemId?: number }) => void,
-  userNicho?: string | null 
+  userNicho?: string | null,
+  isFullscreen?: boolean
 }) {
   const [mapHeight, setMapHeight] = useState<number>(0)
   const [markers, setMarkers] = useState<MarkerType[]>([])
@@ -188,7 +189,13 @@ export default function Mapbox({ anunciosFiltrados, onCityFound, userNicho }: {
       const viewportHeight = window.visualViewport
         ? window.visualViewport.height
         : window.innerHeight
-      setMapHeight(viewportHeight - headerHeight)
+      
+      // Se estiver em modo tela cheia, usar toda a altura disponível
+      if (isFullscreen) {
+        setMapHeight(viewportHeight - headerHeight)
+      } else {
+        setMapHeight(viewportHeight - headerHeight)
+      }
     }
     updateHeight()
     window.addEventListener('resize', updateHeight)
@@ -203,7 +210,7 @@ export default function Mapbox({ anunciosFiltrados, onCityFound, userNicho }: {
         window.visualViewport.removeEventListener('scroll', updateHeight)
       }
     }
-  }, [mounted])
+  }, [mounted, isFullscreen])
 
   useEffect(() => {
     async function fetchMarkers() {
@@ -238,11 +245,11 @@ export default function Mapbox({ anunciosFiltrados, onCityFound, userNicho }: {
   console.log('Markers para exibir:', markersToDisplay);
 
   if (!mounted || mapHeight === 0) return null
-  if (loading) return <div className="hidden xl:flex w-[400px] flex-shrink-0 z-0 items-center justify-center map-loading" style={{ height: '100%' }}>Carregando totens no mapa...</div>
+  if (loading) return <div className={`${isFullscreen ? 'w-full' : 'hidden xl:flex w-[400px]'} flex-shrink-0 z-0 items-center justify-center map-loading`} style={{ height: '100%' }}>Carregando totens no mapa...</div>
 
   return (
     <div
-      className="hidden xl:flex w-[400px] flex-shrink-0 z-0 map-container"
+      className={`${isFullscreen ? 'w-full' : 'hidden xl:flex w-[400px]'} flex-shrink-0 z-0 map-container`}
       style={{ height: `${mapHeight}px`, background: '#fff' }}
     >
       <MapContainer

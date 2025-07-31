@@ -91,11 +91,12 @@ function MapController({
   return null;
 }
 
-export default function SimpleMap({ anunciosFiltrados, onCityFound, userNicho, specificTotemId }: { 
+export default function SimpleMap({ anunciosFiltrados, onCityFound, userNicho, specificTotemId, isFullscreen = false }: { 
   anunciosFiltrados?: any[], 
   onCityFound?: (coords: { lat: number; lng: number; totemId?: number }) => void,
   userNicho?: string | null,
-  specificTotemId?: number | null
+  specificTotemId?: number | null,
+  isFullscreen?: boolean
 }) {
   const [mapHeight, setMapHeight] = useState<number>(0)
   const [markers, setMarkers] = useState<MarkerType[]>([])
@@ -235,11 +236,11 @@ export default function SimpleMap({ anunciosFiltrados, onCityFound, userNicho, s
   }, [specificTotemId, markers]);
 
   if (!mounted || mapHeight === 0) return null
-  if (loading) return <div className="hidden xl:flex w-[400px] flex-shrink-0 z-0 items-center justify-center map-loading" style={{ height: '100%' }}>Carregando totens no mapa...</div>
+  if (loading) return <div className={`${isFullscreen ? 'w-full' : 'hidden xl:flex w-[400px]'} flex-shrink-0 z-0 items-center justify-center map-loading`} style={{ height: '100%' }}>Carregando totens no mapa...</div>
 
   return (
     <div
-      className="hidden xl:flex w-[400px] flex-shrink-0 z-0 map-container"
+      className={`${isFullscreen ? 'w-full' : 'hidden xl:flex w-[400px]'} flex-shrink-0 z-0 map-container`}
       style={{ height: `${mapHeight}px`, background: '#fff' }}
     >
       <MapContainer
