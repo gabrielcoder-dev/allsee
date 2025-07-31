@@ -60,7 +60,7 @@ function MapController({
         console.log('✅ Totem encontrado no mapa:', totemMarker);
         
         // Centralizar o totem com zoom mais próximo e animação suave
-        map.setView([totemMarker.lat, totemMarker.lng], 18, {
+        map.setView([totemMarker.lat, totemMarker.lng], 16, {
           animate: true,
           duration: 2.5
         });
@@ -80,7 +80,7 @@ function MapController({
         
         // Fallback: navegar para as coordenadas fornecidas mesmo sem marker
         console.log('🗺️ Navegando para coordenadas fornecidas (fallback):', coords);
-        map.setView([coords.lat, coords.lng], 18, {
+        map.setView([coords.lat, coords.lng], 16, {
           animate: true,
           duration: 2.5
         });
@@ -115,14 +115,14 @@ function MapController({
       // Navegar se houver markers próximos
       if (hasNearbyMarkers) {
         console.log('Navegando para cidade:', coords);
-        map.setView([coords.lat, coords.lng], 14, {
+        map.setView([coords.lat, coords.lng], 12, {
           animate: true,
           duration: 1.5
         });
       } else {
         // Se não há markers próximos, voltar para Primavera do Leste
         console.log('🏠 Nenhum marker próximo, voltando para Primavera do Leste');
-        map.setView(PRIMAVERA_DO_LESTE_COORDS, 13, {
+        map.setView(PRIMAVERA_DO_LESTE_COORDS, 12, {
           animate: true,
           duration: 1.5
         });
@@ -158,7 +158,7 @@ function MapController({
   // Garantir que o mapa sempre inicie em Primavera do Leste
   useEffect(() => {
     const timer = setTimeout(() => {
-      map.setView(PRIMAVERA_DO_LESTE_COORDS, 13);
+      map.setView(PRIMAVERA_DO_LESTE_COORDS, 12);
     }, 100);
     return () => clearTimeout(timer);
   }, [map]);
