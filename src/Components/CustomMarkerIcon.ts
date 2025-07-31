@@ -15,7 +15,7 @@ export const orangePinIcon = new L.DivIcon({
 });
 
 export const highlightedPinIcon = new L.DivIcon({
-  className: 'custom-highlighted-marker',
+  className: 'highlighted-marker',
   html: `
     <svg width="40" height="48" viewBox="0 0 40 48" fill="none" xmlns="http://www.w3.org/2000/svg">
       <ellipse cx="20" cy="15" rx="16" ry="16" fill="#FF4500"/>
