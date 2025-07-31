@@ -283,101 +283,97 @@
 
 /* Estilos personalizados para o mapa */
 .map-container {
-  border-radius: 16px;
+  border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
-  border: 2px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  border: 1px solid rgba(0, 0, 0, 0.1);
 }
 
 /* Estilo para os controles de zoom */
 .leaflet-control-zoom {
   border: none !important;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3) !important;
-  border-radius: 16px !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2) !important;
+  border-radius: 12px !important;
   background: rgba(255, 255, 255, 0.95) !important;
-  backdrop-filter: blur(16px) !important;
+  backdrop-filter: blur(8px) !important;
 }
 
 .leaflet-control-zoom a {
-  background: linear-gradient(135deg, #ff6b6b 0%, #4ecdc4 50%, #45b7d1 100%) !important;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
   color: white !important;
   border: none !important;
-  border-radius: 12px !important;
-  margin: 4px !important;
-  transition: all 0.4s ease !important;
-  font-weight: 700 !important;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3) !important;
+  border-radius: 8px !important;
+  margin: 3px !important;
+  transition: all 0.3s ease !important;
+  font-weight: 600 !important;
 }
 
 .leaflet-control-zoom a:hover {
-  background: linear-gradient(135deg, #4ecdc4 0%, #45b7d1 50%, #ff6b6b 100%) !important;
-  transform: scale(1.1) !important;
-  box-shadow: 0 8px 20px rgba(255, 107, 107, 0.5) !important;
+  background: linear-gradient(135deg, #764ba2 0%, #667eea 100%) !important;
+  transform: scale(1.05) !important;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4) !important;
 }
 
 /* Estilo para os popups */
 .leaflet-popup-content-wrapper {
-  border-radius: 16px !important;
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3) !important;
-  background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 50%, #fecfef 100%) !important;
-  color: #333 !important;
-  border: 2px solid rgba(255, 255, 255, 0.3) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2) !important;
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%) !important;
+  color: white !important;
 }
 
 .leaflet-popup-tip {
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3) !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2) !important;
 }
 
 .leaflet-popup-content {
-  color: #333 !important;
-  font-weight: 600 !important;
+  color: white !important;
 }
 
 /* Estilo para os markers destacados */
 .highlighted-marker {
-  animation: pulse-highlight 1.2s infinite;
+  animation: pulse-highlight 1.5s infinite;
 }
 
 @keyframes pulse-highlight {
   0% {
     transform: scale(1);
-    box-shadow: 0 0 25px rgba(255, 107, 53, 0.9);
+    box-shadow: 0 0 20px rgba(255, 107, 53, 0.8);
   }
   50% {
-    transform: scale(1.2);
-    box-shadow: 0 0 40px rgba(255, 107, 53, 1.2);
+    transform: scale(1.15);
+    box-shadow: 0 0 30px rgba(255, 107, 53, 1);
   }
   100% {
     transform: scale(1);
-    box-shadow: 0 0 25px rgba(255, 107, 53, 0.9);
+    box-shadow: 0 0 20px rgba(255, 107, 53, 0.8);
   }
 }
 
 /* Estilo para o botão de alternância */
 .map-toggle-button {
-  backdrop-filter: blur(16px);
-  background: linear-gradient(135deg, rgba(255, 107, 107, 0.9) 0%, rgba(78, 205, 196, 0.9) 100%);
-  border: 2px solid rgba(255, 255, 255, 0.4);
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
-  color: white;
-  font-weight: 700;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(12px);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.8) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+  color: #333;
+  font-weight: 600;
 }
 
 .map-toggle-button:hover {
-  background: linear-gradient(135deg, rgba(78, 205, 196, 0.95) 0%, rgba(255, 107, 107, 0.95) 100%);
-  transform: translateY(-2px) scale(1.05);
-  box-shadow: 0 16px 50px rgba(0, 0, 0, 0.3);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.9) 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
 }
 
 /* Estilo para os markers normais */
 .leaflet-marker-icon {
-  filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.4));
-  transition: all 0.4s ease;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
+  transition: all 0.3s ease;
 }
 
 .leaflet-marker-icon:hover {
-  transform: scale(1.15);
-  filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.5));
+  transform: scale(1.1);
+  filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.4));
 }
 
