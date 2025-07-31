@@ -221,12 +221,19 @@ export function useSimpleCitySearch(delay: number = 0) { // Mudança: delay padr
   const [isSearching, setIsSearching] = useState(false)
   const [lastResult, setLastResult] = useState<CitySearchResult | null>(null)
   const [error, setError] = useState('')
+  const [mounted, setMounted] = useState(false)
+
+  // Garantir que está no cliente
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   const searchCity = useCallback(async (term: string) => {
+    if (!mounted) return;
     
     if (!term.trim()) {
       // Quando o campo estiver vazio, navegar para Primavera do Leste
-      if ((window as any).navigateToCity) {
+      if (typeof window !== 'undefined' && (window as any).navigateToCity) {
         (window as any).navigateToCity(PRIMAVERA_DO_LESTE_COORDS);
       }
       return
@@ -243,10 +250,10 @@ export function useSimpleCitySearch(delay: number = 0) { // Mudança: delay padr
         console.log('🎯 Totem específico encontrado:', totemCheck);
         
         // Se for um totem específico, navegar diretamente para as coordenadas do marker
-        if ((window as any).navigateToCity && totemCheck.coords) {
+        if (typeof window !== 'undefined' && (window as any).navigateToCity && totemCheck.coords) {
           console.log('🗺️ Navegando para coordenadas do marker:', totemCheck.coords);
           (window as any).navigateToCity(totemCheck.coords, totemCheck.totemId);
-        } else if ((window as any).navigateToCity) {
+        } else if (typeof window !== 'undefined' && (window as any).navigateToCity) {
           // Fallback para coordenadas padrão se não tiver coords
           console.log('🗺️ Navegando para coordenadas padrão');
           const cityCoords = { lat: -15.5586, lng: -54.2811 };
@@ -277,7 +284,7 @@ export function useSimpleCitySearch(delay: number = 0) { // Mudança: delay padr
         
         setLastResult(finalResult)
         setError('')
-        if ((window as any).navigateToCity) {
+        if (typeof window !== 'undefined' && (window as any).navigateToCity) {
           (window as any).navigateToCity(result);
         }
       } else {
@@ -291,23 +298,25 @@ export function useSimpleCitySearch(delay: number = 0) { // Mudança: delay padr
     } finally {
       setIsSearching(false)
     }
-  }, [])
+  }, [mounted])
 
   // Debounce effect - agora imediato (0ms)
   useEffect(() => {
+    if (!mounted) return;
+    
     if (searchTerm.trim()) {
       searchCity(searchTerm)
     } else {
       // Quando o campo estiver vazio, navegar para Primavera do Leste
       console.log('🏠 Campo vazio, voltando para Primavera do Leste');
-      if ((window as any).navigateToCity) {
+      if (typeof window !== 'undefined' && (window as any).navigateToCity) {
         (window as any).navigateToCity(PRIMAVERA_DO_LESTE_COORDS);
       }
       // Limpar resultados anteriores
       setLastResult(null);
       setError('');
     }
-  }, [searchTerm, searchCity])
+  }, [searchTerm, searchCity, mounted])
 
   return {
     searchTerm,

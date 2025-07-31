@@ -154,8 +154,10 @@ function MapController({
 
   // Expor as funções globalmente
   useEffect(() => {
-    (window as any).navigateToCity = navigateToCity;
-    (window as any).setHighlightedMarker = setHighlightedMarker;
+    if (typeof window !== 'undefined') {
+      (window as any).navigateToCity = navigateToCity;
+      (window as any).setHighlightedMarker = setHighlightedMarker;
+    }
   }, [navigateToCity, setHighlightedMarker]);
 
   // Garantir que o mapa sempre inicie em Primavera do Leste

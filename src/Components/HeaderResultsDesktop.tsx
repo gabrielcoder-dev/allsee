@@ -53,6 +53,7 @@ const HeaderResultsDesktop = ({ onDurationChange, selectedDuration, onTipoMidiaC
   const [showFilter, setShowFilter] = useState(false)
   const [open, setOpen] = useState(false)
   const [tipoMidia, setTipoMidia] = useState<string | null>(null)
+  const [mounted, setMounted] = useState(false)
   const popoverRef = useRef<HTMLDivElement>(null)
   const router = useRouter()
   const { produtos, setSelectedDurationGlobal, selectedDurationGlobal, formData, updateFormData } = useCart()
@@ -62,6 +63,11 @@ const HeaderResultsDesktop = ({ onDurationChange, selectedDuration, onTipoMidiaC
   
   // Hook de busca automática de cidade
   const { searchTerm, setSearchTerm, isSearching, lastResult, error } = useSimpleCitySearch(0)
+
+  // Garantir que está no cliente
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   // Função para criar string yyyy-MM-dd
   function toYMD(date: Date): string {
@@ -80,36 +86,40 @@ const HeaderResultsDesktop = ({ onDurationChange, selectedDuration, onTipoMidiaC
   const today = new Date();
 
   useEffect(() => {
+    if (!mounted) return;
+    
     const fetchUserName = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (user) {
-        setUserName(user.user_metadata?.name || user.email)
+      try {
+        const { data: { user } } = await supabase.auth.getUser()
+        if (user) {
+          setUserName(user.user_metadata?.name || user.email)
+        }
+      } catch (error) {
+        console.error('Erro ao buscar usuário:', error)
       }
     }
     fetchUserName()
-  }, [])
+  }, [mounted])
 
   // Debug: log when showMenuModal changes
   useEffect(() => {
-    console.log('showMenuModal changed:', showMenuModal)
-  }, [showMenuModal])
+    if (mounted) {
+      console.log('showMenuModal changed:', showMenuModal)
+    }
+  }, [showMenuModal, mounted])
 
   // Notificar quando uma cidade é encontrada
   useEffect(() => {
-    if (lastResult) {
+    if (mounted && lastResult && onCityFound) {
       // NÃO navegar automaticamente para a cidade encontrada
-      // A navegação só acontecerá se houver markers nessa cidade
-      
-      // Notificar o componente pai
-      if (onCityFound) {
-        onCityFound({ 
-          lat: lastResult.lat, 
-          lng: lastResult.lng,
-          totemId: lastResult.totemId 
-        })
-      }
+      // Apenas notificar o componente pai
+      onCityFound({
+        lat: lastResult.lat,
+        lng: lastResult.lng,
+        totemId: lastResult.totemId
+      })
     }
-  }, [lastResult, onCityFound])
+  }, [lastResult, onCityFound, mounted])
 
   // Fecha ao clicar fora
   useEffect(() => {
