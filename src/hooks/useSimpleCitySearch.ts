@@ -180,26 +180,38 @@ async function geocodeCity(cityName: string): Promise<CitySearchResult | null> {
 // Função para verificar se o endereço corresponde a um totem específico
 async function checkIfSpecificTotem(address: string): Promise<{ isSpecificTotem: boolean; totemId?: number; markerId?: number; coords?: { lat: number; lng: number } }> {
   try {
+    console.log('🔍 Verificando totem específico para:', address);
+    
     const response = await fetch('/api/check-totem-address', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ address })
     })
     
-    const { data, error } = await response.json()
+    if (!response.ok) {
+      console.error('❌ Erro na resposta da API:', response.status, response.statusText);
+      return { isSpecificTotem: false }
+    }
+    
+    const result = await response.json()
+    console.log('📡 Resposta da API:', result);
+
+    const { data, error } = result
 
     if (error || !data) {
+      console.log('❌ Erro ou dados não encontrados:', error);
       return { isSpecificTotem: false }
     }
 
+    console.log('✅ Totem encontrado:', data);
     return { 
-      isSpecificTotem: true, 
+      isSpecificTotem: data.isSpecificTotem, 
       totemId: data.totemId,
       markerId: data.markerId,
       coords: data.coords
     }
   } catch (error) {
-    console.error('Erro ao verificar totem específico:', error)
+    console.error('💥 Erro ao verificar totem específico:', error)
     return { isSpecificTotem: false }
   }
 }

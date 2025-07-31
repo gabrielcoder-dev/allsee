@@ -8,7 +8,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   try {
     const { address } = req.body
-    console.log('Verificando totem para endereço:', address);
+    console.log('🔍 Verificando totem para endereço:', address);
 
     if (!address) {
       return res.status(400).json({ error: 'Address is required' })
@@ -16,21 +16,22 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     // Normalizar o endereço de busca
     const normalizedAddress = address.toLowerCase().trim()
+    console.log('📝 Endereço normalizado:', normalizedAddress);
 
-    // Buscar por correspondência mais precisa primeiro - otimizado para velocidade
+    // Buscar por correspondência mais precisa primeiro
     const { data: anunciosData, error: anunciosError } = await supabase
       .from('anuncios')
       .select('id, name, adress, endereco')
       .or(`adress.ilike.%${normalizedAddress}%,endereco.ilike.%${normalizedAddress}%,name.ilike.%${normalizedAddress}%`)
-      .limit(10) // Aumentar limite para maior precisão
+      .limit(20) // Aumentar limite para maior precisão
 
     if (anunciosError) {
-      console.error('Erro ao buscar totem:', anunciosError)
+      console.error('❌ Erro ao buscar totem:', anunciosError)
       return res.status(500).json({ error: 'Erro interno do servidor' })
     }
 
-    console.log('Resultados encontrados:', anunciosData);
-    console.log('Endereço buscado:', normalizedAddress);
+    console.log('📊 Resultados encontrados:', anunciosData?.length || 0);
+    console.log('🔍 Endereço buscado:', normalizedAddress);
 
     if (anunciosData && anunciosData.length > 0) {
       console.log('🔍 Analisando', anunciosData.length, 'totens encontrados...');
@@ -41,7 +42,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         const totemEndereco = (totem.endereco || '').toLowerCase();
         const totemName = (totem.name || '').toLowerCase();
         
-        console.log('🔍 Comparando:', {
+        console.log('🔍 Comparando totem:', {
+          id: totem.id,
           normalizedAddress,
           totemAddress,
           totemEndereco,
@@ -106,7 +108,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
       
       // Se não encontrou match melhor, usar o primeiro resultado
-      console.log('Usando primeiro resultado:', anunciosData[0]);
+      console.log('⚠️ Usando primeiro resultado:', anunciosData[0]);
       
       // Buscar o marker correspondente
       const { data: markerData, error: markerError } = await supabase
@@ -116,7 +118,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         .single()
 
       if (markerError) {
-        console.error('Erro ao buscar marker:', markerError)
+        console.error('❌ Erro ao buscar marker:', markerError)
         return res.status(200).json({ 
           data: { 
             isSpecificTotem: true, 
@@ -127,7 +129,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         })
       }
 
-      console.log('Marker encontrado:', markerData);
+      console.log('📍 Marker encontrado:', markerData);
 
       return res.status(200).json({ 
         data: { 
@@ -139,10 +141,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       })
     }
 
-    console.log('Nenhum totem encontrado');
+    console.log('❌ Nenhum totem encontrado');
     return res.status(200).json({ data: { isSpecificTotem: false } })
   } catch (error) {
-    console.error('Erro na API:', error)
+    console.error('💥 Erro na API:', error)
     return res.status(500).json({ error: 'Erro interno do servidor' })
   }
 } 
