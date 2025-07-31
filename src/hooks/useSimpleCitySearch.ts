@@ -249,14 +249,6 @@ export function useSimpleCitySearch(delay: number = 0) { // Mudança: delay padr
           console.log('❌ setHighlightedMarker não disponível ou markerId não encontrado');
         }
         
-        // Abrir o popup automaticamente
-        if ((window as any).openMarkerPopup && totemCheck.markerId) {
-          console.log('📋 Abrindo popup do marker:', totemCheck.markerId);
-          setTimeout(() => {
-            (window as any).openMarkerPopup(totemCheck.markerId);
-          }, 500); // Pequeno delay para garantir que a navegação terminou
-        }
-        
         setLastResult({ 
           lat: totemCheck.coords?.lat || -15.5586, 
           lng: totemCheck.coords?.lng || -54.2811, 

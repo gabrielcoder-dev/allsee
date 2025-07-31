@@ -45,7 +45,6 @@ function MapController({
 }) {
   const map = useMap();
   const [highlightedMarkerId, setHighlightedMarkerId] = useState<number | null>(null);
-  const markerRefs = useRef<{ [key: number]: any }>({});
 
   // Função para navegar para uma cidade
   const navigateToCity = (coords: { lat: number; lng: number }, totemId?: number) => {
@@ -105,21 +104,11 @@ function MapController({
     }, 3000);
   };
 
-  // Função para abrir o popup de um marker específico
-  const openMarkerPopup = (markerId: number) => {
-    console.log('Abrindo popup do marker:', markerId);
-    const markerRef = markerRefs.current[markerId];
-    if (markerRef && markerRef.leafletElement) {
-      markerRef.leafletElement.openPopup();
-    }
-  };
-
   // Expor as funções globalmente
   useEffect(() => {
     (window as any).navigateToCity = navigateToCity;
     (window as any).setHighlightedMarker = setHighlightedMarker;
-    (window as any).openMarkerPopup = openMarkerPopup;
-  }, [navigateToCity, setHighlightedMarker, openMarkerPopup]);
+  }, [navigateToCity, setHighlightedMarker]);
 
   // Garantir que o mapa sempre inicie em Primavera do Leste
   useEffect(() => {
@@ -142,7 +131,6 @@ export default function Mapbox({ anunciosFiltrados, onCityFound, userNicho }: {
   const [loading, setLoading] = useState(true)
   const [mounted, setMounted] = useState(false)
   const [highlightedMarkerId, setHighlightedMarkerId] = useState<number | null>(null);
-  const markerRefs = useRef<{ [key: number]: any }>({});
 
   useEffect(() => {
     setMounted(true)
@@ -241,11 +229,6 @@ export default function Mapbox({ anunciosFiltrados, onCityFound, userNicho }: {
             key={marker.id}
             position={[marker.lat, marker.lng]}
             icon={highlightedMarkerId === marker.id ? highlightedPinIcon : orangePinIcon}
-            ref={(ref) => {
-              if (ref) {
-                markerRefs.current[marker.id] = ref;
-              }
-            }}
           >
             <Popup minWidth={200} maxWidth={300}>
               <MiniAnuncioCard anuncio={marker.anuncio} />
