@@ -52,23 +52,38 @@ function MapController({
     
     // Se for um totem específico, navegar para ele
     if (totemId) {
+      console.log('🔍 Procurando totem com ID:', totemId);
+      console.log('📍 Markers disponíveis:', markers.map(m => ({ id: m.id, anuncio_id: m.anuncio_id, lat: m.lat, lng: m.lng })));
+      
       const totemMarker = markers.find(marker => marker.anuncio_id === totemId);
       if (totemMarker) {
-        console.log('Navegando para totem específico:', totemMarker);
-        map.setView([totemMarker.lat, totemMarker.lng], 16, {
+        console.log('✅ Totem encontrado:', totemMarker);
+        
+        // Centralizar o totem com zoom mais próximo
+        map.setView([totemMarker.lat, totemMarker.lng], 18, {
           animate: true,
-          duration: 1.5
+          duration: 2
         });
         
         // Destacar o marker
         setHighlightedMarkerId(totemMarker.id);
         
-        // Remover destaque após 3 segundos
+        // Remover destaque após 5 segundos (mais tempo para ver)
         setTimeout(() => {
           setHighlightedMarkerId(null);
-        }, 3000);
+        }, 5000);
         
         return;
+      } else {
+        console.log('❌ Totem não encontrado no mapa. ID buscado:', totemId);
+        console.log('📍 Coordenadas disponíveis:', markers.map(m => ({ anuncio_id: m.anuncio_id, lat: m.lat, lng: m.lng })));
+        
+        // Fallback: navegar para as coordenadas fornecidas mesmo sem marker
+        console.log('🗺️ Navegando para coordenadas fornecidas:', coords);
+        map.setView([coords.lat, coords.lng], 18, {
+          animate: true,
+          duration: 2
+        });
       }
     }
 
@@ -98,10 +113,10 @@ function MapController({
     console.log('Destacando marker:', markerId);
     setHighlightedMarkerId(markerId);
     
-    // Remover destaque após 3 segundos
+    // Remover destaque após 5 segundos (mais tempo para ver)
     setTimeout(() => {
       setHighlightedMarkerId(null);
-    }, 3000);
+    }, 5000);
   };
 
   // Expor as funções globalmente

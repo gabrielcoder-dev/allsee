@@ -72,7 +72,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       });
       
       if (bestMatch) {
-        console.log('Totem encontrado:', bestMatch);
+        console.log('🎯 Totem selecionado:', bestMatch);
         
         // Buscar o marker correspondente
         const { data: markerData, error: markerError } = await supabase
@@ -82,7 +82,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           .single()
 
         if (markerError) {
-          console.error('Erro ao buscar marker:', markerError)
+          console.error('❌ Erro ao buscar marker:', markerError)
           return res.status(200).json({ 
             data: { 
               isSpecificTotem: true, 
@@ -93,7 +93,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           })
         }
 
-        console.log('Marker encontrado:', markerData);
+        console.log('📍 Marker encontrado:', markerData);
 
         return res.status(200).json({ 
           data: { 
