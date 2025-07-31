@@ -6,7 +6,7 @@ import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import { useEffect, useState, useRef } from 'react'
 import { supabase } from '../lib/supabase'
-import { orangePinIcon, highlightedPinIcon } from './CustomMarkerIcon';
+import { orangePinIcon } from './CustomMarkerIcon';
 import MiniAnuncioCard from './MiniAnuncioCard';
 
 L.Icon.Default.mergeOptions({
@@ -44,7 +44,6 @@ function MapController({
   markers: MarkerType[];
 }) {
   const map = useMap();
-  const [highlightedMarkerId, setHighlightedMarkerId] = useState<number | null>(null);
 
   // Função para navegar para uma cidade
   const navigateToCity = (coords: { lat: number; lng: number }, totemId?: number) => {
@@ -59,19 +58,11 @@ function MapController({
       if (totemMarker) {
         console.log('✅ Totem encontrado no mapa:', totemMarker);
         
-        // Primeiro destacar o marker
-        setHighlightedMarkerId(totemMarker.id);
-        
-        // Depois centralizar o totem com zoom mais próximo e animação suave
+        // Centralizar o totem com zoom mais próximo e animação suave
         map.setView([totemMarker.lat, totemMarker.lng], 16, {
           animate: true,
           duration: 2.5
         });
-        
-        // Remover destaque após 6 segundos
-        setTimeout(() => {
-          setHighlightedMarkerId(null);
-        }, 6000);
         
         return;
       } else {
@@ -84,25 +75,10 @@ function MapController({
           animate: true,
           duration: 2.5
         });
-        
-        // Tentar encontrar o marker novamente após um delay
-        setTimeout(() => {
-          const retryMarker = markers.find(marker => marker.anuncio_id === totemId);
-          if (retryMarker) {
-            console.log('✅ Totem encontrado na segunda tentativa:', retryMarker);
-            setHighlightedMarkerId(retryMarker.id);
-            setTimeout(() => {
-              setHighlightedMarkerId(null);
-            }, 6000);
-          }
-        }, 1000);
       }
     } else {
-      // Navegação para cidade (não totem específico) - SEM DESTAQUE
+      // Navegação para cidade (não totem específico)
       console.log('🏙️ Navegando para cidade:', coords);
-      
-      // Garantir que não há destaque ativo para cidades
-      setHighlightedMarkerId(null);
       
       // Verificar se há markers próximos à cidade (dentro de 50km)
       const hasNearbyMarkers = markers.some(marker => {
@@ -133,32 +109,12 @@ function MapController({
     }
   };
 
-  // Função para destacar um marker específico
-  const setHighlightedMarker = (markerId: number) => {
-    console.log('⭐ Destacando marker:', markerId);
-    console.log('📍 Markers disponíveis para destaque:', markers.map(m => ({ id: m.id, anuncio_id: m.anuncio_id })));
-    
-    const markerExists = markers.find(m => m.id === markerId);
-    if (markerExists) {
-      console.log('✅ Marker encontrado para destaque:', markerExists);
-      setHighlightedMarkerId(markerId);
-      
-      // Remover destaque após 6 segundos (mais tempo para ver)
-      setTimeout(() => {
-        setHighlightedMarkerId(null);
-      }, 6000);
-    } else {
-      console.log('❌ Marker não encontrado para destaque. ID:', markerId);
-    }
-  };
-
   // Expor as funções globalmente
   useEffect(() => {
     if (typeof window !== 'undefined') {
       (window as any).navigateToCity = navigateToCity;
-      (window as any).setHighlightedMarker = setHighlightedMarker;
     }
-  }, [navigateToCity, setHighlightedMarker]);
+  }, [navigateToCity]);
 
   // Garantir que o mapa sempre inicie em Primavera do Leste
   useEffect(() => {
@@ -181,7 +137,6 @@ export default function Mapbox({ anunciosFiltrados, onCityFound, userNicho, isFu
   const [markers, setMarkers] = useState<MarkerType[]>([])
   const [loading, setLoading] = useState(true)
   const [mounted, setMounted] = useState(false)
-  const [highlightedMarkerId, setHighlightedMarkerId] = useState<number | null>(null);
 
   useEffect(() => {
     setMounted(true)
@@ -285,7 +240,7 @@ export default function Mapbox({ anunciosFiltrados, onCityFound, userNicho, isFu
           <Marker
             key={marker.id}
             position={[marker.lat, marker.lng]}
-            icon={highlightedMarkerId === marker.id ? highlightedPinIcon : orangePinIcon}
+            icon={orangePinIcon}
           >
             <Popup minWidth={200} maxWidth={300}>
               <MiniAnuncioCard anuncio={marker.anuncio} />
