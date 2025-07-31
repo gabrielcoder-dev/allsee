@@ -59,19 +59,19 @@ function MapController({
       if (totemMarker) {
         console.log('✅ Totem encontrado no mapa:', totemMarker);
         
-        // Centralizar o totem com zoom mais próximo e animação suave
+        // Primeiro destacar o marker
+        setHighlightedMarkerId(totemMarker.id);
+        
+        // Depois centralizar o totem com zoom mais próximo e animação suave
         map.setView([totemMarker.lat, totemMarker.lng], 16, {
           animate: true,
           duration: 2.5
         });
         
-        // Destacar o marker
-        setHighlightedMarkerId(totemMarker.id);
-        
-        // Remover destaque após 6 segundos (mais tempo para ver)
+        // Remover destaque após 6 segundos
         setTimeout(() => {
           setHighlightedMarkerId(null);
-        }, 5000);
+        }, 6000);
         
         return;
       } else {
@@ -98,8 +98,11 @@ function MapController({
         }, 1000);
       }
     } else {
-      // Navegação para cidade (não totem específico)
+      // Navegação para cidade (não totem específico) - SEM DESTAQUE
       console.log('🏙️ Navegando para cidade:', coords);
+      
+      // Garantir que não há destaque ativo para cidades
+      setHighlightedMarkerId(null);
       
       // Verificar se há markers próximos à cidade (dentro de 50km)
       const hasNearbyMarkers = markers.some(marker => {

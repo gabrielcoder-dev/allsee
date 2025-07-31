@@ -241,14 +241,6 @@ export function useSimpleCitySearch(delay: number = 0) { // Mudança: delay padr
           (window as any).navigateToCity(cityCoords, totemCheck.totemId);
         }
         
-        // Destacar o totem específico usando o markerId
-        if ((window as any).setHighlightedMarker && totemCheck.markerId) {
-          console.log('⭐ Destacando marker:', totemCheck.markerId);
-          (window as any).setHighlightedMarker(totemCheck.markerId);
-        } else {
-          console.log('❌ setHighlightedMarker não disponível ou markerId não encontrado');
-        }
-        
         setLastResult({ 
           lat: totemCheck.coords?.lat || -15.5586, 
           lng: totemCheck.coords?.lng || -54.2811, 

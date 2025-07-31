@@ -317,8 +317,8 @@
 .leaflet-popup-content-wrapper {
   border-radius: 12px !important;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2) !important;
-  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%) !important;
-  color: white !important;
+  background: white !important;
+  color: #333 !important;
 }
 
 .leaflet-popup-tip {
@@ -326,7 +326,7 @@
 }
 
 .leaflet-popup-content {
-  color: white !important;
+  color: #333 !important;
 }
 
 /* Estilo para os markers destacados */
@@ -337,15 +337,12 @@
 @keyframes pulse-highlight {
   0% {
     transform: scale(1);
-    box-shadow: 0 0 20px rgba(255, 107, 53, 0.8);
   }
   50% {
     transform: scale(1.15);
-    box-shadow: 0 0 30px rgba(255, 107, 53, 1);
   }
   100% {
     transform: scale(1);
-    box-shadow: 0 0 20px rgba(255, 107, 53, 0.8);
   }
 }
 
