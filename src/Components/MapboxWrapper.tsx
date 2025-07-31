@@ -22,9 +22,10 @@ type MapboxWrapperProps = {
   userNicho?: string | null
   specificTotemId?: number | null
   isFullscreen?: boolean
+  onToggleMapView?: () => void
 }
 
-export default function MapboxWrapper({ anunciosFiltrados, onCityFound, userNicho, specificTotemId, isFullscreen = false }: MapboxWrapperProps) {
+export default function MapboxWrapper({ anunciosFiltrados, onCityFound, userNicho, specificTotemId, isFullscreen = false, onToggleMapView }: MapboxWrapperProps) {
   return (
     <Suspense fallback={
       <div className={`${isFullscreen ? 'w-full' : 'hidden xl:flex w-[400px]'} flex-shrink-0 z-0 items-center justify-center map-loading`} style={{ height: '100vh' }}>
@@ -40,6 +41,7 @@ export default function MapboxWrapper({ anunciosFiltrados, onCityFound, userNich
         userNicho={userNicho}
         specificTotemId={specificTotemId}
         isFullscreen={isFullscreen}
+        onToggleMapView={onToggleMapView}
       />
     </Suspense>
   )

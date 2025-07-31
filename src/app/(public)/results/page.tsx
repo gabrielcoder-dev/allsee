@@ -162,26 +162,6 @@ const Page = () => {
       />
       {/* Área principal com scroll controlado */}
       <div className="flex flex-1 min-h-0 overflow-hidden xl:pl-16 justify-center xl:justify-between relative">
-        {/* Botão de alternância do mapa */}
-        <button
-          onClick={toggleMapView}
-          className={`absolute z-50 bg-white hover:bg-gray-50 border border-gray-200 rounded-lg px-4 py-2 shadow-md flex items-center gap-2 text-sm font-medium transition-colors ${
-            isMapFullscreen ? 'top-4 right-4' : 'top-4 right-4 xl:right-[420px]'
-          }`}
-        >
-          {isMapFullscreen ? (
-            <>
-              <PanelLeftIcon className="w-4 h-4" />
-              Ver em lateral
-            </>
-          ) : (
-            <>
-              <MapIcon className="w-4 h-4" />
-              Ver em mapa
-            </>
-          )}
-        </button>
-
         {/* Conteúdo principal */}
         <div className={`flex flex-1 ${isMapFullscreen ? 'hidden' : 'block'}`}>
           <GetAnunciosResults 
@@ -204,6 +184,7 @@ const Page = () => {
             userNicho={userNicho} 
             specificTotemId={specificTotemId}
             isFullscreen={isMapFullscreen}
+            onToggleMapView={toggleMapView}
           />
         </div>
       </div>

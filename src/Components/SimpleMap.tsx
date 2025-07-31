@@ -8,6 +8,7 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { orangePinIcon } from './CustomMarkerIcon';
 import MiniAnuncioCard from './MiniAnuncioCard';
+import { MapIcon, PanelLeftIcon } from 'lucide-react'
 
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: require('leaflet/dist/images/marker-icon-2x.png'),
@@ -91,12 +92,13 @@ function MapController({
   return null;
 }
 
-export default function SimpleMap({ anunciosFiltrados, onCityFound, userNicho, specificTotemId, isFullscreen = false }: { 
+export default function SimpleMap({ anunciosFiltrados, onCityFound, userNicho, specificTotemId, isFullscreen = false, onToggleMapView }: { 
   anunciosFiltrados?: any[], 
   onCityFound?: (coords: { lat: number; lng: number; totemId?: number }) => void,
   userNicho?: string | null,
   specificTotemId?: number | null,
-  isFullscreen?: boolean
+  isFullscreen?: boolean,
+  onToggleMapView?: () => void
 }) {
   const [mapHeight, setMapHeight] = useState<number>(0)
   const [markers, setMarkers] = useState<MarkerType[]>([])
@@ -240,9 +242,29 @@ export default function SimpleMap({ anunciosFiltrados, onCityFound, userNicho, s
 
   return (
     <div
-      className={`${isFullscreen ? 'w-full' : 'hidden xl:flex w-[400px]'} flex-shrink-0 z-0 map-container`}
+      className={`${isFullscreen ? 'w-full' : 'hidden xl:flex w-[400px]'} flex-shrink-0 z-0 map-container relative`}
       style={{ height: `${mapHeight}px`, background: '#fff' }}
     >
+      {/* Botão de alternância do mapa */}
+      {onToggleMapView && (
+        <button
+          onClick={onToggleMapView}
+          className="absolute top-4 right-4 z-[1000] bg-white hover:bg-gray-50 border border-gray-200 rounded-lg px-4 py-2 shadow-md flex items-center gap-2 text-sm font-medium transition-colors"
+        >
+          {isFullscreen ? (
+            <>
+              <PanelLeftIcon className="w-4 h-4" />
+              Ver em lateral
+            </>
+          ) : (
+            <>
+              <MapIcon className="w-4 h-4" />
+              Ver em mapa
+            </>
+          )}
+        </button>
+      )}
+
       <MapContainer
         center={PRIMAVERA_DO_LESTE_COORDS}
         zoom={13}
