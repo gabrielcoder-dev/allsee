@@ -249,7 +249,7 @@ export default function SimpleMap({ anunciosFiltrados, onCityFound, userNicho, s
       {onToggleMapView && (
         <button
           onClick={onToggleMapView}
-          className="absolute top-4 right-4 z-[1000] bg-white hover:bg-gray-50 border border-gray-200 rounded-lg px-4 py-2 shadow-md flex items-center gap-2 text-sm font-medium transition-colors"
+          className="absolute top-4 right-4 z-[1000] map-toggle-button rounded-lg px-4 py-2 flex items-center gap-2 text-sm font-medium transition-colors"
         >
           {isFullscreen ? (
             <>
@@ -285,7 +285,7 @@ export default function SimpleMap({ anunciosFiltrados, onCityFound, userNicho, s
         
         <TileLayer
           attribution='&copy; <a href="https://osm.org/copyright">OpenStreetMap</a> contributors'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
           maxZoom={22}
           minZoom={10}
         />
