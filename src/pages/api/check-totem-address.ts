@@ -22,7 +22,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       .from('anuncios')
       .select('id, name, adress, endereco')
       .or(`adress.ilike.%${normalizedAddress}%,endereco.ilike.%${normalizedAddress}%,name.ilike.%${normalizedAddress}%`)
-      .limit(5) // Limitar resultados para maior velocidade
+      .limit(10) // Aumentar limite para maior precisão
 
     if (anunciosError) {
       console.error('Erro ao buscar totem:', anunciosError)

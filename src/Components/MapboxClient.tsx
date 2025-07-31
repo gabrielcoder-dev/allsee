@@ -48,7 +48,7 @@ function MapController({
 
   // Função para navegar para uma cidade
   const navigateToCity = (coords: { lat: number; lng: number }, totemId?: number) => {
-    console.log('Navegando para:', coords, 'totemId:', totemId);
+    console.log('🗺️ Navegando para:', coords, 'totemId:', totemId);
     
     // Se for um totem específico, navegar para ele
     if (totemId) {
@@ -57,18 +57,18 @@ function MapController({
       
       const totemMarker = markers.find(marker => marker.anuncio_id === totemId);
       if (totemMarker) {
-        console.log('✅ Totem encontrado:', totemMarker);
+        console.log('✅ Totem encontrado no mapa:', totemMarker);
         
-        // Centralizar o totem com zoom mais próximo
+        // Centralizar o totem com zoom mais próximo e animação suave
         map.setView([totemMarker.lat, totemMarker.lng], 18, {
           animate: true,
-          duration: 2
+          duration: 2.5
         });
         
         // Destacar o marker
         setHighlightedMarkerId(totemMarker.id);
         
-        // Remover destaque após 5 segundos (mais tempo para ver)
+        // Remover destaque após 6 segundos (mais tempo para ver)
         setTimeout(() => {
           setHighlightedMarkerId(null);
         }, 5000);
@@ -79,11 +79,23 @@ function MapController({
         console.log('📍 Coordenadas disponíveis:', markers.map(m => ({ anuncio_id: m.anuncio_id, lat: m.lat, lng: m.lng })));
         
         // Fallback: navegar para as coordenadas fornecidas mesmo sem marker
-        console.log('🗺️ Navegando para coordenadas fornecidas:', coords);
+        console.log('🗺️ Navegando para coordenadas fornecidas (fallback):', coords);
         map.setView([coords.lat, coords.lng], 18, {
           animate: true,
-          duration: 2
+          duration: 2.5
         });
+        
+        // Tentar encontrar o marker novamente após um delay
+        setTimeout(() => {
+          const retryMarker = markers.find(marker => marker.anuncio_id === totemId);
+          if (retryMarker) {
+            console.log('✅ Totem encontrado na segunda tentativa:', retryMarker);
+            setHighlightedMarkerId(retryMarker.id);
+            setTimeout(() => {
+              setHighlightedMarkerId(null);
+            }, 6000);
+          }
+        }, 1000);
       }
     } else {
       // Navegação para cidade (não totem específico)
@@ -120,13 +132,21 @@ function MapController({
 
   // Função para destacar um marker específico
   const setHighlightedMarker = (markerId: number) => {
-    console.log('Destacando marker:', markerId);
-    setHighlightedMarkerId(markerId);
+    console.log('⭐ Destacando marker:', markerId);
+    console.log('📍 Markers disponíveis para destaque:', markers.map(m => ({ id: m.id, anuncio_id: m.anuncio_id })));
     
-    // Remover destaque após 5 segundos (mais tempo para ver)
-    setTimeout(() => {
-      setHighlightedMarkerId(null);
-    }, 5000);
+    const markerExists = markers.find(m => m.id === markerId);
+    if (markerExists) {
+      console.log('✅ Marker encontrado para destaque:', markerExists);
+      setHighlightedMarkerId(markerId);
+      
+      // Remover destaque após 6 segundos (mais tempo para ver)
+      setTimeout(() => {
+        setHighlightedMarkerId(null);
+      }, 6000);
+    } else {
+      console.log('❌ Marker não encontrado para destaque. ID:', markerId);
+    }
   };
 
   // Expor as funções globalmente
