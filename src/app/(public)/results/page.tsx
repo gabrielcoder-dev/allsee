@@ -17,7 +17,7 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 )
 
-const Mapbox = dynamic(() => import('@/Components/MapboxClient'), { ssr: false })
+const Mapbox = dynamic(() => import('@/Components/MapboxWrapper'), { ssr: false })
 
 const Page = () => {
   const { selectedDurationGlobal, setSelectedDurationGlobal } = useCart();
@@ -26,6 +26,7 @@ const Page = () => {
   const [bairros, setBairros] = useState<string[]>([]);
   const [orderBy, setOrderBy] = useState<string>('');
   const [anunciosFiltrados, setAnunciosFiltrados] = useState<any[]>([]); // NOVO
+  const [specificTotemId, setSpecificTotemId] = useState<number | null>(null);
   const mapRef = useRef<any>(null);
   
   // Estados para o modal de nicho
@@ -60,6 +61,19 @@ const Page = () => {
     // Implementar lógica de busca se necessário
     console.log('Busca:', { location, duration, startDate });
   };
+
+  // Função para lidar com totem específico encontrado
+  const handleSpecificTotemFound = (totemId: number) => {
+    console.log('🎯 Totem específico encontrado na página:', totemId);
+    setSpecificTotemId(totemId);
+  };
+
+  // Limpar specificTotemId quando bairros mudar (usuário digitou algo novo)
+  useEffect(() => {
+    if (bairros.length === 0) {
+      setSpecificTotemId(null);
+    }
+  }, [bairros]);
 
   // Verificar se é o primeiro acesso do usuário e obter o nicho
   useEffect(() => {
@@ -122,8 +136,6 @@ const Page = () => {
         onDurationChange={setSelectedDurationGlobal} 
         selectedDuration={selectedDurationGlobal}
         onTipoMidiaChange={(tipo, bairros) => { 
-          console.log('Results page - tipo recebido:', tipo);
-          console.log('Results page - bairros recebidos:', bairros);
           setTipoMidia(tipo); 
           setBairros(bairros); 
         }}
@@ -136,8 +148,6 @@ const Page = () => {
         selectedDuration={selectedDurationGlobal}
         onSearch={handleSearch}
         onTipoMidiaChange={(tipo, bairros) => { 
-          console.log('Results page - tipo recebido:', tipo);
-          console.log('Results page - bairros recebidos:', bairros);
           setTipoMidia(tipo); 
           setBairros(bairros); 
         }}
@@ -154,8 +164,9 @@ const Page = () => {
           orderBy={orderBy}
           onChangeAnunciosFiltrados={setAnunciosFiltrados} // NOVO
           userNicho={userNicho}
+          onSpecificTotemFound={handleSpecificTotemFound}
         />
-        <Mapbox anunciosFiltrados={anunciosFiltrados} onCityFound={handleCityFound} userNicho={userNicho} />
+        <Mapbox anunciosFiltrados={anunciosFiltrados} onCityFound={handleCityFound} userNicho={userNicho} specificTotemId={specificTotemId} />
       </div>
 
       <HeaderPrice />

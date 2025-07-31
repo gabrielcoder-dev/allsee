@@ -14,35 +14,129 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(400).json({ error: 'Address is required' })
     }
 
-    const { data, error } = await supabase
+    // Normalizar o endereço de busca
+    const normalizedAddress = address.toLowerCase().trim()
+
+    // Buscar por correspondência mais precisa primeiro - otimizado para velocidade
+    const { data: anunciosData, error: anunciosError } = await supabase
       .from('anuncios')
       .select('id, name, adress, endereco')
-      .or(`adress.ilike.%${address}%,endereco.ilike.%${address}%,name.ilike.%${address}%`) // Case-insensitive search
+      .or(`adress.ilike.%${normalizedAddress}%,endereco.ilike.%${normalizedAddress}%,name.ilike.%${normalizedAddress}%`)
+      .limit(5) // Limitar resultados para maior velocidade
 
-    if (error) {
-      console.error('Erro ao buscar totem:', error)
+    if (anunciosError) {
+      console.error('Erro ao buscar totem:', anunciosError)
       return res.status(500).json({ error: 'Erro interno do servidor' })
     }
 
-    console.log('Resultados encontrados:', data);
-    console.log('Endereço buscado:', address);
+    console.log('Resultados encontrados:', anunciosData);
+    console.log('Endereço buscado:', normalizedAddress);
 
-    if (data && data.length > 0) {
-      // Tentar encontrar uma correspondência mais precisa
-      const exactMatch = data.find(totem => 
-        totem.adress?.toLowerCase().includes(address.toLowerCase()) ||
-        totem.endereco?.toLowerCase().includes(address.toLowerCase()) ||
-        totem.name?.toLowerCase().includes(address.toLowerCase())
-      );
+    if (anunciosData && anunciosData.length > 0) {
+      console.log('🔍 Analisando', anunciosData.length, 'totens encontrados...');
       
-      if (exactMatch) {
-        console.log('Totem encontrado (match exato):', exactMatch);
-        return res.status(200).json({ data: { isSpecificTotem: true, totemId: exactMatch.id } })
+      // Tentar encontrar uma correspondência mais precisa
+      const bestMatch = anunciosData.find(totem => {
+        const totemAddress = (totem.adress || '').toLowerCase();
+        const totemEndereco = (totem.endereco || '').toLowerCase();
+        const totemName = (totem.name || '').toLowerCase();
+        
+        console.log('🔍 Comparando:', {
+          normalizedAddress,
+          totemAddress,
+          totemEndereco,
+          totemName
+        });
+        
+        // Verificar correspondência exata primeiro
+        if (totemAddress === normalizedAddress || 
+            totemEndereco === normalizedAddress || 
+            totemName === normalizedAddress) {
+          console.log('✅ Match exato encontrado para totem:', totem);
+          return true;
+        }
+        
+        // Verificar se o endereço buscado está contido em qualquer campo do totem
+        const match = totemAddress.includes(normalizedAddress) ||
+               totemEndereco.includes(normalizedAddress) ||
+               totemName.includes(normalizedAddress) ||
+               normalizedAddress.includes(totemAddress) ||
+               normalizedAddress.includes(totemEndereco) ||
+               normalizedAddress.includes(totemName);
+        
+        if (match) {
+          console.log('✅ Match parcial encontrado para totem:', totem);
+        }
+        
+        return match;
+      });
+      
+      if (bestMatch) {
+        console.log('Totem encontrado:', bestMatch);
+        
+        // Buscar o marker correspondente
+        const { data: markerData, error: markerError } = await supabase
+          .from('markers')
+          .select('id, lat, lng')
+          .eq('anuncio_id', bestMatch.id)
+          .single()
+
+        if (markerError) {
+          console.error('Erro ao buscar marker:', markerError)
+          return res.status(200).json({ 
+            data: { 
+              isSpecificTotem: true, 
+              totemId: bestMatch.id,
+              markerId: null,
+              coords: null
+            } 
+          })
+        }
+
+        console.log('Marker encontrado:', markerData);
+
+        return res.status(200).json({ 
+          data: { 
+            isSpecificTotem: true, 
+            totemId: bestMatch.id,
+            markerId: markerData?.id || null,
+            coords: markerData ? { lat: markerData.lat, lng: markerData.lng } : null
+          } 
+        })
       }
       
-      // Se não encontrou match exato, usar o primeiro resultado
-      console.log('Totem encontrado (primeiro resultado):', data[0]);
-      return res.status(200).json({ data: { isSpecificTotem: true, totemId: data[0].id } })
+      // Se não encontrou match melhor, usar o primeiro resultado
+      console.log('Usando primeiro resultado:', anunciosData[0]);
+      
+      // Buscar o marker correspondente
+      const { data: markerData, error: markerError } = await supabase
+        .from('markers')
+        .select('id, lat, lng')
+        .eq('anuncio_id', anunciosData[0].id)
+        .single()
+
+      if (markerError) {
+        console.error('Erro ao buscar marker:', markerError)
+        return res.status(200).json({ 
+          data: { 
+            isSpecificTotem: true, 
+            totemId: anunciosData[0].id,
+            markerId: null,
+            coords: null
+          } 
+        })
+      }
+
+      console.log('Marker encontrado:', markerData);
+
+      return res.status(200).json({ 
+        data: { 
+          isSpecificTotem: true, 
+          totemId: anunciosData[0].id,
+          markerId: markerData?.id || null,
+          coords: markerData ? { lat: markerData.lat, lng: markerData.lng } : null
+        } 
+      })
     }
 
     console.log('Nenhum totem encontrado');

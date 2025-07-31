@@ -13,42 +13,12 @@ const PRIMAVERA_DO_LESTE_COORDS = { lat: -15.5586, lng: -54.2811 }
 
 async function geocodeCity(cityName: string): Promise<CitySearchResult | null> {
   try {
-    console.log('Geocodificando:', cityName);
-    
-    // Buscar com o termo exato primeiro
-    let response = await fetch(
+    const response = await fetch(
       `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(cityName)}&limit=1&addressdetails=1&countrycodes=br`
     )
-    let data = await response.json()
-    
-    console.log('Resultado da busca exata:', data);
-    
-    // Se não encontrou com o termo exato, tentar com termo parcial
-    if (!data || data.length === 0) {
-      console.log('Tentando busca parcial...');
-      // Adicionar wildcard para busca parcial
-      const partialSearch = `${cityName}*`
-      response = await fetch(
-        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(partialSearch)}&limit=5&addressdetails=1&countrycodes=br`
-      )
-      data = await response.json()
-      
-      console.log('Resultado da busca parcial:', data);
-      
-      // Filtrar resultados que contêm o termo buscado
-      if (data && data.length > 0) {
-        const filteredData = data.filter((item: any) => 
-          item.display_name.toLowerCase().includes(cityName.toLowerCase())
-        )
-        if (filteredData.length > 0) {
-          data = [filteredData[0]] // Pegar o primeiro resultado filtrado
-          console.log('Resultado filtrado:', data[0]);
-        }
-      }
-    }
+    const data = await response.json()
     
     if (data && data.length > 0) {
-      console.log('Cidade encontrada:', data[0].display_name, 'para busca:', cityName);
       return { 
         lat: parseFloat(data[0].lat), 
         lng: parseFloat(data[0].lon),
@@ -56,7 +26,6 @@ async function geocodeCity(cityName: string): Promise<CitySearchResult | null> {
       }
     }
     
-    console.log('Nenhuma cidade encontrada para:', cityName);
     return null
   } catch (error) {
     console.error('Erro ao buscar cidade:', error)
@@ -67,7 +36,6 @@ async function geocodeCity(cityName: string): Promise<CitySearchResult | null> {
 // Função para verificar se o endereço corresponde a um totem específico
 async function checkIfSpecificTotem(address: string): Promise<{ isSpecificTotem: boolean; totemId?: number }> {
   try {
-    console.log('Verificando totem específico para:', address);
     const { data, error } = await fetch('/api/check-totem-address', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -75,34 +43,12 @@ async function checkIfSpecificTotem(address: string): Promise<{ isSpecificTotem:
     }).then(res => res.json())
 
     if (error || !data) {
-      console.log('Nenhum totem específico encontrado');
       return { isSpecificTotem: false }
     }
 
-    console.log('Totem específico encontrado:', data);
     return { isSpecificTotem: true, totemId: data.totemId }
   } catch (error) {
-    console.log('Erro ao verificar totem específico:', error);
     return { isSpecificTotem: false }
-  }
-}
-
-// Função para verificar se o endereço contém o nome de uma cidade com markers
-async function checkIfAddressContainsCityWithMarkers(address: string): Promise<boolean> {
-  try {
-    const { data, error } = await fetch('/api/check-city-in-address', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ address })
-    }).then(res => res.json())
-
-    if (error || !data) {
-      return false
-    }
-
-    return data.hasCityWithMarkers
-  } catch (error) {
-    return false
   }
 }
 
@@ -118,7 +64,6 @@ export function useCitySearch(delay: number = 0) {
       setLastResult(null)
       // Quando o campo estiver vazio, navegar para Primavera do Leste
       if ((window as any).navigateToCity) {
-        // Indicar que não há pesquisa ativa
         if ((window as any).setIsSearchingCity) {
           (window as any).setIsSearchingCity(false);
         }
@@ -135,11 +80,12 @@ export function useCitySearch(delay: number = 0) {
       const totemCheck = await checkIfSpecificTotem(term)
       
       if (totemCheck.isSpecificTotem && totemCheck.totemId) {
-        console.log('Totem específico encontrado, navegando diretamente...');
-        // Se for um totem específico, navegar diretamente sem geocodificar
+        // Se for um totem específico, navegar diretamente
         if ((window as any).navigateToCity) {
-          // Usar coordenadas padrão da cidade (será ajustado pelo mapa)
-          const cityCoords = { lat: -15.5586, lng: -54.2811 }; // Coordenadas padrão
+          if ((window as any).setIsSearchingCity) {
+            (window as any).setIsSearchingCity(true);
+          }
+          const cityCoords = { lat: -15.5586, lng: -54.2811 };
           (window as any).navigateToCity(cityCoords, totemCheck.totemId);
         }
         setLastResult({ lat: -15.5586, lng: -54.2811, displayName: term, isSpecificTotem: true, totemId: totemCheck.totemId });
@@ -159,48 +105,22 @@ export function useCitySearch(delay: number = 0) {
         
         setLastResult(finalResult)
         setError('')
-        // Indicar que há uma pesquisa ativa
         if ((window as any).setIsSearchingCity) {
           (window as any).setIsSearchingCity(true);
         }
-        // Navegar para a cidade encontrada
         if ((window as any).navigateToCity) {
-          console.log('Navegando para cidade:', result);
           (window as any).navigateToCity(result);
         }
       } else {
-        // Se a geocodificação falhou, verificar se o endereço contém uma cidade com markers
-        const hasCityWithMarkers = await checkIfAddressContainsCityWithMarkers(term)
-        
-        if (hasCityWithMarkers) {
-          // Se contém cidade com markers, não mostrar erro
-          setError('')
-          setLastResult(null)
-          // Indicar que há uma pesquisa ativa
-          if ((window as any).setIsSearchingCity) {
-            (window as any).setIsSearchingCity(true);
-          }
-          // Verificar se é um totem específico
-          const totemCheck = await checkIfSpecificTotem(term);
-          // Tentar geocodificar a cidade para navegar
-          const cityResult = await geocodeCity(term);
-          if (cityResult && (window as any).navigateToCity) {
-            console.log('Navegando para cidade com markers:', cityResult, 'totemId:', totemCheck.totemId);
-            (window as any).navigateToCity(cityResult, totemCheck.totemId);
-          }
-        } else {
-          setError('Cidade não encontrada. Tente novamente.')
-          setLastResult(null)
-          // Indicar que não há pesquisa ativa
-          if ((window as any).setIsSearchingCity) {
-            (window as any).setIsSearchingCity(false);
-          }
+        setError('Cidade não encontrada. Tente novamente.')
+        setLastResult(null)
+        if ((window as any).setIsSearchingCity) {
+          (window as any).setIsSearchingCity(false);
         }
       }
     } catch (error) {
       setError('Erro ao buscar cidade. Tente novamente.')
       setLastResult(null)
-      // Indicar que não há pesquisa ativa
       if ((window as any).setIsSearchingCity) {
         (window as any).setIsSearchingCity(false);
       }
@@ -215,12 +135,14 @@ export function useCitySearch(delay: number = 0) {
       if (searchTerm.trim()) {
         searchCity(searchTerm)
       } else {
-        // Quando o campo estiver vazio, navegar imediatamente para Primavera do Leste
         if ((window as any).navigateToCity) {
+          if ((window as any).setIsSearchingCity) {
+            (window as any).setIsSearchingCity(false);
+          }
           (window as any).navigateToCity(PRIMAVERA_DO_LESTE_COORDS);
         }
       }
-    }, searchTerm.trim() ? delay : 0) // Sem delay quando o campo estiver vazio
+    }, searchTerm.trim() ? delay : 0)
 
     return () => clearTimeout(timeoutId)
   }, [searchTerm, delay, searchCity])
@@ -230,9 +152,7 @@ export function useCitySearch(delay: number = 0) {
     if (!searchTerm.trim()) {
       setError('')
       setLastResult(null)
-      // Navegar para Primavera do Leste quando o campo ficar vazio
       if ((window as any).navigateToCity) {
-        // Indicar que não há pesquisa ativa
         if ((window as any).setIsSearchingCity) {
           (window as any).setIsSearchingCity(false);
         }

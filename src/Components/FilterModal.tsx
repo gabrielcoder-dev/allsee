@@ -19,10 +19,8 @@ export default function FilterModal({ open, onClose, onFilter }: { open: boolean
   if (!open) return null
 
   const toggleTipo = (tipo: string) => {
-    console.log('Toggle tipo:', tipo);
     setSelectedTipo(prev => {
       const newSelection = prev.includes(tipo) ? [] : [tipo];
-      console.log('Nova seleção:', newSelection);
       return newSelection;
     })
   }
@@ -42,7 +40,6 @@ export default function FilterModal({ open, onClose, onFilter }: { open: boolean
   }
 
   const limparFiltro = () => {
-    console.log('Limpando filtro');
     setSelectedTipo([])
     setSelectedAmbientes([])
   }
@@ -131,8 +128,6 @@ export default function FilterModal({ open, onClose, onFilter }: { open: boolean
           <button
             className="flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white font-semibold rounded-lg px-6 py-2 text-base"
             onClick={() => {
-              console.log('FilterModal - selectedTipo:', selectedTipo);
-              console.log('FilterModal - selectedAmbientes:', selectedAmbientes);
               if (onFilter) onFilter(selectedTipo[0] || null, selectedAmbientes);
               onClose();
             }}

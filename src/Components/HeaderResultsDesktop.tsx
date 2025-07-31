@@ -13,7 +13,7 @@ import FilterModal from '@/Components/FilterModal'
 import { useRouter } from 'next/navigation'
 import { useCart } from '@/context/CartContext'
 import ModalMenu from './ModalMenu'
-import { useCitySearch } from '@/hooks/useCitySearch'
+import { useSimpleCitySearch } from '@/hooks/useSimpleCitySearch'
 
 const durations = [
   { label: '2 semanas', value: '2' },
@@ -61,7 +61,7 @@ const HeaderResultsDesktop = ({ onDurationChange, selectedDuration, onTipoMidiaC
   const [showMenuModal, setShowMenuModal] = useState(false)
   
   // Hook de busca automática de cidade
-  const { searchTerm, setSearchTerm, isSearching, lastResult, error } = useCitySearch(2000)
+  const { searchTerm, setSearchTerm, isSearching, lastResult, error } = useSimpleCitySearch(0)
 
   // Função para criar string yyyy-MM-dd
   function toYMD(date: Date): string {
@@ -145,13 +145,13 @@ const HeaderResultsDesktop = ({ onDurationChange, selectedDuration, onTipoMidiaC
                 <MapPinIcon className="w-4 h-5 text-orange-500" />
                 <span className="text-gray-500 mb-1 font-semibold">Endereço ou região</span>
                 {isSearching && (
-                  <span className="text-xs text-blue-500 ml-2">Buscando...</span>
+                  <span className="text-xs text-blue-500 ml-2 animate-pulse">Buscando...</span>
                 )}
               </div>
 
               <input
                 type="text"
-                placeholder="Ex.: Bairro Castelândia"
+                placeholder="Ex.: Rua das Flores, Bairro Centro, Primavera do Leste"
                 className="bg-transparent outline-none flex-1 w-72 text-sm"
                 value={searchTerm}
                 onChange={e => {
@@ -161,6 +161,9 @@ const HeaderResultsDesktop = ({ onDurationChange, selectedDuration, onTipoMidiaC
               />
               {error && (
                 <span className="text-xs text-red-500 mt-1">{error}</span>
+              )}
+              {lastResult?.isSpecificTotem && (
+                <span className="text-xs text-green-600 mt-1 font-medium">✅ Totem encontrado!</span>
               )}
             </div>
             <Search className="w-5 h-5 text-gray-500 cursor-pointer lg:hidden" />
@@ -285,8 +288,6 @@ const HeaderResultsDesktop = ({ onDurationChange, selectedDuration, onTipoMidiaC
 
         {/* Modal de filtro */}
         <FilterModal open={showFilter} onClose={() => setShowFilter(false)} onFilter={(tipo, bairros) => {
-          console.log('HeaderResultsDesktop - tipo recebido:', tipo);
-          console.log('HeaderResultsDesktop - bairros recebidos:', bairros);
           setTipoMidia(tipo);
           if (onTipoMidiaChange) onTipoMidiaChange(tipo, bairros);
         }} />

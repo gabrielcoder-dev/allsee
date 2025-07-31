@@ -38,9 +38,10 @@ type GetAnunciosResultsProps = {
   orderBy?: string;
   onChangeAnunciosFiltrados?: (anuncios: Anuncio[]) => void;
   userNicho?: string | null;
+  onSpecificTotemFound?: (totemId: number) => void;
 }
 
-export default function GetAnunciosResults({ onAdicionarProduto, selectedDuration = '2', tipoMidia, bairros, orderBy, onChangeAnunciosFiltrados, userNicho }: GetAnunciosResultsProps) {
+export default function GetAnunciosResults({ onAdicionarProduto, selectedDuration = '2', tipoMidia, bairros, orderBy, onChangeAnunciosFiltrados, userNicho, onSpecificTotemFound }: GetAnunciosResultsProps) {
   const { adicionarProduto, removerProduto, produtos, atualizarProdutosComNovaDuracao } = useCart()
   const [anuncios, setAnuncios] = useState<Anuncio[]>([])
   const [loading, setLoading] = useState(true)
@@ -74,11 +75,9 @@ export default function GetAnunciosResults({ onAdicionarProduto, selectedDuratio
         .eq(durationColumn, true)
         .order('id', { ascending: false });
       if (tipoMidia) {
-        console.log('Filtrando por tipo de mídia:', tipoMidia);
         query = query.eq('type_screen', tipoMidia);
       }
       const { data, error } = await query;
-      console.log('Query result:', { data, error, tipoMidia });
       // Garante que data e filteredData são arrays
       const anunciosData: any[] = Array.isArray(data) ? data : [];
       let filteredData: any[] = anunciosData;
@@ -103,6 +102,14 @@ export default function GetAnunciosResults({ onAdicionarProduto, selectedDuratio
         setAnuncios(anunciosOrdenados)
         atualizarProdutosComNovaDuracao(anunciosOrdenados, selectedDuration);
         if (onChangeAnunciosFiltrados) onChangeAnunciosFiltrados(anunciosOrdenados);
+        
+        // Se há apenas 1 totem e há bairros filtrados, provavelmente é um totem específico
+        if (anunciosOrdenados.length === 1 && bairros && bairros.length > 0) {
+          console.log('🎯 Totem específico encontrado:', anunciosOrdenados[0]);
+          if (onSpecificTotemFound) {
+            onSpecificTotemFound(anunciosOrdenados[0].id);
+          }
+        }
       } else {
         console.error("Erro ao carregar anúncios:", error);
         setAnuncios([]);
@@ -114,10 +121,7 @@ export default function GetAnunciosResults({ onAdicionarProduto, selectedDuratio
     fetchAnuncios()
   }, [selectedDuration, tipoMidia, JSON.stringify(bairros), orderBy, userNicho])
 
-  // Debug: log when tipoMidia changes
-  useEffect(() => {
-    console.log('GetAnunciosResults - tipoMidia changed:', tipoMidia);
-  }, [tipoMidia])
+
 
   if (loading) return <div>Carregando anúncios...</div>
   if (!anuncios.length) {

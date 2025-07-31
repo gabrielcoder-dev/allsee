@@ -12,4 +12,20 @@ export const orangePinIcon = new L.DivIcon({
   iconSize: [32, 40],
   iconAnchor: [16, 40],
   popupAnchor: [0, -40],
+});
+
+export const highlightedPinIcon = new L.DivIcon({
+  className: 'custom-highlighted-marker',
+  html: `
+    <svg width="40" height="48" viewBox="0 0 40 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <ellipse cx="20" cy="15" rx="16" ry="16" fill="#FF4500"/>
+      <path d="M20 48C20 48 36 30.5 36 20C36 9.71573 28.2843 2 20 2C11.7157 2 4 9.71573 4 20C4 30.5 20 48 20 48Z" fill="#FF4500"/>
+      <ellipse cx="20" cy="20" rx="8" ry="8" fill="white" fill-opacity="0.8"/>
+      <circle cx="20" cy="20" r="4" fill="#FF4500"/>
+      <circle cx="20" cy="20" r="2" fill="white"/>
+    </svg>
+  `,
+  iconSize: [40, 48],
+  iconAnchor: [20, 48],
+  popupAnchor: [0, -48],
 }); 
