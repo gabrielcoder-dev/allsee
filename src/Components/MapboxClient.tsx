@@ -271,7 +271,7 @@ export default function Mapbox({ anunciosFiltrados, onCityFound, userNicho, isFu
         
         <TileLayer
           attribution='&copy; <a href="https://osm.org/copyright">OpenStreetMap</a> contributors'
-          url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
+          url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
           maxZoom={18}
           minZoom={10}
         />
