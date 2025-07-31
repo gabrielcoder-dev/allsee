@@ -294,9 +294,14 @@ export function useSimpleCitySearch(delay: number = 0) { // Mudança: delay padr
     if (searchTerm.trim()) {
       searchCity(searchTerm)
     } else {
+      // Quando o campo estiver vazio, navegar para Primavera do Leste
+      console.log('🏠 Campo vazio, voltando para Primavera do Leste');
       if ((window as any).navigateToCity) {
         (window as any).navigateToCity(PRIMAVERA_DO_LESTE_COORDS);
       }
+      // Limpar resultados anteriores
+      setLastResult(null);
+      setError('');
     }
   }, [searchTerm, searchCity])
 

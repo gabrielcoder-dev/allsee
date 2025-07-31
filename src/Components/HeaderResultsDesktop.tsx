@@ -162,9 +162,9 @@ const HeaderResultsDesktop = ({ onDurationChange, selectedDuration, onTipoMidiaC
               {error && (
                 <span className="text-xs text-red-500 mt-1">{error}</span>
               )}
-              {lastResult?.isSpecificTotem && (
-                <span className="text-xs text-green-600 mt-1 font-medium">✅ Totem encontrado!</span>
-              )}
+                             {lastResult?.isSpecificTotem && searchTerm.trim() && (
+                 <span className="text-xs text-green-600 mt-1 font-medium">✅ Totem encontrado!</span>
+               )}
             </div>
             <Search className="w-5 h-5 text-gray-500 cursor-pointer lg:hidden" />
             </div>

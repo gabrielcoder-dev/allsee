@@ -85,26 +85,36 @@ function MapController({
           duration: 2
         });
       }
-    }
-
-    // Verificar se há markers próximos à cidade (dentro de 50km)
-    const hasNearbyMarkers = markers.some(marker => {
-      const distance = Math.sqrt(
-        Math.pow(marker.lat - coords.lat, 2) + 
-        Math.pow(marker.lng - coords.lng, 2)
-      ) * 111;
-      return distance <= 50;
-    });
-
-    console.log('Há markers próximos?', hasNearbyMarkers);
-
-    // Navegar se houver markers próximos
-    if (hasNearbyMarkers) {
-      console.log('Navegando para cidade:', coords);
-      map.setView([coords.lat, coords.lng], 14, {
-        animate: true,
-        duration: 1.5
+    } else {
+      // Navegação para cidade (não totem específico)
+      console.log('🏙️ Navegando para cidade:', coords);
+      
+      // Verificar se há markers próximos à cidade (dentro de 50km)
+      const hasNearbyMarkers = markers.some(marker => {
+        const distance = Math.sqrt(
+          Math.pow(marker.lat - coords.lat, 2) + 
+          Math.pow(marker.lng - coords.lng, 2)
+        ) * 111;
+        return distance <= 50;
       });
+
+      console.log('Há markers próximos?', hasNearbyMarkers);
+
+      // Navegar se houver markers próximos
+      if (hasNearbyMarkers) {
+        console.log('Navegando para cidade:', coords);
+        map.setView([coords.lat, coords.lng], 14, {
+          animate: true,
+          duration: 1.5
+        });
+      } else {
+        // Se não há markers próximos, voltar para Primavera do Leste
+        console.log('🏠 Nenhum marker próximo, voltando para Primavera do Leste');
+        map.setView(PRIMAVERA_DO_LESTE_COORDS, 13, {
+          animate: true,
+          duration: 1.5
+        });
+      }
     }
   };
 
