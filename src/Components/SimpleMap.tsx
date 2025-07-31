@@ -111,13 +111,20 @@ export default function SimpleMap({ anunciosFiltrados, onCityFound, userNicho, s
   }, [])
 
   useEffect(() => {
+    if (!mounted) return;
+
     function updateHeight() {
-      const header = document.getElementById('header-price')
-      const headerHeight = header ? header.offsetHeight : 64
-      const viewportHeight = window.visualViewport
-        ? window.visualViewport.height
-        : window.innerHeight
-      setMapHeight(viewportHeight - headerHeight)
+      try {
+        const header = document.getElementById('header-price')
+        const headerHeight = header ? header.offsetHeight : 64
+        const viewportHeight = window.visualViewport
+          ? window.visualViewport.height
+          : window.innerHeight
+        setMapHeight(viewportHeight - headerHeight)
+      } catch (error) {
+        console.error('Erro ao calcular altura do mapa:', error);
+        setMapHeight(600); // altura padrão
+      }
     }
     updateHeight()
     window.addEventListener('resize', updateHeight)
@@ -135,6 +142,8 @@ export default function SimpleMap({ anunciosFiltrados, onCityFound, userNicho, s
   }, [mounted])
 
   useEffect(() => {
+    if (!mounted) return;
+
     async function fetchMarkers() {
       setLoading(true)
       try {
@@ -171,9 +180,7 @@ export default function SimpleMap({ anunciosFiltrados, onCityFound, userNicho, s
       }
     }
     
-    if (mounted) {
-      fetchMarkers()
-    }
+    fetchMarkers()
   }, [mounted])
 
   // Filtrar markers baseado no nicho do usuário
@@ -237,8 +244,28 @@ export default function SimpleMap({ anunciosFiltrados, onCityFound, userNicho, s
     }
   }, [specificTotemId, markers]);
 
-  if (!mounted || mapHeight === 0) return null
-  if (loading) return <div className={`${isFullscreen ? 'w-full' : 'hidden xl:flex w-[400px]'} flex-shrink-0 z-0 items-center justify-center map-loading`} style={{ height: '100%' }}>Carregando totens no mapa...</div>
+  // Não renderizar até estar montado
+  if (!mounted) {
+    return (
+      <div className={`${isFullscreen ? 'w-full' : 'hidden xl:flex w-[400px]'} flex-shrink-0 z-0 items-center justify-center`} style={{ height: '100vh' }}>
+        <div className="flex flex-col items-center gap-2">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500"></div>
+          <span className="text-sm text-gray-600">Carregando mapa...</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (loading) {
+    return (
+      <div className={`${isFullscreen ? 'w-full' : 'hidden xl:flex w-[400px]'} flex-shrink-0 z-0 items-center justify-center`} style={{ height: '100vh' }}>
+        <div className="flex flex-col items-center gap-2">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500"></div>
+          <span className="text-sm text-gray-600">Carregando totens no mapa...</span>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div

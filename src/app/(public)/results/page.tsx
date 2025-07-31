@@ -18,7 +18,17 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 )
 
-const Mapbox = dynamic(() => import('@/Components/MapboxWrapper'), { ssr: false })
+const Mapbox = dynamic(() => import('@/Components/MapboxWrapper'), { 
+  ssr: false,
+  loading: () => (
+    <div className="hidden xl:flex w-[400px] flex-shrink-0 z-0 items-center justify-center" style={{ height: '100vh' }}>
+      <div className="flex flex-col items-center gap-2">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500"></div>
+        <span className="text-sm text-gray-600">Carregando mapa...</span>
+      </div>
+    </div>
+  )
+})
 
 const Page = () => {
   const { selectedDurationGlobal, setSelectedDurationGlobal } = useCart();
@@ -26,8 +36,9 @@ const Page = () => {
   const [tipoMidia, setTipoMidia] = useState<string | null>(null);
   const [bairros, setBairros] = useState<string[]>([]);
   const [orderBy, setOrderBy] = useState<string>('');
-  const [anunciosFiltrados, setAnunciosFiltrados] = useState<any[]>([]); // NOVO
+  const [anunciosFiltrados, setAnunciosFiltrados] = useState<any[]>([]);
   const [specificTotemId, setSpecificTotemId] = useState<number | null>(null);
+  const [mounted, setMounted] = useState(false);
   const mapRef = useRef<any>(null);
   
   // Estados para o modal de nicho
@@ -35,6 +46,11 @@ const Page = () => {
   const [isFirstTimeUser, setIsFirstTimeUser] = useState(false);
   const [userNicho, setUserNicho] = useState<string | null>(null);
   const [isMapFullscreen, setIsMapFullscreen] = useState(false)
+
+  // Garantir que o componente está montado no cliente
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Função para adicionar produto ao carrinho
   function handleAdicionarProduto(produto: any) {
@@ -83,6 +99,8 @@ const Page = () => {
 
   // Verificar se é o primeiro acesso do usuário e obter o nicho
   useEffect(() => {
+    if (!mounted) return;
+
     const checkFirstTimeUser = async () => {
       try {
         const { data: { user } } = await supabase.auth.getUser()
@@ -100,7 +118,6 @@ const Page = () => {
             setIsFirstTimeUser(true)
             setShowNichoModal(true)
           } else {
-            // Se tem nicho, salvar para usar no filtro
             setUserNicho(profile.nicho)
           }
         }
@@ -110,7 +127,7 @@ const Page = () => {
     }
 
     checkFirstTimeUser()
-  }, [])
+  }, [mounted])
 
   // Função chamada quando o nicho é selecionado
   const handleNichoSelected = async () => {
@@ -134,6 +151,18 @@ const Page = () => {
     } catch (error) {
       console.error('Erro ao buscar nicho atualizado:', error)
     }
+  }
+
+  // Não renderizar até estar montado
+  if (!mounted) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="flex flex-col items-center gap-2">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500"></div>
+          <span className="text-sm text-gray-600">Carregando...</span>
+        </div>
+      </div>
+    );
   }
 
   return (
