@@ -285,7 +285,6 @@
 .map-container {
   border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
   border: 1px solid rgba(0, 0, 0, 0.1);
 }
 
@@ -299,9 +298,9 @@
 }
 
 .leaflet-control-zoom a {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
-  color: white !important;
-  border: none !important;
+  background: white !important;
+  color: #333 !important;
+  border: 1px solid #e0e0e0 !important;
   border-radius: 8px !important;
   margin: 3px !important;
   transition: all 0.3s ease !important;
@@ -309,9 +308,11 @@
 }
 
 .leaflet-control-zoom a:hover {
-  background: linear-gradient(135deg, #764ba2 0%, #667eea 100%) !important;
+  background: #f8f9fa !important;
+  color: #333 !important;
+  border-color: #ccc !important;
   transform: scale(1.05) !important;
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
 }
 
 /* Estilo para os popups */
