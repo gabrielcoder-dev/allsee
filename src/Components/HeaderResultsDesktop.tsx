@@ -151,7 +151,7 @@ const HeaderResultsDesktop = ({ onDurationChange, selectedDuration, onTipoMidiaC
 
               <input
                 type="text"
-                placeholder="Ex.: Rua das Flores, Bairro Centro, Primavera do Leste"
+                placeholder="Ex: Rua das Flores, Centro, Primavera do Leste"
                 className="bg-transparent outline-none flex-1 w-72 text-sm"
                 value={searchTerm}
                 onChange={e => {
