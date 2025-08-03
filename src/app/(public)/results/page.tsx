@@ -231,34 +231,36 @@ const Page = () => {
           />
         </div>
 
-        {/* Mobile - Lista ou Mapa */}
-        <div className="xl:hidden w-full h-full">
-          {!isMobileMapView ? (
-            <div className="w-full h-full overflow-y-auto">
-              <GetAnunciosResults 
-                onAdicionarProduto={handleAdicionarProduto} 
-                selectedDuration={selectedDurationGlobal} 
-                tipoMidia={tipoMidia} 
-                bairros={bairros}
-                orderBy={orderBy}
-                onChangeAnunciosFiltrados={setAnunciosFiltrados}
-                userNicho={userNicho}
-                onSpecificTotemFound={handleSpecificTotemFound}
-              />
-            </div>
-          ) : (
-            <div className="w-full h-full">
-              <Mapbox 
-                anunciosFiltrados={anunciosFiltrados} 
-                onCityFound={handleCityFound} 
-                userNicho={userNicho} 
-                specificTotemId={specificTotemId}
-                isFullscreen={true}
-                onToggleMapView={toggleMobileMapView}
-              />
-            </div>
-          )}
-        </div>
+                 {/* Mobile - Lista ou Mapa */}
+         <div className="xl:hidden w-full h-full relative">
+           {/* GetAnunciosResults sempre presente */}
+           <div className={`w-full h-full overflow-y-auto ${isMobileMapView ? 'hidden' : 'block'}`}>
+             <GetAnunciosResults 
+               onAdicionarProduto={handleAdicionarProduto} 
+               selectedDuration={selectedDurationGlobal} 
+               tipoMidia={tipoMidia} 
+               bairros={bairros}
+               orderBy={orderBy}
+               onChangeAnunciosFiltrados={setAnunciosFiltrados}
+               userNicho={userNicho}
+               onSpecificTotemFound={handleSpecificTotemFound}
+             />
+           </div>
+           
+           {/* Mapa por cima quando ativo */}
+           {isMobileMapView && (
+             <div className="absolute inset-0 z-50">
+               <Mapbox 
+                 anunciosFiltrados={anunciosFiltrados} 
+                 onCityFound={handleCityFound} 
+                 userNicho={userNicho} 
+                 specificTotemId={specificTotemId}
+                 isFullscreen={true}
+                 onToggleMapView={toggleMobileMapView}
+               />
+             </div>
+           )}
+         </div>
       </div>
 
       {/* HeaderPrice - sempre visível */}
