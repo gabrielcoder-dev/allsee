@@ -46,6 +46,7 @@ const Page = () => {
   const [isFirstTimeUser, setIsFirstTimeUser] = useState(false);
   const [userNicho, setUserNicho] = useState<string | null>(null);
   const [isMapFullscreen, setIsMapFullscreen] = useState(false)
+  const [isMobileMapView, setIsMobileMapView] = useState(false)
 
   // Garantir que o componente está montado no cliente
   useEffect(() => {
@@ -88,6 +89,11 @@ const Page = () => {
   // Função para alternar entre mapa lateral e mapa em tela cheia
   const toggleMapView = () => {
     setIsMapFullscreen(!isMapFullscreen)
+  }
+
+  // Função para alternar entre lista e mapa no mobile
+  const toggleMobileMapView = () => {
+    setIsMobileMapView(!isMobileMapView)
   }
 
   // Limpar specificTotemId quando bairros mudar (usuário digitou algo novo)
@@ -188,11 +194,13 @@ const Page = () => {
         }}
         orderBy={orderBy}
         onOrderChange={setOrderBy}
+        onToggleMapView={toggleMobileMapView}
+        isMapView={isMobileMapView}
       />
       {/* Área principal com scroll controlado */}
       <div className="flex flex-1 min-h-0 overflow-hidden xl:pl-16 justify-center xl:justify-between relative">
-        {/* Conteúdo principal */}
-        <div className={`flex flex-1 ${isMapFullscreen ? 'hidden' : 'block'}`}>
+        {/* Conteúdo principal - Desktop */}
+        <div className={`flex flex-1 ${isMapFullscreen ? 'hidden' : 'block'} hidden xl:block`}>
           <GetAnunciosResults 
             onAdicionarProduto={handleAdicionarProduto} 
             selectedDuration={selectedDurationGlobal} 
@@ -205,7 +213,7 @@ const Page = () => {
           />
         </div>
 
-        {/* Mapa */}
+        {/* Mapa - Desktop */}
         <div className={`${isMapFullscreen ? 'w-full' : 'hidden xl:block w-[400px]'}`}>
           <Mapbox 
             anunciosFiltrados={anunciosFiltrados} 
@@ -216,9 +224,39 @@ const Page = () => {
             onToggleMapView={toggleMapView}
           />
         </div>
+
+        {/* Mobile - Lista ou Mapa */}
+        <div className="xl:hidden w-full h-full">
+          {!isMobileMapView ? (
+            <GetAnunciosResults 
+              onAdicionarProduto={handleAdicionarProduto} 
+              selectedDuration={selectedDurationGlobal} 
+              tipoMidia={tipoMidia} 
+              bairros={bairros}
+              orderBy={orderBy}
+              onChangeAnunciosFiltrados={setAnunciosFiltrados}
+              userNicho={userNicho}
+              onSpecificTotemFound={handleSpecificTotemFound}
+            />
+          ) : (
+            <div className="w-full h-full">
+              <Mapbox 
+                anunciosFiltrados={anunciosFiltrados} 
+                onCityFound={handleCityFound} 
+                userNicho={userNicho} 
+                specificTotemId={specificTotemId}
+                isFullscreen={true}
+                onToggleMapView={toggleMobileMapView}
+              />
+            </div>
+          )}
+        </div>
       </div>
 
-      <HeaderPrice />
+      {/* HeaderPrice - ocultar no mobile quando mapa estiver ativo */}
+      <div className={`${isMobileMapView ? 'xl:block hidden' : 'block'}`}>
+        <HeaderPrice />
+      </div>
 
       <ToastContainer />
       

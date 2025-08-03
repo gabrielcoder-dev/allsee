@@ -1,6 +1,6 @@
 'use client'
 
-import { MenuIcon, ShoppingCartIcon, Search, MapPinIcon, ChevronDownIcon, Sliders } from 'lucide-react'
+import { MenuIcon, ShoppingCartIcon, Search, MapPinIcon, ChevronDownIcon, Sliders, MapIcon } from 'lucide-react'
 import Image from 'next/image'
 import logoImg from '@/assets/logo.png'
 import { Button } from './ui/button'
@@ -24,6 +24,8 @@ type MobileHeaderProps = {
   onTipoMidiaChange?: (tipo: string | null, bairros: string[]) => void;
   orderBy?: string;
   onOrderChange?: (order: string) => void;
+  onToggleMapView?: () => void;
+  isMapView?: boolean;
 }
 
 export default function MobileHeader({ 
@@ -32,7 +34,9 @@ export default function MobileHeader({
   onSearch,
   onTipoMidiaChange,
   orderBy,
-  onOrderChange
+  onOrderChange,
+  onToggleMapView,
+  isMapView = false
 }: MobileHeaderProps) {
   const [userName, setUserName] = useState<string>('')
 
@@ -155,7 +159,7 @@ export default function MobileHeader({
             </div>
           </div>
 
-          <div className='w-full flex items-center justify-between gap-6'>
+          <div className='w-full flex items-center justify-between gap-4'>
             {/* Ordenar */}
             <div className="relative" ref={popoverRef}>
                   <button
@@ -186,6 +190,20 @@ export default function MobileHeader({
                     </div>
                   )}
                 </div>
+            
+            {/* Ver no mapa */}
+            <Button 
+              variant="ghost" 
+              className="flex items-center gap-1 text-gray-700 bg-gray-100 px-3 py-1 rounded-lg"
+              onClick={onToggleMapView}
+              type="button"
+            >
+              <MapIcon className="w-4 h-4" />
+              <span className="text-sm font-medium">
+                {isMapView ? 'lista' : 'mapa'}
+              </span>
+            </Button>
+            
             {/* Filtrar */}
             <Button variant="ghost" className="flex items-center gap-1 text-gray-700"
               onClick={() => setShowFilter(true)}
