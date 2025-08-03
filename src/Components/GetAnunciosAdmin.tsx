@@ -170,12 +170,15 @@ export default function GetAnunciosAdmin({ selectedDuration = '2', onFetchAnunci
                     alt={anuncio.name}
                     className="object-cover w-full h-full"
                     onError={(e) => {
-                      console.error('Erro ao carregar imagem:', anuncio.image);
+                      console.error('❌ Erro ao carregar imagem:', anuncio.image);
                       e.currentTarget.style.display = 'none';
                       e.currentTarget.nextElementSibling?.classList.remove('hidden');
                     }}
+                    onLoad={() => {
+                      console.log('✅ Imagem carregada com sucesso:', anuncio.image);
+                    }}
                   />
-                  <div className="absolute inset-0 flex items-center justify-center bg-gray-200 text-gray-500 text-sm">
+                  <div className="hidden absolute inset-0 flex items-center justify-center bg-gray-200 text-gray-500 text-sm">
                     Sem imagem
                   </div>
                 </div>

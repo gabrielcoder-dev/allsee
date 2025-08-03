@@ -71,18 +71,21 @@ export default function MiniAnuncioCard({ anuncio, actionButton, hideAddButton }
     <div
       className="bg-white rounded-xl shadow border border-gray-100 p-1.5 flex flex-col gap-1 w-[200px] min-w-[160px] max-w-[220px] cursor-pointer"
     >
-      <div className="rounded-lg overflow-hidden h-12 flex items-center justify-center bg-gray-100 mb-1">
+      <div className="rounded-lg overflow-hidden h-12 flex items-center justify-center bg-gray-100 mb-1 relative">
         <img
           src={anuncio.image}
           alt={anuncio.name || anuncio.nome}
           className="object-cover w-full h-12"
           onError={(e) => {
-            console.error('Erro ao carregar imagem:', anuncio.image);
+            console.error('❌ Erro ao carregar imagem:', anuncio.image);
             e.currentTarget.style.display = 'none';
             e.currentTarget.nextElementSibling?.classList.remove('hidden');
           }}
+          onLoad={() => {
+            console.log('✅ Imagem carregada com sucesso:', anuncio.image);
+          }}
         />
-        <div className="absolute inset-0 flex items-center justify-center bg-gray-200 text-gray-500 text-xs">
+        <div className="hidden absolute inset-0 flex items-center justify-center bg-gray-200 text-gray-500 text-xs">
           Sem imagem
         </div>
       </div>

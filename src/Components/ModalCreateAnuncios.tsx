@@ -166,7 +166,7 @@ export default function ModalCreateAnuncios({
   }
 
   async function handleImageUpload(file: File) {
-    console.log('Iniciando upload de imagem:', file.name, file.size, file.type);
+    console.log('🚀 Iniciando upload de imagem:', file.name, file.size, file.type);
     
     // Verificar se o arquivo é uma imagem válida
     if (!file.type.startsWith('image/')) {
@@ -180,38 +180,69 @@ export default function ModalCreateAnuncios({
     
     const fileExt = file.name.split(".").pop();
     const fileName = `${Date.now()}.${fileExt}`;
-    console.log('Nome do arquivo gerado:', fileName);
+    console.log('📁 Nome do arquivo gerado:', fileName);
     
-    // Verificar se o bucket existe
-    const { data: buckets, error: bucketsError } = await supabase.storage.listBuckets();
-    if (bucketsError) {
-      console.error('Erro ao listar buckets:', bucketsError);
-      throw new Error('Erro ao acessar storage');
-    }
-    
-    const anunciosBucket = buckets?.find(bucket => bucket.name === 'anuncios');
-    if (!anunciosBucket) {
-      console.error('Bucket "anuncios" não encontrado');
-      throw new Error('Bucket de storage não configurado');
-    }
-    
-    const { data, error } = await supabase.storage
-      .from("anuncios")
-      .upload(fileName, file);
-    
-    if (error) {
-      console.error('Erro no upload:', error);
+    try {
+      // Verificar se o bucket existe
+      console.log('🔍 Verificando buckets disponíveis...');
+      const { data: buckets, error: bucketsError } = await supabase.storage.listBuckets();
+      
+      if (bucketsError) {
+        console.error('❌ Erro ao listar buckets:', bucketsError);
+        throw new Error('Erro ao acessar storage');
+      }
+      
+      console.log('📦 Buckets encontrados:', buckets);
+      
+      const anunciosBucket = buckets?.find(bucket => bucket.name === 'anuncios');
+      if (!anunciosBucket) {
+        console.error('❌ Bucket "anuncios" não encontrado');
+        console.log('📋 Buckets disponíveis:', buckets?.map(b => b.name));
+        throw new Error('Bucket de storage não configurado. Execute o SQL de configuração.');
+      }
+      
+      console.log('✅ Bucket "anuncios" encontrado:', anunciosBucket);
+      
+      // Fazer upload da imagem
+      console.log('📤 Fazendo upload...');
+      const { data, error } = await supabase.storage
+        .from("anuncios")
+        .upload(fileName, file, {
+          cacheControl: '3600',
+          upsert: false
+        });
+      
+      if (error) {
+        console.error('❌ Erro no upload:', error);
+        throw error;
+      }
+      
+      console.log('✅ Upload bem-sucedido:', data);
+      
+      // Gerar URL pública
+      console.log('🔗 Gerando URL pública...');
+      const { data: urlData } = supabase.storage
+        .from("anuncios")
+        .getPublicUrl(fileName);
+      
+      console.log('✅ URL pública gerada:', urlData.publicUrl);
+      
+      // Testar se a URL é acessível
+      try {
+        const response = await fetch(urlData.publicUrl, { method: 'HEAD' });
+        console.log('🌐 Teste de acesso à URL:', response.status, response.ok);
+        if (!response.ok) {
+          console.warn('⚠️ URL pode não estar acessível publicamente');
+        }
+      } catch (fetchError) {
+        console.warn('⚠️ Não foi possível testar a URL:', fetchError);
+      }
+      
+      return urlData.publicUrl;
+    } catch (error) {
+      console.error('❌ Erro completo no upload:', error);
       throw error;
     }
-    
-    console.log('Upload bem-sucedido:', data);
-    
-    const { data: urlData } = supabase.storage
-      .from("anuncios")
-      .getPublicUrl(fileName);
-    
-    console.log('URL pública gerada:', urlData.publicUrl);
-    return urlData.publicUrl;
   }
 
   async function handleSubmit(e: React.FormEvent) {
