@@ -173,6 +173,7 @@ const Page = () => {
 
   return (
     <div className="flex flex-col h-screen">
+      {/* Desktop Header */}
       <HeaderResultsDesktop 
         onDurationChange={setSelectedDurationGlobal} 
         selectedDuration={selectedDurationGlobal}
@@ -184,19 +185,24 @@ const Page = () => {
         onOrderChange={setOrderBy}
         onCityFound={handleCityFound}
       />
-      <MobileHeader 
-        onDurationChange={setSelectedDurationGlobal} 
-        selectedDuration={selectedDurationGlobal}
-        onSearch={handleSearch}
-        onTipoMidiaChange={(tipo, bairros) => { 
-          setTipoMidia(tipo); 
-          setBairros(bairros); 
-        }}
-        orderBy={orderBy}
-        onOrderChange={setOrderBy}
-        onToggleMapView={toggleMobileMapView}
-        isMapView={isMobileMapView}
-      />
+      
+      {/* Mobile Header - ocultar quando mapa estiver ativo */}
+      <div className={`${isMobileMapView ? 'hidden' : 'block'}`}>
+        <MobileHeader 
+          onDurationChange={setSelectedDurationGlobal} 
+          selectedDuration={selectedDurationGlobal}
+          onSearch={handleSearch}
+          onTipoMidiaChange={(tipo, bairros) => { 
+            setTipoMidia(tipo); 
+            setBairros(bairros); 
+          }}
+          orderBy={orderBy}
+          onOrderChange={setOrderBy}
+          onToggleMapView={toggleMobileMapView}
+          isMapView={isMobileMapView}
+        />
+      </div>
+
       {/* Área principal com scroll controlado */}
       <div className="flex flex-1 min-h-0 overflow-hidden xl:pl-16 justify-center xl:justify-between relative">
         {/* Conteúdo principal - Desktop */}
@@ -253,10 +259,8 @@ const Page = () => {
         </div>
       </div>
 
-      {/* HeaderPrice - ocultar no mobile quando mapa estiver ativo */}
-      <div className={`${isMobileMapView ? 'xl:block hidden' : 'block'}`}>
-        <HeaderPrice />
-      </div>
+      {/* HeaderPrice - sempre visível */}
+      <HeaderPrice />
 
       <ToastContainer />
       

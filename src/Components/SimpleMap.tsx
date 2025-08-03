@@ -120,6 +120,8 @@ export default function SimpleMap({ anunciosFiltrados, onCityFound, userNicho, s
         const viewportHeight = window.visualViewport
           ? window.visualViewport.height
           : window.innerHeight
+        
+        // Sempre usar a altura disponível menos o header
         setMapHeight(viewportHeight - headerHeight)
       } catch (error) {
         console.error('Erro ao calcular altura do mapa:', error);
@@ -276,12 +278,12 @@ export default function SimpleMap({ anunciosFiltrados, onCityFound, userNicho, s
       {onToggleMapView && (
         <button
           onClick={onToggleMapView}
-          className="absolute top-4 right-4 z-[1000] map-toggle-button rounded-lg px-4 py-2 flex items-center gap-2 text-sm font-medium transition-colors"
+          className="absolute top-4 right-4 z-[1000] map-toggle-button rounded-lg px-4 py-2 flex items-center gap-2 text-sm font-medium transition-colors bg-white shadow-lg border"
         >
           {isFullscreen ? (
             <>
               <PanelLeftIcon className="w-4 h-4" />
-              Ver em lateral
+              Ver em lista
             </>
           ) : (
             <>
