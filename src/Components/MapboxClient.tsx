@@ -59,7 +59,7 @@ function MapController({
         console.log('✅ Totem encontrado no mapa:', totemMarker);
         
         // Centralizar o totem com zoom mais próximo e animação suave
-        map.setView([totemMarker.lat, totemMarker.lng], 16, {
+        map.setView([totemMarker.lat, totemMarker.lng], 17, {
           animate: true,
           duration: 2.5
         });
@@ -71,7 +71,7 @@ function MapController({
         
         // Fallback: navegar para as coordenadas fornecidas mesmo sem marker
         console.log('🗺️ Navegando para coordenadas fornecidas (fallback):', coords);
-        map.setView([coords.lat, coords.lng], 16, {
+        map.setView([coords.lat, coords.lng], 17, {
           animate: true,
           duration: 2.5
         });
@@ -94,14 +94,14 @@ function MapController({
               // Navegar se houver markers próximos
       if (hasNearbyMarkers) {
         console.log('Navegando para cidade:', coords);
-        map.setView([coords.lat, coords.lng], 15, {
+        map.setView([coords.lat, coords.lng], 16, {
           animate: true,
           duration: 1.5
         });
       } else {
         // Se não há markers próximos, voltar para Primavera do Leste
         console.log('🏠 Nenhum marker próximo, voltando para Primavera do Leste');
-        map.setView(PRIMAVERA_DO_LESTE_COORDS, 15, {
+        map.setView(PRIMAVERA_DO_LESTE_COORDS, 16, {
           animate: true,
           duration: 1.5
         });
@@ -119,7 +119,7 @@ function MapController({
   // Garantir que o mapa sempre inicie em Primavera do Leste
   useEffect(() => {
     const timer = setTimeout(() => {
-      map.setView(PRIMAVERA_DO_LESTE_COORDS, 15);
+      map.setView(PRIMAVERA_DO_LESTE_COORDS, 16);
     }, 100);
     return () => clearTimeout(timer);
   }, [map]);
@@ -214,7 +214,7 @@ export default function Mapbox({ anunciosFiltrados, onCityFound, userNicho, isFu
     >
       <MapContainer
         center={PRIMAVERA_DO_LESTE_COORDS}
-        zoom={15}
+        zoom={16}
         style={{ width: '100%', height: '100%' }}
         whenReady={() => {}}
         zoomControl={true}
@@ -223,6 +223,10 @@ export default function Mapbox({ anunciosFiltrados, onCityFound, userNicho, isFu
         boxZoom={true}
         keyboard={true}
         dragging={true}
+        maxBounds={undefined}
+        minZoom={1}
+        maxZoom={18}
+        worldCopyJump={true}
       >
         <MapController 
           onCityFound={onCityFound}
@@ -233,7 +237,7 @@ export default function Mapbox({ anunciosFiltrados, onCityFound, userNicho, isFu
           attribution='&copy; <a href="https://osm.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
           maxZoom={18}
-          minZoom={10}
+          minZoom={1}
         />
 
         {markersToDisplay.map((marker) => (

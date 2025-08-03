@@ -137,8 +137,12 @@ const MapAdmin = () => {
         <MapWithRef
           mapRef={mapRef}
           center={[-15.5586, -54.2811]}
-          zoom={15}
+          zoom={16}
           style={{ width: '100%', height: '100%' }}
+          maxBounds={undefined}
+          minZoom={1}
+          maxZoom={18}
+          worldCopyJump={true}
         >
           <TileLayer
             attribution='&copy; <a href="https://osm.org/copyright">OpenStreetMap</a> contributors'

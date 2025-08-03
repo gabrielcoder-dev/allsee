@@ -58,7 +58,7 @@ function MapController({
       if (totemMarker) {
         console.log('Encontrou marker para totem:', totemMarker);
         // Navegar para as coordenadas exatas do marker com zoom bem próximo
-        map.setView([totemMarker.lat, totemMarker.lng], 20, {
+        map.setView([totemMarker.lat, totemMarker.lng], 17, {
           animate: true,
           duration: 1.5
         });
@@ -70,7 +70,7 @@ function MapController({
 
     // Se não encontrou o marker ou não é totem específico, navegar para as coordenadas fornecidas
     console.log('Navegando para coordenadas:', coords);
-    map.setView([coords.lat, coords.lng], 14, {
+    map.setView([coords.lat, coords.lng], 16, {
       animate: true,
       duration: 1.5
     });
@@ -84,7 +84,7 @@ function MapController({
   // Garantir que o mapa sempre inicie em Primavera do Leste
   useEffect(() => {
     const timer = setTimeout(() => {
-      map.setView(PRIMAVERA_DO_LESTE_COORDS, 13);
+      map.setView(PRIMAVERA_DO_LESTE_COORDS, 16);
     }, 100);
     return () => clearTimeout(timer);
   }, [map]);
@@ -294,7 +294,7 @@ export default function SimpleMap({ anunciosFiltrados, onCityFound, userNicho, s
 
       <MapContainer
         center={PRIMAVERA_DO_LESTE_COORDS}
-        zoom={15}
+        zoom={16}
         style={{ width: '100%', height: '100%' }}
         whenReady={() => {}}
         zoomControl={true}
@@ -303,6 +303,10 @@ export default function SimpleMap({ anunciosFiltrados, onCityFound, userNicho, s
         boxZoom={true}
         keyboard={true}
         dragging={true}
+        maxBounds={undefined}
+        minZoom={1}
+        maxZoom={18}
+        worldCopyJump={true}
       >
         <MapController 
           onCityFound={onCityFound}
@@ -313,8 +317,8 @@ export default function SimpleMap({ anunciosFiltrados, onCityFound, userNicho, s
         <TileLayer
           attribution='&copy; <a href="https://osm.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
-          maxZoom={22}
-          minZoom={10}
+          maxZoom={18}
+          minZoom={1}
         />
 
         {markersToDisplay.map((marker) => {
