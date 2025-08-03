@@ -15,8 +15,8 @@ L.Icon.Default.mergeOptions({
   shadowUrl: require('leaflet/dist/images/marker-shadow.png'),
 })
 
-// Coordenadas de Primavera do Leste, MT - Centralizada para mostrar melhor os bairros
-const PRIMAVERA_DO_LESTE_COORDS: LatLngTuple = [-15.5586, -54.2811]
+// Coordenadas de Primavera do Leste, MT - Centralizada mais para a esquerda para mostrar os totens
+const PRIMAVERA_DO_LESTE_COORDS: LatLngTuple = [-15.5586, -54.2850]
 
 type MarkerType = {
   id: number;
@@ -58,23 +58,23 @@ function MapController({
       if (totemMarker) {
         console.log('✅ Totem encontrado no mapa:', totemMarker);
         
-        // Centralizar o totem com zoom mais próximo e animação suave
-        map.setView([totemMarker.lat, totemMarker.lng], 17, {
-          animate: true,
-          duration: 2.5
-        });
+                 // Centralizar o totem com zoom mais próximo e animação suave
+         map.setView([totemMarker.lat, totemMarker.lng], 15, {
+           animate: true,
+           duration: 2.5
+         });
         
         return;
       } else {
         console.log('❌ Totem não encontrado no mapa. ID buscado:', totemId);
         console.log('📍 Coordenadas disponíveis:', markers.map(m => ({ anuncio_id: m.anuncio_id, lat: m.lat, lng: m.lng })));
         
-        // Fallback: navegar para as coordenadas fornecidas mesmo sem marker
-        console.log('🗺️ Navegando para coordenadas fornecidas (fallback):', coords);
-        map.setView([coords.lat, coords.lng], 17, {
-          animate: true,
-          duration: 2.5
-        });
+                 // Fallback: navegar para as coordenadas fornecidas mesmo sem marker
+         console.log('🗺️ Navegando para coordenadas fornecidas (fallback):', coords);
+         map.setView([coords.lat, coords.lng], 15, {
+           animate: true,
+           duration: 2.5
+         });
       }
     } else {
       // Navegação para cidade (não totem específico)
@@ -92,20 +92,20 @@ function MapController({
       console.log('Há markers próximos?', hasNearbyMarkers);
 
               // Navegar se houver markers próximos
-      if (hasNearbyMarkers) {
-        console.log('Navegando para cidade:', coords);
-        map.setView([coords.lat, coords.lng], 16, {
-          animate: true,
-          duration: 1.5
-        });
-      } else {
-        // Se não há markers próximos, voltar para Primavera do Leste
-        console.log('🏠 Nenhum marker próximo, voltando para Primavera do Leste');
-        map.setView(PRIMAVERA_DO_LESTE_COORDS, 16, {
-          animate: true,
-          duration: 1.5
-        });
-      }
+             if (hasNearbyMarkers) {
+         console.log('Navegando para cidade:', coords);
+         map.setView([coords.lat, coords.lng], 14, {
+           animate: true,
+           duration: 1.5
+         });
+       } else {
+         // Se não há markers próximos, voltar para Primavera do Leste
+         console.log('🏠 Nenhum marker próximo, voltando para Primavera do Leste');
+         map.setView(PRIMAVERA_DO_LESTE_COORDS, 14, {
+           animate: true,
+           duration: 1.5
+         });
+       }
     }
   };
 
@@ -119,7 +119,7 @@ function MapController({
   // Garantir que o mapa sempre inicie em Primavera do Leste
   useEffect(() => {
     const timer = setTimeout(() => {
-      map.setView(PRIMAVERA_DO_LESTE_COORDS, 16);
+      map.setView(PRIMAVERA_DO_LESTE_COORDS, 14);
     }, 100);
     return () => clearTimeout(timer);
   }, [map]);
@@ -212,10 +212,10 @@ export default function Mapbox({ anunciosFiltrados, onCityFound, userNicho, isFu
       className={`${isFullscreen ? 'w-full' : 'hidden xl:flex w-[400px]'} flex-shrink-0 z-0 map-container`}
       style={{ height: `${mapHeight}px`, background: '#fff' }}
     >
-      <MapContainer
-        center={PRIMAVERA_DO_LESTE_COORDS}
-        zoom={16}
-        style={{ width: '100%', height: '100%' }}
+             <MapContainer
+         center={PRIMAVERA_DO_LESTE_COORDS}
+         zoom={14}
+         style={{ width: '100%', height: '100%' }}
         whenReady={() => {}}
         zoomControl={true}
         scrollWheelZoom={true}

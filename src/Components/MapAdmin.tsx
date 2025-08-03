@@ -134,11 +134,11 @@ const MapAdmin = () => {
   return (
     <div className="w-full h-full relative">
       <div className="absolute inset-0 z-0">
-        <MapWithRef
-          mapRef={mapRef}
-          center={[-15.5586, -54.2811]}
-          zoom={16}
-          style={{ width: '100%', height: '100%' }}
+                 <MapWithRef
+           mapRef={mapRef}
+           center={[-15.5586, -54.2850]}
+           zoom={14}
+           style={{ width: '100%', height: '100%' }}
           maxBounds={undefined}
           minZoom={1}
           maxZoom={18}

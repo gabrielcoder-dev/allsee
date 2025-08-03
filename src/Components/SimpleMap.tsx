@@ -16,8 +16,8 @@ L.Icon.Default.mergeOptions({
   shadowUrl: require('leaflet/dist/images/marker-shadow.png'),
 })
 
-// Coordenadas de Primavera do Leste, MT
-const PRIMAVERA_DO_LESTE_COORDS: LatLngTuple = [-15.5586, -54.2811]
+// Coordenadas de Primavera do Leste, MT - Centralizada mais para a esquerda para mostrar os totens
+const PRIMAVERA_DO_LESTE_COORDS: LatLngTuple = [-15.5586, -54.2850]
 
 type MarkerType = {
   id: number;
@@ -57,23 +57,23 @@ function MapController({
       const totemMarker = markers.find(marker => marker.id === totemId);
       if (totemMarker) {
         console.log('Encontrou marker para totem:', totemMarker);
-        // Navegar para as coordenadas exatas do marker com zoom bem próximo
-        map.setView([totemMarker.lat, totemMarker.lng], 17, {
-          animate: true,
-          duration: 1.5
-        });
+                 // Navegar para as coordenadas exatas do marker com zoom bem próximo
+         map.setView([totemMarker.lat, totemMarker.lng], 15, {
+           animate: true,
+           duration: 1.5
+         });
         return;
       } else {
         console.log('Não encontrou marker para totemId:', totemId);
       }
     }
 
-    // Se não encontrou o marker ou não é totem específico, navegar para as coordenadas fornecidas
-    console.log('Navegando para coordenadas:', coords);
-    map.setView([coords.lat, coords.lng], 16, {
-      animate: true,
-      duration: 1.5
-    });
+         // Se não encontrou o marker ou não é totem específico, navegar para as coordenadas fornecidas
+     console.log('Navegando para coordenadas:', coords);
+     map.setView([coords.lat, coords.lng], 14, {
+       animate: true,
+       duration: 1.5
+     });
   };
 
   // Expor a função globalmente
@@ -84,7 +84,7 @@ function MapController({
   // Garantir que o mapa sempre inicie em Primavera do Leste
   useEffect(() => {
     const timer = setTimeout(() => {
-      map.setView(PRIMAVERA_DO_LESTE_COORDS, 16);
+      map.setView(PRIMAVERA_DO_LESTE_COORDS, 14);
     }, 100);
     return () => clearTimeout(timer);
   }, [map]);
@@ -292,10 +292,10 @@ export default function SimpleMap({ anunciosFiltrados, onCityFound, userNicho, s
         </button>
       )}
 
-      <MapContainer
-        center={PRIMAVERA_DO_LESTE_COORDS}
-        zoom={16}
-        style={{ width: '100%', height: '100%' }}
+             <MapContainer
+         center={PRIMAVERA_DO_LESTE_COORDS}
+         zoom={14}
+         style={{ width: '100%', height: '100%' }}
         whenReady={() => {}}
         zoomControl={true}
         scrollWheelZoom={true}
