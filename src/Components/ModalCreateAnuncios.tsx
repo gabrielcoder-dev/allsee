@@ -227,6 +227,12 @@ export default function ModalCreateAnuncios({
       
       console.log('✅ URL pública gerada:', urlData.publicUrl);
       
+      // Validar se a URL está correta
+      if (!urlData.publicUrl || !urlData.publicUrl.startsWith('https://')) {
+        console.error('❌ URL inválida gerada:', urlData.publicUrl);
+        throw new Error('URL inválida gerada pelo Supabase');
+      }
+      
       // Testar se a URL é acessível
       try {
         const response = await fetch(urlData.publicUrl, { method: 'HEAD' });

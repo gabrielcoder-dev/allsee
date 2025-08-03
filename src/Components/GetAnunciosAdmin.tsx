@@ -67,21 +67,46 @@ export default function GetAnunciosAdmin({ selectedDuration = '2', onFetchAnunci
       .order('id', { ascending: false })
     if (!error && data) {
       console.log("Anúncios carregados do Supabase:", data);
-      // Verificar se todos os anúncios têm o campo address
-      data.forEach((anuncio, index) => {
-        console.log(`Anúncio ${index}:`, {
+      
+      // Verificar URLs das imagens
+      const anunciosComImagensVerificadas = data.map(anuncio => {
+        console.log(`🔍 Verificando anúncio ${anuncio.id}:`, {
           id: anuncio.id,
           name: anuncio.name,
+          image: anuncio.image,
           address: anuncio.address,
           type_screen: anuncio.type_screen,
           display: anuncio.display,
           views: anuncio.views,
-          price: anuncio.price,
-          hasAddress: 'address' in anuncio,
-          addressType: typeof anuncio.address
+          price: anuncio.price
         });
+        
+        if (anuncio.image) {
+          // Verificar se a URL é válida
+          if (!anuncio.image.startsWith('https://')) {
+            console.error(`❌ URL inválida para anúncio ${anuncio.id}:`, anuncio.image);
+          } else {
+            // Testar se a imagem carrega
+            fetch(anuncio.image, { method: 'HEAD' })
+              .then(response => {
+                if (response.ok) {
+                  console.log(`✅ Imagem ${anuncio.id} carrega corretamente`);
+                } else {
+                  console.error(`❌ Imagem ${anuncio.id} não carrega:`, response.status);
+                }
+              })
+              .catch(error => {
+                console.error(`❌ Erro ao carregar imagem ${anuncio.id}:`, error);
+              });
+          }
+        } else {
+          console.log(`⚠️ Anúncio ${anuncio.id} sem imagem`);
+        }
+        
+        return anuncio;
       });
-      setAnuncios(data)
+      
+      setAnuncios(anunciosComImagensVerificadas)
     } else {
       console.error("Erro ao carregar anúncios:", error);
     }
