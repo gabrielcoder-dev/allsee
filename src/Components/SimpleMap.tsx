@@ -16,8 +16,8 @@ L.Icon.Default.mergeOptions({
   shadowUrl: require('leaflet/dist/images/marker-shadow.png'),
 })
 
-// Coordenadas de Primavera do Leste, MT - Centralizada mais para a esquerda para mostrar os totens
-const PRIMAVERA_DO_LESTE_COORDS: LatLngTuple = [-15.5586, -54.2850]
+// Coordenadas de Primavera do Leste, MT - Centralizada ainda mais para a esquerda para mostrar todos os totens
+const PRIMAVERA_DO_LESTE_COORDS: LatLngTuple = [-15.5586, -54.2880]
 
 type MarkerType = {
   id: number;
