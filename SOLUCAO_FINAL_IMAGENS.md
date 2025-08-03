@@ -2,12 +2,15 @@
 
 ## ❌ Problema Identificado
 
-Os últimos 6 totens cadastrados não estão exibindo as imagens, mesmo que os nomes apareçam corretamente. Isso indica um problema com:
+Os últimos 6 totens cadastrados não estão exibindo as imagens, mesmo que os nomes apareçam corretamente. Isso pode ser causado por:
 
 1. **URLs inválidas** no banco de dados
 2. **Bucket de storage não configurado**
 3. **Políticas de segurança incorretas**
 4. **Problemas no upload de imagens**
+5. **Imagens muito grandes** (> 10MB ou > 4000px)
+6. **Imagens muito pequenas** (< 1KB ou < 100px)
+7. **Formato de imagem incompatível**
 
 ## ✅ Soluções Implementadas
 
@@ -56,6 +59,21 @@ CREATE POLICY "Imagens públicas para visualização" ON storage.objects
 FOR SELECT USING (bucket_id = 'anuncios');
 ```
 
+#### `check_image_sizes.sql`
+Execute este SQL para verificar problemas de tamanho:
+```sql
+-- Verificar anúncios com URLs de imagem
+SELECT 
+  id,
+  name,
+  image,
+  LENGTH(image) as tamanho_url
+FROM anuncios 
+WHERE image IS NOT NULL AND image != ''
+ORDER BY created_at DESC 
+LIMIT 10;
+```
+
 ### 2. **Melhorias no Código**
 
 #### `ModalCreateAnuncios.tsx`
@@ -73,6 +91,12 @@ FOR SELECT USING (bucket_id = 'anuncios');
 - ✅ **Componente de teste** para verificar URLs
 - ✅ **Função de correção** automática
 - ✅ **Interface visual** para debug
+
+#### `ImageSizeTester.tsx`
+- ✅ **Análise de tamanho** de arquivo
+- ✅ **Verificação de dimensões** da imagem
+- ✅ **Teste de upload** com feedback
+- ✅ **Recomendações** de otimização
 
 ### 3. **Verificações Automáticas**
 
@@ -140,6 +164,9 @@ O código agora mostra:
 2. **URLs inválidas** → Execute `fix_image_urls.sql`
 3. **Políticas incorretas** → Verifique Storage > Policies
 4. **Problemas de CORS** → Configure bucket público
+5. **Imagem muito grande** → Redimensione para < 2000px
+6. **Imagem muito pequena** → Use imagem com > 100px
+7. **Formato incompatível** → Use JPG, PNG ou WebP
 
 ## 🚀 Resultado Esperado
 
@@ -155,7 +182,9 @@ Após seguir todos os passos:
 - `check_image_urls.sql` - Diagnóstico
 - `fix_image_urls.sql` - Correção
 - `setup_storage_bucket.sql` - Configuração
+- `check_image_sizes.sql` - Verificação de tamanho
 - `ImageUrlTester.tsx` - Componente de teste
+- `ImageSizeTester.tsx` - Testador de tamanho
 - `ModalCreateAnuncios.tsx` - Upload melhorado
 - `MiniAnuncioCard.tsx` - Tratamento de erro
 - `GetAnunciosAdmin.tsx` - Verificação automática 

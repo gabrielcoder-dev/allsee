@@ -173,9 +173,43 @@ export default function ModalCreateAnuncios({
       throw new Error('Arquivo deve ser uma imagem válida');
     }
     
-    // Verificar tamanho do arquivo (máximo 5MB)
+    // Verificar tamanho do arquivo (máximo 10MB para permitir imagens maiores)
+    if (file.size > 10 * 1024 * 1024) {
+      throw new Error('Arquivo muito grande. Máximo 10MB permitido.');
+    }
+    
+    // Verificar tamanho mínimo (evitar arquivos muito pequenos)
+    if (file.size < 1024) {
+      throw new Error('Arquivo muito pequeno. Tamanho mínimo 1KB.');
+    }
+    
+    console.log('📏 Tamanho do arquivo:', (file.size / 1024 / 1024).toFixed(2), 'MB');
+    
+    // Verificar dimensões da imagem se for muito grande
     if (file.size > 5 * 1024 * 1024) {
-      throw new Error('Arquivo muito grande. Máximo 5MB permitido.');
+      console.log('⚠️ Imagem grande detectada, verificando dimensões...');
+      try {
+        const img = new Image();
+        const objectUrl = URL.createObjectURL(file);
+        
+        await new Promise((resolve, reject) => {
+          img.onload = () => {
+            console.log('📐 Dimensões da imagem:', img.width, 'x', img.height);
+            if (img.width > 4000 || img.height > 4000) {
+              console.warn('⚠️ Imagem muito grande, pode causar problemas de carregamento');
+            }
+            URL.revokeObjectURL(objectUrl);
+            resolve(null);
+          };
+          img.onerror = () => {
+            URL.revokeObjectURL(objectUrl);
+            reject(new Error('Não foi possível verificar as dimensões da imagem'));
+          };
+          img.src = objectUrl;
+        });
+      } catch (error) {
+        console.warn('⚠️ Erro ao verificar dimensões:', error);
+      }
     }
     
     const fileExt = file.name.split(".").pop();
