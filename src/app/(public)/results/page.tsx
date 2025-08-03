@@ -234,16 +234,18 @@ const Page = () => {
         {/* Mobile - Lista ou Mapa */}
         <div className="xl:hidden w-full h-full">
           {!isMobileMapView ? (
-            <GetAnunciosResults 
-              onAdicionarProduto={handleAdicionarProduto} 
-              selectedDuration={selectedDurationGlobal} 
-              tipoMidia={tipoMidia} 
-              bairros={bairros}
-              orderBy={orderBy}
-              onChangeAnunciosFiltrados={setAnunciosFiltrados}
-              userNicho={userNicho}
-              onSpecificTotemFound={handleSpecificTotemFound}
-            />
+            <div className="w-full h-full overflow-y-auto">
+              <GetAnunciosResults 
+                onAdicionarProduto={handleAdicionarProduto} 
+                selectedDuration={selectedDurationGlobal} 
+                tipoMidia={tipoMidia} 
+                bairros={bairros}
+                orderBy={orderBy}
+                onChangeAnunciosFiltrados={setAnunciosFiltrados}
+                userNicho={userNicho}
+                onSpecificTotemFound={handleSpecificTotemFound}
+              />
+            </div>
           ) : (
             <div className="w-full h-full">
               <Mapbox 
