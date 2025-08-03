@@ -16,7 +16,7 @@ L.Icon.Default.mergeOptions({
 })
 
 // Coordenadas de Primavera do Leste, MT - Centralizada ainda mais para a esquerda para mostrar todos os totens
-const PRIMAVERA_DO_LESTE_COORDS: LatLngTuple = [-15.5586, -54.2880]
+const PRIMAVERA_DO_LESTE_COORDS: LatLngTuple = [-15.5586, -54.2910]
 
 type MarkerType = {
   id: number;
