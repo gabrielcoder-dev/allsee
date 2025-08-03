@@ -205,19 +205,19 @@ const Page = () => {
 
       {/* Área principal com scroll controlado */}
       <div className="flex flex-1 min-h-0 overflow-hidden xl:pl-16 justify-center xl:justify-between relative">
-        {/* Conteúdo principal - Desktop */}
-        <div className={`flex flex-1 ${isMapFullscreen ? 'hidden' : 'block'} hidden xl:block`}>
-          <GetAnunciosResults 
-            onAdicionarProduto={handleAdicionarProduto} 
-            selectedDuration={selectedDurationGlobal} 
-            tipoMidia={tipoMidia} 
-            bairros={bairros}
-            orderBy={orderBy}
-            onChangeAnunciosFiltrados={setAnunciosFiltrados}
-            userNicho={userNicho}
-            onSpecificTotemFound={handleSpecificTotemFound}
-          />
-        </div>
+                 {/* Conteúdo principal - Desktop */}
+         <div className={`flex flex-1 ${isMapFullscreen ? 'hidden' : 'block'} hidden xl:block overflow-y-auto`}>
+           <GetAnunciosResults 
+             onAdicionarProduto={handleAdicionarProduto} 
+             selectedDuration={selectedDurationGlobal} 
+             tipoMidia={tipoMidia} 
+             bairros={bairros}
+             orderBy={orderBy}
+             onChangeAnunciosFiltrados={setAnunciosFiltrados}
+             userNicho={userNicho}
+             onSpecificTotemFound={handleSpecificTotemFound}
+           />
+         </div>
 
         {/* Mapa - Desktop */}
         <div className={`${isMapFullscreen ? 'w-full' : 'hidden xl:block w-[400px]'}`}>
