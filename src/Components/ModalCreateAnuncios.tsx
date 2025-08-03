@@ -10,7 +10,7 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
 
-type NichoOption = 'restaurante' | 'academia' | 'mercado' | 'padaria' | 'banco' | 'outro'
+type NichoOption = 'restaurante' | 'academia' | 'mercado' | 'padaria' | 'banco' | 'outro' | string
 
 export default function ModalCreateAnuncios({
   open,
@@ -41,6 +41,9 @@ export default function ModalCreateAnuncios({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [newSegmento, setNewSegmento] = useState("");
+  const [customNichos, setCustomNichos] = useState<string[]>([]);
+  const [isAddingSegmento, setIsAddingSegmento] = useState(false);
 
   const nichoOptions = [
     { value: 'restaurante' as NichoOption, label: 'Restaurante' },
@@ -105,18 +108,109 @@ export default function ModalCreateAnuncios({
     }
   }, [type_screen, anuncio]);
 
+  // Carregar nichos customizados do banco de dados
+  useEffect(() => {
+    async function loadCustomNichos() {
+      try {
+        const { data, error } = await supabase
+          .from('nichos_customizados')
+          .select('nome')
+          .order('nome');
+        
+        if (error) {
+          console.error('Erro ao carregar nichos customizados:', error);
+          return;
+        }
+        
+        if (data) {
+          setCustomNichos(data.map(item => item.nome));
+        }
+      } catch (error) {
+        console.error('Erro ao carregar nichos customizados:', error);
+      }
+    }
+    
+    loadCustomNichos();
+  }, []);
+
   if (!open) return null;
 
+  // Função para adicionar novo segmento
+  async function handleAddSegmento() {
+    if (!newSegmento.trim()) {
+      setError('Digite um nome para o segmento');
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('nichos_customizados')
+        .insert([{ nome: newSegmento.trim() }]);
+      
+      if (error) {
+        console.error('Erro ao adicionar segmento:', error);
+        setError('Erro ao adicionar segmento. Tente novamente.');
+        return;
+      }
+
+      // Adicionar à lista local
+      setCustomNichos(prev => [...prev, newSegmento.trim()]);
+      setNewSegmento('');
+      setIsAddingSegmento(false);
+      setError(null);
+      toast.success('Segmento adicionado com sucesso!');
+    } catch (error) {
+      console.error('Erro ao adicionar segmento:', error);
+      setError('Erro ao adicionar segmento. Tente novamente.');
+    }
+  }
+
   async function handleImageUpload(file: File) {
+    console.log('Iniciando upload de imagem:', file.name, file.size, file.type);
+    
+    // Verificar se o arquivo é uma imagem válida
+    if (!file.type.startsWith('image/')) {
+      throw new Error('Arquivo deve ser uma imagem válida');
+    }
+    
+    // Verificar tamanho do arquivo (máximo 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      throw new Error('Arquivo muito grande. Máximo 5MB permitido.');
+    }
+    
     const fileExt = file.name.split(".").pop();
     const fileName = `${Date.now()}.${fileExt}`;
+    console.log('Nome do arquivo gerado:', fileName);
+    
+    // Verificar se o bucket existe
+    const { data: buckets, error: bucketsError } = await supabase.storage.listBuckets();
+    if (bucketsError) {
+      console.error('Erro ao listar buckets:', bucketsError);
+      throw new Error('Erro ao acessar storage');
+    }
+    
+    const anunciosBucket = buckets?.find(bucket => bucket.name === 'anuncios');
+    if (!anunciosBucket) {
+      console.error('Bucket "anuncios" não encontrado');
+      throw new Error('Bucket de storage não configurado');
+    }
+    
     const { data, error } = await supabase.storage
       .from("anuncios")
       .upload(fileName, file);
-    if (error) throw error;
+    
+    if (error) {
+      console.error('Erro no upload:', error);
+      throw error;
+    }
+    
+    console.log('Upload bem-sucedido:', data);
+    
     const { data: urlData } = supabase.storage
       .from("anuncios")
       .getPublicUrl(fileName);
+    
+    console.log('URL pública gerada:', urlData.publicUrl);
     return urlData.publicUrl;
   }
 
@@ -141,8 +235,15 @@ export default function ModalCreateAnuncios({
       }
 
       if (image && !imageUrl) {
-        imgUrl = await handleImageUpload(image);
-        setImageUrl(imgUrl);
+        try {
+          imgUrl = await handleImageUpload(image);
+          setImageUrl(imgUrl);
+          console.log('Imagem salva com sucesso:', imgUrl);
+        } catch (uploadError) {
+          console.error('Erro no upload da imagem:', uploadError);
+          setError('Erro ao fazer upload da imagem. Verifique se o arquivo é válido.');
+          return;
+        }
       }
 
       if (anuncio && anuncio.id) {
@@ -317,6 +418,7 @@ export default function ModalCreateAnuncios({
           {/* Nicho */}
           <span className="text-xs font-semibold text-gray-700 pl-1 mt-2">Segmento</span>
           <div className="flex flex-col gap-1">
+            {/* Nichos padrão */}
             {nichoOptions.map((option) => (
               <label key={option.value} className="flex items-center text-sm sm:text-base">
                 <input
@@ -329,6 +431,65 @@ export default function ModalCreateAnuncios({
                 {option.label}
               </label>
             ))}
+            
+            {/* Nichos customizados */}
+            {customNichos.map((nicho) => (
+              <label key={nicho} className="flex items-center text-sm sm:text-base">
+                <input
+                  type="radio"
+                  value={nicho}
+                  checked={selectedNicho === nicho}
+                  onChange={() => setSelectedNicho(nicho as NichoOption)}
+                  className="mr-2"
+                />
+                {nicho}
+              </label>
+            ))}
+            
+                         {/* Input inline para adicionar novo segmento */}
+             {isAddingSegmento ? (
+               <div className="flex gap-2 mt-2">
+                 <input
+                   type="text"
+                   placeholder="Digite o nome do segmento"
+                   value={newSegmento}
+                   onChange={(e) => setNewSegmento(e.target.value)}
+                   className="flex-1 border rounded-lg px-2 py-1 text-sm"
+                   onKeyPress={(e) => {
+                     if (e.key === 'Enter') {
+                       handleAddSegmento();
+                     }
+                   }}
+                   autoFocus
+                 />
+                 <button
+                   type="button"
+                   onClick={handleAddSegmento}
+                   className="bg-orange-500 hover:bg-orange-600 text-white px-3 py-1 rounded-lg text-sm font-medium"
+                 >
+                   ✓
+                 </button>
+                 <button
+                   type="button"
+                   onClick={() => {
+                     setIsAddingSegmento(false);
+                     setNewSegmento('');
+                     setError(null);
+                   }}
+                   className="bg-gray-300 hover:bg-gray-400 text-gray-700 px-3 py-1 rounded-lg text-sm font-medium"
+                 >
+                   ✕
+                 </button>
+               </div>
+             ) : (
+               <button
+                 type="button"
+                 onClick={() => setIsAddingSegmento(true)}
+                 className="text-orange-500 text-sm font-medium hover:text-orange-600 mt-2"
+               >
+                 + Adicionar segmento
+               </button>
+             )}
           </div>
 
           <span className="text-xs font-semibold text-gray-700 pl-1">Duração</span>
@@ -365,9 +526,11 @@ export default function ModalCreateAnuncios({
           >
             {isSubmitting ? "Salvando..." : anuncio ? "Atualizar" : "Cadastrar"}
           </button>
-          {error && <div className="text-red-500 text-xs sm:text-sm">{error}</div>}
-        </form>
-      </div>
-    </div>
-  );
-}
+                     {error && <div className="text-red-500 text-xs sm:text-sm">{error}</div>}
+         </form>
+       </div>
+       
+       
+     </div>
+   );
+ }

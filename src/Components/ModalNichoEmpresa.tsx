@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { createClient } from '@supabase/supabase-js'
 import { toast } from "sonner"
 
@@ -9,7 +9,7 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 )
 
-type NichoOption = 'restaurante' | 'academia' | 'mercado' | 'padaria' | 'banco' | 'outro'
+type NichoOption = 'restaurante' | 'academia' | 'mercado' | 'padaria' | 'banco' | 'outro' | string
 
 export default function ModalNichoEmpresa({
   open,
@@ -22,6 +22,7 @@ export default function ModalNichoEmpresa({
 }) {
   const [selectedNicho, setSelectedNicho] = useState<NichoOption | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [customNichos, setCustomNichos] = useState<string[]>([]);
 
   const nichoOptions = [
     { value: 'restaurante' as NichoOption, label: 'Restaurante' },
@@ -31,6 +32,31 @@ export default function ModalNichoEmpresa({
     { value: 'banco' as NichoOption, label: 'Banco' },
     { value: 'outro' as NichoOption, label: 'Outro' }
   ];
+
+  // Carregar nichos customizados
+  useEffect(() => {
+    async function loadCustomNichos() {
+      try {
+        const { data, error } = await supabase
+          .from('nichos_customizados')
+          .select('nome')
+          .order('nome');
+        
+        if (error) {
+          console.error('Erro ao carregar nichos customizados:', error);
+          return;
+        }
+        
+        if (data) {
+          setCustomNichos(data.map(item => item.nome));
+        }
+      } catch (error) {
+        console.error('Erro ao carregar nichos customizados:', error);
+      }
+    }
+    
+    loadCustomNichos();
+  }, []);
 
   const handleNichoSelect = (nicho: NichoOption) => {
     setSelectedNicho(nicho)
@@ -107,6 +133,7 @@ export default function ModalNichoEmpresa({
         </h2>
         
         <div className="space-y-3 mb-6">
+          {/* Nichos padrão */}
           {nichoOptions.map((option) => (
             <button
               key={option.value}
@@ -118,6 +145,21 @@ export default function ModalNichoEmpresa({
               }`}
             >
               {option.label}
+            </button>
+          ))}
+          
+          {/* Nichos customizados */}
+          {customNichos.map((nicho) => (
+            <button
+              key={nicho}
+              onClick={() => handleNichoSelect(nicho)}
+              className={`w-full p-4 text-left rounded-lg border-2 transition-all ${
+                selectedNicho === nicho
+                  ? 'border-orange-500 bg-orange-50 text-orange-700'
+                  : 'border-gray-200 hover:border-gray-300'
+              }`}
+            >
+              {nicho}
             </button>
           ))}
         </div>

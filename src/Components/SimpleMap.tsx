@@ -294,7 +294,7 @@ export default function SimpleMap({ anunciosFiltrados, onCityFound, userNicho, s
 
       <MapContainer
         center={PRIMAVERA_DO_LESTE_COORDS}
-        zoom={13}
+        zoom={15}
         style={{ width: '100%', height: '100%' }}
         whenReady={() => {}}
         zoomControl={true}

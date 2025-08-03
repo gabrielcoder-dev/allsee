@@ -76,7 +76,15 @@ export default function MiniAnuncioCard({ anuncio, actionButton, hideAddButton }
           src={anuncio.image}
           alt={anuncio.name || anuncio.nome}
           className="object-cover w-full h-12"
+          onError={(e) => {
+            console.error('Erro ao carregar imagem:', anuncio.image);
+            e.currentTarget.style.display = 'none';
+            e.currentTarget.nextElementSibling?.classList.remove('hidden');
+          }}
         />
+        <div className="absolute inset-0 flex items-center justify-center bg-gray-200 text-gray-500 text-xs">
+          Sem imagem
+        </div>
       </div>
       <div className="flex gap-2 mb-1">
         {anuncio.type_screen?.toLowerCase() === 'impresso' ? (

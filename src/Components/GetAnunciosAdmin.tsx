@@ -164,12 +164,20 @@ export default function GetAnunciosAdmin({ selectedDuration = '2', onFetchAnunci
                   hover:shadow-xl
                 "
               >
-                <div className="rounded-lg overflow-hidden h-28 md:h-32 flex items-center justify-center bg-gray-100 mb-2">
+                <div className="rounded-lg overflow-hidden h-28 md:h-32 flex items-center justify-center bg-gray-100 mb-2 relative">
                   <img
                     src={anuncio.image}
                     alt={anuncio.name}
                     className="object-cover w-full h-full"
+                    onError={(e) => {
+                      console.error('Erro ao carregar imagem:', anuncio.image);
+                      e.currentTarget.style.display = 'none';
+                      e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                    }}
                   />
+                  <div className="absolute inset-0 flex items-center justify-center bg-gray-200 text-gray-500 text-sm">
+                    Sem imagem
+                  </div>
                 </div>
                 <div className="flex gap-2 mb-2">
                   {anuncio.type_screen?.toLowerCase() === 'impresso' ? (

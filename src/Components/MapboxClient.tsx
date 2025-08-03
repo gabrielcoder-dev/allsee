@@ -15,7 +15,7 @@ L.Icon.Default.mergeOptions({
   shadowUrl: require('leaflet/dist/images/marker-shadow.png'),
 })
 
-// Coordenadas de Primavera do Leste, MT
+// Coordenadas de Primavera do Leste, MT - Centralizada para mostrar melhor os bairros
 const PRIMAVERA_DO_LESTE_COORDS: LatLngTuple = [-15.5586, -54.2811]
 
 type MarkerType = {
@@ -91,17 +91,17 @@ function MapController({
 
       console.log('Há markers próximos?', hasNearbyMarkers);
 
-      // Navegar se houver markers próximos
+              // Navegar se houver markers próximos
       if (hasNearbyMarkers) {
         console.log('Navegando para cidade:', coords);
-        map.setView([coords.lat, coords.lng], 12, {
+        map.setView([coords.lat, coords.lng], 15, {
           animate: true,
           duration: 1.5
         });
       } else {
         // Se não há markers próximos, voltar para Primavera do Leste
         console.log('🏠 Nenhum marker próximo, voltando para Primavera do Leste');
-        map.setView(PRIMAVERA_DO_LESTE_COORDS, 12, {
+        map.setView(PRIMAVERA_DO_LESTE_COORDS, 15, {
           animate: true,
           duration: 1.5
         });
@@ -119,7 +119,7 @@ function MapController({
   // Garantir que o mapa sempre inicie em Primavera do Leste
   useEffect(() => {
     const timer = setTimeout(() => {
-      map.setView(PRIMAVERA_DO_LESTE_COORDS, 12);
+      map.setView(PRIMAVERA_DO_LESTE_COORDS, 15);
     }, 100);
     return () => clearTimeout(timer);
   }, [map]);
@@ -214,7 +214,7 @@ export default function Mapbox({ anunciosFiltrados, onCityFound, userNicho, isFu
     >
       <MapContainer
         center={PRIMAVERA_DO_LESTE_COORDS}
-        zoom={13}
+        zoom={15}
         style={{ width: '100%', height: '100%' }}
         whenReady={() => {}}
         zoomControl={true}

@@ -136,8 +136,8 @@ const MapAdmin = () => {
       <div className="absolute inset-0 z-0">
         <MapWithRef
           mapRef={mapRef}
-          center={[-15.5556, -54.2811]}
-          zoom={13}
+          center={[-15.5586, -54.2811]}
+          zoom={15}
           style={{ width: '100%', height: '100%' }}
         >
           <TileLayer
