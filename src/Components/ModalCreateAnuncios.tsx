@@ -168,48 +168,14 @@ export default function ModalCreateAnuncios({
   async function handleImageUpload(file: File) {
     console.log('🚀 Iniciando upload de imagem:', file.name, file.size, file.type);
     
-    // Verificar se o arquivo é uma imagem válida
+    // Verificação básica de tipo
     if (!file.type.startsWith('image/')) {
       throw new Error('Arquivo deve ser uma imagem válida');
     }
     
-    // Verificar tamanho do arquivo (máximo 10MB para permitir imagens maiores)
-    if (file.size > 10 * 1024 * 1024) {
-      throw new Error('Arquivo muito grande. Máximo 10MB permitido.');
-    }
-    
-    // Verificar tamanho mínimo (evitar arquivos muito pequenos)
-    if (file.size < 1024) {
-      throw new Error('Arquivo muito pequeno. Tamanho mínimo 1KB.');
-    }
-    
-    console.log('📏 Tamanho do arquivo:', (file.size / 1024 / 1024).toFixed(2), 'MB');
-    
-    // Verificar dimensões da imagem se for muito grande
+    // Verificação básica de tamanho (máximo 5MB)
     if (file.size > 5 * 1024 * 1024) {
-      console.log('⚠️ Imagem grande detectada, verificando dimensões...');
-      try {
-        const img = new Image();
-        const objectUrl = URL.createObjectURL(file);
-        
-        await new Promise((resolve, reject) => {
-          img.onload = () => {
-            console.log('📐 Dimensões da imagem:', img.width, 'x', img.height);
-            if (img.width > 4000 || img.height > 4000) {
-              console.warn('⚠️ Imagem muito grande, pode causar problemas de carregamento');
-            }
-            URL.revokeObjectURL(objectUrl);
-            resolve(null);
-          };
-          img.onerror = () => {
-            URL.revokeObjectURL(objectUrl);
-            reject(new Error('Não foi possível verificar as dimensões da imagem'));
-          };
-          img.src = objectUrl;
-        });
-      } catch (error) {
-        console.warn('⚠️ Erro ao verificar dimensões:', error);
-      }
+      throw new Error('Arquivo muito grande. Máximo 5MB permitido.');
     }
     
     const fileExt = file.name.split(".").pop();
@@ -217,26 +183,6 @@ export default function ModalCreateAnuncios({
     console.log('📁 Nome do arquivo gerado:', fileName);
     
     try {
-      // Verificar se o bucket existe
-      console.log('🔍 Verificando buckets disponíveis...');
-      const { data: buckets, error: bucketsError } = await supabase.storage.listBuckets();
-      
-      if (bucketsError) {
-        console.error('❌ Erro ao listar buckets:', bucketsError);
-        throw new Error('Erro ao acessar storage');
-      }
-      
-      console.log('📦 Buckets encontrados:', buckets);
-      
-      const anunciosBucket = buckets?.find(bucket => bucket.name === 'anuncios');
-      if (!anunciosBucket) {
-        console.error('❌ Bucket "anuncios" não encontrado');
-        console.log('📋 Buckets disponíveis:', buckets?.map(b => b.name));
-        throw new Error('Bucket de storage não configurado. Execute o SQL de configuração.');
-      }
-      
-      console.log('✅ Bucket "anuncios" encontrado:', anunciosBucket);
-      
       // Fazer upload da imagem
       console.log('📤 Fazendo upload...');
       const { data, error } = await supabase.storage
@@ -260,23 +206,6 @@ export default function ModalCreateAnuncios({
         .getPublicUrl(fileName);
       
       console.log('✅ URL pública gerada:', urlData.publicUrl);
-      
-      // Validar se a URL está correta
-      if (!urlData.publicUrl || !urlData.publicUrl.startsWith('https://')) {
-        console.error('❌ URL inválida gerada:', urlData.publicUrl);
-        throw new Error('URL inválida gerada pelo Supabase');
-      }
-      
-      // Testar se a URL é acessível
-      try {
-        const response = await fetch(urlData.publicUrl, { method: 'HEAD' });
-        console.log('🌐 Teste de acesso à URL:', response.status, response.ok);
-        if (!response.ok) {
-          console.warn('⚠️ URL pode não estar acessível publicamente');
-        }
-      } catch (fetchError) {
-        console.warn('⚠️ Não foi possível testar a URL:', fetchError);
-      }
       
       return urlData.publicUrl;
     } catch (error) {
