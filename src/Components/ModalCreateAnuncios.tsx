@@ -234,23 +234,28 @@ export default function ModalCreateAnuncios({
         throw new Error("Usuário não autenticado.");
       }
 
-      if (image && !imageUrl) {
-        try {
-          imgUrl = await handleImageUpload(image);
-          setImageUrl(imgUrl);
-          console.log('Imagem salva com sucesso:', imgUrl);
-        } catch (uploadError) {
-          console.error('Erro no upload da imagem:', uploadError);
-          setError('Erro ao fazer upload da imagem. Verifique se o arquivo é válido.');
-          return;
-        }
-      }
+             if (image && !imageUrl) {
+         try {
+           imgUrl = await handleImageUpload(image);
+           setImageUrl(imgUrl);
+           console.log('✅ Imagem salva com sucesso:', imgUrl);
+         } catch (uploadError) {
+           console.error('❌ Erro no upload da imagem:', uploadError);
+           setError('Erro ao fazer upload da imagem. Verifique se o arquivo é válido.');
+           return;
+         }
+       }
+
+       // Garantir que a URL da imagem seja usada
+       if (imgUrl) {
+         console.log('🔗 Usando URL da imagem:', imgUrl);
+       }
 
       if (anuncio && anuncio.id) {
         // UPDATE
         const anuncioData = {
           name,
-          image: imageUrl,
+          image: imgUrl || imageUrl, // Usar imgUrl se disponível, senão imageUrl
           address,
           screens: Number(screens),
           display: type_screen === 'impresso' ? 'fixo' : Number(display),
@@ -279,7 +284,7 @@ export default function ModalCreateAnuncios({
         // INSERT
         const anuncioData = {
           name,
-          image: imageUrl,
+          image: imgUrl || imageUrl, // Usar imgUrl se disponível, senão imageUrl
           address,
           screens: Number(screens),
           display: type_screen === 'impresso' ? 'fixo' : Number(display),
