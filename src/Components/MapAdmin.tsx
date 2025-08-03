@@ -134,11 +134,18 @@ const MapAdmin = () => {
   return (
     <div className="w-full h-full relative">
       <div className="absolute inset-0 z-0">
-                 <MapWithRef
-           mapRef={mapRef}
-           center={[-15.5586, -54.2940]}
-           zoom={14}
-           style={{ width: '100%', height: '100%' }}
+                         <MapWithRef
+          mapRef={mapRef}
+          center={[-15.5586, -54.2940]}
+          zoom={14}
+          style={{ width: '100%', height: '100%' }}
+          whenReady={() => {}}
+          zoomControl={true}
+          scrollWheelZoom={true}
+          doubleClickZoom={true}
+          boxZoom={true}
+          keyboard={true}
+          dragging={true}
           maxBounds={undefined}
           minZoom={1}
           maxZoom={18}
@@ -146,7 +153,9 @@ const MapAdmin = () => {
         >
           <TileLayer
             attribution='&copy; <a href="https://osm.org/copyright">OpenStreetMap</a> contributors'
-            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
+            maxZoom={18}
+            minZoom={1}
           />
           <MapClickHandler onMapClick={handleMapClick} />
           {/* Renderizar markers */}
