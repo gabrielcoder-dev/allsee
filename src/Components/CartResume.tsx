@@ -331,22 +331,22 @@ export default function CartResume({ onCartArtSelected, onCampaignNameChange, ar
   };
 
   return (
-    <div className="w-full h-full px-4 md:px-12 py-6 flex flex-col gap-4">
+    <div className="w-full h-full px-2 sm:px-4 md:px-12 py-4 lg:py-6 flex flex-col gap-4">
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-2xl font-bold">Plano de Mídia</h2>
+        <h2 className="text-xl lg:text-2xl font-bold">Plano de Mídia</h2>
         <button
           onClick={() => {
             localStorage.removeItem("cart");
             localStorage.removeItem("formData");
             window.location.reload();
           }}
-          className="text-sm text-red-500 underline px-4 py-2 rounded-md cursor-pointer disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed"
+          className="text-xs lg:text-sm text-red-500 underline px-2 lg:px-4 py-2 rounded-md cursor-pointer disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed"
           disabled={produtos.length === 0}
         >
           Limpar carrinho
         </button>
       </div>
-      <div className="flex flex-col lg:flex-row gap-8 flex-1 min-h-0">
+      <div className="flex flex-col lg:flex-row gap-4 lg:gap-8 flex-1 min-h-0">
         <div className="w-full lg:w-1/2 overflow-y-auto">
           {produtos.length === 0 ? (
             <p>Nenhum produto adicionado.</p>
@@ -423,14 +423,14 @@ export default function CartResume({ onCartArtSelected, onCampaignNameChange, ar
 
         {/* Painel lateral com resumo do plano */}
         {produtos.length > 0 && (
-          <div className="w-full lg:w-1/2 bg-white rounded-lg shadow p-6 flex flex-col gap-6 border border-neutral-200 overflow-y-auto">
+          <div className="w-full lg:w-1/2 bg-white rounded-lg shadow p-4 lg:p-6 flex flex-col gap-4 lg:gap-6 border border-neutral-200 overflow-y-auto">
             {/* Input do nome da campanha */}
             <div className="flex flex-col gap-1 mb-2">
               <label htmlFor="campaign-name" className="block text-sm font-bold mb-1">Nome da campanha</label>
               <input
                 id="campaign-name"
                 type="text"
-                className={`w-80 border text-sm rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500`}
+                className={`w-full lg:w-80 border text-sm rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500`}
                 placeholder="Digite o nome da campanha"
                 value={campaignName}
                 onChange={e => handleCampaignNameChange(e.target.value)}
@@ -440,11 +440,11 @@ export default function CartResume({ onCartArtSelected, onCampaignNameChange, ar
               )}
             </div>
             {/* Bloco de duração como select global e início */}
-            <div className="flex gap-4 mb-2 items-end">
+            <div className="flex flex-col sm:flex-row gap-4 mb-2 items-start sm:items-end">
               <div className="flex flex-col gap-1">
                 <label className="block text-xs text-gray-500 font-bold mb-1">Duração</label>
                 <Select value={duration} onValueChange={handleDurationChange}>
-                  <SelectTrigger className="w-32 bg-gray-50 rounded-lg px-3 py-2">
+                  <SelectTrigger className="w-full sm:w-32 bg-gray-50 rounded-lg px-3 py-2">
                     <SelectValue placeholder="duração" />
                   </SelectTrigger>
                   <SelectContent>
@@ -462,7 +462,7 @@ export default function CartResume({ onCartArtSelected, onCampaignNameChange, ar
                   <PopoverTrigger asChild>
                     <Button
                       variant="outline"
-                      className="bg-gray-50 rounded-lg px-3 py-2 flex items-center gap-2"
+                      className="w-full sm:w-auto bg-gray-50 rounded-lg px-3 py-2 flex items-center gap-2"
                     >
                       <CalendarIcon className="w-4 h-4 text-orange-500" />
                       <span>
@@ -569,7 +569,7 @@ export default function CartResume({ onCartArtSelected, onCampaignNameChange, ar
               <span className="block text-lg font-bold mb-3">
                 Carregar arte de exibição
               </span>
-              <div className="flex items-center gap-4 relative">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 relative">
                 {!previewUrl ? (
                   <>
                     <input
@@ -581,7 +581,7 @@ export default function CartResume({ onCartArtSelected, onCampaignNameChange, ar
                     />
                     <label
                       htmlFor="upload-art"
-                      className={`cursor-pointer border px-4 py-2 rounded transition hover:bg-gray-50`}
+                      className={`w-full sm:w-auto cursor-pointer border px-4 py-2 rounded transition hover:bg-gray-50 text-center`}
                     >
                       Selecionar arte
                     </label>
@@ -590,10 +590,10 @@ export default function CartResume({ onCartArtSelected, onCampaignNameChange, ar
                     )}
                   </>
                 ) : (
-                  <div className="relative flex justify-center items-center gap-4">
+                  <div className="relative flex flex-col sm:flex-row justify-center items-center gap-4 w-full">
                     <button
                       onClick={handleRemoveImage}
-                      className="absolute -top-3 -right-3 w-6 h-6 flex  items-center justify-center  border border-gray-300 rounded-full bg-white text-xl font-bold cursor-pointer z-10"
+                      className="absolute -top-3 -right-3 w-6 h-6 flex items-center justify-center border border-gray-300 rounded-full bg-white text-xl font-bold cursor-pointer z-10"
                       aria-label="Remover arte"
                     >
                       <X className="w-4" />
