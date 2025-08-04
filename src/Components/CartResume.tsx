@@ -347,7 +347,7 @@ export default function CartResume({ onCartArtSelected, onCampaignNameChange, ar
         </button>
       </div>
       <div className="flex flex-col lg:flex-row gap-4 lg:gap-8 flex-1 min-h-0">
-        <div className="w-full lg:w-1/2 overflow-y-auto">
+        <div className="w-full lg:w-1/2 lg:overflow-y-auto">
           {produtos.length === 0 ? (
             <p>Nenhum produto adicionado.</p>
           ) : (
@@ -423,7 +423,7 @@ export default function CartResume({ onCartArtSelected, onCampaignNameChange, ar
 
         {/* Painel lateral com resumo do plano */}
         {produtos.length > 0 && (
-          <div className="w-full lg:w-1/2 bg-white rounded-lg shadow p-4 lg:p-6 flex flex-col gap-4 lg:gap-6 border border-neutral-200 overflow-y-auto">
+          <div className="w-full lg:w-1/2 bg-white rounded-lg shadow p-4 lg:p-6 flex flex-col gap-4 lg:gap-6 border border-neutral-200 lg:overflow-y-auto">
             {/* Input do nome da campanha */}
             <div className="flex flex-col gap-1 mb-2">
               <label htmlFor="campaign-name" className="block text-sm font-bold mb-1">Nome da campanha</label>
