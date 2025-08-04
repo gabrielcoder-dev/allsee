@@ -298,7 +298,7 @@ export default function Mapbox({ anunciosFiltrados, onCityFound, userNicho, isFu
           
           return (
             <Marker
-              key={`${marker.id}-${forceUpdate}`}
+              key={`${marker.id}-${forceUpdate}-${estaNoCarrinho}`}
               position={[marker.lat, marker.lng]}
               icon={estaNoCarrinho ? greenPinIcon : orangePinIcon}
             >
