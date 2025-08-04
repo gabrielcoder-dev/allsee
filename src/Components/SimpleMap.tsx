@@ -12,9 +12,9 @@ import { useCart } from '../context/CartContext';
 import { MapIcon, PanelLeftIcon } from 'lucide-react'
 
 L.Icon.Default.mergeOptions({
-  iconRetinaUrl: require('leaflet/dist/images/marker-icon-2x.png'),
-  iconUrl: require('leaflet/dist/images/marker-icon.png'),
-  shadowUrl: require('leaflet/dist/images/marker-shadow.png'),
+  iconRetinaUrl: '/images/marker-icon-2x.png',
+  iconUrl: '/images/marker-icon.png',
+  shadowUrl: '/images/marker-shadow.png',
 })
 
 // Coordenadas de Primavera do Leste, MT - Centralizada ainda mais para a esquerda para mostrar todos os totens
@@ -107,17 +107,9 @@ export default function SimpleMap({ anunciosFiltrados, onCityFound, userNicho, s
   const [mounted, setMounted] = useState(false)
   const [highlightedMarkerId, setHighlightedMarkerId] = useState<number | null>(null)
   
-  // Usar try-catch para evitar erros de contexto
-  let produtos: any[] = [];
-  let cartContext: any = null;
-  
-  try {
-    cartContext = useCart();
-    produtos = cartContext?.produtos || [];
-  } catch (error) {
-    console.warn('Erro ao acessar contexto do carrinho:', error);
-    produtos = [];
-  }
+  // Acessar contexto do carrinho
+  const cartContext = useCart();
+  const produtos = cartContext?.produtos || [];
 
   useEffect(() => {
     setMounted(true)

@@ -11,9 +11,9 @@ import MiniAnuncioCard from './MiniAnuncioCard';
 import { useCart } from '../context/CartContext';
 
 L.Icon.Default.mergeOptions({
-  iconRetinaUrl: require('leaflet/dist/images/marker-icon-2x.png'),
-  iconUrl: require('leaflet/dist/images/marker-icon.png'),
-  shadowUrl: require('leaflet/dist/images/marker-shadow.png'),
+  iconRetinaUrl: '/images/marker-icon-2x.png',
+  iconUrl: '/images/marker-icon.png',
+  shadowUrl: '/images/marker-shadow.png',
 })
 
 // Coordenadas de Primavera do Leste, MT - Centralizada ainda mais para a esquerda para mostrar todos os totens
@@ -149,17 +149,9 @@ export default function Mapbox({ anunciosFiltrados, onCityFound, userNicho, isFu
   const [mounted, setMounted] = useState(false)
   const [forceUpdate, setForceUpdate] = useState(0)
   
-  // Usar try-catch para evitar erros de contexto
-  let produtos: any[] = [];
-  let cartContext: any = null;
-  
-  try {
-    cartContext = useCart();
-    produtos = cartContext?.produtos || [];
-  } catch (error) {
-    console.warn('Erro ao acessar contexto do carrinho:', error);
-    produtos = [];
-  }
+  // Acessar contexto do carrinho
+  const cartContext = useCart();
+  const produtos = cartContext?.produtos || [];
 
   // Forçar re-renderização quando o carrinho mudar
   useEffect(() => {
