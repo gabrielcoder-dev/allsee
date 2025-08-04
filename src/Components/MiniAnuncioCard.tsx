@@ -2,16 +2,33 @@ import React from 'react';
 import { ShoppingCartIcon, TrashIcon } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
 
-export default function MiniAnuncioCard({ anuncio, actionButton, hideAddButton }: { anuncio: any, actionButton?: React.ReactNode, hideAddButton?: boolean }) {
+type AnuncioType = {
+  id: number;
+  name?: string;
+  nome?: string;
+  image?: string;
+  address?: string;
+  adress?: string;
+  endereco?: string;
+  price?: number;
+  preco?: number;
+  duration_2?: boolean;
+  duration_4?: boolean;
+  duration_12?: boolean;
+  duration_24?: boolean;
+  type_screen?: string;
+  display?: number;
+  views?: number;
+  screens?: number;
+  alcance?: number;
+};
+
+export default function MiniAnuncioCard({ anuncio, actionButton, hideAddButton }: { 
+  anuncio: AnuncioType, 
+  actionButton?: React.ReactNode, 
+  hideAddButton?: boolean 
+}) {
   const { adicionarProduto, removerProduto, produtos, selectedDurationGlobal } = useCart();
-  
-  // Debug: verificar se o anuncio tem imagem
-  console.log('🔍 MiniAnuncioCard - anuncio:', {
-    id: anuncio.id,
-    name: anuncio.name || anuncio.nome,
-    image: anuncio.image,
-    hasImage: !!anuncio.image
-  });
   
   // Checa se já está no carrinho
   const estaNoCarrinho = produtos.some((p) => p.id === (anuncio.id?.toString() || anuncio.id));
@@ -53,24 +70,26 @@ export default function MiniAnuncioCard({ anuncio, actionButton, hideAddButton }
   // Handler do botão
   const handleClick = () => {
     if (estaNoCarrinho) {
-      removerProduto(anuncio.id?.toString() || anuncio.id);
+      console.log('🗑️ Removendo do carrinho:', anuncio.id);
+      removerProduto(anuncio.id?.toString() || anuncio.id.toString());
     } else {
+      console.log('🛒 Adicionando ao carrinho:', anuncio.id);
       adicionarProduto({
-        id: anuncio.id?.toString() || anuncio.id,
-        nome: anuncio.name || anuncio.nome,
+        id: anuncio.id?.toString() || anuncio.id.toString(),
+        nome: anuncio.name || anuncio.nome || '',
         preco: precoOriginal,
         precoMultiplicado: precoCalculado,
         selectedDuration: selectedDuration,
         quantidade: 1,
-        image: anuncio.image,
-        endereco: anuncio.address || anuncio.adress || anuncio.endereco,
-        screens: anuncio.screens,
-        display: anuncio.display,
-        views: anuncio.views,
-        duration_2: anuncio.duration_2,
-        duration_4: anuncio.duration_4,
-        duration_12: anuncio.duration_12,
-        duration_24: anuncio.duration_24,
+        image: anuncio.image || '',
+        endereco: anuncio.address || anuncio.adress || anuncio.endereco || '',
+        screens: anuncio.screens || 1,
+        display: anuncio.display || 1,
+        views: anuncio.views || 0,
+        duration_2: anuncio.duration_2 || false,
+        duration_4: anuncio.duration_4 || false,
+        duration_12: anuncio.duration_12 || false,
+        duration_24: anuncio.duration_24 || false,
         type_screen: anuncio.type_screen && anuncio.type_screen.trim() ? anuncio.type_screen : 'digital',
       });
     }

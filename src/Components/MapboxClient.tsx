@@ -4,7 +4,7 @@ import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet'
 import type { LatLngTuple } from 'leaflet'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { orangePinIcon, greenPinIcon } from './CustomMarkerIcon';
 import MiniAnuncioCard from './MiniAnuncioCard';
@@ -276,6 +276,15 @@ export default function Mapbox({ anunciosFiltrados, onCityFound, userNicho, isFu
           // Verificar se o totem está no carrinho com segurança
           const estaNoCarrinho = produtos && produtos.length > 0 ? 
             produtos.some((p) => p.id === marker.anuncio_id?.toString()) : false;
+          
+          // Debug: verificar a lógica do carrinho
+          console.log('🔍 Debug marker:', {
+            markerId: marker.id,
+            anuncioId: marker.anuncio_id,
+            anuncioIdString: marker.anuncio_id?.toString(),
+            produtosNoCarrinho: produtos.map(p => p.id),
+            estaNoCarrinho
+          });
           
           return (
             <Marker
