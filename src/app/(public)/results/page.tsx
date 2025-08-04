@@ -188,7 +188,7 @@ const Page = () => {
   }
 
   return (
-    <div className="flex flex-col h-screen">
+    <div className='h-screen flex flex-col'>
       {/* Desktop Header */}
       <HeaderResultsDesktop 
         onDurationChange={setSelectedDurationGlobal} 
@@ -221,19 +221,19 @@ const Page = () => {
 
       {/* Área principal com scroll controlado */}
       <div className="flex flex-1 min-h-0 overflow-hidden xl:pl-16 justify-center xl:justify-between relative">
-                 {/* Conteúdo principal - Desktop */}
-         <div className={`flex flex-1 ${isMapFullscreen ? 'hidden' : 'block'} hidden xl:block overflow-y-auto`}>
-           <GetAnunciosResults 
-             onAdicionarProduto={handleAdicionarProduto} 
-             selectedDuration={selectedDurationGlobal} 
-             tipoMidia={tipoMidia} 
-             bairros={bairros}
-             orderBy={orderBy}
-             onChangeAnunciosFiltrados={setAnunciosFiltrados}
-             userNicho={userNicho}
-             onSpecificTotemFound={handleSpecificTotemFound}
-           />
-         </div>
+        {/* Conteúdo principal - Desktop */}
+        <div className={`flex flex-1 ${isMapFullscreen ? 'hidden' : 'block'} hidden xl:block overflow-y-auto pb-20`}>
+          <GetAnunciosResults 
+            onAdicionarProduto={handleAdicionarProduto} 
+            selectedDuration={selectedDurationGlobal} 
+            tipoMidia={tipoMidia} 
+            bairros={bairros}
+            orderBy={orderBy}
+            onChangeAnunciosFiltrados={setAnunciosFiltrados}
+            userNicho={userNicho}
+            onSpecificTotemFound={handleSpecificTotemFound}
+          />
+        </div>
 
         {/* Mapa - Desktop */}
         <div className={`${isMapFullscreen ? 'w-full' : 'hidden xl:block w-[400px]'}`}>
@@ -247,49 +247,42 @@ const Page = () => {
           />
         </div>
 
-                 {/* Mobile - Lista ou Mapa */}
-         <div className="xl:hidden w-full h-full relative">
-           {/* GetAnunciosResults sempre presente */}
-           <div className={`w-full h-full overflow-y-auto ${isMobileMapView ? 'hidden' : 'block'}`}>
-             <GetAnunciosResults 
-               onAdicionarProduto={handleAdicionarProduto} 
-               selectedDuration={selectedDurationGlobal} 
-               tipoMidia={tipoMidia} 
-               bairros={bairros}
-               orderBy={orderBy}
-               onChangeAnunciosFiltrados={setAnunciosFiltrados}
-               userNicho={userNicho}
-               onSpecificTotemFound={handleSpecificTotemFound}
-             />
-           </div>
-           
-           {/* Mapa por cima quando ativo */}
-           {isMobileMapView && (
-             <div className="absolute inset-0 z-50">
-               <Mapbox 
-                 anunciosFiltrados={anunciosFiltrados} 
-                 onCityFound={handleCityFound} 
-                 userNicho={userNicho} 
-                 specificTotemId={specificTotemId}
-                 isFullscreen={true}
-                 onToggleMapView={toggleMobileMapView}
-               />
-             </div>
-           )}
-         </div>
+        {/* Mobile - Lista ou Mapa */}
+        <div className="xl:hidden w-full h-full relative">
+          {/* GetAnunciosResults sempre presente */}
+          <div className={`w-full h-full overflow-y-auto pb-20 ${isMobileMapView ? 'hidden' : 'block'}`}>
+            <GetAnunciosResults 
+              onAdicionarProduto={handleAdicionarProduto} 
+              selectedDuration={selectedDurationGlobal} 
+              tipoMidia={tipoMidia} 
+              bairros={bairros}
+              orderBy={orderBy}
+              onChangeAnunciosFiltrados={setAnunciosFiltrados}
+              userNicho={userNicho}
+              onSpecificTotemFound={handleSpecificTotemFound}
+            />
+          </div>
+          
+          {/* Mapa por cima quando ativo */}
+          {isMobileMapView && (
+            <div className="absolute inset-0 z-50">
+              <Mapbox 
+                anunciosFiltrados={anunciosFiltrados} 
+                onCityFound={handleCityFound} 
+                userNicho={userNicho} 
+                specificTotemId={specificTotemId}
+                isFullscreen={true}
+                onToggleMapView={toggleMobileMapView}
+              />
+            </div>
+          )}
+        </div>
       </div>
 
-      {/* HeaderPrice - sempre visível */}
+      {/* HeaderPrice - sempre visível e fixo */}
       <HeaderPrice />
 
       <ToastContainer />
-      
-      {/* Modal de nicho da empresa - obrigatório para primeiro acesso */}
-      <ModalNichoEmpresa
-        open={showNichoModal}
-        onClose={() => setShowNichoModal(false)}
-        onNichoSelected={handleNichoSelected}
-      />
     </div>
   )
 }

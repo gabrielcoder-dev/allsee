@@ -75,10 +75,12 @@ const page = () => {
   return (
     <div className='h-screen flex flex-col'>
       <HeaderResume />
-      <CartResume 
-        artError={artError}
-        campaignError={campaignError}
-      />
+      <div className="flex-1 min-h-0">
+        <CartResume 
+          artError={artError}
+          campaignError={campaignError}
+        />
+      </div>
       <div className="flex items-center justify-between p-5 border-t border-gray-200">
         <p
           className='flex items-center gap-2 text-orange-500 cursor-pointer font-semibold'

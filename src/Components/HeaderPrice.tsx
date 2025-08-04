@@ -49,10 +49,16 @@ export default function HeaderPrice() {
 
   const valor = produtos.reduce((acc, p) => acc + getPrecoMultiplicado(p, duration) * p.quantidade, 0);
 
+  const onClick = () => {
+    if (quantidade > 0) {
+      router.push('/resumo');
+    }
+  };
+
   return (
     <div
       id="header-price"
-      className="fixed flex items-center justify-between bottom-0 z-1 w-full border-t border-solid border-neutral-high-light bg-white lg:sticky py-6 actions-bar-results !text-lg lg:bottom-0 lg:right-0 lg:px-[80px]"
+      className="fixed bottom-0 left-0 right-0 z-50 flex items-center justify-between w-full border-t border-solid border-neutral-high-light bg-white py-4 px-4 lg:px-[80px]"
     >
       <div className="hidden md:block text-base md:text-lg">
         <span className="font-bold">{quantidade} produto{quantidade > 1 ? 's' : ''}</span>
@@ -62,11 +68,11 @@ export default function HeaderPrice() {
       </div>
       <div className="flex justify-end w-full md:w-auto pr-6 md:pr-0">
         <button
-          className="bg-orange-600 cursor-pointer hover:bg-orange-700 text-white rounded-lg px-6 py-2 font-medium transition disabled:bg-orange-300 disabled:cursor-not-allowed"
+          className="bg-orange-600 cursor-pointer hover:bg-orange-700 text-white rounded-lg px-6 py-2 font-semibold disabled:bg-orange-300 disabled:cursor-not-allowed"
           disabled={quantidade === 0}
-          onClick={() => quantidade > 0 && router.push('/resumo')}
+          onClick={onClick}
         >
-          continuar
+          {quantidade === 0 ? 'Carrinho vazio' : 'Ver carrinho'}
         </button>
       </div>
     </div>
