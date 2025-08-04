@@ -331,7 +331,7 @@ export default function CartResume({ onCartArtSelected, onCampaignNameChange, ar
   };
 
   return (
-    <div className="w-full h-full px-4 md:px-12 py-6 flex flex-col gap-4 overflow-y-auto">
+    <div className="w-full h-full px-4 md:px-12 py-6 flex flex-col gap-4">
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-2xl font-bold">Plano de Mídia</h2>
         <button
@@ -347,7 +347,7 @@ export default function CartResume({ onCartArtSelected, onCampaignNameChange, ar
         </button>
       </div>
       <div className="flex flex-col lg:flex-row gap-8 flex-1 min-h-0">
-        <div className="w-full lg:w-1/2">
+        <div className="w-full lg:w-1/2 overflow-y-auto">
           {produtos.length === 0 ? (
             <p>Nenhum produto adicionado.</p>
           ) : (

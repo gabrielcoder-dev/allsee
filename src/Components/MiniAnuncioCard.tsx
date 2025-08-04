@@ -113,7 +113,7 @@ export default function MiniAnuncioCard({ anuncio, actionButton, hideAddButton }
             console.log('✅ Imagem carregada com sucesso:', anuncio.image);
           }}
         />
-        <div className="hidden absolute inset-0 flex items-center justify-center bg-gray-200 text-gray-500 text-xs">
+        <div className="hidden absolute inset-0 items-center justify-center bg-gray-200 text-gray-500 text-xs">
           Sem imagem
         </div>
       </div>
