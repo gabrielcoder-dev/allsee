@@ -151,9 +151,11 @@ export default function Mapbox({ anunciosFiltrados, onCityFound, userNicho, isFu
   
   // Usar try-catch para evitar erros de contexto
   let produtos: any[] = [];
+  let cartContext: any = null;
+  
   try {
-    const cartContext = useCart();
-    produtos = cartContext.produtos || [];
+    cartContext = useCart();
+    produtos = cartContext?.produtos || [];
   } catch (error) {
     console.warn('Erro ao acessar contexto do carrinho:', error);
     produtos = [];
@@ -161,13 +163,15 @@ export default function Mapbox({ anunciosFiltrados, onCityFound, userNicho, isFu
 
   // Forçar re-renderização quando o carrinho mudar
   useEffect(() => {
-    console.log('🔄 Carrinho mudou, forçando re-renderização:', {
-      produtosLength: produtos.length,
-      produtosIds: produtos.map(p => p.id),
-      forceUpdate: forceUpdate + 1
-    });
-    setForceUpdate(prev => prev + 1);
-  }, [produtos]);
+    if (mounted && produtos) {
+      console.log('🔄 Carrinho mudou, forçando re-renderização:', {
+        produtosLength: produtos.length,
+        produtosIds: produtos.map(p => p.id),
+        forceUpdate: forceUpdate + 1
+      });
+      setForceUpdate(prev => prev + 1);
+    }
+  }, [produtos, mounted]);
 
   useEffect(() => {
     setMounted(true)
@@ -249,6 +253,9 @@ export default function Mapbox({ anunciosFiltrados, onCityFound, userNicho, isFu
 
   if (!mounted || mapHeight === 0) return null
   if (loading) return <div className={`${isFullscreen ? 'w-full' : 'hidden xl:flex w-[400px]'} flex-shrink-0 z-0 items-center justify-center map-loading`} style={{ height: '100%' }}>Carregando totens no mapa...</div>
+  
+  // Verificação adicional de segurança
+  if (typeof window === 'undefined') return null
 
   return (
     <div
@@ -298,7 +305,7 @@ export default function Mapbox({ anunciosFiltrados, onCityFound, userNicho, isFu
           
           return (
             <Marker
-              key={`${marker.id}-${forceUpdate}-${estaNoCarrinho}`}
+              key={`${marker.id}-${forceUpdate}`}
               position={[marker.lat, marker.lng]}
               icon={estaNoCarrinho ? greenPinIcon : orangePinIcon}
             >
