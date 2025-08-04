@@ -103,16 +103,28 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     cidadeJ: "",
     estadoJ: ""
   });
+  const [mounted, setMounted] = useState(false);
+
+  // Garantir que o componente está montado no cliente
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // 🔄 Carregar carrinho do localStorage
   useEffect(() => {
-    const storedCart = localStorage.getItem('cart')
-    if (storedCart) {
-      const parsedCart = JSON.parse(storedCart)
-      console.log("Carrinho carregado do localStorage:", parsedCart);
-      setProdutos(parsedCart)
+    if (!mounted) return;
+    
+    try {
+      const storedCart = localStorage.getItem('cart')
+      if (storedCart) {
+        const parsedCart = JSON.parse(storedCart)
+        console.log("Carrinho carregado do localStorage:", parsedCart);
+        setProdutos(parsedCart)
+      }
+    } catch (error) {
+      console.warn('Erro ao carregar carrinho do localStorage:', error);
     }
-  }, [])
+  }, [mounted])
 
   // // 🔄 Carregar form data do localStorage
   // useEffect(() => {
@@ -147,9 +159,15 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
 
   // 💾 Salvar carrinho no localStorage sempre que mudar
   useEffect(() => {
-    console.log("Salvando carrinho no localStorage:", produtos);
-    localStorage.setItem('cart', JSON.stringify(produtos))
-  }, [produtos])
+    if (!mounted) return;
+    
+    try {
+      console.log("Salvando carrinho no localStorage:", produtos);
+      localStorage.setItem('cart', JSON.stringify(produtos))
+    } catch (error) {
+      console.warn('Erro ao salvar carrinho no localStorage:', error);
+    }
+  }, [produtos, mounted])
 
   // // 💾 Salvar form data no localStorage sempre que mudar
   // useEffect(() => {
@@ -329,6 +347,48 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
 
 export const useCart = () => {
   const context = useContext(CartContext)
-  if (!context) throw new Error('useCart deve ser usado dentro de um CartProvider')
+  if (!context) {
+    // Retornar um contexto padrão durante a hidratação
+    return {
+      produtos: [],
+      adicionarProduto: () => {},
+      removerProduto: () => {},
+      limparCarrinho: () => {},
+      atualizarProdutosComNovaDuracao: () => {},
+      selectedDurationGlobal: "2",
+      setSelectedDurationGlobal: () => {},
+      formData: {
+        campaignName: "",
+        startDate: null,
+        selectedImage: null,
+        previewUrl: null,
+        isArtSelected: false,
+        cpf: "",
+        telefone: "",
+        cep: "",
+        endereco: "",
+        numero: "",
+        bairro: "",
+        complemento: "",
+        cidade: "",
+        estado: "",
+        cnpj: "",
+        razaoSocial: "",
+        segmento: "",
+        telefonej: "",
+        cepJ: "",
+        enderecoJ: "",
+        numeroJ: "",
+        bairroJ: "",
+        complementoJ: "",
+        cidadeJ: "",
+        estadoJ: ""
+      },
+      updateFormData: () => {},
+      clearFormData: () => {},
+      total: 0,
+      precoComDesconto: 0,
+    }
+  }
   return context
 }

@@ -138,11 +138,32 @@ export default function Mapbox({ anunciosFiltrados, onCityFound, userNicho, isFu
   const [markers, setMarkers] = useState<MarkerType[]>([])
   const [loading, setLoading] = useState(true)
   const [mounted, setMounted] = useState(false)
-  const { produtos } = useCart()
+  
+  // Usar try-catch para evitar erros de contexto
+  let produtos: any[] = [];
+  try {
+    const cartContext = useCart();
+    produtos = cartContext.produtos || [];
+  } catch (error) {
+    console.warn('Erro ao acessar contexto do carrinho:', error);
+    produtos = [];
+  }
 
   useEffect(() => {
     setMounted(true)
   }, [])
+
+  // Não renderizar até estar montado
+  if (!mounted) {
+    return (
+      <div className={`${isFullscreen ? 'w-full' : 'hidden xl:flex w-[400px]'} flex-shrink-0 z-0 items-center justify-center`} style={{ height: '100vh' }}>
+        <div className="flex flex-col items-center gap-2">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500"></div>
+          <span className="text-sm text-gray-600">Carregando mapa...</span>
+        </div>
+      </div>
+    );
+  }
 
   useEffect(() => {
     function updateHeight() {
@@ -243,8 +264,9 @@ export default function Mapbox({ anunciosFiltrados, onCityFound, userNicho, isFu
         />
 
         {markersToDisplay.map((marker) => {
-          // Verificar se o totem está no carrinho
-          const estaNoCarrinho = produtos.some((p) => p.id === marker.anuncio_id?.toString());
+          // Verificar se o totem está no carrinho com segurança
+          const estaNoCarrinho = produtos && produtos.length > 0 ? 
+            produtos.some((p) => p.id === marker.anuncio_id?.toString()) : false;
           
           return (
             <Marker
