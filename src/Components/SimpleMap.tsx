@@ -1,13 +1,14 @@
 'use client'
 
+import React, { useEffect, useState } from 'react'
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet'
 import type { LatLngTuple } from 'leaflet'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
-import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
-import { orangePinIcon } from './CustomMarkerIcon';
+import { orangePinIcon, greenPinIcon } from './CustomMarkerIcon';
 import MiniAnuncioCard from './MiniAnuncioCard';
+import { useCart } from '../context/CartContext';
 import { MapIcon, PanelLeftIcon } from 'lucide-react'
 
 L.Icon.Default.mergeOptions({
@@ -105,6 +106,18 @@ export default function SimpleMap({ anunciosFiltrados, onCityFound, userNicho, s
   const [loading, setLoading] = useState(true)
   const [mounted, setMounted] = useState(false)
   const [highlightedMarkerId, setHighlightedMarkerId] = useState<number | null>(null)
+  
+  // Usar try-catch para evitar erros de contexto
+  let produtos: any[] = [];
+  let cartContext: any = null;
+  
+  try {
+    cartContext = useCart();
+    produtos = cartContext?.produtos || [];
+  } catch (error) {
+    console.warn('Erro ao acessar contexto do carrinho:', error);
+    produtos = [];
+  }
 
   useEffect(() => {
     setMounted(true)
@@ -324,6 +337,18 @@ export default function SimpleMap({ anunciosFiltrados, onCityFound, userNicho, s
         />
 
         {markersToDisplay.map((marker) => {
+          // Verificar se o marker está no carrinho usando o ID do anúncio
+          const markerAnuncioId = marker.anuncio_id?.toString();
+          const estaNoCarrinho = produtos.some(p => p.id === markerAnuncioId);
+          
+          // Determinar qual ícone usar
+          let iconToUse = orangePinIcon;
+          if (highlightedMarkerId === marker.id) {
+            iconToUse = createHighlightedIcon(marker.id);
+          } else if (estaNoCarrinho) {
+            iconToUse = greenPinIcon;
+          }
+          
           if (highlightedMarkerId === marker.id) {
             console.log('⭐ Renderizando marker destacado:', marker.id);
           }
@@ -331,7 +356,7 @@ export default function SimpleMap({ anunciosFiltrados, onCityFound, userNicho, s
             <Marker
               key={marker.id}
               position={[marker.lat, marker.lng]}
-              icon={highlightedMarkerId === marker.id ? createHighlightedIcon(marker.id) : orangePinIcon}
+              icon={iconToUse}
             >
               <Popup minWidth={200} maxWidth={300}>
                 <MiniAnuncioCard anuncio={marker.anuncio} />

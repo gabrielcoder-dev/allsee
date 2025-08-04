@@ -291,17 +291,9 @@ export default function Mapbox({ anunciosFiltrados, onCityFound, userNicho, isFu
         />
 
         {markersToDisplay.map((marker) => {
-          // Pegar todos os IDs dos totens que estão no carrinho
-          const idsNoCarrinho = produtos.map(p => p.id);
-          
-          // Verificar se o ID do marker está na lista de IDs do carrinho
+          // Verificar se o marker está no carrinho usando o ID do anúncio
           const markerAnuncioId = marker.anuncio_id?.toString();
-          const estaNoCarrinho = idsNoCarrinho.includes(markerAnuncioId);
-          
-          // Log simples para debug
-          if (produtos.length > 0) {
-            console.log(`🎯 Marker ${marker.id}: anuncio_id=${markerAnuncioId}, no carrinho=${estaNoCarrinho}, cor=${estaNoCarrinho ? 'VERDE' : 'LARANJA'}`);
-          }
+          const estaNoCarrinho = produtos.some(p => p.id === markerAnuncioId);
           
           return (
             <Marker
