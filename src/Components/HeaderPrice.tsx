@@ -72,7 +72,7 @@ export default function HeaderPrice() {
           disabled={quantidade === 0}
           onClick={onClick}
         >
-          avançar
+          Avançar
         </button>
       </div>
     </div>
