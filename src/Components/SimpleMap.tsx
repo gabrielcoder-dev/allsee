@@ -111,8 +111,22 @@ export default function SimpleMap({ anunciosFiltrados, onCityFound, userNicho, s
   const cartContext = useCart();
   const produtos = cartContext?.produtos || [];
 
+  // Verificação adicional para evitar erros de hidratação
+  if (typeof window === 'undefined') {
+    return null;
+  }
+
   useEffect(() => {
     setMounted(true)
+    
+    // Cleanup function para limpar estado quando componente for desmontado
+    return () => {
+      setMounted(false)
+      setMarkers([])
+      setLoading(true)
+      setHighlightedMarkerId(null)
+      setMapHeight(0)
+    }
   }, [])
 
   useEffect(() => {
@@ -147,6 +161,17 @@ export default function SimpleMap({ anunciosFiltrados, onCityFound, userNicho, s
       }
     }
   }, [mounted])
+
+  // Cleanup adicional quando componente for desmontado
+  useEffect(() => {
+    return () => {
+      // Limpar funções globais
+      if (typeof window !== 'undefined') {
+        delete (window as any).navigateToCity;
+        delete (window as any).setHighlightedMarker;
+      }
+    }
+  }, [])
 
   useEffect(() => {
     if (!mounted) return;

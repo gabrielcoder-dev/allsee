@@ -400,5 +400,50 @@ export const useCart = () => {
       precoComDesconto: 0,
     }
   }
+  
+  // Verificação adicional para evitar erros de hidratação
+  if (typeof window === 'undefined') {
+    return {
+      produtos: [],
+      adicionarProduto: () => {},
+      removerProduto: () => {},
+      limparCarrinho: () => {},
+      atualizarProdutosComNovaDuracao: () => {},
+      selectedDurationGlobal: "2",
+      setSelectedDurationGlobal: () => {},
+      formData: {
+        campaignName: "",
+        startDate: null,
+        selectedImage: null,
+        previewUrl: null,
+        isArtSelected: false,
+        cpf: "",
+        telefone: "",
+        cep: "",
+        endereco: "",
+        numero: "",
+        bairro: "",
+        complemento: "",
+        cidade: "",
+        estado: "",
+        cnpj: "",
+        razaoSocial: "",
+        segmento: "",
+        telefonej: "",
+        cepJ: "",
+        enderecoJ: "",
+        numeroJ: "",
+        bairroJ: "",
+        complementoJ: "",
+        cidadeJ: "",
+        estadoJ: ""
+      },
+      updateFormData: () => {},
+      clearFormData: () => {},
+      total: 0,
+      precoComDesconto: 0,
+    }
+  }
+  
   return context
 }

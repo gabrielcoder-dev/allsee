@@ -153,6 +153,11 @@ export default function Mapbox({ anunciosFiltrados, onCityFound, userNicho, isFu
   const cartContext = useCart();
   const produtos = cartContext?.produtos || [];
 
+  // Verificação adicional para evitar erros de hidratação
+  if (typeof window === 'undefined') {
+    return null;
+  }
+
   // Forçar re-renderização quando o carrinho mudar
   useEffect(() => {
     if (mounted && produtos) {
@@ -165,8 +170,27 @@ export default function Mapbox({ anunciosFiltrados, onCityFound, userNicho, isFu
     }
   }, [produtos, mounted]);
 
+  // Cleanup adicional quando componente for desmontado
+  useEffect(() => {
+    return () => {
+      // Limpar funções globais
+      if (typeof window !== 'undefined') {
+        delete (window as any).navigateToCity;
+      }
+    }
+  }, [])
+
   useEffect(() => {
     setMounted(true)
+    
+    // Cleanup function para limpar estado quando componente for desmontado
+    return () => {
+      setMounted(false)
+      setMarkers([])
+      setLoading(true)
+      setForceUpdate(0)
+      setMapHeight(0)
+    }
   }, [])
 
   // Não renderizar até estar montado

@@ -51,6 +51,22 @@ const Page = () => {
   // Garantir que o componente está montado no cliente
   useEffect(() => {
     setMounted(true);
+    
+    // Cleanup function para limpar estado quando componente for desmontado
+    return () => {
+      setMounted(false);
+      setProdutos([]);
+      setTipoMidia(null);
+      setBairros([]);
+      setOrderBy('');
+      setAnunciosFiltrados([]);
+      setSpecificTotemId(null);
+      setIsMapFullscreen(false);
+      setIsMobileMapView(false);
+      setShowNichoModal(false);
+      setIsFirstTimeUser(false);
+      setUserNicho(null);
+    }
   }, []);
 
   // Função para adicionar produto ao carrinho
