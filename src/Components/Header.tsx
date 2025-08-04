@@ -52,7 +52,7 @@ export default function Header() {
 
             {/* Desktop Navigation */}
             <nav className="hidden md:flex items-center space-x-8">
-              <HeaderLink href="#home" onClick={closeMobileMenu}>Home</HeaderLink>
+              <HeaderLink href="#home" onClick={closeMobileMenu}>Inicio</HeaderLink>
               <HeaderLink href="#sobre" onClick={closeMobileMenu}>Sobre Nós</HeaderLink>
               <HeaderLink href="#locais" onClick={closeMobileMenu}>Locais</HeaderLink>
               <HeaderLink href="#contato" onClick={closeMobileMenu}>Contato</HeaderLink>
