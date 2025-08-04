@@ -176,10 +176,9 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   // }, [formData])
 
   const adicionarProduto = (produto: Produto) => {
-    console.log("🛒 Adicionando produto ao contexto:", {
+    console.log("🛒 Adicionando produto ao carrinho:", {
       id: produto.id,
-      nome: produto.nome,
-      tipo: typeof produto.id
+      nome: produto.nome
     });
     setProdutos((prev) => {
       const existente = prev.find((p) => p.id === produto.id);
@@ -190,24 +189,22 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
             ? { ...p, ...produto, quantidade: p.quantidade }
             : p
         );
-        console.log("🔄 Produto atualizado no contexto:", updated.map(p => ({ id: p.id, nome: p.nome })));
+        console.log("🔄 Produtos no carrinho após atualização:", updated.map(p => p.id));
         return updated;
       }
       const newProducts = [...prev, produto];
-      console.log("➕ Produto adicionado ao contexto:", newProducts.map(p => ({ id: p.id, nome: p.nome })));
+      console.log("➕ Produtos no carrinho após adição:", newProducts.map(p => p.id));
       return newProducts;
     });
-    // toast.success(`${produto.nome} adicionado ao carrinho`);
   }
 
   const removerProduto = (id: string) => {
-    console.log("🗑️ Removendo produto do contexto:", id);
+    console.log("🗑️ Removendo produto do carrinho:", id);
     setProdutos((prev) => {
       const filtered = prev.filter((p) => p.id !== id);
-      console.log("➖ Produto removido do contexto:", filtered.map(p => ({ id: p.id, nome: p.nome })));
+      console.log("➖ Produtos no carrinho após remoção:", filtered.map(p => p.id));
       return filtered;
     });
-    // toast.success("Produto removido do carrinho");
   }
 
   const limparCarrinho = () => setProdutos([])

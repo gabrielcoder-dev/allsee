@@ -279,33 +279,21 @@ export default function Mapbox({ anunciosFiltrados, onCityFound, userNicho, isFu
         />
 
         {markersToDisplay.map((marker) => {
-          // Verificar se o totem está no carrinho com segurança
-          const anuncioIdString = marker.anuncio_id?.toString();
-          const estaNoCarrinho = produtos && produtos.length > 0 ? 
-            produtos.some((p) => p.id === anuncioIdString) : false;
+          // Pegar todos os IDs dos totens que estão no carrinho
+          const idsNoCarrinho = produtos.map(p => p.id);
+          
+          // Verificar se o ID do marker está na lista de IDs do carrinho
+          const markerAnuncioId = marker.anuncio_id?.toString();
+          const estaNoCarrinho = idsNoCarrinho.includes(markerAnuncioId);
           
           // Debug: verificar a lógica do carrinho
           console.log('🔍 Debug marker:', {
             markerId: marker.id,
-            anuncioId: marker.anuncio_id,
-            anuncioIdString,
-            produtosNoCarrinho: produtos.map(p => ({ id: p.id, nome: p.nome })),
+            markerAnuncioId: markerAnuncioId,
+            idsNoCarrinho: idsNoCarrinho,
             estaNoCarrinho,
-            forceUpdate,
-            produtosLength: produtos.length
+            produtosNoCarrinho: produtos.map(p => ({ id: p.id, nome: p.nome }))
           });
-          
-          // Log específico para markers que deveriam estar no carrinho
-          if (produtos.length > 0) {
-            const produtoEncontrado = produtos.find(p => p.id === anuncioIdString);
-            if (produtoEncontrado) {
-              console.log('✅ Produto encontrado no carrinho:', {
-                markerAnuncioId: anuncioIdString,
-                produtoId: produtoEncontrado.id,
-                produtoNome: produtoEncontrado.nome
-              });
-            }
-          }
           
           return (
             <Marker
