@@ -28,11 +28,20 @@ type MarkerType = {
     id: number;
     name?: string;
     nome?: string;
+    image?: string;
     adress?: string;
     endereco?: string;
     price?: number;
     duration?: number;
     nicho?: string;
+    type_screen?: string;
+    display?: number;
+    views?: number;
+    screens?: number;
+    duration_2?: boolean;
+    duration_4?: boolean;
+    duration_12?: boolean;
+    duration_24?: boolean;
   };
 };
 
@@ -200,7 +209,7 @@ export default function Mapbox({ anunciosFiltrados, onCityFound, userNicho, isFu
       setLoading(true)
       const { data, error } = await supabase
         .from('markers')
-        .select('id, anuncio_id, lat, lng, anuncio:anuncio_id(*)')
+        .select('id, anuncio_id, lat, lng, anuncio:anuncio_id(id, name, nome, image, address, adress, endereco, price, duration, nicho, type_screen, display, views, screens, duration_2, duration_4, duration_12, duration_24)')
       if (error || !data) {
         setMarkers([])
         setLoading(false)

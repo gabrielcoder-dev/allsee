@@ -4,6 +4,15 @@ import { useCart } from '@/context/CartContext';
 
 export default function MiniAnuncioCard({ anuncio, actionButton, hideAddButton }: { anuncio: any, actionButton?: React.ReactNode, hideAddButton?: boolean }) {
   const { adicionarProduto, removerProduto, produtos, selectedDurationGlobal } = useCart();
+  
+  // Debug: verificar se o anuncio tem imagem
+  console.log('🔍 MiniAnuncioCard - anuncio:', {
+    id: anuncio.id,
+    name: anuncio.name || anuncio.nome,
+    image: anuncio.image,
+    hasImage: !!anuncio.image
+  });
+  
   // Checa se já está no carrinho
   const estaNoCarrinho = produtos.some((p) => p.id === (anuncio.id?.toString() || anuncio.id));
   // Duração selecionada global
@@ -85,7 +94,7 @@ export default function MiniAnuncioCard({ anuncio, actionButton, hideAddButton }
             console.log('✅ Imagem carregada com sucesso:', anuncio.image);
           }}
         />
-        <div className="absolute inset-0 flex items-center justify-center bg-gray-200 text-gray-500 text-xs">
+        <div className="hidden absolute inset-0 flex items-center justify-center bg-gray-200 text-gray-500 text-xs">
           Sem imagem
         </div>
       </div>
