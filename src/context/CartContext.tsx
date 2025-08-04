@@ -176,24 +176,33 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   // }, [formData])
 
   const adicionarProduto = (produto: Produto) => {
-    console.log("Adicionando produto:", produto);
+    console.log("🛒 Adicionando produto ao contexto:", produto);
     setProdutos((prev) => {
       const existente = prev.find((p) => p.id === produto.id);
       if (existente) {
         // Atualiza os campos do produto, mas mantém a quantidade original
-        return prev.map((p) =>
+        const updated = prev.map((p) =>
           p.id === produto.id
             ? { ...p, ...produto, quantidade: p.quantidade }
             : p
         );
+        console.log("🔄 Produto atualizado no contexto:", updated);
+        return updated;
       }
-      return [...prev, produto];
+      const newProducts = [...prev, produto];
+      console.log("➕ Produto adicionado ao contexto:", newProducts);
+      return newProducts;
     });
     // toast.success(`${produto.nome} adicionado ao carrinho`);
   }
 
   const removerProduto = (id: string) => {
-    setProdutos((prev) => prev.filter((p) => p.id !== id))
+    console.log("🗑️ Removendo produto do contexto:", id);
+    setProdutos((prev) => {
+      const filtered = prev.filter((p) => p.id !== id);
+      console.log("➖ Produto removido do contexto:", filtered);
+      return filtered;
+    });
     toast.warning(`Produto removido do carrinho`)
   }
 

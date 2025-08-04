@@ -147,6 +147,7 @@ export default function Mapbox({ anunciosFiltrados, onCityFound, userNicho, isFu
   const [markers, setMarkers] = useState<MarkerType[]>([])
   const [loading, setLoading] = useState(true)
   const [mounted, setMounted] = useState(false)
+  const [forceUpdate, setForceUpdate] = useState(0)
   
   // Usar try-catch para evitar erros de contexto
   let produtos: any[] = [];
@@ -157,6 +158,11 @@ export default function Mapbox({ anunciosFiltrados, onCityFound, userNicho, isFu
     console.warn('Erro ao acessar contexto do carrinho:', error);
     produtos = [];
   }
+
+  // Forçar re-renderização quando o carrinho mudar
+  useEffect(() => {
+    setForceUpdate(prev => prev + 1);
+  }, [produtos]);
 
   useEffect(() => {
     setMounted(true)
@@ -274,21 +280,23 @@ export default function Mapbox({ anunciosFiltrados, onCityFound, userNicho, isFu
 
         {markersToDisplay.map((marker) => {
           // Verificar se o totem está no carrinho com segurança
+          const anuncioIdString = marker.anuncio_id?.toString();
           const estaNoCarrinho = produtos && produtos.length > 0 ? 
-            produtos.some((p) => p.id === marker.anuncio_id?.toString()) : false;
+            produtos.some((p) => p.id === anuncioIdString) : false;
           
           // Debug: verificar a lógica do carrinho
           console.log('🔍 Debug marker:', {
             markerId: marker.id,
             anuncioId: marker.anuncio_id,
-            anuncioIdString: marker.anuncio_id?.toString(),
+            anuncioIdString,
             produtosNoCarrinho: produtos.map(p => p.id),
-            estaNoCarrinho
+            estaNoCarrinho,
+            forceUpdate
           });
           
           return (
             <Marker
-              key={marker.id}
+              key={`${marker.id}-${forceUpdate}`}
               position={[marker.lat, marker.lng]}
               icon={estaNoCarrinho ? greenPinIcon : orangePinIcon}
             >
