@@ -161,6 +161,11 @@ export default function Mapbox({ anunciosFiltrados, onCityFound, userNicho, isFu
 
   // Forçar re-renderização quando o carrinho mudar
   useEffect(() => {
+    console.log('🔄 Carrinho mudou, forçando re-renderização:', {
+      produtosLength: produtos.length,
+      produtosIds: produtos.map(p => p.id),
+      forceUpdate: forceUpdate + 1
+    });
     setForceUpdate(prev => prev + 1);
   }, [produtos]);
 
@@ -286,14 +291,10 @@ export default function Mapbox({ anunciosFiltrados, onCityFound, userNicho, isFu
           const markerAnuncioId = marker.anuncio_id?.toString();
           const estaNoCarrinho = idsNoCarrinho.includes(markerAnuncioId);
           
-          // Debug: verificar a lógica do carrinho
-          console.log('🔍 Debug marker:', {
-            markerId: marker.id,
-            markerAnuncioId: markerAnuncioId,
-            idsNoCarrinho: idsNoCarrinho,
-            estaNoCarrinho,
-            produtosNoCarrinho: produtos.map(p => ({ id: p.id, nome: p.nome }))
-          });
+          // Log simples para debug
+          if (produtos.length > 0) {
+            console.log(`🎯 Marker ${marker.id}: anuncio_id=${markerAnuncioId}, no carrinho=${estaNoCarrinho}, cor=${estaNoCarrinho ? 'VERDE' : 'LARANJA'}`);
+          }
           
           return (
             <Marker
