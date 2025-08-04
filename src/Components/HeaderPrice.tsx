@@ -68,11 +68,11 @@ export default function HeaderPrice() {
       </div>
       <div className="flex justify-end w-full md:w-auto pr-6 md:pr-0">
         <button
-          className="bg-orange-600 cursor-pointer hover:bg-orange-700 text-white rounded-lg px-6 py-2 font-semibold disabled:bg-orange-300 disabled:cursor-not-allowed"
+          className="bg-orange-600 cursor-pointer hover:bg-orange-700 text-white rounded-lg px-6 py-2 font-semibold disabled:bg-gray-300 disabled:cursor-not-allowed"
           disabled={quantidade === 0}
           onClick={onClick}
         >
-          {quantidade === 0 ? 'Carrinho vazio' : 'Ver carrinho'}
+          avançar
         </button>
       </div>
     </div>
