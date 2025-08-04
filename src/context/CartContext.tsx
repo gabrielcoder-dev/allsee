@@ -176,7 +176,11 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   // }, [formData])
 
   const adicionarProduto = (produto: Produto) => {
-    console.log("🛒 Adicionando produto ao contexto:", produto);
+    console.log("🛒 Adicionando produto ao contexto:", {
+      id: produto.id,
+      nome: produto.nome,
+      tipo: typeof produto.id
+    });
     setProdutos((prev) => {
       const existente = prev.find((p) => p.id === produto.id);
       if (existente) {
@@ -186,11 +190,11 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
             ? { ...p, ...produto, quantidade: p.quantidade }
             : p
         );
-        console.log("🔄 Produto atualizado no contexto:", updated);
+        console.log("🔄 Produto atualizado no contexto:", updated.map(p => ({ id: p.id, nome: p.nome })));
         return updated;
       }
       const newProducts = [...prev, produto];
-      console.log("➕ Produto adicionado ao contexto:", newProducts);
+      console.log("➕ Produto adicionado ao contexto:", newProducts.map(p => ({ id: p.id, nome: p.nome })));
       return newProducts;
     });
     // toast.success(`${produto.nome} adicionado ao carrinho`);
@@ -200,10 +204,10 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     console.log("🗑️ Removendo produto do contexto:", id);
     setProdutos((prev) => {
       const filtered = prev.filter((p) => p.id !== id);
-      console.log("➖ Produto removido do contexto:", filtered);
+      console.log("➖ Produto removido do contexto:", filtered.map(p => ({ id: p.id, nome: p.nome })));
       return filtered;
     });
-    toast.warning(`Produto removido do carrinho`)
+    // toast.success("Produto removido do carrinho");
   }
 
   const limparCarrinho = () => setProdutos([])
