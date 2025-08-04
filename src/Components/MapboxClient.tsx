@@ -6,8 +6,9 @@ import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import { useEffect, useState, useRef } from 'react'
 import { supabase } from '../lib/supabase'
-import { orangePinIcon } from './CustomMarkerIcon';
+import { orangePinIcon, greenPinIcon } from './CustomMarkerIcon';
 import MiniAnuncioCard from './MiniAnuncioCard';
+import { useCart } from '../context/CartContext';
 
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: require('leaflet/dist/images/marker-icon-2x.png'),
@@ -137,6 +138,7 @@ export default function Mapbox({ anunciosFiltrados, onCityFound, userNicho, isFu
   const [markers, setMarkers] = useState<MarkerType[]>([])
   const [loading, setLoading] = useState(true)
   const [mounted, setMounted] = useState(false)
+  const { produtos } = useCart()
 
   useEffect(() => {
     setMounted(true)
@@ -240,17 +242,22 @@ export default function Mapbox({ anunciosFiltrados, onCityFound, userNicho, isFu
           minZoom={1}
         />
 
-        {markersToDisplay.map((marker) => (
-          <Marker
-            key={marker.id}
-            position={[marker.lat, marker.lng]}
-            icon={orangePinIcon}
-          >
-            <Popup minWidth={200} maxWidth={300}>
-              <MiniAnuncioCard anuncio={marker.anuncio} />
-            </Popup>
-          </Marker>
-        ))}
+        {markersToDisplay.map((marker) => {
+          // Verificar se o totem está no carrinho
+          const estaNoCarrinho = produtos.some((p) => p.id === marker.anuncio_id?.toString());
+          
+          return (
+            <Marker
+              key={marker.id}
+              position={[marker.lat, marker.lng]}
+              icon={estaNoCarrinho ? greenPinIcon : orangePinIcon}
+            >
+              <Popup minWidth={200} maxWidth={300}>
+                <MiniAnuncioCard anuncio={marker.anuncio} />
+              </Popup>
+            </Marker>
+          );
+        })}
       </MapContainer>
     </div>
   )
