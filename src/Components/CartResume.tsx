@@ -367,81 +367,82 @@ export default function CartResume({ onCartArtSelected, onCampaignNameChange, ar
           {produtos.length === 0 ? (
             <p>Nenhum produto adicionado.</p>
           ) : (
-            <>
-              {/* Mapa - apenas no desktop */}
-              <div className="hidden lg:block mb-4">
-                <div className="w-full h-64 rounded-lg overflow-hidden border border-gray-200">
-                  <ResumoMap produtos={produtos} />
-                </div>
-              </div>
-
-              {/* Grupos de produtos originais */}
-              {['impresso', 'digital'].map((tipo) => {
-                const itensTipo = produtos.filter((item) => (item.type_screen?.toLowerCase() || 'digital') === tipo);
-                if (itensTipo.length === 0) return null;
-                const isOpen = openGroups[tipo];
-                const pontosLabel = itensTipo.length === 1 ? 'ponto' : 'pontos';
-                return (
-                  <div
-                    key={tipo}
-                    className="mb-2 rounded-sm border bg-[#f7f9fb] transition-all duration-300"
-                    style={{ overflow: 'hidden' }}
-                  >
-                    <div
-                      className={`flex items-center justify-between px-5 py-4 bg-white cursor-pointer select-none transition-colors duration-200 rounded-t-xl`}
-                      onClick={() => setOpenGroups((prev) => ({ ...prev, [tipo]: !prev[tipo] }))}
-                    >
-                      <span className="font-medium text-base capitalize text-[#3b4252] tracking-tight">
-                        {tipo} ({itensTipo.length} {pontosLabel})
-                      </span>
-                      <button
-                        className="rounded-full p-1 hover:bg-gray-200 transition"
-                        tabIndex={-1}
-                        aria-label={isOpen ? `Fechar ${tipo}` : `Abrir ${tipo}`}
-                        onClick={e => { e.stopPropagation(); setOpenGroups((prev) => ({ ...prev, [tipo]: !prev[tipo] })); }}
-                      >
-                        <svg className={`w-4 h-4 text-gray-500 transition-transform duration-300 ${isOpen ? 'rotate-180' : 'rotate-0'}`} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
-                      </button>
-                    </div>
-                    <div
-                      className={`transition-all duration-300 ${isOpen ? 'max-h-[1000px] opacity-100' : 'max-h-0 opacity-0'} bg-[#f7f9fb]`}
-                      style={{ overflow: 'hidden' }}
-                    >
-                      {isOpen && (
-                        <div className="p-4 space-y-3">
-                          {itensTipo.map((item) => {
-                            let precoCalculado = calcularPreco(item);
-                            return (
-                              <div key={item.id} className="bg-white border border-neutral-200 rounded-lg flex flex-col gap-2 p-3 md:flex-row md:items-center md:gap-0 relative">
-                                <div className="flex-1">
-                                  <div className="flex items-center gap-2 mb-1">
-                                    {renderTypeScreenBadge(item.type_screen)}
-                                    <h3 className="font-medium text-base text-[#3b4252]">{item.nome}</h3>
-                                  </div>
-                                  <div className="text-xs text-gray-600 mb-1">{item.endereco}</div>
-                                  <div className="flex items-center gap-4 mt-1">
-                                    <span className="text-base font-semibold text-green-700">R$ {precoCalculado.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</span>
-                                    <span className="text-xs text-gray-500">/ {duration} semana(s)</span>
-                                  </div>
-                                </div>
-                                <button
-                                  className="md:absolute md:top-1/2 md:-translate-y-1/2 md:right-6 cursor-pointer ml-auto rounded-full bg-[#fee2e2] hover:bg-red-200 transition p-2 px-2 flex items-center justify-center"
-                                  onClick={() => removerProduto(item.id)}
-                                  title="Remover"
-                                  style={{ minWidth: 56, minHeight: 56 }}
-                                >
-                                  <Trash className="w-5 h-5 text-red-700 font-bold" />
-                                </button>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </>
+                         <>
+               {/* Grupos de produtos originais */}
+               {['impresso', 'digital'].map((tipo) => {
+                 const itensTipo = produtos.filter((item) => (item.type_screen?.toLowerCase() || 'digital') === tipo);
+                 if (itensTipo.length === 0) return null;
+                 const isOpen = openGroups[tipo];
+                 const pontosLabel = itensTipo.length === 1 ? 'ponto' : 'pontos';
+                 return (
+                   <div
+                     key={tipo}
+                     className="mb-2 rounded-sm border bg-[#f7f9fb] transition-all duration-300"
+                     style={{ overflow: 'hidden' }}
+                   >
+                     <div
+                       className={`flex items-center justify-between px-5 py-4 bg-white cursor-pointer select-none transition-colors duration-200 rounded-t-xl`}
+                       onClick={() => setOpenGroups((prev) => ({ ...prev, [tipo]: !prev[tipo] }))}
+                     >
+                       <span className="font-medium text-base capitalize text-[#3b4252] tracking-tight">
+                         {tipo} ({itensTipo.length} {pontosLabel})
+                       </span>
+                       <button
+                         className="rounded-full p-1 hover:bg-gray-200 transition"
+                         tabIndex={-1}
+                         aria-label={isOpen ? `Fechar ${tipo}` : `Abrir ${tipo}`}
+                         onClick={e => { e.stopPropagation(); setOpenGroups((prev) => ({ ...prev, [tipo]: !prev[tipo] })); }}
+                       >
+                         <svg className={`w-4 h-4 text-gray-500 transition-transform duration-300 ${isOpen ? 'rotate-180' : 'rotate-0'}`} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
+                       </button>
+                     </div>
+                     <div
+                       className={`transition-all duration-300 ${isOpen ? 'max-h-[1000px] opacity-100' : 'max-h-0 opacity-0'} bg-[#f7f9fb]`}
+                       style={{ overflow: 'hidden' }}
+                     >
+                       {isOpen && (
+                         <div className="p-4 space-y-3">
+                           {/* Lista de produtos */}
+                           {itensTipo.map((item) => {
+                             let precoCalculado = calcularPreco(item);
+                             return (
+                               <div key={item.id} className="bg-white border border-neutral-200 rounded-lg flex flex-col gap-2 p-3 md:flex-row md:items-center md:gap-0 relative">
+                                 <div className="flex-1">
+                                   <div className="flex items-center gap-2 mb-1">
+                                     {renderTypeScreenBadge(item.type_screen)}
+                                     <h3 className="font-medium text-base text-[#3b4252]">{item.nome}</h3>
+                                   </div>
+                                   <div className="text-xs text-gray-600 mb-1">{item.endereco}</div>
+                                   <div className="flex items-center gap-4 mt-1">
+                                     <span className="text-base font-semibold text-green-700">R$ {precoCalculado.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</span>
+                                     <span className="text-xs text-gray-500">/ {duration} semana(s)</span>
+                                   </div>
+                                 </div>
+                                 <button
+                                   className="md:absolute md:top-1/2 md:-translate-y-1/2 md:right-6 cursor-pointer ml-auto rounded-full bg-[#fee2e2] hover:bg-red-200 transition p-2 px-2 flex items-center justify-center"
+                                   onClick={() => removerProduto(item.id)}
+                                   title="Remover"
+                                   style={{ minWidth: 56, minHeight: 56 }}
+                                 >
+                                   <Trash className="w-5 h-5 text-red-700 font-bold" />
+                                 </button>
+                               </div>
+                             );
+                           })}
+                           
+                           {/* Mapa - apenas no desktop */}
+                           <div className="hidden lg:block mt-4">
+                             <div className="w-full h-64 rounded-lg overflow-hidden border border-gray-200">
+                               <ResumoMap produtos={itensTipo} />
+                             </div>
+                           </div>
+                         </div>
+                       )}
+                     </div>
+                   </div>
+                 );
+               })}
+             </>
           )}
         </div>
 
