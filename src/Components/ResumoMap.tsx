@@ -43,10 +43,10 @@ function MapController({
 }) {
   const map = useMap();
 
-  // Garantir que o mapa sempre inicie em Primavera do Leste
+  // Garantir que o mapa sempre inicie em Primavera do Leste com zoom mais distante
   useEffect(() => {
     const timer = setTimeout(() => {
-      map.setView(PRIMAVERA_DO_LESTE_COORDS, 14);
+      map.setView(PRIMAVERA_DO_LESTE_COORDS, 12);
     }, 100);
     return () => clearTimeout(timer);
   }, [map]);
@@ -150,10 +150,10 @@ export default function ResumoMap({ produtos }: { produtos: any[] }) {
 
   return (
     <div className="w-full h-full map-container relative">
-      <MapContainer
-        center={PRIMAVERA_DO_LESTE_COORDS}
-        zoom={14}
-        style={{ width: '100%', height: '100%' }}
+             <MapContainer
+         center={PRIMAVERA_DO_LESTE_COORDS}
+         zoom={12}
+         style={{ width: '100%', height: '100%' }}
         whenReady={() => {}}
         zoomControl={true}
         scrollWheelZoom={true}
