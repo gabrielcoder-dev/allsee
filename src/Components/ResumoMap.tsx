@@ -181,7 +181,7 @@ export default function ResumoMap({ produtos }: { produtos: any[] }) {
             position={[marker.lat, marker.lng]}
             icon={greenPinIcon}
           >
-            <Popup minWidth={200} maxWidth={300}>
+            <Popup minWidth={160} maxWidth={180}>
               <MiniAnuncioCard anuncio={marker.anuncio} />
             </Popup>
           </Marker>
