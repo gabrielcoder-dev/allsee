@@ -368,8 +368,9 @@ export default function CartResume({ onCartArtSelected, onCampaignNameChange, ar
              <p>Nenhum produto adicionado.</p>
            ) : (
              <>
-               {/* Mapa - apenas no desktop, em primeiro lugar */}
+               {/* Título e Mapa - apenas no desktop, em primeiro lugar */}
                <div className="hidden lg:block mb-6">
+                 <h3 className="text-lg font-bold mb-3 text-[#3b4252]">Totens que você adicionou</h3>
                  <div className="w-full h-64 rounded-lg overflow-hidden border border-gray-200">
                    <ResumoMap produtos={produtos} />
                  </div>
