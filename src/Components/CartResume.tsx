@@ -429,19 +429,19 @@ export default function CartResume({ onCartArtSelected, onCampaignNameChange, ar
                               </div>
                             );
                                                      })}
-                           
-                           {/* Mapa - apenas no desktop */}
-                           <div className="hidden lg:block mt-4">
-                             <div className="w-full h-64 rounded-lg overflow-hidden border border-gray-200">
-                               <ResumoMap produtos={itensTipo} />
-                             </div>
-                           </div>
                          </div>
                        )}
                      </div>
                    </div>
                  );
                })}
+               
+               {/* Mapa - apenas no desktop, acima dos grupos */}
+               <div className="hidden lg:block mb-6">
+                 <div className="w-full h-64 rounded-lg overflow-hidden border border-gray-200">
+                   <ResumoMap produtos={produtos} />
+                 </div>
+               </div>
             </>
           )}
          </div>
