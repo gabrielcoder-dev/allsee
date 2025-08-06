@@ -33,6 +33,19 @@ export default function ModalNichoEmpresa({
     { value: 'outro' as NichoOption, label: 'Outro' }
   ];
 
+  // Função para obter nichos organizados (outro sempre por último)
+  const getOrganizedNichos = () => {
+    const standardNichos = nichoOptions.filter(option => option.value !== 'outro');
+    const outroNicho = nichoOptions.find(option => option.value === 'outro');
+    const customNichosWithoutOutro = customNichos.filter(nicho => nicho !== 'outro');
+    
+    return [
+      ...standardNichos,
+      ...customNichosWithoutOutro.map(nicho => ({ value: nicho as NichoOption, label: nicho, isCustom: true })),
+      ...(outroNicho ? [{ ...outroNicho, isCustom: false }] : [])
+    ] as Array<{ value: NichoOption; label: string; isCustom: boolean }>;
+  };
+
   // Carregar nichos customizados
   useEffect(() => {
     async function loadCustomNichos() {
@@ -135,14 +148,13 @@ export default function ModalNichoEmpresa({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-      <div className="bg-white rounded-md relative flex flex-col p-8 shadow-lg w-96 max-w-full mx-4">
+      <div className="bg-white rounded-md relative flex flex-col p-8 shadow-lg w-full max-w-md sm:max-w-lg md:max-w-xl lg:max-w-2xl mx-4">
         <h2 className="text-xl font-semibold mb-6 text-center">
           Escolha o segmento da sua empresa!
         </h2>
         
-        <div className="space-y-3 mb-6">
-          {/* Nichos padrão */}
-          {nichoOptions.map((option) => (
+        <div className="space-y-3 mb-6 overflow-y-auto max-h-60">
+          {getOrganizedNichos().map((option) => (
             <button
               key={option.value}
               onClick={() => handleNichoSelect(option.value)}
@@ -153,21 +165,6 @@ export default function ModalNichoEmpresa({
               }`}
             >
               {option.label}
-            </button>
-          ))}
-          
-          {/* Nichos customizados */}
-          {customNichos.map((nicho) => (
-            <button
-              key={nicho}
-              onClick={() => handleNichoSelect(nicho)}
-              className={`w-full p-4 text-left rounded-lg border-2 transition-all ${
-                selectedNicho === nicho
-                  ? 'border-orange-500 bg-orange-50 text-orange-700'
-                  : 'border-gray-200 hover:border-gray-300'
-              }`}
-            >
-              {nicho}
             </button>
           ))}
         </div>

@@ -54,6 +54,19 @@ export default function ModalCreateAnuncios({
     { value: 'outro' as NichoOption, label: 'Outro' }
   ];
 
+  // Função para obter nichos organizados (outro sempre por último)
+  const getOrganizedNichos = () => {
+    const standardNichos = nichoOptions.filter(option => option.value !== 'outro');
+    const outroNicho = nichoOptions.find(option => option.value === 'outro');
+    const customNichosWithoutOutro = customNichos.filter(nicho => nicho !== 'outro');
+    
+    return [
+      ...standardNichos,
+      ...customNichosWithoutOutro.map(nicho => ({ value: nicho as NichoOption, label: nicho, isCustom: true })),
+      ...(outroNicho ? [{ ...outroNicho, isCustom: false }] : [])
+    ] as Array<{ value: NichoOption; label: string; isCustom: boolean }>;
+  };
+
   useEffect(() => {
     if (anuncio) {
       setName(anuncio.name || "");
@@ -383,7 +396,7 @@ export default function ModalCreateAnuncios({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-2 sm:p-4">
-      <div className="bg-white rounded-2xl shadow-xl p-3 sm:p-4 md:p-6 w-full max-w-sm sm:max-w-lg md:max-w-xl lg:max-w-2xl relative overflow-y-auto max-h-[95vh] sm:max-h-[90vh]">
+      <div className="bg-white rounded-2xl shadow-xl p-3 sm:p-4 md:p-6 w-full max-w-md sm:max-w-lg md:max-w-2xl lg:max-w-3xl relative overflow-y-auto max-h-[90vh] sm:max-h-[85vh]">
         <button
           className="absolute top-2 right-2 sm:top-3 sm:right-3 p-1.5 sm:p-2 rounded hover:bg-gray-100"
           onClick={onClose}
@@ -486,42 +499,29 @@ export default function ModalCreateAnuncios({
 
           {/* Nicho */}
           <span className="text-xs font-semibold text-gray-700 pl-1 mt-2">Segmento</span>
-          <div className="flex flex-col gap-1">
-            {/* Nichos padrão */}
-            {nichoOptions.map((option) => (
-              <label key={option.value} className="flex items-center text-sm sm:text-base">
-                <input
-                  type="radio"
-                  value={option.value}
-                  checked={selectedNicho === option.value}
-                  onChange={() => setSelectedNicho(option.value as NichoOption)}
-                  className="mr-2"
-                />
-                {option.label}
-              </label>
-            ))}
-            
-            {/* Nichos customizados */}
-            {customNichos.map((nicho) => (
-              <div key={nicho} className="flex items-center justify-between text-sm sm:text-base">
+          <div className="flex flex-col gap-1 overflow-y-auto max-h-40">
+            {getOrganizedNichos().map((option) => (
+              <div key={option.value} className="flex items-center justify-between text-sm sm:text-base">
                 <label className="flex items-center flex-1 cursor-pointer">
                   <input
                     type="radio"
-                    value={nicho}
-                    checked={selectedNicho === nicho}
-                    onChange={() => setSelectedNicho(nicho as NichoOption)}
+                    value={option.value}
+                    checked={selectedNicho === option.value}
+                    onChange={() => setSelectedNicho(option.value as NichoOption)}
                     className="mr-2"
                   />
-                  {nicho}
+                  {option.label}
                 </label>
-                <button
-                  type="button"
-                  onClick={() => handleDeleteNicho(nicho)}
-                  className="ml-2 text-red-500 hover:text-red-600 p-1 rounded-full hover:bg-red-50 transition-colors"
-                  title="Excluir Nicho"
-                >
-                  <X className="w-3 h-3" />
-                </button>
+                {option.isCustom && (
+                  <button
+                    type="button"
+                    onClick={() => handleDeleteNicho(option.value)}
+                    className="ml-2 text-red-500 hover:text-red-600 p-1 rounded-full hover:bg-red-50 transition-colors"
+                    title="Excluir Nicho"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                )}
               </div>
             ))}
             
