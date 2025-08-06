@@ -112,26 +112,34 @@ export default function ModalCreateAnuncios({
   useEffect(() => {
     async function loadCustomNichos() {
       try {
+        console.log('🔄 Recarregando nichos customizados...')
         const { data, error } = await supabase
           .from('nichos_customizados')
           .select('nome')
           .order('nome');
         
         if (error) {
-          console.error('Erro ao carregar nichos customizados:', error);
+          console.error('❌ Erro ao carregar nichos customizados:', error);
           return;
         }
         
         if (data) {
+          console.log('✅ Nichos carregados:', data.map(item => item.nome))
           setCustomNichos(data.map(item => item.nome));
+        } else {
+          console.log('📭 Nenhum nicho encontrado')
+          setCustomNichos([]);
         }
       } catch (error) {
-        console.error('Erro ao carregar nichos customizados:', error);
+        console.error('❌ Erro ao carregar nichos customizados:', error);
       }
     }
     
-    loadCustomNichos();
-  }, []);
+    // Recarregar sempre que o modal abrir
+    if (open) {
+      loadCustomNichos();
+    }
+  }, [open]); // Dependência no 'open' para recarregar quando modal abrir
 
   if (!open) return null;
 
@@ -165,6 +173,32 @@ export default function ModalCreateAnuncios({
     }
   }
 
+  // Função para recarregar nichos customizados
+  async function refreshCustomNichos() {
+    try {
+      console.log('🔄 Forçando recarregamento de nichos...')
+      const { data, error } = await supabase
+        .from('nichos_customizados')
+        .select('nome')
+        .order('nome');
+      
+      if (error) {
+        console.error('❌ Erro ao recarregar nichos:', error);
+        return;
+      }
+      
+      if (data) {
+        console.log('✅ Nichos recarregados:', data.map(item => item.nome))
+        setCustomNichos(data.map(item => item.nome));
+      } else {
+        console.log('📭 Nenhum nicho encontrado após recarregamento')
+        setCustomNichos([]);
+      }
+    } catch (error) {
+      console.error('❌ Erro ao recarregar nichos:', error);
+    }
+  }
+
   // Função para excluir nicho customizado
   async function handleDeleteNicho(nichoToDelete: string) {
     try {
@@ -174,13 +208,13 @@ export default function ModalCreateAnuncios({
         .eq('nome', nichoToDelete);
       
       if (error) {
-        console.error('Erro ao excluir nicho:', error);
+        console.error('❌ Erro ao excluir nicho:', error);
         setError('Erro ao excluir nicho. Tente novamente.');
         return;
       }
 
-      // Remover da lista local
-      setCustomNichos(prev => prev.filter(nicho => nicho !== nichoToDelete));
+      // Recarregar nichos do banco para garantir sincronização
+      await refreshCustomNichos();
       
       // Se o nicho excluído estava selecionado, limpar a seleção
       if (selectedNicho === nichoToDelete) {
@@ -190,7 +224,7 @@ export default function ModalCreateAnuncios({
       setError(null);
       toast.success('Nicho excluído com sucesso!');
     } catch (error) {
-      console.error('Erro ao excluir nicho:', error);
+      console.error('❌ Erro ao excluir nicho:', error);
       setError('Erro ao excluir nicho. Tente novamente.');
     }
   }

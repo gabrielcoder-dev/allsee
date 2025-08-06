@@ -53,14 +53,18 @@ export default function ModalNichoEmpresa({
           setCustomNichos(data.map(item => item.nome));
         } else {
           console.log('📭 Nenhum nicho customizado encontrado')
+          setCustomNichos([]);
         }
       } catch (error) {
         console.error('❌ Erro ao carregar nichos customizados:', error);
       }
     }
     
-    loadCustomNichos();
-  }, []);
+    // Recarregar sempre que o modal abrir
+    if (open) {
+      loadCustomNichos();
+    }
+  }, [open]); // Dependência no 'open' para recarregar quando modal abrir
 
   const handleNichoSelect = (nicho: NichoOption) => {
     setSelectedNicho(nicho)
