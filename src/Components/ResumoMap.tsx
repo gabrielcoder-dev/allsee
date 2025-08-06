@@ -8,6 +8,7 @@ import 'leaflet/dist/leaflet.css'
 import { supabase } from '../lib/supabase'
 import { greenPinIcon } from './CustomMarkerIcon';
 import MiniAnuncioCard from './MiniAnuncioCard';
+import { MapIcon, ArrowLeft } from 'lucide-react';
 
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: '/images/marker-icon-2x.png',
@@ -58,6 +59,7 @@ export default function ResumoMap({ produtos }: { produtos: any[] }) {
   const [markers, setMarkers] = useState<MarkerType[]>([])
   const [loading, setLoading] = useState(true)
   const [mounted, setMounted] = useState(false)
+  const [isExpanded, setIsExpanded] = useState(false)
 
   // Verificação adicional para evitar erros de hidratação
   if (typeof window === 'undefined') {
@@ -148,12 +150,82 @@ export default function ResumoMap({ produtos }: { produtos: any[] }) {
     );
   }
 
+  // Se o mapa estiver expandido, renderizar em tela cheia
+  if (isExpanded) {
+    return (
+      <div className="fixed inset-0 z-50 bg-white">
+        {/* Header do mapa expandido */}
+        <div className="absolute top-0 left-0 right-0 z-10 bg-white border-b border-gray-200 p-4 flex items-center justify-between">
+          <h2 className="text-lg font-bold text-gray-800">Mapa dos Totens</h2>
+          <button
+            onClick={() => setIsExpanded(false)}
+            className="flex items-center gap-2 bg-orange-500 text-white px-4 py-2 rounded-md hover:bg-orange-600 transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Voltar à compra
+          </button>
+        </div>
+        
+        {/* Mapa em tela cheia */}
+        <div className="w-full h-full pt-16">
+          <MapContainer
+            center={PRIMAVERA_DO_LESTE_COORDS}
+            zoom={12}
+            style={{ width: '100%', height: '100%' }}
+            whenReady={() => {}}
+            zoomControl={true}
+            scrollWheelZoom={true}
+            doubleClickZoom={true}
+            boxZoom={true}
+            keyboard={true}
+            dragging={true}
+            maxBounds={undefined}
+            minZoom={1}
+            maxZoom={18}
+            worldCopyJump={true}
+          >
+            <MapController markers={markers} />
+            
+            <TileLayer
+              attribution='&copy; <a href="https://osm.org/copyright">OpenStreetMap</a> contributors'
+              url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
+              maxZoom={18}
+              minZoom={1}
+            />
+
+            {markersNoCarrinho.map((marker) => (
+              <Marker
+                key={marker.id}
+                position={[marker.lat, marker.lng]}
+                icon={greenPinIcon}
+              >
+                <Popup minWidth={160} maxWidth={180}>
+                  <MiniAnuncioCard anuncio={marker.anuncio} size="small" />
+                </Popup>
+              </Marker>
+            ))}
+          </MapContainer>
+        </div>
+      </div>
+    );
+  }
+
+  // Renderização normal do mapa
   return (
     <div className="w-full h-full map-container relative">
-             <MapContainer
-         center={PRIMAVERA_DO_LESTE_COORDS}
-         zoom={12}
-         style={{ width: '100%', height: '100%' }}
+      {/* Botão "Ver o mapa" */}
+      <button
+        onClick={() => setIsExpanded(true)}
+        className="absolute top-2 right-2 z-10 bg-orange-500 text-white px-3 py-1.5 rounded-md text-sm font-medium hover:bg-orange-600 transition-colors flex items-center gap-1"
+      >
+        <MapIcon className="w-4 h-4" />
+        Ver o mapa
+      </button>
+      
+      <MapContainer
+        center={PRIMAVERA_DO_LESTE_COORDS}
+        zoom={12}
+        style={{ width: '100%', height: '100%' }}
         whenReady={() => {}}
         zoomControl={true}
         scrollWheelZoom={true}
