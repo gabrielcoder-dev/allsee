@@ -37,21 +37,25 @@ export default function ModalNichoEmpresa({
   useEffect(() => {
     async function loadCustomNichos() {
       try {
+        console.log('🔄 Carregando nichos customizados...')
         const { data, error } = await supabase
           .from('nichos_customizados')
           .select('nome')
           .order('nome');
         
         if (error) {
-          console.error('Erro ao carregar nichos customizados:', error);
+          console.error('❌ Erro ao carregar nichos customizados:', error);
           return;
         }
         
         if (data) {
+          console.log('✅ Nichos customizados carregados:', data.map(item => item.nome))
           setCustomNichos(data.map(item => item.nome));
+        } else {
+          console.log('📭 Nenhum nicho customizado encontrado')
         }
       } catch (error) {
-        console.error('Erro ao carregar nichos customizados:', error);
+        console.error('❌ Erro ao carregar nichos customizados:', error);
       }
     }
     

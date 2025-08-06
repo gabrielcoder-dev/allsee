@@ -128,23 +128,35 @@ const Page = () => {
         const { data: { user } } = await supabase.auth.getUser()
         
         if (user) {
+          console.log('🔍 Verificando usuário:', user.id)
+          
           // Verificar se já existe um profile com nicho
-          const { data: profile } = await supabase
+          const { data: profile, error } = await supabase
             .from('profiles')
             .select('nicho')
             .eq('id', user.id)
             .single()
 
+          console.log('📋 Profile encontrado:', profile)
+          console.log('❌ Erro na busca:', error)
+
           // Se não existe profile ou não tem nicho, é primeiro acesso
           if (!profile || !profile.nicho) {
+            console.log('🆕 Usuário novo detectado - mostrando modal')
             setIsFirstTimeUser(true)
             setShowNichoModal(true)
           } else {
+            console.log('👤 Usuário existente - nicho:', profile.nicho)
             setUserNicho(profile.nicho)
           }
+        } else {
+          console.log('❌ Nenhum usuário autenticado')
         }
       } catch (error) {
-        console.error('Erro ao verificar primeiro acesso:', error)
+        console.error('❌ Erro ao verificar primeiro acesso:', error)
+        // Em caso de erro, mostrar o modal para garantir
+        setIsFirstTimeUser(true)
+        setShowNichoModal(true)
       }
     }
 
@@ -281,6 +293,13 @@ const Page = () => {
 
       {/* HeaderPrice - sempre visível e fixo */}
       <HeaderPrice />
+
+      {/* Modal de Nicho da Empresa */}
+      <ModalNichoEmpresa
+        open={showNichoModal}
+        onClose={() => setShowNichoModal(false)}
+        onNichoSelected={handleNichoSelected}
+      />
 
       <ToastContainer />
     </div>
