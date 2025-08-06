@@ -318,7 +318,7 @@ export default function Mapbox({ anunciosFiltrados, onCityFound, userNicho, isFu
               icon={estaNoCarrinho ? greenPinIcon : orangePinIcon}
             >
               <Popup minWidth={200} maxWidth={300}>
-                <MiniAnuncioCard anuncio={marker.anuncio} size="large" />
+                <MiniAnuncioCard anuncio={marker.anuncio} size="medium" />
               </Popup>
             </Marker>
           );
