@@ -153,7 +153,7 @@ export default function ResumoMap({ produtos }: { produtos: any[] }) {
   // Se o mapa estiver expandido, renderizar em tela cheia
   if (isExpanded) {
     return (
-      <div className="fixed inset-0 z-50 bg-white" style={{ top: '120px', bottom: '80px' }}>
+      <div className="fixed inset-0 z-50 bg-white" style={{ top: '80px', bottom: '80px' }}>
         {/* Mapa em tela cheia */}
         <div className="w-full h-full relative">
           {/* Botão "Voltar à compra" */}
