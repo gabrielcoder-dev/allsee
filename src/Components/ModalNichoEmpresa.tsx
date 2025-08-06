@@ -147,7 +147,7 @@ export default function ModalNichoEmpresa({
   if (!open) return null
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/40">
       <div className="bg-white rounded-md relative flex flex-col p-8 shadow-lg w-full max-w-md sm:max-w-lg md:max-w-xl lg:max-w-2xl mx-4">
         <h2 className="text-xl font-semibold mb-6 text-center">
           Escolha o segmento da sua empresa!

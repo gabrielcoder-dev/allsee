@@ -45,7 +45,7 @@ export default function FilterModal({ open, onClose, onFilter }: { open: boolean
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex">
+    <div className="fixed inset-0 z-[9999] flex">
       {/* Overlay */}
       <div className="fixed inset-0 bg-black/30" onClick={onClose} />
 

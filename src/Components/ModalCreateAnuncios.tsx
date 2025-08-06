@@ -395,7 +395,7 @@ export default function ModalCreateAnuncios({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-2 sm:p-4">
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/40 p-2 sm:p-4">
       <div className="bg-white rounded-2xl shadow-xl p-3 sm:p-4 md:p-6 w-full max-w-md sm:max-w-lg md:max-w-2xl lg:max-w-3xl relative overflow-y-auto max-h-[90vh] sm:max-h-[85vh]">
         <button
           className="absolute top-2 right-2 sm:top-3 sm:right-3 p-1.5 sm:p-2 rounded hover:bg-gray-100"

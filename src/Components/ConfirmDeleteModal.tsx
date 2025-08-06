@@ -13,7 +13,7 @@ export default function ConfirmDeleteModal({ isOpen, onClose, onConfirm, totemNa
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4 sm:p-6">
+    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-[9999] p-4 sm:p-6">
       <div className="bg-white rounded-2xl p-4 sm:p-6 max-w-sm sm:max-w-md w-full shadow-xl mx-4">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg sm:text-xl font-bold text-gray-900">Confirmar exclusão</h2>

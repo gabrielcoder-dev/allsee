@@ -95,7 +95,7 @@ export default function ModalHeaderMobile({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/30" onClick={onClose}>
+    <div className="fixed inset-0 z-[9999] flex items-start justify-center bg-black/30" onClick={onClose}>
       <div
         className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-sm mx-2 mt-8"
         onClick={e => e.stopPropagation()}
@@ -166,7 +166,7 @@ export default function ModalHeaderMobile({
 
       {/* Calendar modal centralizado */}
       {showCalendar && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/40">
           <div
             id="calendar-modal"
             className="bg-white rounded-2xl shadow-xl p-4"
