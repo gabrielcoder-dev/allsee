@@ -276,11 +276,11 @@ export default function MiniAnuncioCard({ anuncio, actionButton, hideAddButton, 
         >
           {estaNoCarrinho ? (
             <>
-              remover <TrashIcon className="inline w-3 h-3" />
+              remover ponto <TrashIcon className="inline w-3 h-3" />
             </>
           ) : (
             <>
-              adicionar <ShoppingCartIcon className="inline w-3 h-3" />
+              adicionar ponto <ShoppingCartIcon className="inline w-3 h-3" />
             </>
           )}
         </button>
