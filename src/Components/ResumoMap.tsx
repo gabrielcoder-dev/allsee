@@ -216,10 +216,10 @@ export default function ResumoMap({ produtos }: { produtos: any[] }) {
       {/* Botão "Ver o mapa" */}
       <button
         onClick={() => setIsExpanded(true)}
-        className="absolute top-2 right-2 z-10 bg-orange-500 text-white px-3 py-1.5 rounded-md text-sm font-medium hover:bg-orange-600 transition-colors flex items-center gap-1"
+        className="absolute top-3 right-3 z-20 bg-white text-gray-800 px-4 py-2 rounded-full text-sm font-medium hover:bg-gray-50 transition-colors flex items-center gap-2 shadow-md border border-gray-200"
       >
         <MapIcon className="w-4 h-4" />
-        Ver o mapa
+        Ver em mapa
       </button>
       
       <MapContainer
