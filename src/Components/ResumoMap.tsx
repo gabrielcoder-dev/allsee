@@ -154,20 +154,19 @@ export default function ResumoMap({ produtos }: { produtos: any[] }) {
   if (isExpanded) {
     return (
       <div className="fixed inset-0 z-50 bg-white" style={{ top: '64px', bottom: '80px' }}>
-        {/* Header do mapa expandido */}
-        <div className="absolute top-0 left-0 right-0 z-10 bg-white border-b border-gray-200 p-4 flex items-center justify-between">
-          <h2 className="text-lg font-bold text-gray-800">Mapa dos Totens</h2>
-          <button
-            onClick={() => setIsExpanded(false)}
-            className="flex items-center gap-2 bg-orange-500 text-white px-4 py-2 rounded-md hover:bg-orange-600 transition-colors"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Voltar à compra
-          </button>
-        </div>
-        
         {/* Mapa em tela cheia */}
-        <div className="w-full h-full pt-16">
+        <div className="w-full h-full relative">
+          {/* Botão "Voltar à compra" */}
+          <div style={{ position: 'absolute', top: '12px', right: '12px', zIndex: 99999, pointerEvents: 'auto' }}>
+            <button
+              onClick={() => setIsExpanded(false)}
+              className="bg-white text-gray-800 px-4 py-2 rounded-2xl text-sm font-medium hover:bg-gray-50 transition-colors flex items-center gap-2 shadow-md border border-gray-200"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              Voltar à compra
+            </button>
+          </div>
+          
           <MapContainer
             center={PRIMAVERA_DO_LESTE_COORDS}
             zoom={12}
