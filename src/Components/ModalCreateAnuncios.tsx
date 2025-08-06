@@ -165,6 +165,36 @@ export default function ModalCreateAnuncios({
     }
   }
 
+  // Função para excluir nicho customizado
+  async function handleDeleteNicho(nichoToDelete: string) {
+    try {
+      const { error } = await supabase
+        .from('nichos_customizados')
+        .delete()
+        .eq('nome', nichoToDelete);
+      
+      if (error) {
+        console.error('Erro ao excluir nicho:', error);
+        setError('Erro ao excluir nicho. Tente novamente.');
+        return;
+      }
+
+      // Remover da lista local
+      setCustomNichos(prev => prev.filter(nicho => nicho !== nichoToDelete));
+      
+      // Se o nicho excluído estava selecionado, limpar a seleção
+      if (selectedNicho === nichoToDelete) {
+        setSelectedNicho(null);
+      }
+      
+      setError(null);
+      toast.success('Nicho excluído com sucesso!');
+    } catch (error) {
+      console.error('Erro ao excluir nicho:', error);
+      setError('Erro ao excluir nicho. Tente novamente.');
+    }
+  }
+
   async function handleImageUpload(file: File) {
     console.log('🚀 Iniciando upload de imagem:', file.name, file.size, file.type);
     
@@ -439,16 +469,26 @@ export default function ModalCreateAnuncios({
             
             {/* Nichos customizados */}
             {customNichos.map((nicho) => (
-              <label key={nicho} className="flex items-center text-sm sm:text-base">
-                <input
-                  type="radio"
-                  value={nicho}
-                  checked={selectedNicho === nicho}
-                  onChange={() => setSelectedNicho(nicho as NichoOption)}
-                  className="mr-2"
-                />
-                {nicho}
-              </label>
+              <div key={nicho} className="flex items-center justify-between text-sm sm:text-base">
+                <label className="flex items-center flex-1 cursor-pointer">
+                  <input
+                    type="radio"
+                    value={nicho}
+                    checked={selectedNicho === nicho}
+                    onChange={() => setSelectedNicho(nicho as NichoOption)}
+                    className="mr-2"
+                  />
+                  {nicho}
+                </label>
+                <button
+                  type="button"
+                  onClick={() => handleDeleteNicho(nicho)}
+                  className="ml-2 text-red-500 hover:text-red-600 p-1 rounded-full hover:bg-red-50 transition-colors"
+                  title="Excluir Nicho"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              </div>
             ))}
             
                          {/* Input inline para adicionar novo segmento */}
