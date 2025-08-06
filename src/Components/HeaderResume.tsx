@@ -75,7 +75,7 @@ export const HeaderResume = () => {
   }, [open])
 
   return (
-    <div className="border-b w-full px-4 lg:px-12 py-2 flex top-0 left-0 right-0 z-40 justify-between items-center gap-4 ">
+    <div className="border-b w-full px-4 lg:px-12 py-2 flex top-0 left-0 right-0 z-30 justify-between items-center gap-4 ">
 
       <Image
         src={logoImg}

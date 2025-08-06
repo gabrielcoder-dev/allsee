@@ -87,7 +87,7 @@ export default function MobileHeader({
 
   return (
     <>
-      <div className="flex lg:hidden flex-col gap-4 w-full px-4 py-3 bg-white z-40 transition-all duration-500">
+      <div className="flex lg:hidden flex-col gap-4 w-full px-4 py-3 bg-white z-30 transition-all duration-500">
         {/* Top Bar: Logo, carrinho, saudação, menu */}
         <div
           className={`
@@ -171,7 +171,7 @@ export default function MobileHeader({
                     <ChevronDownIcon className="w-4 h-4" />
                   </button>
                   {open && (
-                    <div className="absolute left-0 mt-2 min-w-[180px] bg-white rounded-xl shadow-lg border z-40 py-2">
+                    <div className="absolute left-0 mt-2 min-w-[180px] bg-white rounded-xl shadow-lg border z-30 py-2">
                       {orderOptions.map(opt => (
                         <button
                           key={opt.value}
