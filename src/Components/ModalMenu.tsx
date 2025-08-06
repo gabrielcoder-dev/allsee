@@ -25,7 +25,7 @@ export default function ModalMenu({ open, onClose }: ModalMenuProps) {
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-[9999] flex items-end justify-end md:items-start md:justify-end">
+    <div className="fixed inset-0 z-50 flex items-end justify-end md:items-start md:justify-end">
       {/* Overlay escuro */}
       <div
         className="fixed inset-0 bg-black/30"
