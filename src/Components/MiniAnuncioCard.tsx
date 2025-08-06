@@ -100,91 +100,91 @@ export default function MiniAnuncioCard({ anuncio, actionButton, hideAddButton, 
   const containerClasses = size === 'small' 
     ? "bg-white rounded-xl shadow border border-gray-100 p-1 flex flex-col gap-0.5 w-[160px] min-w-[140px] max-w-[180px] cursor-pointer"
     : size === 'medium'
-    ? "bg-white rounded-xl shadow border border-gray-100 p-2 flex flex-col gap-1.5 w-[220px] min-w-[200px] max-w-[240px] cursor-pointer"
+    ? "bg-white rounded-xl shadow border border-gray-100 p-1.5 flex flex-col gap-1 w-[180px] min-w-[160px] max-w-[200px] cursor-pointer"
     : "bg-white rounded-xl shadow border border-gray-100 p-3 flex flex-col gap-2 w-[280px] min-w-[250px] max-w-[320px] cursor-pointer";
 
   const imageClasses = size === 'small'
     ? "rounded-lg overflow-hidden h-8 flex items-center justify-center bg-gray-100 mb-0.5 relative"
     : size === 'medium'
-    ? "rounded-lg overflow-hidden h-12 flex items-center justify-center bg-gray-100 mb-1.5 relative"
+    ? "rounded-lg overflow-hidden h-10 flex items-center justify-center bg-gray-100 mb-1 relative"
     : "rounded-lg overflow-hidden h-16 flex items-center justify-center bg-gray-100 mb-2 relative";
 
   const imageImgClasses = size === 'small'
     ? "object-cover w-full h-8"
     : size === 'medium'
-    ? "object-cover w-full h-12"
+    ? "object-cover w-full h-10"
     : "object-cover w-full h-16";
 
   const tagClasses = size === 'small'
     ? "bg-purple-600 text-white text-[8px] px-1 py-0.5 rounded font-medium flex items-center gap-0.5"
     : size === 'medium'
-    ? "bg-purple-600 text-white text-[10px] px-1.5 py-0.5 rounded font-medium flex items-center gap-0.5"
+    ? "bg-purple-600 text-white text-[9px] px-1 py-0.5 rounded font-medium flex items-center gap-0.5"
     : "bg-purple-600 text-white text-xs px-2 py-1 rounded font-medium flex items-center gap-1";
 
   const titleClasses = size === 'small'
     ? "font-bold text-xs line-clamp-1 mb-0.5"
     : size === 'medium'
-    ? "font-bold text-sm line-clamp-1 mb-1"
+    ? "font-bold text-xs line-clamp-1 mb-0.5"
     : "font-bold text-sm line-clamp-1 mb-1";
 
   const addressClasses = size === 'small'
     ? "text-gray-500 text-[8px] mb-0.5 break-words line-clamp-2"
     : size === 'medium'
-    ? "text-gray-500 text-[10px] mb-1 break-words line-clamp-2"
+    ? "text-gray-500 text-[9px] mb-0.5 break-words line-clamp-2"
     : "text-gray-500 text-xs mb-2 break-words line-clamp-2";
 
   const statsContainerClasses = size === 'small'
     ? "flex gap-2 mb-0.5"
     : size === 'medium'
-    ? "flex gap-3 mb-1"
+    ? "flex gap-2 mb-0.5"
     : "flex gap-4 mb-2";
 
   const statLabelClasses = size === 'small'
     ? "text-[7px] text-gray-500 font-medium lowercase"
     : size === 'medium'
-    ? "text-[9px] text-gray-500 font-medium lowercase"
+    ? "text-[8px] text-gray-500 font-medium lowercase"
     : "text-xs text-gray-500 font-medium lowercase";
 
   const statValueClasses = size === 'small'
     ? "font-bold text-[8px]"
     : size === 'medium'
-    ? "font-bold text-[10px]"
+    ? "font-bold text-[9px]"
     : "font-bold text-sm";
 
   const screensClasses = size === 'small'
     ? "text-[8px] text-gray-800 mb-0.5 font-bold"
     : size === 'medium'
-    ? "text-[10px] text-gray-800 mb-1 font-bold"
+    ? "text-[9px] text-gray-800 mb-0.5 font-bold"
     : "text-xs text-gray-800 mb-2 font-bold";
 
   const priceContainerClasses = size === 'small'
     ? "mb-0.5 flex flex-col gap-0.5"
     : size === 'medium'
-    ? "mb-1 flex flex-col gap-0.5"
+    ? "mb-0.5 flex flex-col gap-0.5"
     : "mb-2 flex flex-col gap-1";
 
   const originalPriceClasses = size === 'small'
     ? "text-[8px] text-gray-400 line-through"
     : size === 'medium'
-    ? "text-[10px] text-gray-400 line-through"
+    ? "text-[9px] text-gray-400 line-through"
     : "text-xs text-gray-400 line-through";
 
   const finalPriceClasses = size === 'small'
     ? "text-xs font-bold text-green-700"
     : size === 'medium'
-    ? "text-sm font-bold text-green-700"
+    ? "text-xs font-bold text-green-700"
     : "text-lg font-bold text-green-700";
 
   const durationClasses = size === 'small'
     ? "text-[8px] text-gray-500 mb-0.5"
     : size === 'medium'
-    ? "text-[10px] text-gray-500 mb-1"
+    ? "text-[9px] text-gray-500 mb-0.5"
     : "text-xs text-gray-500 mb-2";
 
   const buttonClasses = size === 'small'
     ? "w-full cursor-pointer flex items-center justify-center gap-1 border rounded py-0.5 text-[8px] font-semibold transition"
     : size === 'medium'
-    ? "w-full cursor-pointer flex items-center justify-center gap-1 border rounded py-1 text-[10px] font-semibold transition"
+    ? "w-full cursor-pointer flex items-center justify-center gap-1 border rounded py-0.5 text-[9px] font-semibold transition"
     : "w-full cursor-pointer flex items-center justify-center gap-2 border rounded py-2 text-sm font-semibold transition";
 
   return (
