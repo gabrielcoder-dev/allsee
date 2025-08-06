@@ -212,15 +212,17 @@ export default function ResumoMap({ produtos }: { produtos: any[] }) {
 
   // Renderização normal do mapa
   return (
-    <div className="w-full h-full map-container relative">
+    <div className="w-full h-full map-container relative" style={{ position: 'relative' }}>
       {/* Botão "Ver o mapa" */}
-      <button
-        onClick={() => setIsExpanded(true)}
-        className="absolute top-3 right-3 z-20 bg-white text-gray-800 px-4 py-2 rounded-full text-sm font-medium hover:bg-gray-50 transition-colors flex items-center gap-2 shadow-md border border-gray-200"
-      >
-        <MapIcon className="w-4 h-4" />
-        Ver em mapa
-      </button>
+      <div style={{ position: 'absolute', top: '12px', right: '12px', zIndex: 99999, pointerEvents: 'auto' }}>
+        <button
+          onClick={() => setIsExpanded(true)}
+          className="bg-white text-gray-800 px-4 py-2 rounded-full text-sm font-medium hover:bg-gray-50 transition-colors flex items-center gap-2 shadow-md border border-gray-200"
+        >
+          <MapIcon className="w-4 h-4" />
+          Ver em mapa
+        </button>
+      </div>
       
       <MapContainer
         center={PRIMAVERA_DO_LESTE_COORDS}
