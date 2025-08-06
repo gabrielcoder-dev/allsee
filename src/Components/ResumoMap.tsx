@@ -153,7 +153,7 @@ export default function ResumoMap({ produtos }: { produtos: any[] }) {
   // Se o mapa estiver expandido, renderizar em tela cheia
   if (isExpanded) {
     return (
-      <div className="fixed inset-0 z-50 bg-white">
+      <div className="fixed inset-0 z-50 bg-white" style={{ top: '64px', bottom: '80px' }}>
         {/* Header do mapa expandido */}
         <div className="absolute top-0 left-0 right-0 z-10 bg-white border-b border-gray-200 p-4 flex items-center justify-between">
           <h2 className="text-lg font-bold text-gray-800">Mapa dos Totens</h2>
@@ -217,10 +217,10 @@ export default function ResumoMap({ produtos }: { produtos: any[] }) {
       <div style={{ position: 'absolute', top: '12px', right: '12px', zIndex: 99999, pointerEvents: 'auto' }}>
         <button
           onClick={() => setIsExpanded(true)}
-          className="bg-white text-gray-800 px-4 py-2 rounded-full text-sm font-medium hover:bg-gray-50 transition-colors flex items-center gap-2 shadow-md border border-gray-200"
+          className="bg-white text-gray-800 px-4 py-2 rounded-2xl text-sm font-medium hover:bg-gray-50 transition-colors flex items-center gap-2 shadow-md border border-gray-200"
         >
           <MapIcon className="w-4 h-4" />
-          Ver em mapa
+          Ver o mapa
         </button>
       </div>
       
