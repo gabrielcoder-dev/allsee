@@ -347,7 +347,7 @@ export default function CartResume({ onCartArtSelected, onCampaignNameChange, ar
 
 
   return (
-    <div className="w-full h-full px-2 sm:px-4 md:px-12 py-4 lg:py-6 flex flex-col gap-4">
+    <div className="w-full h-full px-2 sm:px-4 md:px-12 py-4 lg:py-6 flex flex-col gap-4 overflow-y-auto lg:overflow-y-hidden">
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-xl lg:text-2xl font-bold">Plano de Mídia</h2>
         <button
