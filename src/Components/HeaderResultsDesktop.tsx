@@ -134,7 +134,7 @@ const HeaderResultsDesktop = ({ onDurationChange, selectedDuration, onTipoMidiaC
 
   return (
     <>
-      <div className="w-full hidden px-12 py-3 lg:flex top-0 left-0 right-0 z-50 justify-between items-center gap-4 ">
+      <div className="w-full hidden px-12 py-3 lg:flex top-0 left-0 right-0 z-40 justify-between items-center gap-4 ">
 
         <Image
         src={logoImg}
@@ -237,7 +237,7 @@ const HeaderResultsDesktop = ({ onDurationChange, selectedDuration, onTipoMidiaC
           <ChevronDownIcon className="w-4 h-4" />
         </button>
         {open && (
-          <div className="absolute left-0 mt-2 min-w-[180px] bg-white rounded-xl shadow-lg border z-50 py-2">
+          <div className="absolute left-0 mt-2 min-w-[180px] bg-white rounded-xl shadow-lg border z-40 py-2">
             {orderOptions.map(opt => (
               <button
                 key={opt.value}
