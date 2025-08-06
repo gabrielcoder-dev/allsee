@@ -176,7 +176,6 @@ const MapAdmin = () => {
                   <MiniAnuncioCard
                     anuncio={selectedMarker.anuncio}
                     hideAddButton={true}
-                    size="large"
                     actionButton={
                       <button
                         onClick={() => { handleRemoveMarker(selectedMarker.id); setSelectedMarker(null); }}
