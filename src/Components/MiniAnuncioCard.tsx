@@ -23,10 +23,11 @@ type AnuncioType = {
   alcance?: number;
 };
 
-export default function MiniAnuncioCard({ anuncio, actionButton, hideAddButton }: { 
+export default function MiniAnuncioCard({ anuncio, actionButton, hideAddButton, size = 'large' }: { 
   anuncio: AnuncioType, 
   actionButton?: React.ReactNode, 
-  hideAddButton?: boolean 
+  hideAddButton?: boolean,
+  size?: 'small' | 'large'
 }) {
   const { adicionarProduto, removerProduto, produtos, selectedDurationGlobal } = useCart();
   
@@ -95,15 +96,74 @@ export default function MiniAnuncioCard({ anuncio, actionButton, hideAddButton }
     }
   };
 
+  // Classes baseadas no tamanho
+  const containerClasses = size === 'small' 
+    ? "bg-white rounded-xl shadow border border-gray-100 p-1 flex flex-col gap-0.5 w-[160px] min-w-[140px] max-w-[180px] cursor-pointer"
+    : "bg-white rounded-xl shadow border border-gray-100 p-3 flex flex-col gap-2 w-[280px] min-w-[250px] max-w-[320px] cursor-pointer";
+
+  const imageClasses = size === 'small'
+    ? "rounded-lg overflow-hidden h-8 flex items-center justify-center bg-gray-100 mb-0.5 relative"
+    : "rounded-lg overflow-hidden h-16 flex items-center justify-center bg-gray-100 mb-2 relative";
+
+  const imageImgClasses = size === 'small'
+    ? "object-cover w-full h-8"
+    : "object-cover w-full h-16";
+
+  const tagClasses = size === 'small'
+    ? "bg-purple-600 text-white text-[8px] px-1 py-0.5 rounded font-medium flex items-center gap-0.5"
+    : "bg-purple-600 text-white text-xs px-2 py-1 rounded font-medium flex items-center gap-1";
+
+  const titleClasses = size === 'small'
+    ? "font-bold text-xs line-clamp-1 mb-0.5"
+    : "font-bold text-sm line-clamp-1 mb-1";
+
+  const addressClasses = size === 'small'
+    ? "text-gray-500 text-[8px] mb-0.5 break-words line-clamp-2"
+    : "text-gray-500 text-xs mb-2 break-words line-clamp-2";
+
+  const statsContainerClasses = size === 'small'
+    ? "flex gap-2 mb-0.5"
+    : "flex gap-4 mb-2";
+
+  const statLabelClasses = size === 'small'
+    ? "text-[7px] text-gray-500 font-medium lowercase"
+    : "text-xs text-gray-500 font-medium lowercase";
+
+  const statValueClasses = size === 'small'
+    ? "font-bold text-[8px]"
+    : "font-bold text-sm";
+
+  const screensClasses = size === 'small'
+    ? "text-[8px] text-gray-800 mb-0.5 font-bold"
+    : "text-xs text-gray-800 mb-2 font-bold";
+
+  const priceContainerClasses = size === 'small'
+    ? "mb-0.5 flex flex-col gap-0.5"
+    : "mb-2 flex flex-col gap-1";
+
+  const originalPriceClasses = size === 'small'
+    ? "text-[8px] text-gray-400 line-through"
+    : "text-xs text-gray-400 line-through";
+
+  const finalPriceClasses = size === 'small'
+    ? "text-xs font-bold text-green-700"
+    : "text-lg font-bold text-green-700";
+
+  const durationClasses = size === 'small'
+    ? "text-[8px] text-gray-500 mb-0.5"
+    : "text-xs text-gray-500 mb-2";
+
+  const buttonClasses = size === 'small'
+    ? "w-full cursor-pointer flex items-center justify-center gap-1 border rounded py-0.5 text-[8px] font-semibold transition"
+    : "w-full cursor-pointer flex items-center justify-center gap-2 border rounded py-2 text-sm font-semibold transition";
+
   return (
-    <div
-      className="bg-white rounded-xl shadow border border-gray-100 p-1 flex flex-col gap-0.5 w-[160px] min-w-[140px] max-w-[180px] cursor-pointer"
-    >
-      <div className="rounded-lg overflow-hidden h-8 flex items-center justify-center bg-gray-100 mb-0.5 relative">
+    <div className={containerClasses}>
+      <div className={imageClasses}>
         <img
           src={anuncio.image}
           alt={anuncio.name || anuncio.nome}
-          className="object-cover w-full h-8"
+          className={imageImgClasses}
           onError={(e) => {
             console.error('❌ Erro ao carregar imagem:', anuncio.image);
             e.currentTarget.style.display = 'none';
@@ -119,39 +179,39 @@ export default function MiniAnuncioCard({ anuncio, actionButton, hideAddButton }
       </div>
       <div className="flex gap-1 mb-0.5">
         {anuncio.type_screen?.toLowerCase() === 'impresso' ? (
-          <span className="bg-green-600 text-white text-[8px] px-1 py-0.5 rounded font-medium flex items-center gap-0.5">
+          <span className={tagClasses.replace('bg-purple-600', 'bg-green-600')}>
             impresso
           </span>
         ) : (
-          <span className="bg-purple-600 text-white text-[8px] px-1 py-0.5 rounded font-medium flex items-center gap-0.5">
+          <span className={tagClasses}>
             digital
           </span>
         )}
       </div>
-      <h3 className="font-bold text-xs line-clamp-1 mb-0.5">{anuncio.name || anuncio.nome}</h3>
-      <div className="text-gray-500 text-[8px] mb-0.5 break-words line-clamp-2">{anuncio.address || anuncio.adress || anuncio.endereco}</div>
-      <div className="flex gap-2 mb-0.5">
+      <h3 className={titleClasses}>{anuncio.name || anuncio.nome}</h3>
+      <div className={addressClasses}>{anuncio.address || anuncio.adress || anuncio.endereco}</div>
+      <div className={statsContainerClasses}>
         <div className="flex flex-col items-start">
-          <span className="text-[7px] text-gray-500 font-medium lowercase">exibições</span>
-          <span className="font-bold text-[8px]">{anuncio.display || anuncio.screens || '1'}</span>
+          <span className={statLabelClasses}>exibições</span>
+          <span className={statValueClasses}>{anuncio.display || anuncio.screens || '1'}</span>
         </div>
         <div className="flex flex-col items-start">
-          <span className="text-[7px] text-gray-500 font-medium lowercase">alcance</span>
-          <span className="font-bold text-[8px]">{anuncio.views || anuncio.alcance || '-'}</span>
+          <span className={statLabelClasses}>alcance</span>
+          <span className={statValueClasses}>{anuncio.views || anuncio.alcance || '-'}</span>
         </div>
       </div>
-      <div className="text-[8px] text-gray-800 mb-0.5 font-bold">Telas: {anuncio.screens || 1}</div>
+      <div className={screensClasses}>Telas: {anuncio.screens || 1}</div>
       {/* Preço original riscado e preço com desconto */}
-      <div className="mb-0.5 flex flex-col gap-0.5">
+      <div className={priceContainerClasses}>
         {precoOriginal !== precoCalculado && (
-          <span className="text-[8px] text-gray-400 line-through">R$ {Number(precoOriginal).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}{selectedDuration !== '2' && ` x${selectedDuration === '4' ? 2 : selectedDuration === '12' ? 6 : selectedDuration === '24' ? 12 : 1}`}</span>
+          <span className={originalPriceClasses}>R$ {Number(precoOriginal).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}{selectedDuration !== '2' && ` x${selectedDuration === '4' ? 2 : selectedDuration === '12' ? 6 : selectedDuration === '24' ? 12 : 1}`}</span>
         )}
-        <span className="text-xs font-bold text-green-700">R$ {Number(precoCalculado).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+        <span className={finalPriceClasses}>R$ {Number(precoCalculado).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
       </div>
-      <div className="text-[8px] text-gray-500 mb-0.5">/ {selectedDuration} semana{Number(selectedDuration) > 1 ? 's' : ''}</div>
+      <div className={durationClasses}>/ {selectedDuration} semana{Number(selectedDuration) > 1 ? 's' : ''}</div>
       {!hideAddButton && (
         <button
-          className={`w-full cursor-pointer flex items-center justify-center gap-1 border rounded py-0.5 text-[8px] font-semibold transition ${estaNoCarrinho ? 'border-red-400 text-red-600 hover:bg-red-50' : 'border-green-400 text-green-600 hover:bg-green-50'}`}
+          className={`${buttonClasses} ${estaNoCarrinho ? 'border-red-400 text-red-600 hover:bg-red-50' : 'border-green-400 text-green-600 hover:bg-green-50'}`}
           onClick={handleClick}
         >
           {estaNoCarrinho ? (
