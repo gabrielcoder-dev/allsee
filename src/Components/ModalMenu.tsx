@@ -35,7 +35,7 @@ export default function ModalMenu({ open, onClose }: ModalMenuProps) {
       {/* Menu lateral */}
       <div
         ref={modalRef}
-        className="relative bg-white p-4 rounded-l-2xl shadow-xl h-screen w-4/5 max-w-xs md:w-80 flex flex-col gap-4 animate-slide-in-right z-50"
+        className="relative bg-white p-4 rounded-l-2xl shadow-xl h-screen w-4/5 max-w-xs md:w-80 flex flex-col gap-4 animate-slide-in-right z-[9999]"
         style={{ right: 0 }}
       >
         {/* Botão de fechar */}
