@@ -213,7 +213,7 @@ export default function ResumoMap({ produtos }: { produtos: any[] }) {
   return (
     <div className="w-full h-full map-container relative" style={{ position: 'relative' }}>
       {/* Botão "Ver o mapa" */}
-      <div style={{ position: 'absolute', top: '12px', right: '12px', zIndex: 99999, pointerEvents: 'auto' }}>
+      <div style={{ position: 'absolute', top: '12px', right: '12px', zIndex: 1, pointerEvents: 'auto' }}>
         <button
           onClick={() => setIsExpanded(true)}
           className="bg-white text-gray-800 px-4 py-2 rounded-2xl text-sm font-medium hover:bg-gray-50 transition-colors flex items-center gap-2 shadow-md border border-gray-200"
@@ -226,7 +226,7 @@ export default function ResumoMap({ produtos }: { produtos: any[] }) {
       <MapContainer
         center={PRIMAVERA_DO_LESTE_COORDS}
         zoom={12}
-        style={{ width: '100%', height: '100%' }}
+        style={{ width: '100%', height: '100%', zIndex: 0 }}
         whenReady={() => {}}
         zoomControl={true}
         scrollWheelZoom={true}
