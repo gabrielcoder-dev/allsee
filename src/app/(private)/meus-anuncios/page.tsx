@@ -32,7 +32,7 @@ const page = () => {
       // Busca apenas as colunas que existem
       const { data, error } = await supabase
         .from("order")
-        .select("id, nome_campanha, arte_campanha, id_user, inicio_campanha, duracao_campanha, preco")
+        .select("id, nome_campanha, arte_campanha, id_user, inicio_campanha, duracao_campanha, preco, status")
         .eq("id_user", user.id)
         .order("id", { ascending: false });
       console.log('User ID:', user.id);
@@ -180,9 +180,19 @@ const page = () => {
                   <span>|</span>
                   <span>Período de Duração: <span className="text-blue-700 font-medium">{order.duracao_campanha ? `${order.duracao_campanha} semanas` : '-'}</span></span>
                 </div>
-                <div className="mb-2">
+                <div className="mb-2 flex items-center gap-2">
                   {/* Tag de categoria (exemplo) */}
                   <span className="inline-block bg-gray-100 text-gray-700 text-xs px-2 py-1 rounded">Elevadores Comerciais</span>
+                  {/* Status do pedido */}
+                  <span className={`inline-block text-xs px-2 py-1 rounded font-medium ${
+                    order.status === 'pago' 
+                      ? 'bg-green-100 text-green-700' 
+                      : order.status === 'pendente'
+                      ? 'bg-yellow-100 text-yellow-700'
+                      : 'bg-gray-100 text-gray-700'
+                  }`}>
+                    {order.status === 'pago' ? 'Pago' : order.status === 'pendente' ? 'Pendente' : order.status || 'N/A'}
+                  </span>
                 </div>
                 <button
                   className="border border-gray-300 rounded px-3 py-1 text-sm hover:bg-gray-100"
@@ -248,6 +258,11 @@ const page = () => {
                   <span className="block mb-1">Início: {selectedOrder.inicio_campanha ? formatDateBR(parseLocalDateString(selectedOrder.inicio_campanha)) : '-'}</span>
                   <span className="block mb-1">Duração: <span className="font-medium">{selectedOrder.duracao_campanha || '-'}</span></span>
                   <span className="block mb-1">Preço: <span className="font-medium">{selectedOrder.preco ? Number(selectedOrder.preco).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : '-'}</span></span>
+                  <span className="block mb-1">Status: <span className={`font-medium ${
+                    selectedOrder.status === 'pago' ? 'text-green-600' : 
+                    selectedOrder.status === 'pendente' ? 'text-yellow-600' : 
+                    'text-gray-600'
+                  }`}>{selectedOrder.status === 'pago' ? 'Pago' : selectedOrder.status === 'pendente' ? 'Pendente' : selectedOrder.status || 'N/A'}</span></span>
                 </div>
               </div>
             )}

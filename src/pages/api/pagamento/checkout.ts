@@ -33,6 +33,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         },
         auto_return: 'approved',
         external_reference: orderId,
+        notification_url: `${process.env.NEXT_PUBLIC_BASE_URL}/api/pagamento/webhook`,
       },
     });
     return res.status(200).json({ init_point: result.init_point });
