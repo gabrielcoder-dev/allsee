@@ -30,6 +30,17 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
+  // Verificar variáveis de ambiente necessárias
+  if (!process.env.MERCADO_PAGO_ACCESS_TOKEN) {
+    console.error("❌ MERCADO_PAGO_ACCESS_TOKEN não configurado");
+    return res.status(500).json({ error: "Configuração do Mercado Pago não encontrada" });
+  }
+
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    console.error("❌ Variáveis do Supabase não configuradas");
+    return res.status(500).json({ error: "Configuração do banco de dados não encontrada" });
+  }
+
   console.log("📨 Webhook recebido:", {
     method: req.method,
     body: req.body,
@@ -44,6 +55,12 @@ export default async function handler(
 
   const { data, type } = req.body;
 
+  // Validar se o body tem os campos necessários
+  if (!data || !type) {
+    console.error("❌ Body inválido:", req.body);
+    return res.status(400).json({ error: "Body inválido - campos data e type são obrigatórios" });
+  }
+
   if (type === "payment") {
     try {
       console.log("💳 Processando pagamento:", data);
@@ -53,6 +70,12 @@ export default async function handler(
       });
 
       const paymentClient = new Payment(mercadoPagoClient);
+
+      // Validar se o ID do pagamento existe
+      if (!data.id) {
+        console.error("❌ ID do pagamento não encontrado:", data);
+        return res.status(400).json({ error: "ID do pagamento é obrigatório" });
+      }
 
       // Buscar detalhes do pagamento no Mercado Pago
       const pagamento = await paymentClient.get({ id: data.id });
@@ -70,7 +93,7 @@ export default async function handler(
         await atualizarStatusOrder(pagamento.external_reference, "pago");
         
         console.log("🎉 Processamento concluído com sucesso");
-        res.status(200).json({ 
+        return res.status(200).json({ 
           received: true, 
           message: "Status atualizado para pago",
           orderId: pagamento.external_reference
@@ -80,7 +103,7 @@ export default async function handler(
           status: pagamento.status,
           external_reference: pagamento.external_reference
         });
-        res.status(200).json({ 
+        return res.status(200).json({ 
           received: true, 
           message: "Pagamento processado mas não aprovado",
           status: pagamento.status
@@ -88,14 +111,14 @@ export default async function handler(
       }
     } catch (error) {
       console.error("❌ Erro ao processar webhook:", error);
-      res.status(500).json({ 
+      return res.status(500).json({ 
         error: "Erro interno do servidor",
         details: error instanceof Error ? error.message : "Erro desconhecido"
       });
     }
   } else {
     console.log("ℹ️ Tipo de webhook não processado:", type);
-    res.status(200).json({ 
+    return res.status(200).json({ 
       received: true, 
       message: "Webhook recebido mas tipo não processado",
       type: type
