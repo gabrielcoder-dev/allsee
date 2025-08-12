@@ -77,18 +77,18 @@ export default async function handler(
         return res.status(400).json({ error: "ID do pagamento é obrigatório" });
       }
 
-      // Buscar detalhes do pagamento no Mercado Pago
-      const pagamento = await paymentClient.get({ id: data.id });
-      
-      console.log("📊 Dados do pagamento:", {
-        id: pagamento.id,
-        status: pagamento.status,
-        external_reference: pagamento.external_reference,
-        amount: pagamento.transaction_amount
-      });
+                    // Buscar detalhes do pagamento no Mercado Pago
+       const pagamento = await paymentClient.get({ id: data.id });
+       
+       console.log("📊 Dados do pagamento:", {
+         id: pagamento.id,
+         status: pagamento.status,
+         external_reference: pagamento.external_reference,
+         amount: pagamento.transaction_amount
+       });
 
-      // Verificar se o pagamento foi aprovado e tem referência externa
-      if (pagamento.status === "approved" && pagamento.external_reference) {
+       // Verificar se o pagamento foi aprovado e tem referência externa
+       if (pagamento.status === "approved" && pagamento.external_reference) {
         console.log("✅ Pagamento aprovado, atualizando status do order");
         await atualizarStatusOrder(pagamento.external_reference, "pago");
         
