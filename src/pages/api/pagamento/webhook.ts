@@ -30,16 +30,24 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
-  // Verificar variáveis de ambiente necessárias
-  if (!process.env.MERCADO_PAGO_ACCESS_TOKEN) {
-    console.error("❌ MERCADO_PAGO_ACCESS_TOKEN não configurado");
-    return res.status(500).json({ error: "Configuração do Mercado Pago não encontrada" });
-  }
+  try {
+    console.log("📨 Webhook recebido:", {
+      method: req.method,
+      body: req.body,
+      query: req.query,
+      headers: req.headers
+    });
 
-  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
-    console.error("❌ Variáveis do Supabase não configuradas");
-    return res.status(500).json({ error: "Configuração do banco de dados não encontrada" });
-  }
+    // Verificar variáveis de ambiente necessárias
+    if (!process.env.MERCADO_PAGO_ACCESS_TOKEN) {
+      console.error("❌ MERCADO_PAGO_ACCESS_TOKEN não configurado");
+      return res.status(500).json({ error: "Configuração do Mercado Pago não encontrada" });
+    }
+
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+      console.error("❌ Variáveis do Supabase não configuradas");
+      return res.status(500).json({ error: "Configuração do banco de dados não encontrada" });
+    }
 
   console.log("📨 Webhook recebido:", {
     method: req.method,
@@ -122,6 +130,13 @@ export default async function handler(
       received: true, 
       message: "Webhook recebido mas tipo não processado",
       type: type
+    });
+  }
+  } catch (error) {
+    console.error("❌ Erro no webhook:", error);
+    return res.status(500).json({ 
+      error: "Erro interno do servidor",
+      details: error instanceof Error ? error.message : "Erro desconhecido"
     });
   }
 }
