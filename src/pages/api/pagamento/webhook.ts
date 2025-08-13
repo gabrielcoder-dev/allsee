@@ -118,7 +118,7 @@ export default async function handler(
         console.log("🎉 Order atualizado com sucesso! Status: pago");
         return res.status(200).json({ 
           received: true, 
-          message: "Status atualizado para pago",
+          message: "Status atualizado para pago!",
           orderId: pagamento.external_reference
         });
       } else {
