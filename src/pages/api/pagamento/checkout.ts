@@ -15,6 +15,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   try {
     const preference = new Preference(mercadoPagoClient);
+
     const result = await preference.create({
       body: {
         items: [
@@ -34,10 +35,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         auto_return: 'approved',
         external_reference: orderId,
         notification_url: `${process.env.NEXT_PUBLIC_BASE_URL}/api/pagamento/webhook`,
+
+        // Aceita todas as formas de pagamento
+        payment_methods: {
+          excluded_payment_types: [],
+        },
+
+        // Se um dia você tiver o email do cliente, pode incluir aqui:
+        // payer: { email: clienteEmail },
       },
     });
+
     return res.status(200).json({ init_point: result.init_point });
   } catch (error) {
+    console.error(error);
     return res.status(500).json({ error: 'Erro ao criar preferência' });
   }
 }
