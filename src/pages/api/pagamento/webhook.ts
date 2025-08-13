@@ -19,7 +19,7 @@ export async function atualizarStatusOrder(id: string, novoStatus: string) {
       .select('id, status');
 
     if (error) {
-      console.error(`❌ Erro ao atualizar status do order ${id}:`, error);
+      console.error(`❌ Erro ao atualizar status do order! ${id}:`, error);
       throw error;
     }
     
