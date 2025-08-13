@@ -110,10 +110,12 @@ export default async function handler(
 
       // Verificar se o pagamento foi aprovado e tem referência externa
       if (pagamento.status === "approved" && pagamento.external_reference) {
-        console.log("✅ Pagamento aprovado, atualizando status do order");
+        console.log("✅ Pagamento aprovado! Order ID:", pagamento.external_reference);
+        console.log("🔄 Atualizando status do order para 'pago'...");
+        
         await atualizarStatusOrder(pagamento.external_reference, "pago");
         
-        console.log("🎉 Processamento concluído com sucesso");
+        console.log("🎉 Order atualizado com sucesso! Status: pago");
         return res.status(200).json({ 
           received: true, 
           message: "Status atualizado para pago",
