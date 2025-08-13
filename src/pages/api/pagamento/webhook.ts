@@ -4,26 +4,31 @@ import { createClient } from "@supabase/supabase-js";
 
 // Usar service role key para permitir atualizações via webhook
 const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!, 
-  process.env.SUPABASE_SERVICE_ROLE_KEY! // Service Role Key para permitir atualizações
+  process.env.NEXT_PUBLIC_SUPABASE_URL || '', 
+  process.env.SUPABASE_SERVICE_ROLE_KEY || '' // Service Role Key para permitir atualizações
 );
 
 export async function atualizarStatusOrder(id: string, novoStatus: string) {
   console.log(`🔄 Atualizando status do order ${id} para: ${novoStatus}`);
   
-  const { data, error } = await supabase
-    .from('order')
-    .update({ status: novoStatus })
-    .eq('id', id)
-    .select('id, status');
+  try {
+    const { data, error } = await supabase
+      .from('order')
+      .update({ status: novoStatus })
+      .eq('id', id)
+      .select('id, status');
 
-  if (error) {
-    console.error(`❌ Erro ao atualizar status do order ${id}:`, error);
+    if (error) {
+      console.error(`❌ Erro ao atualizar status do order ${id}:`, error);
+      throw error;
+    }
+    
+    console.log(`✅ Status do order ${id} atualizado com sucesso:`, data);
+    return data;
+  } catch (error) {
+    console.error(`❌ Erro na função atualizarStatusOrder:`, error);
     throw error;
   }
-  
-  console.log(`✅ Status do order ${id} atualizado com sucesso:`, data);
-  return data;
 }
 
 export default async function handler(
@@ -49,29 +54,37 @@ export default async function handler(
       return res.status(500).json({ error: "Configuração do banco de dados não encontrada" });
     }
 
-  console.log("📨 Webhook recebido:", {
-    method: req.method,
-    body: req.body,
-    query: req.query,
-    headers: req.headers
-  });
+    if (req.method !== "POST") {
+      console.log("❌ Método não permitido:", req.method);
+      return res.status(405).json({ error: "Método não permitido" });
+    }
 
-  if (req.method !== "POST") {
-    console.log("❌ Método não permitido:", req.method);
-    return res.status(405).json({ error: "Método não permitido" });
-  }
+    // Verificar se o body existe e é válido
+    if (!req.body) {
+      console.error("❌ Body não encontrado");
+      return res.status(400).json({ error: "Body não encontrado" });
+    }
 
-  const { data, type } = req.body;
+    const { data, type } = req.body;
 
-  // Validar se o body tem os campos necessários
-  if (!data || !type) {
-    console.error("❌ Body inválido:", req.body);
-    return res.status(400).json({ error: "Body inválido - campos data e type são obrigatórios" });
-  }
+    // Validar se o body tem os campos necessários
+    if (!data || !type) {
+      console.error("❌ Body inválido:", req.body);
+      return res.status(400).json({ error: "Body inválido - campos data e type são obrigatórios" });
+    }
 
-  if (type === "payment") {
-    try {
+    if (type === "payment") {
       console.log("💳 Processando pagamento:", data);
+      
+      // Verificar se é um teste do Mercado Pago (ID 123456)
+      if (data.id === "123456") {
+        console.log("🧪 Teste do Mercado Pago detectado");
+        return res.status(200).json({ 
+          received: true, 
+          message: "Teste do webhook recebido com sucesso",
+          test: true
+        });
+      }
       
       const mercadoPagoClient = new MercadoPagoConfig({
         accessToken: process.env.MERCADO_PAGO_ACCESS_TOKEN as string,
@@ -85,18 +98,18 @@ export default async function handler(
         return res.status(400).json({ error: "ID do pagamento é obrigatório" });
       }
 
-                    // Buscar detalhes do pagamento no Mercado Pago
-       const pagamento = await paymentClient.get({ id: data.id });
-       
-       console.log("📊 Dados do pagamento:", {
-         id: pagamento.id,
-         status: pagamento.status,
-         external_reference: pagamento.external_reference,
-         amount: pagamento.transaction_amount
-       });
+      // Buscar detalhes do pagamento no Mercado Pago
+      const pagamento = await paymentClient.get({ id: data.id });
+      
+      console.log("📊 Dados do pagamento:", {
+        id: pagamento.id,
+        status: pagamento.status,
+        external_reference: pagamento.external_reference,
+        amount: pagamento.transaction_amount
+      });
 
-       // Verificar se o pagamento foi aprovado e tem referência externa
-       if (pagamento.status === "approved" && pagamento.external_reference) {
+      // Verificar se o pagamento foi aprovado e tem referência externa
+      if (pagamento.status === "approved" && pagamento.external_reference) {
         console.log("✅ Pagamento aprovado, atualizando status do order");
         await atualizarStatusOrder(pagamento.external_reference, "pago");
         
@@ -117,21 +130,14 @@ export default async function handler(
           status: pagamento.status
         });
       }
-    } catch (error) {
-      console.error("❌ Erro ao processar webhook:", error);
-      return res.status(500).json({ 
-        error: "Erro interno do servidor",
-        details: error instanceof Error ? error.message : "Erro desconhecido"
+    } else {
+      console.log("ℹ️ Tipo de webhook não processado:", type);
+      return res.status(200).json({ 
+        received: true, 
+        message: "Webhook recebido mas tipo não processado",
+        type: type
       });
     }
-  } else {
-    console.log("ℹ️ Tipo de webhook não processado:", type);
-    return res.status(200).json({ 
-      received: true, 
-      message: "Webhook recebido mas tipo não processado",
-      type: type
-    });
-  }
   } catch (error) {
     console.error("❌ Erro no webhook:", error);
     return res.status(500).json({ 
