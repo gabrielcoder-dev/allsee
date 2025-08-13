@@ -38,7 +38,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
         // Aceita todas as formas de pagamento
         payment_methods: {
-          excluded_payment_types: [],
+          excluded_payment_types: [
+            {
+              id: 'ticket',
+            },
+          ],
         },
 
         // Se um dia você tiver o email do cliente, pode incluir aqui:
