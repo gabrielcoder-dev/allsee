@@ -3,7 +3,7 @@ import heroImg from "@/assets/hero-img.png"
 
 const Hero = () => {
   return (
-    <div className='relative flex h-screen justify-between flex-col md:flex-row px-8 md:px-24 items-center' id="home">
+    <div className='relative flex lg:h-screen justify-between flex-col md:flex-row px-8 md:px-24 items-center' id="home">
 
       <div className="absolute bg-orange-200 w-96 h-96 -z-10 rounded-full -top-30 -left-30 blur-3xl"></div>
       
@@ -30,7 +30,7 @@ const Hero = () => {
      <Image 
      src={heroImg}
       alt="Hero Image"
-      className="w-xl mt-24"
+      className="lg:w-xl lg:mt-16 w-96"
      />
     </div>
   );

@@ -21,7 +21,7 @@ const Card = ({
 
 export default function AllseeSection() {
   return (
-    <section className="relative overflow-hidden py-20 bg-gradient-to-r mt-36 px-6 md:mt-9 md:px-24">
+    <section className="relative overflow-hidden py-20 bg-gradient-to-r px-6 md:mt-9 md:px-24">
 
       <div className="absolute bg-orange-100 w-96 h-96 -z-10 rounded-full top-20 -right-30 blur-3xl"></div>
       <div className="absolute bg-gray-200 w-7xl h-72 -z-10 rounded-full top-72 right-30 blur-3xl"></div>

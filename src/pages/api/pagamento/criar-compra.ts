@@ -41,4 +41,4 @@ export const config = {
       sizeLimit: '1000mb',
     },
   },
-}; 
+};
