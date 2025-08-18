@@ -134,7 +134,12 @@ const PagamantosPart = () => {
   const handleCheckout = async () => {
     setErro("");
     setCarregando(true);
-    console.log("Iniciando checkout, user:", user);
+    console.log("🛒 Iniciando checkout...");
+    console.log("👤 User:", user);
+    console.log("📦 Produtos:", produtos);
+    console.log("📝 FormData:", formData);
+    console.log("✅ Form válido:", isFormValid());
+    console.log("💰 Total:", total);
 
     // Verifica se o usuário está autenticado
     if (!user?.id) {
@@ -170,18 +175,23 @@ const PagamantosPart = () => {
       console.log("Payload do pedido:", orderPayload);
 
       // 1. Criar order no banco
+      console.log("📤 Enviando dados para criar-compra...");
       const orderRes = await fetch("/api/pagamento/criar-compra", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(orderPayload),
       });
       const orderData = await orderRes.json();
-      console.log("Resposta do backend:", orderData);
-      if (!orderData.id) {
-        setErro("Erro ao criar pedido");
+      console.log("📥 Resposta do criar-compra:", orderData);
+      
+      if (!orderData.success || !orderData.orderId) {
+        console.error("❌ Erro ao criar pedido:", orderData);
+        setErro(orderData.error || "Erro ao criar pedido");
         setCarregando(false);
         return;
       }
+      
+      console.log("✅ Order criado com sucesso, ID:", orderData.orderId);
 
       // 2. Preparar dados do pagador
       const payerData = {
@@ -198,21 +208,25 @@ const PagamantosPart = () => {
       };
 
       // 3. Chamar checkout com orderId e dados do pagador
+      console.log("💳 Enviando dados para checkout...");
       const response = await fetch("/api/pagamento/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 
           total, 
-          orderId: orderData.id,
+          orderId: orderData.orderId,
           payerData 
         }),
       });
       const data = await response.json();
-      console.log("Resposta do checkout:", data);
-      if (data.init_point) {
+      console.log("📥 Resposta do checkout:", data);
+      
+      if (data.success && data.init_point) {
+        console.log("✅ Redirecionando para:", data.init_point);
         window.location.href = data.init_point;
       } else {
-        setErro("Erro ao iniciar pagamento");
+        console.error("❌ Erro no checkout:", data);
+        setErro(data.error || "Erro ao iniciar pagamento");
       }
     } catch (e) {
       setErro("Erro ao conectar ao servidor");
@@ -504,6 +518,13 @@ const PagamantosPart = () => {
           </div>
         </div>
 
+        {/* Mensagem de erro */}
+        {erro && (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700 text-sm">
+            ❌ {erro}
+          </div>
+        )}
+
         {/* Botão voltar e concluir */}
         <div className="flex justify-between items-center px-2 md:px-0 mt-2">
           <Button
@@ -522,6 +543,14 @@ const PagamantosPart = () => {
           >
             {carregando ? "Processando..." : "Concluir"}
           </Button>
+          {/* Debug info */}
+          {process.env.NODE_ENV === 'development' && (
+            <div className="text-xs text-gray-500 mt-2">
+              Debug: carregando={carregando.toString()}, 
+              produtos={produtos.length}, 
+              formValido={isFormValid().toString()}
+            </div>
+          )}
         </div>
       </div>
     </div>
