@@ -3,7 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY! // Service Role Key para insert
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -11,34 +11,69 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(405).json({ error: 'Método não permitido' });
   }
 
-  const dados = req.body;
+  try {
+    const dados = req.body;
 
-  // Garante que inicio_campanha será apenas yyyy-MM-dd
-  if (dados.inicio_campanha) {
-    dados.inicio_campanha = dados.inicio_campanha.substring(0, 10);
+    // Validações básicas
+    if (!dados || typeof dados !== 'object') {
+      return res.status(400).json({ error: 'Dados inválidos' });
+    }
+
+    // Formatar data de início da campanha
+    if (dados.inicio_campanha) {
+      dados.inicio_campanha = dados.inicio_campanha.substring(0, 10);
+    }
+
+    console.log('📝 Criando nova compra:', {
+      empresa: dados.empresa,
+      nicho: dados.nicho,
+      valor: dados.valor,
+      inicio_campanha: dados.inicio_campanha
+    });
+
+    // Criar order com status pendente
+    const { data, error } = await supabase
+      .from('order')
+      .insert([{ 
+        ...dados, 
+        status: 'pendente',
+        created_at: new Date().toISOString()
+      }])
+      .select('id, status, created_at')
+      .single();
+
+    if (error) {
+      console.error('❌ Erro ao criar order:', error);
+      return res.status(500).json({ 
+        error: 'Erro ao criar order', 
+        details: error.message 
+      });
+    }
+
+    console.log('✅ Order criado com sucesso:', {
+      id: data.id,
+      status: data.status
+    });
+
+    return res.status(200).json({ 
+      success: true,
+      orderId: data.id,
+      status: data.status
+    });
+
+  } catch (error: any) {
+    console.error('❌ Erro inesperado ao criar compra:', error);
+    return res.status(500).json({ 
+      error: 'Erro interno do servidor',
+      details: error.message 
+    });
   }
-
-  console.log('Body recebido em criar-compra:', JSON.stringify(dados, null, 2));
-
-  // Adiciona status pendente
-  const { data, error } = await supabase
-    .from('order')
-    .insert([{ ...dados, status: 'pendente' }])
-    .select('id')
-    .single();
-
-  if (error) {
-    console.error('Erro ao criar order:', error);
-    return res.status(500).json({ error: 'Erro ao criar order', details: error });
-  }
-
-  return res.status(200).json({ id: data.id });
 }
 
 export const config = {
   api: {
     bodyParser: {
-      sizeLimit: '1000mb',
+      sizeLimit: '10mb',
     },
   },
 };

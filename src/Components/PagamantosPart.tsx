@@ -183,11 +183,29 @@ const PagamantosPart = () => {
         return;
       }
 
-      // 2. Chamar checkout com orderId
+      // 2. Preparar dados do pagador
+      const payerData = {
+        name: formData.cpf ? 'Pessoa Física' : formData.razaoSocial || 'Cliente Allsee',
+        email: user.email || 'cliente@allsee.com',
+        cpf: formData.cpf || null,
+        telefone: formData.telefone || formData.telefonej || null,
+        cep: formData.cep || formData.cepJ || null,
+        endereco: formData.endereco || formData.enderecoJ || null,
+        numero: formData.numero || formData.numeroJ || null,
+        bairro: formData.bairro || formData.bairroJ || null,
+        cidade: formData.cidade || formData.cidadeJ || null,
+        estado: formData.estado || formData.estadoJ || null,
+      };
+
+      // 3. Chamar checkout com orderId e dados do pagador
       const response = await fetch("/api/pagamento/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ total, orderId: orderData.id }),
+        body: JSON.stringify({ 
+          total, 
+          orderId: orderData.id,
+          payerData 
+        }),
       });
       const data = await response.json();
       console.log("Resposta do checkout:", data);
