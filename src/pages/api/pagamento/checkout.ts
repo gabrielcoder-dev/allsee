@@ -42,13 +42,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         },
       ],
       back_urls: {
-        success: `${process.env.NEXT_PUBLIC_BASE_URL}/pagamento-concluido?orderId=${orderId}`,
-        failure: `${process.env.NEXT_PUBLIC_BASE_URL}/pagamento-concluido?orderId=${orderId}&status=failed`,
-        pending: `${process.env.NEXT_PUBLIC_BASE_URL}/pagamento-concluido?orderId=${orderId}&status=pending`,
+        success: `${req.headers.origin}/pagamento-concluido?orderId=${orderId}`,
+        failure: `${req.headers.origin}/pagamento-concluido?orderId=${orderId}&status=failed`,
+        pending: `${req.headers.origin}/pagamento-concluido?orderId=${orderId}&status=pending`,
       },
       auto_return: 'approved',
       external_reference: orderId.toString(),
-      notification_url: `${process.env.NEXT_PUBLIC_BASE_URL}/api/pagamento/webhook`,
+      notification_url: `${req.headers.origin}/api/pagamento/webhook`,
       payment_methods: {
         installments: 1,
         default_installments: 1

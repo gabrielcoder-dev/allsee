@@ -21,11 +21,6 @@ export const validateMercadoPagoConfig = () => {
     throw new Error("Token do Mercado Pago não configurado");
   }
 
-  // Validar URL base
-  if (!process.env.NEXT_PUBLIC_BASE_URL) {
-    throw new Error("NEXT_PUBLIC_BASE_URL não configurado");
-  }
-
   // Validar formato do token
   const token = process.env.MERCADO_PAGO_ACCESS_TOKEN;
   if (token.length < 10) {
@@ -41,7 +36,6 @@ export const getMercadoPagoInfo = () => {
   const isTest = process.env.MERCADO_PAGO_ACCESS_TOKEN?.includes('TEST');
   return {
     isTest,
-    environment: isTest ? 'test' : 'production',
-    baseUrl: process.env.NEXT_PUBLIC_BASE_URL
+    environment: isTest ? 'test' : 'production'
   };
 };
