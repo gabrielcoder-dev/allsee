@@ -15,8 +15,8 @@ export async function atualizarStatusCompra(orderId: string, status: string) {
     throw new Error('orderId e status são obrigatórios');
   }
 
-  // Validar status permitidos
-  const statusPermitidos = ['pendente', 'pago', 'rejeitado', 'cancelado', 'em_processamento'];
+  // Simplificar: apenas pendente e pago
+  const statusPermitidos = ['pendente', 'pago'];
   if (!statusPermitidos.includes(status)) {
     console.warn(`⚠️ Status não reconhecido: ${status}. Usando 'pendente' como padrão.`);
     status = 'pendente';
@@ -28,25 +28,29 @@ export async function atualizarStatusCompra(orderId: string, status: string) {
   );
   
   try {
+    console.log(`🔍 Verificando se order ${orderId} existe...`);
+    
     // Verificar se o order existe
     const { data: existingOrder, error: checkError } = await supabase
       .from('order')
-      .select('id, status')
+      .select('id, status, id_user')
       .eq('id', orderId)
       .single();
 
     if (checkError) {
       console.error(`❌ Order ${orderId} não encontrado:`, checkError);
-      throw new Error(`Order ${orderId} não encontrado`);
+      throw new Error(`Order ${orderId} não encontrado: ${checkError.message}`);
     }
 
     console.log(`📋 Order encontrado:`, {
       id: existingOrder.id,
       statusAtual: existingOrder.status,
-      novoStatus: status
+      novoStatus: status,
+      id_user: existingOrder.id_user
     });
 
     // Atualizar status
+    console.log(`💾 Executando UPDATE na tabela order...`);
     const { data, error } = await supabase
       .from('order')
       .update({ 
@@ -58,6 +62,12 @@ export async function atualizarStatusCompra(orderId: string, status: string) {
 
     if (error) {
       console.error(`❌ Erro ao atualizar status do order ${orderId}:`, error);
+      console.error(`Detalhes do erro:`, {
+        code: error.code,
+        message: error.message,
+        details: error.details,
+        hint: error.hint
+      });
       throw error;
     }
     

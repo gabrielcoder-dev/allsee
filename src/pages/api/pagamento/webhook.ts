@@ -114,27 +114,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       });
     }
 
-    // Mapear status do Mercado Pago para status interno
+    // Mapear status do Mercado Pago para status interno (apenas pendente e pago)
     let internalStatus = 'pendente';
-    switch (status) {
-      case 'approved':
-        internalStatus = 'pago'; // Mudança: 'aprovado' -> 'pago'
-        break;
-      case 'rejected':
-        internalStatus = 'rejeitado';
-        break;
-      case 'cancelled':
-        internalStatus = 'cancelado';
-        break;
-      case 'pending':
-        internalStatus = 'pendente';
-        break;
-      case 'in_process':
-        internalStatus = 'em_processamento';
-        break;
-      default:
-        internalStatus = 'pendente';
+    if (status === 'approved') {
+      internalStatus = 'pago';
     }
+    // Para todos os outros status (rejected, cancelled, pending, in_process, etc.) mantém como 'pendente'
     
     console.log("🔄 Mapeamento de status:", { 
       statusOriginal: status, 
