@@ -16,7 +16,7 @@ export async function atualizarStatusCompra(orderId: string, status: string) {
   }
 
   // Validar status permitidos
-  const statusPermitidos = ['pendente', 'aprovado', 'rejeitado', 'cancelado', 'em_processamento'];
+  const statusPermitidos = ['pendente', 'pago', 'rejeitado', 'cancelado', 'em_processamento'];
   if (!statusPermitidos.includes(status)) {
     console.warn(`⚠️ Status não reconhecido: ${status}. Usando 'pendente' como padrão.`);
     status = 'pendente';

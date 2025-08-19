@@ -102,6 +102,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const externalReference = payment.external_reference;
     const status = payment.status;
+    
+    console.log("🔍 Status do pagamento:", status);
 
     if (!externalReference) {
       console.log("⚠️ Pagamento sem referência externa");
@@ -116,7 +118,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     let internalStatus = 'pendente';
     switch (status) {
       case 'approved':
-        internalStatus = 'aprovado';
+        internalStatus = 'pago'; // Mudança: 'aprovado' -> 'pago'
         break;
       case 'rejected':
         internalStatus = 'rejeitado';
@@ -133,6 +135,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       default:
         internalStatus = 'pendente';
     }
+    
+    console.log("🔄 Mapeamento de status:", { 
+      statusOriginal: status, 
+      statusInterno: internalStatus 
+    });
 
     // Atualizar status da compra no banco
     try {
