@@ -5,6 +5,8 @@ import { Payment, MercadoPagoConfig } from "mercadopago";
 import { atualizarStatusCompra } from "@/lib/utils";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  console.log("🚀 Webhook iniciado - Método:", req.method);
+  
   if (req.method !== "POST") {
     console.log("❌ Método não permitido:", req.method);
     return res.status(405).json({ error: "Método não permitido" });
@@ -24,8 +26,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     console.log("📨 Webhook recebido:", {
       method: req.method,
+      url: req.url,
       body: parsedBody,
-      headers: req.headers
+      headers: req.headers,
+      query: req.query
     });
 
     const paymentId = parsedBody?.data?.id || (req.query?.id as string);
@@ -34,7 +38,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // Validações básicas
     if (topic !== "payment" || !paymentId) {
       console.error("❌ Payload inválido:", req.body);
-      return res.status(400).json({ error: "Payload inválido" });
+      return res.status(200).json({ 
+        received: true,
+        message: "Webhook recebido mas payload inválido",
+        error: "Payload inválido",
+        topic: topic,
+        paymentId: paymentId
+      });
     }
 
     // Verificar se é um teste do Mercado Pago
@@ -52,7 +62,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // Validar token de acesso
     if (!process.env.MERCADO_PAGO_ACCESS_TOKEN) {
       console.error("❌ MERCADO_PAGO_ACCESS_TOKEN não configurado");
-      return res.status(500).json({ error: "Token de acesso não configurado" });
+      return res.status(200).json({ 
+        received: true, 
+        message: "Webhook recebido mas token não configurado",
+        error: "Token de acesso não configurado" 
+      });
     }
 
     // Inicializar cliente do Mercado Pago
@@ -63,17 +77,28 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const paymentClient = new Payment(mercadoPagoClient);
 
     // Buscar dados do pagamento
-    const payment = await paymentClient.get({ id: paymentId });
-    const isLiveMode = payment?.live_mode ?? req.headers['x-test-event'] !== 'true';
-    console.log("🌐 Ambiente do evento:", { liveMode: isLiveMode });
-    
-    console.log("📊 Dados do pagamento:", {
-      id: payment.id,
-      status: payment.status,
-      external_reference: payment.external_reference,
-      amount: payment.transaction_amount,
-      payment_method: payment.payment_method?.type
-    });
+    let payment;
+    try {
+      payment = await paymentClient.get({ id: paymentId });
+      const isLiveMode = payment?.live_mode ?? req.headers['x-test-event'] !== 'true';
+      console.log("🌐 Ambiente do evento:", { liveMode: isLiveMode });
+      
+      console.log("📊 Dados do pagamento:", {
+        id: payment.id,
+        status: payment.status,
+        external_reference: payment.external_reference,
+        amount: payment.transaction_amount,
+        payment_method: payment.payment_method?.type
+      });
+    } catch (paymentError: any) {
+      console.error("❌ Erro ao buscar pagamento:", paymentError);
+      return res.status(200).json({ 
+        received: true, 
+        message: "Webhook recebido mas erro ao buscar pagamento",
+        error: paymentError.message || "Erro desconhecido",
+        paymentId: paymentId
+      });
+    }
 
     const externalReference = payment.external_reference;
     const status = payment.status;
@@ -110,13 +135,24 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     // Atualizar status da compra no banco
-    await atualizarStatusCompra(externalReference, internalStatus);
-    
-    console.log("🎉 Order atualizado com sucesso!", {
-      orderId: externalReference,
-      status: internalStatus,
-      originalStatus: status
-    });
+    try {
+      await atualizarStatusCompra(externalReference, internalStatus);
+      
+      console.log("🎉 Order atualizado com sucesso!", {
+        orderId: externalReference,
+        status: internalStatus,
+        originalStatus: status
+      });
+    } catch (updateError: any) {
+      console.error("❌ Erro ao atualizar status:", updateError);
+      return res.status(200).json({ 
+        received: true, 
+        message: "Webhook recebido mas erro ao atualizar status",
+        error: updateError.message || "Erro desconhecido",
+        orderId: externalReference,
+        status: internalStatus
+      });
+    }
 
     return res.status(200).json({ 
       received: true, 
@@ -137,7 +173,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       console.error("Causa do erro:", error.cause);
     }
     
-    return res.status(500).json({ 
+    // Sempre retornar 200 para evitar falha de entrega
+    return res.status(200).json({ 
+      received: true,
+      message: "Webhook recebido mas erro interno",
       error: "Erro ao processar webhook",
       details: error.message || "Erro desconhecido"
     });
