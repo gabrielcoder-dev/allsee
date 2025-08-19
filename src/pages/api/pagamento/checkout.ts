@@ -30,6 +30,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const preference = new Preference(mercadoPagoClient);
 
+    // Resolver URL do webhook (sempre absoluta)
+    const envWebhookUrl = process.env.MERCADO_PAGO_WEBHOOK_URL;
+    const forwardedProto = (req.headers["x-forwarded-proto"] as string) || (req.headers["x-forwarded-protocol"] as string);
+    const proto = envWebhookUrl ? undefined : (forwardedProto || (req.headers.origin?.toString().startsWith("http") ? new URL(req.headers.origin as string).protocol.replace(":", "") : undefined) || (process.env.NODE_ENV === "development" ? "http" : "https"));
+    const host = envWebhookUrl ? undefined : ((req.headers["x-forwarded-host"] as string) || req.headers.host);
+    const computedWebhookUrl = envWebhookUrl || (proto && host ? `${proto}://${host}/api/pagamento/webhook` : `${req.headers.origin}/api/pagamento/webhook`);
+
+    console.log("🔔 notification_url do Mercado Pago:", {
+      envWebhookUrl: !!envWebhookUrl,
+      computedWebhookUrl
+    });
+
     // Configuração da preferência
     const preferenceBody: any = {
       items: [
@@ -48,7 +60,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       },
       auto_return: 'approved',
       external_reference: orderId.toString(),
-      notification_url: `${req.headers.origin}/api/pagamento/webhook`,
+      notification_url: computedWebhookUrl,
       payment_methods: {
         installments: 1,
         default_installments: 1

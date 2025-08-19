@@ -11,14 +11,25 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
+    // Alguns providers enviam body como string quando o content-type não é application/json
+    const rawBody = typeof req.body === 'string' ? req.body : undefined;
+    let parsedBody: any = req.body;
+    if (rawBody) {
+      try {
+        parsedBody = JSON.parse(rawBody);
+      } catch (e) {
+        console.warn("⚠️ Body não estava em JSON válido, mantendo como texto.");
+      }
+    }
+
     console.log("📨 Webhook recebido:", {
       method: req.method,
-      body: req.body,
+      body: parsedBody,
       headers: req.headers
     });
 
-    const paymentId = req.body?.data?.id;
-    const topic = req.body?.type;
+    const paymentId = parsedBody?.data?.id || (req.query?.id as string);
+    const topic = parsedBody?.type || (req.query?.type as string) || (req.query?.topic as string);
 
     // Validações básicas
     if (topic !== "payment" || !paymentId) {
@@ -53,6 +64,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     // Buscar dados do pagamento
     const payment = await paymentClient.get({ id: paymentId });
+    const isLiveMode = payment?.live_mode ?? req.headers['x-test-event'] !== 'true';
+    console.log("🌐 Ambiente do evento:", { liveMode: isLiveMode });
     
     console.log("📊 Dados do pagamento:", {
       id: payment.id,
