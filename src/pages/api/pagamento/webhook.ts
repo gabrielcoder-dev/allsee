@@ -115,9 +115,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     // Mapear status do Mercado Pago para status interno (apenas pendente e pago)
-    let internalStatus = 'pendente';
-    if (status === 'approved') {
-      internalStatus = 'pago';
+    let internalStatus: "pendente" | "pago" = "pendente";
+    if (status === "approved") {
+      internalStatus = "pago";
     }
     // Para todos os outros status (rejected, cancelled, pending, in_process, etc.) mantém como 'pendente'
     

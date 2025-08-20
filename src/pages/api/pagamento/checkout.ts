@@ -59,7 +59,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         pending: `${req.headers.origin}/pagamento-concluido?orderId=${orderId}&status=pending`,
       },
       auto_return: 'approved',
-      external_reference: orderId.toString(),
+      external_reference: orderId,
       notification_url: computedWebhookUrl,
       payment_methods: {
         installments: 1,
