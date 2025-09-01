@@ -9,14 +9,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   try {
     const { type, data } = req.body
 
-    // só tratamos eventos de pagamento aprovado
+    // Só tratamos eventos de pagamento aprovado
     if (type === "payment" && data?.status === "approved") {
       const paymentId = data.id
-      const externalReference = data.external_reference // vem do checkout
+      const externalReference = data.external_reference // Vem do checkout
 
       console.log(`💳 Pagamento aprovado! payment_id=${paymentId}, ref=${externalReference}`)
 
-      // converte status do MercadoPago para o nosso interno
+      // Converte status do MercadoPago para o nosso interno
       const internalStatus = "pago"
 
       const { data: orderUpdated, error } = await supabaseServer

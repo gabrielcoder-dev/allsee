@@ -99,7 +99,7 @@ export default function ModalNichoEmpresa({
         return
       }
 
-      // Verificar se já existe um profile para este usuário
+      // Verificar se já existe um perfil para este usuário
       const { data: existingProfile } = await supabase
         .from('profiles')
         .select('id')
@@ -119,7 +119,7 @@ export default function ModalNichoEmpresa({
           return
         }
       } else {
-        // Criar novo profile com nicho
+        // Criar novo perfil com nicho
         const { error: insertError } = await supabase
           .from('profiles')
           .insert([{
@@ -128,7 +128,7 @@ export default function ModalNichoEmpresa({
           }])
 
         if (insertError) {
-          console.error('Erro ao criar profile:', insertError)
+          console.error('Erro ao criar perfil:', insertError)
           toast.error("Erro ao salvar nicho")
           return
         }

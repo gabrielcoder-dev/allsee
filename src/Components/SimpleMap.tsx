@@ -17,7 +17,7 @@ L.Icon.Default.mergeOptions({
   shadowUrl: '/images/marker-shadow.png',
 })
 
-// Coordenadas de Primavera do Leste, MT - Centralizada ainda mais para a esquerda para mostrar todos os totens
+// Coordenadas de Primavera do Leste, MT - Centralizada para mostrar todos os totens
 const PRIMAVERA_DO_LESTE_COORDS: LatLngTuple = [-15.5586, -54.2940]
 
 type MarkerType = {
@@ -58,23 +58,23 @@ function MapController({
       const totemMarker = markers.find(marker => marker.id === totemId);
       if (totemMarker) {
         console.log('Encontrou marker para totem:', totemMarker);
-                 // Navegar para as coordenadas exatas do marker com zoom bem próximo
-         map.setView([totemMarker.lat, totemMarker.lng], 15, {
-           animate: true,
-           duration: 1.5
-         });
+        // Navegar para as coordenadas exatas do marker com zoom bem próximo
+        map.setView([totemMarker.lat, totemMarker.lng], 15, {
+          animate: true,
+          duration: 1.5
+        });
         return;
       } else {
         console.log('Não encontrou marker para totemId:', totemId);
       }
     }
 
-         // Se não encontrou o marker ou não é totem específico, navegar para as coordenadas fornecidas
-     console.log('Navegando para coordenadas:', coords);
-     map.setView([coords.lat, coords.lng], 14, {
-       animate: true,
-       duration: 1.5
-     });
+    // Se não encontrou o marker ou não é totem específico, navegar para as coordenadas fornecidas
+    console.log('Navegando para coordenadas:', coords);
+    map.setView([coords.lat, coords.lng], 14, {
+      animate: true,
+      duration: 1.5
+    });
   };
 
   // Expor a função globalmente

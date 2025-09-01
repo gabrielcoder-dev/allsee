@@ -267,11 +267,11 @@ export default function GetAnunciosResults({ onAdicionarProduto, selectedDuratio
                     </div>
                   );
                 })()}
-                <div className="text-xs text-gray-500 mb-2">/ {selectedDuration} semana{selectedDuration === '24' || selectedDuration === '4' || selectedDuration === '2' ? (Number(selectedDuration) > 1 ? 's' : '') : ''}</div>
+                <div className="text-xs text-gray-500 mb-2">/ {selectedDuration} semana{Number(selectedDuration) > 1 ? 's' : ''}</div>
                 <button
                   className={`w-full cursor-pointer flex items-center justify-center gap-4 border rounded-lg py-2 text-base font-semibold transition ${estaNoCarrinho ? 'border-red-400 text-red-600 hover:bg-red-50' : 'border-green-400 text-green-600 hover:bg-green-50'}`}
                   onClick={async () => {
-                    // Checa autenticação
+                    // Verifica autenticação
                     const { data: { user } } = await supabase.auth.getUser();
                     if (!user) {
                       setShowLoginModal(true);

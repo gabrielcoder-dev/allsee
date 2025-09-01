@@ -241,12 +241,12 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     );
   };
 
-  // Função para atualizar form data
+  // Função para atualizar dados do formulário
   const updateFormData = (data: Partial<FormData>) => {
     setFormData(prev => ({ ...prev, ...data }));
   };
 
-  // Função para limpar form data
+  // Função para limpar dados do formulário
   const clearFormData = () => {
     setFormData({
       campaignName: "",

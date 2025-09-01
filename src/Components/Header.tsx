@@ -58,22 +58,22 @@ export default function Header() {
               <HeaderLink href="#contato" onClick={closeMobileMenu}>Contato</HeaderLink>
             </nav>
 
-            {/* CTA Buttons */}
-            <div className="flex items-center gap-2">
-              <button
-                className="flex items-center gap-2 px-4 py-2 rounded-full font-medium transition-all duration-300 border border-orange-600 text-orange-600 hover:bg-orange-50 text-sm md:text-base cursor-pointer"
-                onClick={() => setShowModal(true)}
-              >
-                <User size={18} /> Entrar
-              </button>
-              <button
-                className="hidden md:block px-6 py-2 rounded-full font-medium transition-all duration-300 bg-orange-600 text-white hover:bg-orange-500 cursor-pointer"
-                onClick={() => router.push('/results')}
-              >
-                Anunciar Agora!
-              </button>
+                    {/* Botões CTA */}
+        <div className="flex items-center gap-2">
+          <button
+            className="flex items-center gap-2 px-4 py-2 rounded-full font-medium transition-all duration-300 border border-orange-600 text-orange-600 hover:bg-orange-50 text-sm md:text-base cursor-pointer"
+            onClick={() => setShowModal(true)}
+          >
+            <User size={18} /> Entrar
+          </button>
+          <button
+            className="hidden md:block px-6 py-2 rounded-full font-medium transition-all duration-300 bg-orange-600 text-white hover:bg-orange-500 cursor-pointer"
+            onClick={() => router.push('/results')}
+          >
+            Anunciar Agora!
+          </button>
 
-            {/* Mobile Menu Button */}
+            {/* Botão do Menu Mobile */}
             <button
               onClick={toggleMobileMenu}
               className="md:hidden p-2 rounded-md transition-colors duration-300 text-gray-700 hover:bg-rose-200 cursor-pointer"
@@ -85,7 +85,7 @@ export default function Header() {
           </div>
         </div>
 
-        {/* Mobile Menu */}
+        {/* Menu Mobile */}
         <div
           className={`md:hidden absolute left-0 right-0 w-full transition-all duration-300 overflow-hidden ${
             isMobileMenuOpen
@@ -94,7 +94,7 @@ export default function Header() {
           }`}
         >
           <div className="flex flex-col px-4 py-4 space-y-4 bg-white shadow-lg">
-            <HeaderLink href="#home" onClick={closeMobileMenu}>Home</HeaderLink>
+            <HeaderLink href="#home" onClick={closeMobileMenu}>Início</HeaderLink>
             <HeaderLink href="#sobre" onClick={closeMobileMenu}>Sobre Nós</HeaderLink>
             <HeaderLink href="#locais" onClick={closeMobileMenu}>Locais</HeaderLink>
             <HeaderLink href="#contato" onClick={closeMobileMenu}>Contato</HeaderLink>
@@ -111,7 +111,7 @@ export default function Header() {
   )
 }
 
-// Componente para links do header
+// Componente para links do cabeçalho
 function HeaderLink({ href, children, onClick }: { href: string, children: React.ReactNode, onClick?: () => void }) {
   return (
     <a

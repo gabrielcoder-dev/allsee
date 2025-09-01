@@ -45,8 +45,8 @@ const Page = () => {
   const [showNichoModal, setShowNichoModal] = useState(false);
   const [isFirstTimeUser, setIsFirstTimeUser] = useState(false);
   const [userNicho, setUserNicho] = useState<string | null>(null);
-  const [isMapFullscreen, setIsMapFullscreen] = useState(false)
-  const [isMobileMapView, setIsMobileMapView] = useState(false)
+  const [isMapFullscreen, setIsMapFullscreen] = useState(false);
+  const [isMobileMapView, setIsMobileMapView] = useState(false);
 
   // Garantir que o componente está montado no cliente
   useEffect(() => {
@@ -201,7 +201,7 @@ const Page = () => {
 
   return (
     <div className='h-screen flex flex-col'>
-      {/* Desktop Header */}
+      {/* Cabeçalho Desktop */}
       <HeaderResultsDesktop 
         onDurationChange={setSelectedDurationGlobal} 
         selectedDuration={selectedDurationGlobal}
@@ -214,7 +214,7 @@ const Page = () => {
         onCityFound={handleCityFound}
       />
       
-      {/* Mobile Header - ocultar quando mapa estiver ativo */}
+      {/* Cabeçalho Mobile - ocultar quando mapa estiver ativo */}
       <div className={`${isMobileMapView ? 'hidden' : 'block'}`}>
         <MobileHeader 
           onDurationChange={setSelectedDurationGlobal} 
@@ -275,7 +275,7 @@ const Page = () => {
             />
           </div>
           
-          {/* Mapa por cima quando ativo */}
+          {/* Mapa sobreposto quando ativo */}
           {isMobileMapView && (
             <div className="absolute inset-0 z-50">
               <Mapbox 

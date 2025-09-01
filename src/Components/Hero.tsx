@@ -7,7 +7,7 @@ const Hero = () => {
 
       <div className="absolute bg-orange-200 w-96 h-96 -z-10 rounded-full -top-30 -left-30 blur-3xl"></div>
       
-      {/* left content */}
+      {/* Conteúdo esquerdo */}
       <div className='w-full flex mt-32 md:mt-24 flex-col gap-8 md:w-xl'>
         <button className='border border-orange-600 p-2 w-full md:w-72 rounded-3xl text-orange-600 font-semibold'>
           Anuncie com nossos Totens
@@ -26,10 +26,10 @@ const Hero = () => {
         </a>
       </div>
 
-      {/* right content - remover ou completar */}
+      {/* Conteúdo direito - imagem hero */}
      <Image 
      src={heroImg}
-      alt="Hero Image"
+      alt="Imagem Hero"
       className="lg:w-xl lg:mt-16 w-96"
      />
     </div>

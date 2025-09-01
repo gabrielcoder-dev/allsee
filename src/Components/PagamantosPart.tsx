@@ -97,7 +97,7 @@ const PagamantosPart = () => {
   const [carregando, setCarregando] = useState(false);
   const [erro, setErro] = useState("");
 
-  // Função para checar se todos os campos obrigatórios estão preenchidos (exceto complemento)
+  // Função para verificar se todos os campos obrigatórios estão preenchidos (exceto complemento)
   const isFormValid = () => {
     // Pessoa Física
     if (openAccordion === "fisica") {
@@ -286,7 +286,7 @@ const PagamantosPart = () => {
         <div className="bg-white rounded-xl shadow border border-gray-100 p-4 md:p-8 flex flex-col gap-4">
           <h2 className="text-xl font-bold mb-1">Dados do faturamento</h2>
           <p className="text-gray-500 text-sm mb-4">
-            Essas informações serão usada para fins de faturamento. Escolha a
+            Essas informações serão usadas para fins de faturamento. Escolha a
             opção que melhor se aplica a você.
           </p>
           <div className="flex flex-col gap-0">
@@ -425,7 +425,7 @@ const PagamantosPart = () => {
                   />
                   <input
                     type="text"
-                    placeholder="Razao Social"
+                    placeholder="Razão Social"
                     className="border rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-200"
                     value={formData.razaoSocial}
                     onChange={(e) => updateFormData({ razaoSocial: e.target.value })}

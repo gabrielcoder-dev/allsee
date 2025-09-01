@@ -10,21 +10,21 @@ import Image from 'next/image'
 const locais = [
   {
     titulo: 'Feira Municipal',
-    descricao: 'Mais de 10 mil sp por mês',
+    descricao: 'Mais de 10 mil visualizações por mês',
     img: feiraImg,
     preco: 'R$ 250,90/Mês',
     button: 'QUERO ADQUIRIR',
   },
   {
     titulo: 'Restaurante Gabriela',
-    descricao: 'Mais de 8 mil sp por mês',
+    descricao: 'Mais de 8 mil visualizações por mês',
     img: resImg,
     preco: 'R$ 290,90/Mês',
     button: 'QUERO COMPRAR',
   },
   {
     titulo: 'Restaurante Skinão',
-    descricao: 'Mais de 12 mil sp por mês',
+    descricao: 'Mais de 12 mil visualizações por mês',
     img: restauranteImg,
     preco: 'R$ 250,90/Mês',
     button: 'QUERO COMPRAR',
@@ -59,14 +59,14 @@ export default function Plans() {
             <button
               className="w-12 h-12 md:w-16 md:h-16 rounded-full border border-gray-300 flex items-center justify-center text-xl hover:bg-gray-100"
               onClick={() => scroll('left')}
-              aria-label="Scroll left"
+              aria-label="Rolar para esquerda"
             >
               ←
             </button>
             <button
               className="w-12 h-12 md:w-16 md:h-16 rounded-full bg-black text-white flex items-center justify-center text-xl hover:scale-105 transition"
               onClick={() => scroll('right')}
-              aria-label="Scroll right"
+              aria-label="Rolar para direita"
             >
               →
             </button>
@@ -100,7 +100,7 @@ export default function Plans() {
                 <div>
                   <p className="text-xs text-orange-600 font-semibold">{local.descricao}</p>
                   <h3 className="text-md font-bold text-gray-900">{local.titulo}</h3>
-                  <p className="text-gray-400 text-sm">Localizado ...</p>
+                  <p className="text-gray-400 text-sm">Localizado em Primavera do Leste - MT</p>
                 </div>
                 <div>
                   <p className="text-orange-600 font-bold text-2xl flex items-center gap-2 mt-2">
