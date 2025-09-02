@@ -123,34 +123,6 @@ const page = () => {
           <button className="px-4 py-2 border-b-2 border-orange-500 text-orange-600 font-semibold focus:outline-none">
             Todos anúncios ({orders.length.toString().padStart(2, '0')})
           </button>
-          <button className="px-4 py-2 text-gray-400 ml-4">Rascunhos</button>
-        </div>
-
-        {/* Filtros */}
-        <div className="bg-gray-100 rounded-lg p-6 flex flex-wrap gap-4 items-end mb-8">
-          <div className="flex flex-col">
-            <label className="text-sm font-medium mb-1">Status</label>
-            <select className="border rounded px-3 py-2 w-40">
-              <option>Todos</option>
-              <option>Pendente</option>
-              <option>Pago</option>
-            </select>
-          </div>
-          <div className="flex flex-col">
-            <label className="text-sm font-medium mb-1">Data de publicação</label>
-            <input type="date" className="border rounded px-3 py-2 w-44" />
-          </div>
-          <div className="flex flex-col">
-            <label className="text-sm font-medium mb-1">Período</label>
-            <select className="border rounded px-3 py-2 w-32">
-              <option>dias</option>
-              <option>semanas</option>
-              <option>meses</option>
-            </select>
-          </div>
-          <button className="bg-orange-500 text-white px-6 py-2 rounded ml-4">
-            filtrar
-          </button>
         </div>
       </div>
 
