@@ -2,8 +2,9 @@
 
 import { useState, useEffect } from 'react'
 import { FiLogOut, FiMap, FiList } from 'react-icons/fi'
-import { ChevronLeft, ChevronRight, CheckCircle, RefreshCw, Repeat } from 'lucide-react'
+import { ChevronLeft, ChevronRight, CheckCircle, RefreshCw, Repeat, ArrowLeft } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
+import Link from 'next/link'
 
 type NavBarAdminProps = {
   onLogout?: () => void
@@ -197,8 +198,16 @@ export default function NavBarAdmin({ onLogout, mobileOpen, setMobileOpen, selec
           </ul>
         </div>
 
-        {/* Inferior: Logout */}
-        <div className="mb-6">
+        {/* Inferior: Voltar aos resultados e Logout */}
+        <div className="mb-6 space-y-2">
+          <Link
+            href="/results"
+            className="flex font-semibold cursor-pointer
+            items-center gap-3 px-4 md:px-6 py-2 w-full hover:bg-gray-50 rounded transition text-gray-600"
+          >
+            <ArrowLeft size={20} />
+            {isExpanded && <span className="text-sm md:text-base">Voltar aos resultados</span>}
+          </Link>
           <button
             className="flex font-semibold cursor-pointer
             items-center gap-3 px-4 md:px-6 py-2 w-full hover:bg-orange-100 rounded transition text-red-600"
