@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react'
 import { createClient } from '@supabase/supabase-js'
-import { PlayIcon, ShoppingCartIcon, TrashIcon, User2, Monitor, Printer, Pencil } from 'lucide-react'
+import { PlayIcon, ShoppingCartIcon, TrashIcon, User2, Monitor, Printer, Pencil, Zap } from 'lucide-react'
 import ModalLogin from './ModalLogin'
 import ModalCreateAnuncios from './ModalCreateAnuncios'
 import ConfirmDeleteModal from './ConfirmDeleteModal'
@@ -203,7 +203,7 @@ export default function GetAnunciosAdmin({ selectedDuration = '2', onFetchAnunci
                       console.log('✅ Imagem carregada com sucesso:', anuncio.image);
                     }}
                   />
-                  <div className="hidden absolute inset-0 flex items-center justify-center bg-gray-200 text-gray-500 text-sm">
+                  <div className="absolute inset-0 flex items-center justify-center bg-gray-200 text-gray-500 text-sm">
                     Sem imagem
                   </div>
                 </div>
@@ -235,6 +235,14 @@ export default function GetAnunciosAdmin({ selectedDuration = '2', onFetchAnunci
                       {anuncio.type_screen === 'digital'
                         ? formatarMilhar(calcularViewsPorSemana(anuncio, selectedDuration))
                         : formatarMilhar(anuncio.views)}
+                    </span>
+                  </div>
+                  <div className="flex flex-col items-start">
+                    <span className="text-[10px] text-gray-500 font-medium lowercase flex items-center gap-1">impacto <span className="text-[10px]"><Zap className='w-3' /></span></span>
+                    <span className="font-bold text-sm md:text-base">
+                      {anuncio.type_screen === 'digital'
+                        ? formatarMilhar(calcularViewsPorSemana(anuncio, selectedDuration) * 3)
+                        : formatarMilhar((anuncio.views || 0) * 3)}
                     </span>
                   </div>
                 </div>

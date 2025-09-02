@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { createClient } from '@supabase/supabase-js'
 import { useCart } from '@/context/CartContext'
-import { PlayIcon, ShoppingCartIcon, TrashIcon, User2, ZoomIn, Monitor, Printer } from 'lucide-react'
+import { PlayIcon, ShoppingCartIcon, TrashIcon, User2, ZoomIn, Monitor, Printer, Zap } from 'lucide-react'
 import ModalLogin from './ModalLogin'
 import ImageModal from './ImageModal'
 
@@ -247,6 +247,10 @@ export default function GetAnunciosResults({ onAdicionarProduto, selectedDuratio
                   <div className="flex flex-col items-start">
                     <span className="text-[10px] text-gray-500 font-medium lowercase flex items-center gap-1">alcance <span className="text-[10px]"><User2 className='w-3' /></span></span>
                     <span className="font-bold text-base">{formatarMilhar(viewsCalculado)}</span>
+                  </div>
+                  <div className="flex flex-col items-start">
+                    <span className="text-[10px] text-gray-500 font-medium lowercase flex items-center gap-1">impacto <span className="text-[10px]"><Zap className='w-3' /></span></span>
+                    <span className="font-bold text-base">{formatarMilhar(viewsCalculado * 3)}</span>
                   </div>
                 </div>
                 <div className="text-xs text-gray-800 mb-1 font-bold">Telas: {anuncio.screens}</div>

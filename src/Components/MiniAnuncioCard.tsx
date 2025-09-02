@@ -1,5 +1,5 @@
 import React from 'react';
-import { ShoppingCartIcon, TrashIcon } from 'lucide-react';
+import { ShoppingCartIcon, TrashIcon, Zap } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
 
 type AnuncioType = {
@@ -258,6 +258,10 @@ export default function MiniAnuncioCard({ anuncio, actionButton, hideAddButton, 
         <div className="flex flex-col items-start">
           <span className={statLabelClasses}>alcance</span>
           <span className={statValueClasses}>{anuncio.views || anuncio.alcance || '-'}</span>
+        </div>
+        <div className="flex flex-col items-start">
+          <span className={statLabelClasses}>impacto</span>
+          <span className={statValueClasses}>{((anuncio.views || anuncio.alcance || 0) * 3).toLocaleString('pt-BR')}</span>
         </div>
       </div>
       <div className={screensClasses}>Telas: {anuncio.screens || 1}</div>
