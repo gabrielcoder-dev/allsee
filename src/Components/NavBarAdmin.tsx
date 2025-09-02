@@ -206,7 +206,7 @@ export default function NavBarAdmin({ onLogout, mobileOpen, setMobileOpen, selec
             items-center gap-3 px-4 md:px-6 py-2 w-full rounded transition text-gray-600"
           >
             <ArrowLeft size={20} />
-            {isExpanded && <span className="text-xs md:text-base">Voltar aos resultados</span>}
+            {isExpanded && <span className="text-xs md:text-base">Voltar</span>}
           </Link>
           <button
             className="flex font-semibold cursor-pointer
