@@ -146,28 +146,28 @@ export default function MiniAnuncioCard({ anuncio, actionButton, hideAddButton, 
     : "text-gray-500 text-[9px] mb-0.5 break-words line-clamp-2";
 
   const statsContainerClasses = size === 'small'
-    ? "flex gap-2 mb-0.5"
+    ? "flex gap-1.5 mb-0.5"
     : size === 'medium'
-    ? "flex gap-3 mb-1"
+    ? "flex gap-2 mb-1"
     : size === 'large'
-    ? "flex gap-4 mb-2"
-    : "flex gap-2 mb-0.5";
+    ? "flex gap-3 mb-2"
+    : "flex gap-1.5 mb-0.5";
 
   const statLabelClasses = size === 'small'
-    ? "text-[7px] text-gray-500 font-medium lowercase"
+    ? "text-[6px] text-gray-500 font-medium lowercase"
     : size === 'medium'
-    ? "text-[9px] text-gray-500 font-medium lowercase"
+    ? "text-[8px] text-gray-500 font-medium lowercase"
     : size === 'large'
-    ? "text-xs text-gray-500 font-medium lowercase"
-    : "text-[8px] text-gray-500 font-medium lowercase";
+    ? "text-[10px] text-gray-500 font-medium lowercase"
+    : "text-[7px] text-gray-500 font-medium lowercase";
 
   const statValueClasses = size === 'small'
-    ? "font-bold text-[8px]"
+    ? "font-bold text-[7px]"
     : size === 'medium'
-    ? "font-bold text-[10px]"
+    ? "font-bold text-[9px]"
     : size === 'large'
-    ? "font-bold text-sm"
-    : "font-bold text-[9px]";
+    ? "font-bold text-xs"
+    : "font-bold text-[8px]";
 
   const screensClasses = size === 'small'
     ? "text-[8px] text-gray-800 mb-0.5 font-bold"

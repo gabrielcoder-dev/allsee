@@ -233,10 +233,10 @@ export default function GetAnunciosResults({ onAdicionarProduto, selectedDuratio
                 </div>
                 <h3 className="font-bold text-lg">{anuncio.name}</h3>
                 <div className="text-gray-500 text-xs mb-1">{anuncio.address}</div>
-                <div className="flex gap-8 mb-1">
+                <div className="flex gap-4 mb-1">
                   <div className="flex flex-col items-start">
-                    <span className="text-[10px] text-gray-500 font-medium lowercase flex items-center gap-1">exibições <span className="text-[10px]"><PlayIcon className='w-3' /></span></span>
-                    <span className="font-bold text-base">
+                    <span className="text-[9px] text-gray-500 font-medium lowercase flex items-center gap-1">exibições <span className="text-[9px]"><PlayIcon className='w-2.5' /></span></span>
+                    <span className="font-bold text-sm">
                       {String(anuncio.display) === 'fixo'
                         ? 'fixo'
                         : anuncio.type_screen === 'digital'
@@ -245,12 +245,12 @@ export default function GetAnunciosResults({ onAdicionarProduto, selectedDuratio
                     </span>
                   </div>
                   <div className="flex flex-col items-start">
-                    <span className="text-[10px] text-gray-500 font-medium lowercase flex items-center gap-1">alcance <span className="text-[10px]"><User2 className='w-3' /></span></span>
-                    <span className="font-bold text-base">{formatarMilhar(viewsCalculado)}</span>
+                    <span className="text-[9px] text-gray-500 font-medium lowercase flex items-center gap-1">alcance <span className="text-[9px]"><User2 className='w-2.5' /></span></span>
+                    <span className="font-bold text-sm">{formatarMilhar(viewsCalculado)}</span>
                   </div>
                   <div className="flex flex-col items-start">
-                    <span className="text-[10px] text-gray-500 font-medium lowercase flex items-center gap-1">impacto <span className="text-[10px]"><Zap className='w-3' /></span></span>
-                    <span className="font-bold text-base">{formatarMilhar(viewsCalculado * 3)}</span>
+                    <span className="text-[9px] text-gray-500 font-medium lowercase flex items-center gap-1">impacto <span className="text-[9px]"><Zap className='w-2.5' /></span></span>
+                    <span className="font-bold text-sm">{formatarMilhar(viewsCalculado * 3)}</span>
                   </div>
                 </div>
                 <div className="text-xs text-gray-800 mb-1 font-bold">Telas: {anuncio.screens}</div>

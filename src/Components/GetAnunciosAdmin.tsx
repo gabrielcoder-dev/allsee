@@ -220,26 +220,26 @@ export default function GetAnunciosAdmin({ selectedDuration = '2', onFetchAnunci
                 </div>
                 <h3 className="font-bold text-base md:text-lg line-clamp-2">{anuncio.name}</h3>
                 <div className="text-gray-500 text-xs mb-1 break-words">{anuncio.address}</div>
-                <div className="flex gap-4 md:gap-8 mb-1">
+                <div className="flex gap-3 md:gap-5 mb-1">
                   <div className="flex flex-col items-start">
-                    <span className="text-[10px] text-gray-500 font-medium lowercase flex items-center gap-1">exibições <span className="text-[10px]"><PlayIcon className='w-3' /></span></span>
-                    <span className="font-bold text-sm md:text-base">
+                    <span className="text-[9px] text-gray-500 font-medium lowercase flex items-center gap-1">exibições <span className="text-[9px]"><PlayIcon className='w-2.5' /></span></span>
+                    <span className="font-bold text-xs md:text-sm">
                       {anuncio.type_screen === 'digital'
                         ? formatarMilhar(calcularDisplayPorSemana(anuncio, selectedDuration))
                         : formatarMilhar(anuncio.display)}
                     </span>
                   </div>
                   <div className="flex flex-col items-start">
-                    <span className="text-[10px] text-gray-500 font-medium lowercase flex items-center gap-1">alcance <span className="text-[10px]"><User2 className='w-3' /></span></span>
-                    <span className="font-bold text-sm md:text-base">
+                    <span className="text-[9px] text-gray-500 font-medium lowercase flex items-center gap-1">alcance <span className="text-[9px]"><User2 className='w-2.5' /></span></span>
+                    <span className="font-bold text-xs md:text-sm">
                       {anuncio.type_screen === 'digital'
                         ? formatarMilhar(calcularViewsPorSemana(anuncio, selectedDuration))
                         : formatarMilhar(anuncio.views)}
                     </span>
                   </div>
                   <div className="flex flex-col items-start">
-                    <span className="text-[10px] text-gray-500 font-medium lowercase flex items-center gap-1">impacto <span className="text-[10px]"><Zap className='w-3' /></span></span>
-                    <span className="font-bold text-sm md:text-base">
+                    <span className="text-[9px] text-gray-500 font-medium lowercase flex items-center gap-1">impacto <span className="text-[9px]"><Zap className='w-2.5' /></span></span>
+                    <span className="font-bold text-xs md:text-sm">
                       {anuncio.type_screen === 'digital'
                         ? formatarMilhar(calcularViewsPorSemana(anuncio, selectedDuration) * 3)
                         : formatarMilhar((anuncio.views || 0) * 3)}
