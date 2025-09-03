@@ -164,9 +164,9 @@ const page = () => {
                     </span>
                     {/* Mensagem de aprovação/rejeição */}
                     {orderStatus === 'aprovado' ? (
-                      <div className="text-green-500">Arte Aceita</div>
+                      <div className="font-bold text-green-500">Arte Aceita</div>
                     ) : orderStatus === 'rejeitado' ? (
-                      <div className="text-red-500">Arte Não Aceita, escolha outra.</div>
+                      <div className="text-xs text-bold text-red-500">Arte Não Aceita, escolha outra.</div>
                     ) : null}
                   </div>
                   <button
