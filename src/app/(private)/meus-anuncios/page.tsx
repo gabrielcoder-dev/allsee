@@ -1,3 +1,4 @@
+// src/app/(private)/meus-anuncios/page.tsx
 'use client'
 
 import React, { useState, useRef, useEffect } from "react";
@@ -32,7 +33,7 @@ const page = () => {
       // Busca apenas as colunas que existem
       const { data, error } = await supabase
         .from("order")
-        .select("id, nome_campanha, arte_campanha, id_user, inicio_campanha, duracao_campanha, preco, status")
+        .select("id, nome_campanha, arte_campanha, id_user, inicio_campanha, duracao_campanha, preco")
         .eq("id_user", user.id)
         .order("id", { ascending: false });
       console.log('User ID:', user.id);
@@ -135,70 +136,73 @@ const page = () => {
         ) : orders.length === 0 ? (
           <div className="text-center py-10 text-gray-500">Nenhum anúncio encontrado.</div>
         ) : (
-          orders.map((order) => (
-            <div key={order.id} className="bg-white border rounded-lg shadow p-6 mb-8 flex items-center justify-between gap-6">
-              {/* Imagem da campanha */}
-              <div className="w-32 h-32 bg-gray-200 rounded overflow-hidden flex-shrink-0 flex items-center justify-center">
-                <img src={order.arte_campanha || "/logo.png"} alt="Anúncio" className="object-cover w-full h-full" />
-              </div>
-              {/* Info principal */}
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="text-lg font-semibold truncate">{order.nome_campanha || 'Campanha sem nome'}</span>
-                  <button className="ml-1 text-gray-400 hover:text-gray-600" title="Editar nome"><svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M15.232 5.232l3.536 3.536M9 13l6.586-6.586a2 2 0 1 1 2.828 2.828L11.828 15.828a4 4 0 0 1-1.414.828l-4.243 1.414 1.414-4.243a4 4 0 0 1 .828-1.414z"/></svg></button>
+          orders.map((order) => {
+            const orderStatus = localStorage.getItem(`order_${order.id}`);
+            return (
+              <div key={order.id} className="bg-white border rounded-lg shadow p-6 mb-8 flex items-center justify-between gap-6">
+                {/* Imagem da campanha */}
+                <div className="w-32 h-32 bg-gray-200 rounded overflow-hidden flex-shrink-0 flex items-center justify-center">
+                  <img src={order.arte_campanha || "/logo.png"} alt="Anúncio" className="object-cover w-full h-full" />
                 </div>
-                <div className="flex flex-wrap items-center gap-2 text-sm text-gray-600 mb-1">
-                  <span>Início: <span className="text-gray-800">{order.inicio_campanha ? formatDateBR(parseLocalDateString(order.inicio_campanha)) : '-'}</span></span>
-                  <span>|</span>
-                  <span>Período de Duração: <span className="text-blue-700 font-medium">{order.duracao_campanha ? `${order.duracao_campanha} semanas` : '-'}</span></span>
-                </div>
-                <div className="mb-2 flex items-center gap-2">
-                  {/* Tag de categoria (exemplo) */}
-                  <span className="inline-block bg-gray-100 text-gray-700 text-xs px-2 py-1 rounded">Elevadores Comerciais</span>
-                  {/* Status do pedido */}
-                  <span className={`inline-block text-xs px-2 py-1 rounded font-medium ${
-                    order.status === 'pago' 
-                      ? 'bg-green-100 text-green-700' 
-                      : order.status === 'pendente'
-                      ? 'bg-yellow-100 text-yellow-700'
-                      : 'bg-gray-100 text-gray-700'
-                  }`}>
-                    {order.status === 'pago' ? 'Pago' : order.status === 'pendente' ? 'Pendente' : order.status || 'N/A'}
-                  </span>
-                </div>
-                <button
-                  className="border border-gray-300 rounded px-3 py-1 text-sm hover:bg-gray-100"
-                  onClick={() => { setSelectedOrder(order); setIsModalOpen(true); }}
-                >
-                  Ver detalhes do anúncio
-                </button>
-              </div>
-              {/* ID, menu e preço */}
-              <div className="flex flex-col items-end gap-2 min-w-[120px] h-full justify-between self-stretch">
-                <div className="flex items-center gap-2 w-full justify-end relative">
-                  <span className="text-gray-400 text-sm">#{order.id}</span>
+                {/* Info principal */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-lg font-semibold truncate">{order.nome_campanha || 'Campanha sem nome'}</span>
+                    <button className="ml-1 text-gray-400 hover:text-gray-600" title="Editar nome"><svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M15.232 5.232l3.536 3.536M9 13l6.586-6.586a2 2 0 1 1 2.828 2.828L11.828 15.828a4 4 0 0 1-1.414.828l-4.243 1.414 1.414-4.243a4 4 0 0 1 .828-1.414z"/></svg></button>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2 text-sm text-gray-600 mb-1">
+                    <span>Início: <span className="text-gray-800">{order.inicio_campanha ? formatDateBR(parseLocalDateString(order.inicio_campanha)) : '-'}</span></span>
+                    <span>|</span>
+                    <span>Período de Duração: <span className="text-blue-700 font-medium">{order.duracao_campanha ? `${order.duracao_campanha} semanas` : '-'}</span></span>
+                  </div>
+                  <div className="mb-2 flex items-center gap-2">
+                    {/* Tag de categoria (exemplo) */}
+                    <span className="inline-block bg-gray-100 text-gray-700 text-xs px-2 py-1 rounded">Elevadores Comerciais</span>
+                    {/* Status do pedido */}
+                    <span className={`inline-block text-xs px-2 py-1 rounded font-medium`}>
+                      {/* Status do pedido */}
+                    </span>
+                    {/* Mensagem de aprovação/rejeição */}
+                    {orderStatus === 'aprovado' ? (
+                      <div className="text-green-500">Arte Aceita</div>
+                    ) : orderStatus === 'rejeitado' ? (
+                      <div className="text-red-500">Arte Não Aceita, escolha outra.</div>
+                    ) : null}
+                  </div>
                   <button
-                    className="border border-gray-200 rounded p-1 hover:bg-gray-100"
-                    title="Menu"
-                    onClick={() => setOpenMenuId(openMenuId === order.id ? null : order.id)}
+                    className="border border-gray-300 rounded px-3 py-1 text-sm hover:bg-gray-100"
+                    onClick={() => { setSelectedOrder(order); setIsModalOpen(true); }}
                   >
-                    <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="12" cy="6" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="18" r="1.5"/></svg>
+                    Ver detalhes do anúncio
                   </button>
-                  {openMenuId === order.id && (
-                    <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg z-50 py-2 border">
-                      <button className="block w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100 text-sm">trocar arte</button>
-                      <button className="block w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100 text-sm">detalhes do anúncio</button>
-                      <button className="block w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100 text-sm">adicionar ao plano de mídia</button>
-                      <button className="block w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100 text-sm">alterar data de inicio</button>
-                    </div>
-                  )}
                 </div>
-                <div className="flex-1 flex items-center justify-end">
-                  <span className="text-lg font-bold text-gray-800">{order.preco ? Number(order.preco).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : '-'}</span>
+                {/* ID, menu e preço */}
+                <div className="flex flex-col items-end gap-2 min-w-[120px] h-full justify-between self-stretch">
+                  <div className="flex items-center gap-2 w-full justify-end relative">
+                    <span className="text-gray-400 text-sm">#{order.id}</span>
+                    <button
+                      className="border border-gray-200 rounded p-1 hover:bg-gray-100"
+                      title="Menu"
+                      onClick={() => setOpenMenuId(openMenuId === order.id ? null : order.id)}
+                    >
+                      <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="12" cy="6" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="18" r="1.5"/></svg>
+                    </button>
+                    {openMenuId === order.id && (
+                      <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg z-50 py-2 border">
+                        <button className="block w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100 text-sm">trocar arte</button>
+                        <button className="block w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100 text-sm">detalhes do anúncio</button>
+                        <button className="block w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100 text-sm">adicionar ao plano de mídia</button>
+                        <button className="block w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100 text-sm">alterar data de inicio</button>
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex-1 flex items-center justify-end">
+                    <span className="text-lg font-bold text-gray-800">{order.preco ? Number(order.preco).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : '-'}</span>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))
+            )
+          })
         )}
       </div>
 
@@ -230,11 +234,6 @@ const page = () => {
                   <span className="block mb-1">Início: {selectedOrder.inicio_campanha ? formatDateBR(parseLocalDateString(selectedOrder.inicio_campanha)) : '-'}</span>
                   <span className="block mb-1">Duração: <span className="font-medium">{selectedOrder.duracao_campanha || '-'}</span></span>
                   <span className="block mb-1">Preço: <span className="font-medium">{selectedOrder.preco ? Number(selectedOrder.preco).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : '-'}</span></span>
-                  <span className="block mb-1">Status: <span className={`font-medium ${
-                    selectedOrder.status === 'pago' ? 'text-green-600' : 
-                    selectedOrder.status === 'pendente' ? 'text-yellow-600' : 
-                    'text-gray-600'
-                  }`}>{selectedOrder.status === 'pago' ? 'Pago' : selectedOrder.status === 'pendente' ? 'Pendente' : selectedOrder.status || 'N/A'}</span></span>
                 </div>
               </div>
             )}
