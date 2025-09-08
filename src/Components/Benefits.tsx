@@ -34,7 +34,7 @@ export default function AllseeSection() {
         <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
           <Card
             icon={<FaMapMarkerAlt />}
-            title="Locais mais movimentados de PVA"
+            title="Locais mais movimentados da região"
             description="Estudamos os locais com o maior público de Primavera para que todos vejam seus anúncios."
           />
           <Card
