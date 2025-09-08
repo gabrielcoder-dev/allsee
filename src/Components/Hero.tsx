@@ -14,7 +14,7 @@ const Hero = () => {
         </button>
 
         <h2 className='text-3xl md:text-5xl font-semibold'>
-          Seja visto por mais de <span className='text-orange-600'>36% da População de </span>Primavera do Leste - MT
+          Anuncie onde os seus clientes <span className="text-orange-600"> moram, trabalham e passam </span> todos os dias.
         </h2>
 
         <p className='text-gray-400 w-96'>

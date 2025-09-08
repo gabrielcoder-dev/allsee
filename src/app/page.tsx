@@ -11,7 +11,7 @@ import React from 'react'
 
 const page = () => {
   return (
-    <div>
+    <div className='mb-12'>
       <HeaderLand />
       <Hero />
       <Benefits />

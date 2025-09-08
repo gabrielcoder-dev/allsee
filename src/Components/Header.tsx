@@ -98,7 +98,9 @@ export default function Header() {
             <HeaderLink href="#sobre" onClick={closeMobileMenu}>Sobre Nós</HeaderLink>
             <HeaderLink href="#locais" onClick={closeMobileMenu}>Locais</HeaderLink>
             <HeaderLink href="#contato" onClick={closeMobileMenu}>Contato</HeaderLink>
-            <button className="w-full px-6 py-2 rounded-full font-medium transition-all duration-300 bg-orange-600 text-white hover:bg-orange-500 cursor-pointer">
+            <button
+            onClick={() => router.push('/results')}
+            className="w-full px-6 py-2 rounded-full font-medium transition-all duration-300 bg-orange-600 text-white hover:bg-orange-500 cursor-pointer">
               Anunciar Agora!
             </button>
           </div>

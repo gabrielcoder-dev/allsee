@@ -5,6 +5,10 @@ import { FiLogOut, FiMap, FiList } from 'react-icons/fi'
 import { ChevronLeft, ChevronRight, CheckCircle, RefreshCw, Repeat, ArrowLeft } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+
+
+
 
 type NavBarAdminProps = {
   onLogout?: () => void
@@ -18,6 +22,7 @@ export default function NavBarAdmin({ onLogout, mobileOpen, setMobileOpen, selec
   const [open, setOpen] = useState(true)
   const [userName, setUserName] = useState<string>('Usuário Admin')
   const [isMobile, setIsMobile] = useState(false)
+  const router = useRouter()
 
   useEffect(() => {
     const checkMobile = () => {
@@ -209,9 +214,13 @@ export default function NavBarAdmin({ onLogout, mobileOpen, setMobileOpen, selec
             {isExpanded && <span className="text-xs md:text-base">Voltar</span>}
           </Link>
           <button
+          // {{change 3}}
             className="flex font-semibold cursor-pointer
             items-center gap-3 px-4 md:px-6 py-2 w-full hover:bg-orange-100 rounded transition text-red-600"
-            onClick={onLogout}
+            onClick={async () => {
+              await supabase.auth.signOut();
+              router.push('/');
+            }}
           >
             <FiLogOut size={20} />
             {isExpanded && <span className="text-sm md:text-base">Sair</span>}

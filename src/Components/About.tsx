@@ -1,6 +1,10 @@
 'use client'
 
+import Image from 'next/image'
 import { FaMapMarkerAlt, FaCalendarAlt, FaTags } from 'react-icons/fa'
+import EmpressaImg from "@/assets/empressa-img.png"
+import LogoV2 from "@/assets/logo-v2.jpeg"
+
 
 export default function About() {
   return (
@@ -53,25 +57,21 @@ export default function About() {
         <div className="relative flex justify-center items-center">
           {/* Imagem grande */}
           <div className="w-[340px] h-[340px] sm:w-[280px] sm:h-[380px] md:w-[350px] md:h-[520px] bg-gray-100 rounded-[120px] border-2 border-orange-500 overflow-hidden z-10">
-            <img
-              src="https://images.unsplash.com/photo-1580587771525-78b9dba3b914"
-              alt="CEO principal"
-              className="w-full h-full object-cover"
+            <Image
+             src={EmpressaImg}
+             className='w-full h-full object-cover'
+             alt='Empressa'
             />
           </div>
 
           {/* Imagem menor */}
           <div className="absolute right-0 bottom-0 w-[150px] h-[180px] sm:w-[180px] sm:h-[220px] bg-gray-100 rounded-full border-4 border-white overflow-hidden z-20 shadow-md">
-            <img
-              src="https://images.unsplash.com/photo-1580587771525-78b9dba3b914"
-              alt="CEO secundário"
-              className="w-full h-full object-cover"
+          <Image
+             src={LogoV2}
+             className='w-full h-full object-cover'
+             alt='Empressa'
             />
-            {/* Tag CEO */}
-            <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-gradient-to-r from-orange-500 to-orange-300 text-white text-sm font-bold px-3 py-1 rounded-full flex items-center gap-1 shadow-lg">
-              <FaMapMarkerAlt className="text-white text-xs" />
-              CEO
-            </div>
+            
           </div>
         </div>
       </div>

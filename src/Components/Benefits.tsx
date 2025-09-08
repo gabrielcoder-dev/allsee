@@ -28,8 +28,7 @@ export default function AllseeSection() {
 
       <div className="max-w-7xl mx-auto text-center">
         <h2 className="text-2xl md:text-4xl font-bold mb-16 leading-snug">
-          A <span className="text-orange-600">ALLSEE</span> é para você que busca crescer<br />
-          <span className="text-black">na sua região!</span>
+          <span className="text-orange-600">ALLSEE,</span> onde todos te veem!
         </h2>
 
         <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
@@ -41,12 +40,12 @@ export default function AllseeSection() {
           <Card
             icon={<FaUsers />}
             title="Atraia mais clientes!"
-            description="Quanto mais pessoas virem seus anúncios maior a chances de vender."
+            description="Quanto mais pessoas virem seus anúncios maior a chance de vender."
           />
           <Card
             icon={<FaTrophy />}
             title="Passe dos seus Concorrentes"
-            description="Se você não anunciar, seu concorrente vai e vai estar sempre à sua frente."
+            description="Se você não anunciar, seu concorrente vai estar sempre à sua frente."
           />
           <Card
             icon={<FaStar />}
