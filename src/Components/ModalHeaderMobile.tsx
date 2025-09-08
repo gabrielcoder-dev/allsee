@@ -94,8 +94,12 @@ export default function ModalHeaderMobile({
     return new Date(year, month - 1, day);
   }
 
+  const today = new Date();
+  const twoDaysFromNow = new Date(today);
+  twoDaysFromNow.setDate(today.getDate() + 2);
+
   return (
-    <div className="fixed inset-0 z-[9999] flex items-start justify-center bg-black/30" onClick={onClose}>
+    <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/30" onClick={onClose}>
       <div
         className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-sm mx-2 mt-8"
         onClick={e => e.stopPropagation()}
@@ -148,6 +152,7 @@ export default function ModalHeaderMobile({
                     mode="single"
                     selected={startDate}
                     onSelect={setStartDate}
+                     disabled={date => date < twoDaysFromNow}
                     initialFocus
                   />
                 </PopoverContent>

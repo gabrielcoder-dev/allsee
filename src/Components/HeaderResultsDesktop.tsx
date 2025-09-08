@@ -84,6 +84,8 @@ const HeaderResultsDesktop = ({ onDurationChange, selectedDuration, onTipoMidiaC
     ? parseLocalDateString(formData.startDate)
     : undefined;
   const today = new Date();
+    const twoDaysFromNow = new Date(today);
+    twoDaysFromNow.setDate(today.getDate() + 2);
 
   useEffect(() => {
     if (!mounted) return;
@@ -219,6 +221,9 @@ const HeaderResultsDesktop = ({ onDurationChange, selectedDuration, onTipoMidiaC
                   onSelect={date => {
                     if (date) updateFormData({ startDate: toYMD(date) });
                   }}
+                  disabled={date =>
+                    date < twoDaysFromNow
+                  }
                   initialFocus
                 />
               </PopoverContent>
