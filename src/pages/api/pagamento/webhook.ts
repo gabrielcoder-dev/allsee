@@ -1,160 +1,120 @@
-import type { NextApiRequest, NextApiResponse } from "next";
-import { Payment, MercadoPagoConfig } from "mercadopago";
-import { atualizarStatusCompra } from "@/lib/utils";
+import type { NextApiRequest, NextApiResponse } from "next"
+import { Payment, MercadoPagoConfig } from "mercadopago"
+import { supabaseServer } from "@/lib/supabaseServer" // usa a service role key
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
-  console.log("🚀 Webhook iniciado - Método:", req.method);
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  console.log("🚀 Webhook iniciado - Método:", req.method)
 
   if (req.method !== "POST") {
-    console.log("❌ Método não permitido:", req.method);
-    return res.status(405).json({ error: "Método não permitido" });
+    console.log("❌ Método não permitido:", req.method)
+    return res.status(405).json({ error: "Método não permitido" })
   }
 
   try {
-    // Alguns providers enviam body como string quando o content-type não é application/json
-    const rawBody = typeof req.body === "string" ? req.body : undefined;
-    let parsedBody: any = req.body;
+    // Garantir que o body seja JSON
+    const rawBody = typeof req.body === "string" ? req.body : undefined
+    let parsedBody: any = req.body
     if (rawBody) {
       try {
-        parsedBody = JSON.parse(rawBody);
+        parsedBody = JSON.parse(rawBody)
       } catch (e) {
-        console.warn("⚠️ Body não estava em JSON válido, mantendo como texto.");
+        console.warn("⚠️ Body não estava em JSON válido, mantendo como texto.")
       }
     }
 
     console.log("📨 Webhook recebido:", {
-      method: req.method,
-      url: req.url,
       body: parsedBody,
-      headers: req.headers,
       query: req.query,
-    });
+      headers: req.headers,
+    })
 
-    const paymentId = parsedBody?.data?.id || (req.query?.id as string);
+    const paymentId = parsedBody?.data?.id || (req.query?.id as string)
     const topic =
       parsedBody?.type ||
       (req.query?.type as string) ||
-      (req.query?.topic as string);
+      (req.query?.topic as string)
 
-    // Validações básicas
     if (topic !== "payment" || !paymentId) {
-      console.error("❌ Payload inválido:", req.body);
+      console.error("❌ Payload inválido:", parsedBody)
       return res.status(200).json({
         received: true,
         message: "Webhook recebido mas payload inválido",
-        error: "Payload inválido",
-        topic: topic,
-        paymentId: paymentId,
-      });
+      })
     }
 
-    // Verificar se é um teste do Mercado Pago
-    if (paymentId === "123456") {
-      console.log("🧪 Teste do Mercado Pago detectado");
-      return res.status(200).json({
-        received: true,
-        message: "Teste do webhook recebido com sucesso",
-        test: true,
-      });
-    }
+    console.log("💳 Processando pagamento ID:", paymentId)
 
-    console.log("💳 Processando pagamento ID:", paymentId);
-
-    // Validar token de acesso
     if (!process.env.MERCADO_PAGO_ACCESS_TOKEN) {
-      console.error("❌ MERCADO_PAGO_ACCESS_TOKEN não configurado");
-      return res.status(200).json({
-        received: true,
-        message: "Webhook recebido mas token não configurado",
-        error: "Token de acesso não configurado",
-      });
+      console.error("❌ MERCADO_PAGO_ACCESS_TOKEN não configurado")
+      return res.status(200).json({ received: true, error: "Token não configurado" })
     }
 
-    // Inicializar cliente do Mercado Pago
-    const mercadoPagoClient = new MercadoPagoConfig({
+    // Inicializa client Mercado Pago
+    const mpClient = new MercadoPagoConfig({
       accessToken: process.env.MERCADO_PAGO_ACCESS_TOKEN as string,
-    });
+    })
+    const paymentClient = new Payment(mpClient)
 
-    const paymentClient = new Payment(mercadoPagoClient);
-
-    // Buscar dados do pagamento
-    let payment;
+    let payment
     try {
-      payment = await paymentClient.get({ id: paymentId });
-      const isLiveMode =
-        payment?.live_mode ?? req.headers["x-test-event"] !== "true";
-      console.log("🌐 Ambiente do evento:", { liveMode: isLiveMode });
-
+      payment = await paymentClient.get({ id: paymentId })
       console.log("📊 Dados do pagamento:", {
         id: payment.id,
         status: payment.status,
         external_reference: payment.external_reference,
         amount: payment.transaction_amount,
         payment_method: payment.payment_method?.type,
-      });
-    } catch (paymentError: any) {
-      console.error("❌ Erro ao buscar pagamento:", paymentError);
+      })
+    } catch (err: any) {
+      console.error("❌ Erro ao buscar pagamento:", err)
       return res.status(200).json({
         received: true,
-        message: "Webhook recebido mas erro ao buscar pagamento",
-        error: paymentError.message || "Erro desconhecido",
-        paymentId: paymentId,
-      });
+        message: "Erro ao buscar pagamento",
+        error: err.message || "Erro desconhecido",
+      })
     }
 
-    const externalReference = payment.external_reference;
-    const status = payment.status;
-
-    console.log("🔍 Status do pagamento:", status);
+    const externalReference = payment.external_reference
+    const status = payment.status
 
     if (!externalReference) {
-      console.log("⚠️ Pagamento sem referência externa");
+      console.log("⚠️ Pagamento sem referência externa")
       return res.status(200).json({
         received: true,
-        message: "Pagamento processado mas sem referência externa",
-        status: status,
-      });
+        message: "Pagamento sem referência externa",
+      })
     }
 
-    // Mapear status do Mercado Pago para status interno (apenas pendente e pago)
-    let internalStatus = "pendente";
-
+    // Mapeamento simples de status
+    let internalStatus = "pendente"
     if (status === "approved") {
-      internalStatus = "pago";
-    } else if (status === "rejected" || status === "cancelled") {
-      internalStatus = "pendente";
-    } 
+      internalStatus = "pago"
+    }
 
-    console.log("🔄 Mapeamento de status:", {
-      statusOriginal: status,
+    console.log("🔄 Atualizando status no banco:", {
+      orderId: externalReference,
       statusInterno: internalStatus,
-    });
+      statusOriginal: status,
+    })
 
-    // Atualizar status da compra no banco
-    try {
-      await atualizarStatusCompra(
-        externalReference,
-        internalStatus as "pendente" | "pago"
-        );
-
-      console.log("🎉 Order atualizado com sucesso!", {
-        orderId: externalReference,
+    const { error: updateError } = await supabaseServer
+      .from("order")
+      .update({
         status: internalStatus,
-        originalStatus: status,
-      });
-    } catch (updateError: any) {
-      console.error("❌ Erro ao atualizar status:", updateError);
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", externalReference)
+
+    if (updateError) {
+      console.error("❌ Erro ao atualizar order:", updateError)
       return res.status(200).json({
         received: true,
-        message: "Webhook recebido mas erro ao atualizar status",
-        error: updateError.message || "Erro desconhecido",
-        orderId: externalReference,
-        status: internalStatus,
-      });
+        message: "Erro ao atualizar order",
+        error: updateError.message,
+      })
     }
+
+    console.log("✅ Order atualizada com sucesso:", externalReference)
 
     return res.status(200).json({
       received: true,
@@ -162,24 +122,13 @@ export default async function handler(
       orderId: externalReference,
       status: internalStatus,
       originalStatus: status,
-    });
+    })
   } catch (error: any) {
-    console.error("❌ Erro no webhook:", error);
-
-    // Log detalhado do erro
-    if (error.message) {
-      console.error("Mensagem de erro:", error.message);
-    }
-    if (error.cause) {
-      console.error("Causa do erro:", error.cause);
-    }
-
-    // Sempre retornar 200 para evitar falha de entrega
+    console.error("❌ Erro no webhook:", error)
     return res.status(200).json({
       received: true,
-      message: "Webhook recebido mas erro interno",
-      error: "Erro ao processar webhook",
-      details: error.message || "Erro desconhecido",
-    });
+      message: "Erro interno ao processar webhook",
+      error: error.message || "Erro desconhecido",
+    })
   }
 }
