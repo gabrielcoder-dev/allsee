@@ -4,6 +4,8 @@ import Image from 'next/image'
 import { FaMapMarkerAlt, FaCalendarAlt, FaTags } from 'react-icons/fa'
 import EmpressaImg from "@/assets/empressa-img.png"
 import LogoV2 from "@/assets/logo-v2.jpeg"
+import { MdEmail } from 'react-icons/md'
+import { Smartphone, SmartphoneCharging } from 'lucide-react'
 
 
 export default function About() {
@@ -15,7 +17,7 @@ export default function About() {
         <div>
           <p className="uppercase text-sm text-orange-600 font-bold tracking-wider mb-1">Sobre</p>
           <h2 className="text-3xl md:text-4xl font-extrabold text-black mb-4">ALLSEE</h2>
-          <p className="text-gray-500 mb-10">Texto texto ....</p>
+          <p className="text-gray-500 mb-10">A ALL SEE é a maior empresa de mídia indoor e OOH de Primavera do Leste e uma referência em toda a região. Fundada por empresários com mais de 20 anos de experiência, destaca-se pela inovação, credibilidade e qualidade. Com tecnologia de ponta e telas digitais estrategicamente posicionadas, oferece soluções de comunicação que garantem visibilidade, engajamento e fortalecimento de marcas..</p>
 
           <div className="space-y-6">
             {/* Item 1 */}
@@ -25,29 +27,27 @@ export default function About() {
               </div>
               <div>
                 <h3 className="font-bold text-black text-xl">Primavera do Leste - MT</h3>
-                <p className="text-sm text-gray-500">.....</p>
+                <p className="text-sm text-gray-500">Rua Rio de janeiro - 371 - Centro</p>
               </div>
             </div>
 
             {/* Item 2 */}
-            <div className="flex items-start gap-6 bg-white border border-gray-100 rounded-xl p-3 shadow-sm">
+            <div className="flex items-center gap-6 bg-white border border-gray-100 rounded-xl p-3 shadow-sm">
               <div className="bg-yellow-300 text-white p-5 rounded-xl text-2xl">
-                <FaCalendarAlt />
+                <MdEmail />
               </div>
               <div>
-                <h3 className="font-bold text-black text-xl">A mais de 2 anos no mercado</h3>
-                <p className="text-sm text-gray-500">.....</p>
+                <h3 className="font-bold text-black text-xl">allseecontatos@gmail.com</h3>
               </div>
             </div>
 
             {/* Item 3 */}
-            <div className="flex items-start gap-6">
+            <div className="flex items-center gap-6">
               <div className="bg-orange-500 text-white p-5 rounded-xl text-2xl">
-                <FaTags />
+                <Smartphone />
               </div>
               <div>
-                <h3 className="font-bold text-black text-xl">Sempre entregando as melhores ofertas</h3>
-                <p className="text-sm text-gray-500">.....</p>
+                <h3 className="font-bold text-black text-xl">(66) 9 9976-9524</h3>
               </div>
             </div>
           </div>

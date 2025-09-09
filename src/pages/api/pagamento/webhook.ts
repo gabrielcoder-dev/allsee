@@ -2,6 +2,14 @@ import type { NextApiRequest, NextApiResponse } from "next"
 import { Payment, MercadoPagoConfig } from "mercadopago"
 import { supabaseServer } from "@/lib/supabaseServer" // usa a service role key
 
+// Define a type for the expected body, replace with your actual body structure
+interface WebhookBody {
+  type?: string;
+  data?: {
+    id?: string;
+  };
+}
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   console.log("🚀 Webhook iniciado - Método:", req.method)
 
@@ -13,10 +21,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   try {
     // Garantir que o body seja JSON
     const rawBody = typeof req.body === "string" ? req.body : undefined
-    let parsedBody: any = req.body
+    let parsedBody: WebhookBody | any = req.body // try to parse to the interface, if it fails, keep as any
     if (rawBody) {
       try {
-        parsedBody = JSON.parse(rawBody)
+        parsedBody = JSON.parse(rawBody) as WebhookBody
       } catch (e) {
         console.warn("⚠️ Body não estava em JSON válido, mantendo como texto.")
       }
@@ -46,7 +54,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     if (!process.env.MERCADO_PAGO_ACCESS_TOKEN) {
       console.error("❌ MERCADO_PAGO_ACCESS_TOKEN não configurado")
-      return res.status(200).json({ received: true, error: "Token não configurado" })
+      return res.status(500).json({ received: true, error: "Token não configurado" }) // Changed to 500
     }
 
     // Inicializa client Mercado Pago
@@ -67,7 +75,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       })
     } catch (err: any) {
       console.error("❌ Erro ao buscar pagamento:", err)
-      return res.status(200).json({
+      return res.status(500).json({ // Changed to 500
         received: true,
         message: "Erro ao buscar pagamento",
         error: err.message || "Erro desconhecido",
@@ -107,7 +115,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     if (updateError) {
       console.error("❌ Erro ao atualizar order:", updateError)
-      return res.status(200).json({
+      return res.status(500).json({ // Changed to 500
         received: true,
         message: "Erro ao atualizar order",
         error: updateError.message,
@@ -125,7 +133,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     })
   } catch (error: any) {
     console.error("❌ Erro no webhook:", error)
-    return res.status(200).json({
+    return res.status(500).json({ // Changed to 500
       received: true,
       message: "Erro interno ao processar webhook",
       error: error.message || "Erro desconhecido",

@@ -19,6 +19,8 @@ const page = () => {
   const [selectedOrder, setSelectedOrder] = useState<any | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [openMenuId, setOpenMenuId] = useState<number | null>(null);
+  const [isChangeArtModalOpen, setIsChangeArtModalOpen] = useState(false);
+  const [newArt, setNewArt] = useState<File | null>(null);
 
   useEffect(() => {
     async function fetchOrders() {
@@ -72,7 +74,6 @@ const page = () => {
     };
   }, [menuOpen]);
 
-  // Fecha o menu dropdown ao clicar fora
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       const menus = document.querySelectorAll('.menu-dropdown');
@@ -92,12 +93,11 @@ const page = () => {
     };
   }, [openMenuId]);
 
-  // Função utilitária para criar Date local a partir de yyyy-MM-dd
   function parseLocalDateString(dateString: string) {
     const [year, month, day] = dateString.split('-').map(Number);
     return new Date(year, month - 1, day);
   }
-  // Função utilitária para formatar data em dd/MM/yyyy
+
   function formatDateBR(date: Date | null) {
     if (!date) return null;
     const d = new Date(date);
@@ -107,10 +107,68 @@ const page = () => {
     return `${day}/${month}/${year}`;
   }
 
+  const handleTrocarArte = (orderId: number) => {
+    setSelectedOrder({ id: orderId } as any);
+    setIsChangeArtModalOpen(true);
+  };
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (event.target.files && event.target.files.length > 0) {
+      setNewArt(event.target.files[0]);
+    }
+  };
+
+  const handleTrocarArteConfirm = async () => {
+    if (!newArt || !selectedOrder?.id) {
+      alert("Selecione uma nova arte e verifique o ID do pedido.");
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      const { data: storageData, error: storageError } = await supabase.storage
+        .from('anuncios')
+        .upload(`${user?.id}/${selectedOrder.id}/${newArt.name}`, newArt, {
+          cacheControl: '3600',
+          upsert: false
+        });
+
+      if (storageError) {
+        console.error("Erro ao fazer upload da imagem:", storageError);
+        alert("Erro ao trocar a arte. Detalhes no console.");
+        return;
+      }
+
+      const newArtUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/anuncios/${user?.id}/${selectedOrder.id}/${newArt.name}`;
+
+      const { data, error } = await supabase
+        .from('order')
+        .update({ arte_campanha: newArtUrl })
+        .eq('id', selectedOrder.id);
+
+      if (error) {
+        console.error("Erro ao atualizar a arte no banco de dados:", error);
+        alert("Erro ao trocar a arte no banco de dados.");
+      } else {
+        setOrders(orders.map(order =>
+          order.id === selectedOrder.id ? { ...order, arte_campanha: newArtUrl } : order
+        ));
+        alert("Arte trocada com sucesso!");
+      }
+    } catch (err) {
+      console.error("Erro durante a troca de arte:", err);
+      alert("Erro ao trocar a arte.");
+    } finally {
+      setLoading(false);
+      setIsChangeArtModalOpen(false);
+      setNewArt(null);
+    }
+  };
+
   return (
     <div className="bg-white min-h-screen px-8 py-8">
       <div className="max-w-4xl mx-auto">
-        {/* Título */}
         <Link
           href="/results"
           className="flex items-center mb-6 gap-2"
@@ -119,7 +177,6 @@ const page = () => {
           <h1 className="text-3xl font-bold">Meus anúncios</h1>
         </Link>
 
-        {/* Abas */}
         <div className="flex border-b mb-8">
           <button className="px-4 py-2 border-b-2 border-orange-500 text-orange-600 font-semibold focus:outline-none">
             Todos anúncios ({orders.length.toString().padStart(2, '0')})
@@ -127,7 +184,6 @@ const page = () => {
         </div>
       </div>
 
-      {/* Cards de anúncios do usuário */}
       <div className="max-w-4xl mx-auto">
         {loading ? (
           <div className="text-center py-10 text-gray-500">Carregando anúncios...</div>
@@ -140,11 +196,9 @@ const page = () => {
             const orderStatus = localStorage.getItem(`order_${order.id}`);
             return (
               <div key={order.id} className="bg-white border rounded-lg shadow p-6 mb-8 flex items-center justify-between gap-6">
-                {/* Imagem da campanha */}
                 <div className="w-32 h-32 bg-gray-200 rounded overflow-hidden flex-shrink-0 flex items-center justify-center">
                   <img src={order.arte_campanha || "/logo.png"} alt="Anúncio" className="object-cover w-full h-full" />
                 </div>
-                {/* Info principal */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
                     <span className="text-lg font-semibold truncate">{order.nome_campanha || 'Campanha sem nome'}</span>
@@ -156,13 +210,9 @@ const page = () => {
                     <span>Período de Duração: <span className="text-blue-700 font-medium">{order.duracao_campanha ? `${order.duracao_campanha} semanas` : '-'}</span></span>
                   </div>
                   <div className="mb-2 flex items-center gap-2">
-                    {/* Tag de categoria (exemplo) */}
                     <span className="inline-block bg-gray-100 text-gray-700 text-xs px-2 py-1 rounded">Elevadores Comerciais</span>
-                    {/* Status do pedido */}
                     <span className={`inline-block text-xs px-2 py-1 rounded font-medium`}>
-                      {/* Status do pedido */}
                     </span>
-                    {/* Mensagem de aprovação/rejeição */}
                     {orderStatus === 'aprovado' ? (
                       <div className="font-bold text-green-500">Arte Aceita</div>
                     ) : orderStatus === 'rejeitado' ? (
@@ -180,7 +230,6 @@ const page = () => {
                     Ver detalhes do anúncio
                   </button>
                 </div>
-                {/* ID, menu e preço */}
                 <div className="flex flex-col items-end gap-2 min-w-[120px] h-full justify-between self-stretch">
                   <div className="flex items-center gap-2 w-full justify-end relative">
                     <span className="text-gray-400 text-sm">#{order.id}</span>
@@ -193,10 +242,12 @@ const page = () => {
                     </button>
                     {openMenuId === order.id && (
                       <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg z-50 py-2 border">
-                        <button className="block w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100 text-sm">trocar arte</button>
-                        <button className="block w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100 text-sm">detalhes do anúncio</button>
-                        <button className="block w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100 text-sm">adicionar ao plano de mídia</button>
-                        <button className="block w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100 text-sm">alterar data de inicio</button>
+                        <button 
+                          className="block w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100 text-sm"
+                          onClick={() => handleTrocarArte(order.id)}
+                        >
+                          trocar arte
+                        </button>
                       </div>
                     )}
                   </div>
@@ -210,10 +261,8 @@ const page = () => {
         )}
       </div>
 
-      {/* Modal de detalhes do anúncio */}
       <Dialog open={isModalOpen} onClose={() => setIsModalOpen(false)} className="fixed z-50 inset-0 overflow-y-auto">
         <div className="flex items-center justify-center min-h-screen px-4">
-          {/* Backdrop manual para Headless UI v1+ */}
           {isModalOpen && <div className="fixed inset-0 bg-black bg-opacity-30 z-40" aria-hidden="true"></div>}
           <div className="relative bg-white rounded-lg shadow-xl max-w-lg w-full mx-auto p-8 z-50">
             <button
@@ -241,6 +290,41 @@ const page = () => {
                 </div>
               </div>
             )}
+          </div>
+        </div>
+      </Dialog>
+
+      <Dialog open={isChangeArtModalOpen} onClose={() => setIsChangeArtModalOpen(false)} className="fixed z-50 inset-0 overflow-y-auto">
+        <div className="flex items-center justify-center min-h-screen px-4">
+          {isChangeArtModalOpen && <div className="fixed inset-0 bg-black bg-opacity-30 z-40" aria-hidden="true"></div>}
+          <div className="relative bg-white rounded-lg shadow-xl max-w-md w-full mx-auto p-6 z-50">
+            <h2 className="text-lg font-semibold mb-4">Trocar Arte da Campanha</h2>
+            <div className="mb-4">
+              <label htmlFor="nova-arte" className="block text-gray-700 text-sm font-bold mb-2">
+                Nova Arte:
+              </label>
+              <input
+                type="file"
+                id="nova-arte"
+                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                onChange={handleFileChange}
+              />
+            </div>
+            <div className="flex justify-end">
+              <button
+                className="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline mr-2"
+                onClick={() => setIsChangeArtModalOpen(false)}
+              >
+                Cancelar
+              </button>
+              <button
+                className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+                onClick={handleTrocarArteConfirm}
+                disabled={loading}
+              >
+                {loading ? "Trocando..." : "Trocar"}
+              </button>
+            </div>
           </div>
         </div>
       </Dialog>
