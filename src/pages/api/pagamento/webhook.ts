@@ -25,7 +25,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           status: internalStatus,
           updated_at: new Date().toISOString()
         })
-        .eq("external_reference", externalReference)
+        .eq("id", externalReference)
         .select("id, status")
 
       if (error) {

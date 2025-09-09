@@ -248,7 +248,7 @@ const PagamantosPart = () => {
         <div className="text-center flex items-center justify-center flex-col gap-2 px-2 md:px-0">
           <h1 className="text-3xl font-bold">Pagamento</h1>
           <p className="text-gray-600 text-base w-64 lg:w-full">
-            Você está a um passo de reservar seu lugar nas telas da Eletromidia!
+            Você está a um passo de reservar seu lugar nas telas da <span className="text-orange-600">ALL SEE</span>!
             <br />
             Confirme os valores e preencha os dados de faturamento
           </p>
