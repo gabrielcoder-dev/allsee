@@ -263,7 +263,7 @@ const page = () => {
 
       <Dialog open={isModalOpen} onClose={() => setIsModalOpen(false)} className="fixed z-50 inset-0 overflow-y-auto">
         <div className="flex items-center justify-center min-h-screen px-4">
-          {isModalOpen && <div className="fixed inset-0 bg-black bg-opacity-30 z-40" aria-hidden="true"></div>}
+          {isModalOpen && <div className="fixed inset-0 bg-black/40 bg-opacity-30 z-40" aria-hidden="true"></div>}
           <div className="relative bg-white rounded-lg shadow-xl max-w-lg w-full mx-auto p-8 z-50">
             <button
               className="absolute top-3 right-3 text-gray-400 hover:text-gray-600 text-xl"
@@ -294,9 +294,9 @@ const page = () => {
         </div>
       </Dialog>
 
-      <Dialog open={isChangeArtModalOpen} onClose={() => setIsChangeArtModalOpen(false)} className="fixed z-50 inset-0 overflow-y-auto">
+      <Dialog open={isChangeArtModalOpen} onClose={() => setIsChangeArtModalOpen(false)} className="fixed z-[9999] inset-0 overflow-y-auto">
         <div className="flex items-center justify-center min-h-screen px-4">
-          {isChangeArtModalOpen && <div className="fixed inset-0 bg-black bg-opacity-30 z-40" aria-hidden="true"></div>}
+          {isChangeArtModalOpen && <div className="fixed inset-0 bg-black/50 bg-opacity-30 z-40" aria-hidden="true"></div>}
           <div className="relative bg-white rounded-lg shadow-xl max-w-md w-full mx-auto p-6 z-50">
             <h2 className="text-lg font-semibold mb-4">Trocar Arte da Campanha</h2>
             <div className="mb-4">
