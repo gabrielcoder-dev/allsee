@@ -22,35 +22,36 @@ const page = () => {
   const [newArt, setNewArt] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false); // Separate loading state for image upload
 
-  useEffect(() => {
-    async function fetchOrders() {
-      setErrorMsg(null);
-      if (!user?.id) {
-        setOrders([]);
-        setLoading(false);
-        setErrorMsg('Usuário não autenticado. Faça login para ver seus anúncios.');
-        return;
-      }
-      setLoading(true);
-      // Busca apenas as colunas que existem
-      const { data, error } = await supabase
-        .from("order")
-        .select("id, nome_campanha, arte_campanha, id_user, inicio_campanha, duracao_campanha, preco")
-        .eq("id_user", user.id)
-        .order("id", { ascending: false });
-      console.log('User ID:', user.id);
-      console.log('Supabase data:', data, 'error:', error);
-      if (error) {
-        setErrorMsg('Erro ao buscar anúncios: ' + error.message);
-        setOrders([]);
-      } else if (data) {
-        setOrders(data);
-      } else {
-        setOrders([]);
-      }
+  async function fetchOrdersData() { // Moved outside useEffect
+    setErrorMsg(null);
+    if (!user?.id) {
+      setOrders([]);
       setLoading(false);
+      setErrorMsg('Usuário não autenticado. Faça login para ver seus anúncios.');
+      return;
     }
-    fetchOrders();
+    setLoading(true);
+    // Busca apenas as colunas que existem
+    const { data, error } = await supabase
+      .from("order")
+      .select("id, nome_campanha, arte_campanha, id_user, inicio_campanha, duracao_campanha, preco, new_arte_campanha, replacement_status")
+      .eq("id_user", user.id)
+      .order("id", { ascending: false });
+    console.log('User ID:', user.id);
+    console.log('Supabase data:', data, 'error:', error);
+    if (error) {
+      setErrorMsg('Erro ao buscar anúncios: ' + error.message);
+      setOrders([]);
+    } else if (data) {
+      setOrders(data);
+    } else {
+      setOrders([]);
+    }
+    setLoading(false);
+  }
+
+  useEffect(() => {
+    fetchOrdersData();
   }, [user]);
 
   useEffect(() => {
@@ -107,8 +108,10 @@ const page = () => {
 
     try {
       setUploading(true); // Start loading state
+
+      // 1. Upload the new image to Supabase Storage
       const { data: storageData, error: storageError } = await supabase.storage
-        .from('anuncios')
+        .from('anuncios') // Substitua 'anuncios' pelo nome do seu bucket
         .upload(`${user?.id}/${selectedOrder.id}/${newArt.name}`, newArt, {
           cacheControl: '3600',
           upsert: false
@@ -120,23 +123,29 @@ const page = () => {
         return;
       }
 
+      // Get the public URL of the uploaded image
       const newArtUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/anuncios/${user?.id}/${selectedOrder.id}/${newArt.name}`;
 
-      const { data, error } = await supabase
-        .from('order')
-        .update({ arte_campanha: newArtUrl })
-        .eq('id', selectedOrder.id);
+      // 2. Update the 'order' table: set new_arte_campanha and replacement_status
+      const { data, error: updateError } = await supabase
+        .from("order")
+        .update({
+          new_arte_campanha: newArtUrl, // Store the new art URL
+          replacement_status: "pending" // Set the status to 'pending'
+        })
+        .eq("id", selectedOrder.id);
 
-      if (error) {
-        console.error("Erro ao atualizar a arte no banco de dados:", error);
+      if (updateError) {
+        console.error("Erro ao atualizar o pedido:", updateError);
         alert("Erro ao trocar a arte no banco de dados.");
-      } else {
-        setOrders(orders.map(order =>
-          order.id === selectedOrder.id ? { ...order, arte_campanha: newArtUrl } : order
-        ));
-        alert("Arte trocada com sucesso!");
+        return;
       }
-    } catch (err) {
+
+      // Refresh orders (assuming you have a function to do so)
+      await fetchOrdersData();
+
+      alert("Solicitação de troca de arte enviada para aprovação!");
+    } catch (err: any) {
       console.error("Erro durante a troca de arte:", err);
       alert("Erro ao trocar a arte.");
     } finally {
