@@ -1,355 +1,205 @@
-// src/app/(private)/meus-anuncios/page.tsx
-'use client'
+// src/Components/ReplacementAdmin.tsx
+import React, { useState, useEffect } from "react";
+import Image from "next/image";
+import ImageAprove from "@/assets/restaurante-2.jpg"; // Altere para sua imagem padrão
+import { supabase } from "@/lib/supabase"; // Importe seu cliente Supabase
 
-import React, { useState, useRef, useEffect } from "react";
-import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
-import { useUser } from "@supabase/auth-helpers-react";
-import { supabase } from "@/lib/supabase";
-import { Dialog } from "@headlessui/react";
-import { toast, ToastContainer } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
+interface OrderWithReplacement {
+  id: number;
+  nome_campanha: string;
+  arte_campanha: string; // the current art
+  new_arte_campanha: string | null;
+  replacement_status: 'pending' | 'approved' | 'rejected' | null;
+  preco: number;
+  inicio_campanha: string;
+  duracao_campanha: number;
+}
 
-const page = () => {
-  const [menuOpen, setMenuOpen] = useState(false);
-  const menuRef = useRef<HTMLDivElement | null>(null);
-  const buttonRef = useRef<HTMLButtonElement | null>(null);
-  const user = useUser();
-  const [orders, setOrders] = useState<any[]>([]);
+const ReplacementAdmin = () => {
+  const [ordersWithReplacements, setOrdersWithReplacements] = useState<OrderWithReplacement[]>([]);
   const [loading, setLoading] = useState(true);
-  const [errorMsg, setErrorMsg] = useState<string | null>(null);
-  const [selectedOrder, setSelectedOrder] = useState<any | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isChangeArtModalOpen, setIsChangeArtModalOpen] = useState(false);
-  const [newArt, setNewArt] = useState<File | null>(null);
-  const [uploading, setUploading] = useState(false); // Separate loading state for image upload
-
-  async function fetchOrdersData() { // Moved outside useEffect
-    setErrorMsg(null);
-    if (!user?.id) {
-      setOrders([]);
-      setLoading(false);
-      setErrorMsg('Usuário não autenticado. Faça login para ver seus anúncios.');
-      return;
-    }
-    setLoading(true);
-    // Busca apenas as colunas que existem
-    const { data, error } = await supabase
-      .from("order")
-      .select("id, nome_campanha, arte_campanha, id_user, inicio_campanha, duracao_campanha, preco, new_arte_campanha, replacement_status")
-      .eq("id_user", user.id)
-      .order("id", { ascending: false });
-    console.log('User ID:', user.id);
-    console.log('Supabase data:', data, 'error:', error);
-    if (error) {
-      setErrorMsg('Erro ao buscar anúncios: ' + error.message);
-      setOrders([]);
-    } else if (data) {
-      setOrders(data);
-    } else {
-      setOrders([]);
-    }
-    setLoading(false);
-  }
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetchOrdersData();
-  }, [user]);
+    async function fetchOrdersWithReplacements() {
+      setLoading(true);
+      setError(null);
+      try {
+        const { data, error } = await supabase
+          .from("order")
+          .select("*, new_arte_campanha")
+          .eq("replacement_status", "pending");
 
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (
-        menuRef.current &&
-        !menuRef.current.contains(event.target as Node) &&
-        buttonRef.current &&
-        !buttonRef.current.contains(event.target as Node)
-      ) {
-        setMenuOpen(false);
+        if (error) {
+          setError(error.message);
+        } else {
+          setOrdersWithReplacements(data || []);
+        }
+      } catch (err: any) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
       }
     }
-    if (menuOpen) {
-      document.addEventListener("mousedown", handleClickOutside);
-    } else {
-      document.removeEventListener("mousedown", handleClickOutside);
-    }
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [menuOpen]);
 
-  function parseLocalDateString(dateString: string) {
-    const [year, month, day] = dateString.split('-').map(Number);
-    return new Date(year, month - 1, day);
-  }
+    fetchOrdersWithReplacements();
+  }, []);
 
-  function formatDateBR(date: Date | null) {
-    if (!date) return null;
-    const d = new Date(date);
-    const day = String(d.getDate()).padStart(2, '0');
-    const month = String(d.getMonth() + 1).padStart(2, '0');
-    const year = d.getFullYear();
-    return `${day}/${month}/${year}`;
-  }
-
-  const handleTrocarArte = (order: any) => {
-    setSelectedOrder(order);
-    setIsChangeArtModalOpen(true);
-  };
-
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (event.target.files && event.target.files.length > 0) {
-      setNewArt(event.target.files[0]);
-    }
-  };
-
-  const handleTrocarArteConfirm = async () => {
-    if (!newArt || !selectedOrder?.id) {
-      toast.error("Selecione uma nova arte e verifique o ID do pedido.");
-      return;
-    }
-
+  const handleAccept = async (order: OrderWithReplacement) => {
     try {
-      setUploading(true); // Start loading state
+      setLoading(true);
+      setError(null);
 
-      // 1. Upload the new image to Supabase Storage
-      const { data: storageData, error: storageError } = await supabase.storage
-        .from('anuncios') // Substitua 'anuncios' pelo nome do seu bucket
-        .upload(`${user?.id}/${selectedOrder.id}/${newArt.name}`, newArt, {
-          cacheControl: '3600',
-          upsert: false
-        });
-
-      if (storageError) {
-        console.error("Erro ao fazer upload da imagem:", storageError);
-        toast.error("Erro ao trocar a arte. Detalhes no console.");
-        return;
-      }
-
-      // Get the public URL of the uploaded image
-      const newArtUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/anuncios/${user?.id}/${selectedOrder.id}/${newArt.name}`;
-
-      // 2. Update the 'order' table: set new_arte_campanha and replacement_status
-      const { data, error: updateError } = await supabase
+      const { error: updateError } = await supabase
         .from("order")
         .update({
-          new_arte_campanha: newArtUrl, // Store the new art URL
-          replacement_status: "pending" // Set the status to 'pending'
+          new_arte_campanha: null,
+          replacement_status: "approved"
         })
-        .eq("id", selectedOrder.id);
+        .eq("id", order.id);
 
       if (updateError) {
-        console.error("Erro ao atualizar o pedido:", updateError);
-        toast.error("Erro ao trocar a arte no banco de dados.");
-        return;
+        throw new Error(`Erro ao atualizar o pedido: ${updateError.message}`);
       }
 
-      // Refresh orders (assuming you have a function to do so)
-      await fetchOrdersData();
+      setOrdersWithReplacements(prevOrders =>
+        prevOrders.filter(o => o.id !== order.id)
+      );
 
-      toast.success("Solicitação de troca de arte enviada para aprovação!");
     } catch (err: any) {
-      console.error("Erro durante a troca de arte:", err);
-      toast.error("Erro ao trocar a arte.");
+      setError(err.message);
     } finally {
-      setUploading(false); // End loading state
-      setIsChangeArtModalOpen(false); // Close the modal
-      setNewArt(null);
+      setLoading(false);
+    }
+  };
+
+  const handleReject = async (order: OrderWithReplacement) => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const { error: updateError } = await supabase
+        .from("order")
+        .update({
+          arte_campanha: order.new_arte_campanha, // Reverter para a arte anterior (que agora está em new_arte_campanha)
+          new_arte_campanha: null, //Limpa a arte
+          replacement_status: "rejected"
+        })
+        .eq("id", order.id);
+
+      if (updateError) {
+        throw new Error(`Erro ao atualizar o pedido: ${updateError.message}`);
+      }
+
+      setOrdersWithReplacements(prevOrders =>
+        prevOrders.filter(o => o.id !== order.id)
+      );
+
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className="bg-white min-h-screen px-8 py-8">
-      <ToastContainer />
-      <div className="max-w-4xl mx-auto">
-        <Link
-          href="/results"
-          className="flex items-center mb-6 gap-2"
-        >
-          <ArrowLeft width={30} height={30} />
-          <h1 className="text-3xl font-bold">Meus anúncios</h1>
-        </Link>
+    <div className="w-full h-full p-3 md:p-6">
+      <h2 className="text-2xl md:text-3xl font-bold text-orange-600 mb-4 md:mb-6">Solicitações de Substituição</h2>
 
-        <div className="flex border-b mb-8">
-          <button className="px-4 py-2 border-b-2 border-orange-500 text-orange-600 font-semibold focus:outline-none">
-            Todos anúncios ({orders.length.toString().padStart(2, '0')})
-          </button>
-        </div>
-      </div>
+      {loading && <p>Carregando solicitações...</p>}
+      {error && <p className="text-red-500">Erro: {error}</p>}
 
-      <div className="max-w-4xl mx-auto">
-        {loading ? (
-          <div className="text-center py-10 text-gray-500">Carregando anúncios...</div>
-        ) : errorMsg ? (
-          <div className="text-center py-10 text-red-500">{errorMsg}</div>
-        ) : orders.length === 0 ? (
-          <div className="text-center py-10 text-gray-500">Nenhum anúncio encontrado.</div>
-        ) : (
-          orders.map((order) => {
-            const orderStatus = localStorage.getItem(`order_${order.id}`);
-            return (
-              <div key={order.id} className="bg-white border rounded-lg shadow p-6 mb-8 flex items-center justify-between gap-6">
-                <div className="w-32 h-32 bg-gray-200 rounded overflow-hidden flex-shrink-0 flex items-center justify-center">
-                  <img src={order.arte_campanha || "/logo.png"} alt="Anúncio" className="object-cover w-full h-full" />
+      <div className="space-y-4 md:space-y-6">
+        {ordersWithReplacements.map((order) => (
+          <div
+            key={order.id}
+            className="flex flex-col md:flex-row md:items-center gap-4 md:gap-6 justify-between border border-gray-300 rounded-xl md:rounded-2xl p-4 md:p-6 bg-white shadow-sm"
+          >
+            <div className="flex items-center gap-3 md:gap-4 min-w-0 flex-1">
+              <div className="flex flex-col gap-2">
+                {/* Current Art (which is the new art) */}
+                <div>
+                  <p className="text-gray-500">Nova Arte Proposta:</p>
+                  <Image
+                    src={order.arte_campanha || ImageAprove} // Mostra a NEW art
+                    alt={`Current art for ${order.nome_campanha}`}
+                    width={96}
+                    height={96}
+                    className="w-16 h-16 md:w-24 md:h-24 rounded-lg md:rounded-xl object-cover flex-shrink-0"
+                  />
                 </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-lg font-semibold truncate">{order.nome_campanha || 'Campanha sem nome'}</span>
-                    <button className="ml-1 text-gray-400 hover:text-gray-600" title="Editar nome"><svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M15.232 5.232l3.536 3.536M9 13l6.586-6.586a2 2 0 1 1 2.828 2.828L11.828 15.828a4 4 0 0 1-1.414.828l-4.243 1.414 1.414-4.243a4 4 0 0 1 .828-1.414z"/></svg></button>
+
+                {/* Previous Art */}
+                {order.new_arte_campanha && (
+                  <div>
+                    <p className="text-gray-500">Arte Anterior:</p>
+                    <Image
+                      src={order.new_arte_campanha} // Mostra a OLD art
+                      alt={`Previous art for ${order.nome_campanha}`}
+                      width={96}
+                      height={96}
+                      className="w-16 h-16 md:w-24 md:h-24 rounded-lg md:rounded-xl object-cover flex-shrink-0"
+                    />
                   </div>
-                  <div className="flex flex-wrap items-center gap-2 text-sm text-gray-600 mb-1">
-                    <span>Início: <span className="text-gray-800">{order.inicio_campanha ? formatDateBR(parseLocalDateString(order.inicio_campanha)) : '-'}</span></span>
-                    <span>|</span>
-                    <span>Período de Duração: <span className="text-blue-700 font-medium">{order.duracao_campanha ? `${order.duracao_campanha} semanas` : '-'}</span></span>
-                  </div>
-                  <div className="mb-2 flex items-center gap-2">
-                    <span className="inline-block bg-gray-100 text-gray-700 text-xs px-2 py-1 rounded">Elevadores Comerciais</span>
-                    <span className={`inline-block text-xs px-2 py-1 rounded font-medium`}>
-                    </span>
-                    {orderStatus === 'aprovado' ? (
-                      <div className="font-bold text-green-500">Arte Aceita</div>
-                    ) : orderStatus === 'rejeitado' ? (
-                      <div className="text-xs text-bold text-red-500">Arte Não Aceita, escolha outra.</div>
-                    ) : 
-                    (
-                      <div className="text-xs text-bold text-yellow-500">Arte em análise...</div>
-                    )
-                    }
-                  </div>
-                  <div className="flex gap-2">
-                    <button
-                      className="border border-gray-300 rounded px-3 py-1 text-sm hover:bg-gray-100"
-                      onClick={() => { setSelectedOrder(order); setIsModalOpen(true); }}
-                    >
-                      Ver detalhes do anúncio
-                    </button>
-                    <button
-                      className="border border-blue-500 text-blue-500 rounded px-3 py-1 text-sm hover:bg-blue-100"
-                      onClick={() => handleTrocarArte(order)}
-                    >
-                      Trocar Arte
-                    </button>
-                  </div>
+                )}
+              </div>
+
+              <div className="flex flex-col md:flex-row items-start md:items-center gap-2 md:gap-4 min-w-0 flex-1">
+                <div className="flex items-center gap-2 md:gap-4">
+                  <a
+                    href={order.arte_campanha || undefined}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-gray-500 hover:text-orange-600 text-sm md:text-base font-medium transition-colors"
+                  >
+                    Baixar Nova Arte
+                  </a>
+                  <a
+                    href={order.new_arte_campanha || undefined}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-gray-500 hover:text-orange-600 text-sm md:text-base font-medium transition-colors"
+                  >
+                    Baixar Arte Anterior
+                  </a>
+                  <button className="text-gray-500 hover:text-orange-600 text-sm md:text-base font-medium transition-colors">
+                    Assistir
+                  </button>
                 </div>
-                <div className="flex flex-col items-end gap-2 min-w-[120px] h-full justify-between self-stretch">
-                  <div className="flex items-center gap-2 w-full justify-end relative">
-                    <span className="text-gray-400 text-sm">#{order.id}</span>
-                  </div>
-                  <div className="flex-1 flex items-center justify-end">
-                    <span className="text-lg font-bold text-gray-800">{order.preco ? Number(order.preco).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : '-'}</span>
-                  </div>
+                <div className="text-sm md:text-base">
+                  <p className="font-bold text-gray-800">{order.nome_campanha}</p>
+                  <p className="text-gray-500">Solicitação de substituição</p>
                 </div>
               </div>
-            )
-          })
+            </div>
+
+            <div className="flex items-center gap-2 md:gap-3 flex-shrink-0">
+              <button
+                className="bg-green-500 hover:bg-green-600 cursor-pointer text-white rounded-lg md:rounded-xl px-3 py-2 font-bold text-xs md:text-sm transition-colors min-w-[70px]"
+                onClick={() => handleAccept(order)}
+                disabled={loading}
+              >
+                Aceitar
+              </button>
+              <button
+                className="bg-red-500 hover:bg-red-600 cursor-pointer text-white rounded-lg md:rounded-xl px-3 py-2 font-bold text-xs md:text-sm transition-colors min-w-[70px]"
+                onClick={() => handleReject(order)}
+                disabled={loading}
+              >
+                Recusar
+              </button>
+            </div>
+          </div>
+        ))}
+
+        {ordersWithReplacements.length === 0 && !loading && !error && (
+          <div className="text-center py-4 text-gray-500">
+            Nenhuma solicitação de substituição pendente.
+          </div>
         )}
       </div>
-
-      <Dialog open={isModalOpen} onClose={() => setIsModalOpen(false)} className="relative z-50">
-  <div className="fixed inset-0 bg-black/40" aria-hidden="true" />
-  <div className="fixed inset-0 flex items-center justify-center p-4">
-    <Dialog.Panel className="bg-white rounded-lg shadow-xl max-w-lg w-full mx-auto p-8">
-      <button
-        className="absolute top-3 right-3 text-gray-400 hover:text-gray-600 text-xl"
-        onClick={() => setIsModalOpen(false)}
-        aria-label="Fechar"
-      >
-        ×
-      </button>
-      {selectedOrder && (
-        <div>
-          <div className="flex gap-4 items-start mb-4">
-            <div className="w-24 h-24 bg-gray-200 rounded overflow-hidden flex-shrink-0 flex items-center justify-center">
-              <img
-                src={selectedOrder.arte_campanha || "/logo.png"}
-                alt="Anúncio"
-                className="object-cover w-full h-full"
-              />
-            </div>
-            <div className="flex-1">
-              <h2 className="text-2xl font-bold mb-1">
-                {selectedOrder.nome_campanha || "Campanha sem nome"}
-              </h2>
-              <div className="text-sm text-gray-500 mb-1">
-                ID: <span className="text-gray-700">{selectedOrder.id}</span>
-              </div>
-            </div>
-          </div>
-          <div className="mb-2 text-sm text-gray-700">
-            <span className="block mb-1">
-              Início:{" "}
-              {selectedOrder.inicio_campanha
-                ? formatDateBR(parseLocalDateString(selectedOrder.inicio_campanha))
-                : "-"}
-            </span>
-            <span className="block mb-1">
-              Duração:{" "}
-              <span className="font-medium">
-                {selectedOrder.duracao_campanha || "-"}
-              </span>
-            </span>
-            <span className="block mb-1">
-              Preço:{" "}
-              <span className="font-medium">
-                {selectedOrder.preco
-                  ? Number(selectedOrder.preco).toLocaleString("pt-BR", {
-                      style: "currency",
-                      currency: "BRL",
-                    })
-                  : "-"}
-              </span>
-            </span>
-          </div>
-        </div>
-      )}
-    </Dialog.Panel>
-  </div>
-</Dialog>
-
-{/* Modal Trocar Arte */}
-<Dialog
-  open={isChangeArtModalOpen}
-  onClose={() => setIsChangeArtModalOpen(false)}
-  className="relative z-50"
->
-  <div className="fixed inset-0 bg-black/40" aria-hidden="true" />
-  <div className="fixed inset-0 flex items-center justify-center p-4">
-    <Dialog.Panel className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
-      <h2 className="text-lg font-semibold mb-4">Trocar Arte da Campanha</h2>
-      <div className="mb-4">
-        <label
-          htmlFor="nova-arte"
-          className="block text-gray-700 text-sm font-bold mb-2"
-        >
-          Nova Arte:
-        </label>
-        <input
-          type="file"
-          id="nova-arte"
-          className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-          onChange={handleFileChange}
-        />
-      </div>
-      <div className="flex justify-end">
-        <button
-          className="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded mr-2"
-          onClick={() => setIsChangeArtModalOpen(false)}
-        >
-          Cancelar
-        </button>
-        <button
-          className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-          onClick={handleTrocarArteConfirm}
-          disabled={uploading}
-        >
-          {uploading ? "Trocando..." : "Trocar"}
-        </button>
-      </div>
-    </Dialog.Panel>
-  </div>
-</Dialog>
-
     </div>
   );
 };
 
-export default page;
+export default ReplacementAdmin;
