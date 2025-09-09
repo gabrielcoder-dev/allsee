@@ -14,13 +14,14 @@ const page = () => {
   const buttonRef = useRef<HTMLButtonElement | null>(null);
   const user = useUser();
   const [orders, setOrders] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [selectedOrder, setSelectedOrder] = useState<any | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [openMenuId, setOpenMenuId] = useState<number | null>(null);
   const [isChangeArtModalOpen, setIsChangeArtModalOpen] = useState(false);
   const [newArt, setNewArt] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false); // Separate loading state for image upload
 
   useEffect(() => {
     async function fetchOrders() {
@@ -125,8 +126,7 @@ const page = () => {
     }
 
     try {
-      setLoading(true);
-
+      setUploading(true); // Start loading state
       const { data: storageData, error: storageError } = await supabase.storage
         .from('anuncios')
         .upload(`${user?.id}/${selectedOrder.id}/${newArt.name}`, newArt, {
@@ -160,7 +160,7 @@ const page = () => {
       console.error("Erro durante a troca de arte:", err);
       alert("Erro ao trocar a arte.");
     } finally {
-      setLoading(false);
+      setUploading(false); // End loading state
       setIsChangeArtModalOpen(false);
       setNewArt(null);
     }
@@ -320,9 +320,9 @@ const page = () => {
               <button
                 className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
                 onClick={handleTrocarArteConfirm}
-                disabled={loading}
+                disabled={uploading}
               >
-                {loading ? "Trocando..." : "Trocar"}
+                {uploading ? "Trocando..." : "Trocar"}
               </button>
             </div>
           </div>
