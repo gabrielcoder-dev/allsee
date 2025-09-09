@@ -261,73 +261,110 @@ const page = () => {
         )}
       </div>
 
-      <Dialog open={isModalOpen} onClose={() => setIsModalOpen(false)} className="fixed z-50 inset-0 overflow-y-auto">
-        <div className="flex items-center justify-center min-h-screen px-4">
-          {isModalOpen && <div className="fixed inset-0 bg-black/40 bg-opacity-30 z-40" aria-hidden="true"></div>}
-          <div className="relative bg-white rounded-lg shadow-xl max-w-lg w-full mx-auto p-8 z-50">
-            <button
-              className="absolute top-3 right-3 text-gray-400 hover:text-gray-600 text-xl"
-              onClick={() => setIsModalOpen(false)}
-              aria-label="Fechar"
-            >
-              ×
-            </button>
-            {selectedOrder && (
-              <div>
-                <div className="flex gap-4 items-start mb-4">
-                  <div className="w-24 h-24 bg-gray-200 rounded overflow-hidden flex-shrink-0 flex items-center justify-center">
-                    <img src={selectedOrder.arte_campanha || "/logo.png"} alt="Anúncio" className="object-cover w-full h-full" />
-                  </div>
-                  <div className="flex-1">
-                    <h2 className="text-2xl font-bold mb-1">{selectedOrder.nome_campanha || 'Campanha sem nome'}</h2>
-                    <div className="text-sm text-gray-500 mb-1">ID: <span className="text-gray-700">{selectedOrder.id}</span></div>
-                  </div>
-                </div>
-                <div className="mb-2 text-sm text-gray-700">
-                  <span className="block mb-1">Início: {selectedOrder.inicio_campanha ? formatDateBR(parseLocalDateString(selectedOrder.inicio_campanha)) : '-'}</span>
-                  <span className="block mb-1">Duração: <span className="font-medium">{selectedOrder.duracao_campanha || '-'}</span></span>
-                  <span className="block mb-1">Preço: <span className="font-medium">{selectedOrder.preco ? Number(selectedOrder.preco).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : '-'}</span></span>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      </Dialog>
-
-      <Dialog open={isChangeArtModalOpen} onClose={() => setIsChangeArtModalOpen(false)} className="fixed z-50 inset-0 overflow-y-auto">
-        <div className="flex items-center justify-center min-h-screen px-4">
-          {isChangeArtModalOpen && <div className="fixed inset-0 bg-black/40 bg-opacity-30 z-40" aria-hidden="true"></div>}
-          <div className="relative bg-white rounded-lg shadow-xl max-w-md w-full mx-auto p-6 z-50">
-            <h2 className="text-lg font-semibold mb-4">Trocar Arte da Campanha</h2>
-            <div className="mb-4">
-              <label htmlFor="nova-arte" className="block text-gray-700 text-sm font-bold mb-2">
-                Nova Arte:
-              </label>
-              <input
-                type="file"
-                id="nova-arte"
-                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                onChange={handleFileChange}
+      <Dialog open={isModalOpen} onClose={setIsModalOpen} className="relative z-50">
+  <div className="fixed inset-0 bg-black/40" aria-hidden="true" />
+  <div className="fixed inset-0 flex items-center justify-center p-4">
+    <Dialog.Panel className="bg-white rounded-lg shadow-xl max-w-lg w-full mx-auto p-8">
+      <button
+        className="absolute top-3 right-3 text-gray-400 hover:text-gray-600 text-xl"
+        onClick={() => setIsModalOpen(false)}
+        aria-label="Fechar"
+      >
+        ×
+      </button>
+      {selectedOrder && (
+        <div>
+          <div className="flex gap-4 items-start mb-4">
+            <div className="w-24 h-24 bg-gray-200 rounded overflow-hidden flex-shrink-0 flex items-center justify-center">
+              <img
+                src={selectedOrder.arte_campanha || "/logo.png"}
+                alt="Anúncio"
+                className="object-cover w-full h-full"
               />
             </div>
-            <div className="flex justify-end">
-              <button
-                className="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline mr-2"
-                onClick={() => setIsChangeArtModalOpen(false)}
-              >
-                Cancelar
-              </button>
-              <button
-                className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
-                onClick={handleTrocarArteConfirm}
-                disabled={uploading}
-              >
-                {uploading ? "Trocando..." : "Trocar"}
-              </button>
+            <div className="flex-1">
+              <h2 className="text-2xl font-bold mb-1">
+                {selectedOrder.nome_campanha || "Campanha sem nome"}
+              </h2>
+              <div className="text-sm text-gray-500 mb-1">
+                ID: <span className="text-gray-700">{selectedOrder.id}</span>
+              </div>
             </div>
           </div>
+          <div className="mb-2 text-sm text-gray-700">
+            <span className="block mb-1">
+              Início:{" "}
+              {selectedOrder.inicio_campanha
+                ? formatDateBR(parseLocalDateString(selectedOrder.inicio_campanha))
+                : "-"}
+            </span>
+            <span className="block mb-1">
+              Duração:{" "}
+              <span className="font-medium">
+                {selectedOrder.duracao_campanha || "-"}
+              </span>
+            </span>
+            <span className="block mb-1">
+              Preço:{" "}
+              <span className="font-medium">
+                {selectedOrder.preco
+                  ? Number(selectedOrder.preco).toLocaleString("pt-BR", {
+                      style: "currency",
+                      currency: "BRL",
+                    })
+                  : "-"}
+              </span>
+            </span>
+          </div>
         </div>
-      </Dialog>
+      )}
+    </Dialog.Panel>
+  </div>
+</Dialog>
+
+{/* Modal Trocar Arte */}
+<Dialog
+  open={isChangeArtModalOpen}
+  onClose={setIsChangeArtModalOpen}
+  className="relative z-50"
+>
+  <div className="fixed inset-0 bg-black/40" aria-hidden="true" />
+  <div className="fixed inset-0 flex items-center justify-center p-4">
+    <Dialog.Panel className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+      <h2 className="text-lg font-semibold mb-4">Trocar Arte da Campanha</h2>
+      <div className="mb-4">
+        <label
+          htmlFor="nova-arte"
+          className="block text-gray-700 text-sm font-bold mb-2"
+        >
+          Nova Arte:
+        </label>
+        <input
+          type="file"
+          id="nova-arte"
+          className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+          onChange={handleFileChange}
+        />
+      </div>
+      <div className="flex justify-end">
+        <button
+          className="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded mr-2"
+          onClick={() => setIsChangeArtModalOpen(false)}
+        >
+          Cancelar
+        </button>
+        <button
+          className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+          onClick={handleTrocarArteConfirm}
+          disabled={uploading}
+        >
+          {uploading ? "Trocando..." : "Trocar"}
+        </button>
+      </div>
+    </Dialog.Panel>
+  </div>
+</Dialog>
+
     </div>
   );
 };
