@@ -7,6 +7,8 @@ import { ArrowLeft } from "lucide-react";
 import { useUser } from "@supabase/auth-helpers-react";
 import { supabase } from "@/lib/supabase";
 import { Dialog } from "@headlessui/react";
+import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 const page = () => {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -102,7 +104,7 @@ const page = () => {
 
   const handleTrocarArteConfirm = async () => {
     if (!newArt || !selectedOrder?.id) {
-      alert("Selecione uma nova arte e verifique o ID do pedido.");
+      toast.error("Selecione uma nova arte e verifique o ID do pedido.");
       return;
     }
 
@@ -119,7 +121,7 @@ const page = () => {
 
       if (storageError) {
         console.error("Erro ao fazer upload da imagem:", storageError);
-        alert("Erro ao trocar a arte. Detalhes no console.");
+        toast.error("Erro ao trocar a arte. Detalhes no console.");
         return;
       }
 
@@ -137,26 +139,27 @@ const page = () => {
 
       if (updateError) {
         console.error("Erro ao atualizar o pedido:", updateError);
-        alert("Erro ao trocar a arte no banco de dados.");
+        toast.error("Erro ao trocar a arte no banco de dados.");
         return;
       }
 
       // Refresh orders (assuming you have a function to do so)
       await fetchOrdersData();
 
-      alert("Solicitação de troca de arte enviada para aprovação!");
+      toast.success("Solicitação de troca de arte enviada para aprovação!");
     } catch (err: any) {
       console.error("Erro durante a troca de arte:", err);
-      alert("Erro ao trocar a arte.");
+      toast.error("Erro ao trocar a arte.");
     } finally {
       setUploading(false); // End loading state
-      setIsChangeArtModalOpen(false);
+      setIsChangeArtModalOpen(false); // Close the modal
       setNewArt(null);
     }
   };
 
   return (
     <div className="bg-white min-h-screen px-8 py-8">
+      <ToastContainer />
       <div className="max-w-4xl mx-auto">
         <Link
           href="/results"
