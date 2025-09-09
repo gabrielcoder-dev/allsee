@@ -14,7 +14,7 @@ const page = () => {
   const buttonRef = useRef<HTMLButtonElement | null>(null);
   const user = useUser();
   const [orders, setOrders] = useState<any[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [selectedOrder, setSelectedOrder] = useState<any | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -108,8 +108,8 @@ const page = () => {
     return `${day}/${month}/${year}`;
   }
 
-  const handleTrocarArte = (orderId: number) => {
-    setSelectedOrder({ id: orderId } as any);
+  const handleTrocarArte = (order: any) => {
+    setSelectedOrder(order);
     setIsChangeArtModalOpen(true);
   };
 
@@ -244,7 +244,7 @@ const page = () => {
                       <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg z-50 py-2 border">
                         <button 
                           className="block w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100 text-sm"
-                          onClick={() => handleTrocarArte(order.id)}
+                          onClick={() => handleTrocarArte(order)}
                         >
                           trocar arte
                         </button>
