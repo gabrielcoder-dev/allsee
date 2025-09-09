@@ -261,7 +261,7 @@ const page = () => {
         )}
       </div>
 
-      <Dialog open={isModalOpen} onClose={setIsModalOpen} className="relative z-50">
+      <Dialog open={isModalOpen} onClose={() => setIsModalOpen(false)} className="relative z-50">
   <div className="fixed inset-0 bg-black/40" aria-hidden="true" />
   <div className="fixed inset-0 flex items-center justify-center p-4">
     <Dialog.Panel className="bg-white rounded-lg shadow-xl max-w-lg w-full mx-auto p-8">
@@ -325,7 +325,7 @@ const page = () => {
 {/* Modal Trocar Arte */}
 <Dialog
   open={isChangeArtModalOpen}
-  onClose={setIsChangeArtModalOpen}
+  onClose={() => setIsChangeArtModalOpen(false)}
   className="relative z-50"
 >
   <div className="fixed inset-0 bg-black/40" aria-hidden="true" />
