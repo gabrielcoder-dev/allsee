@@ -18,7 +18,6 @@ const page = () => {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [selectedOrder, setSelectedOrder] = useState<any | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [openMenuId, setOpenMenuId] = useState<number | null>(null);
   const [isChangeArtModalOpen, setIsChangeArtModalOpen] = useState(false);
   const [newArt, setNewArt] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false); // Separate loading state for image upload
@@ -74,25 +73,6 @@ const page = () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [menuOpen]);
-
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      const menus = document.querySelectorAll('.menu-dropdown');
-      let clickedInside = false;
-      menus.forEach(menu => {
-        if (menu.contains(event.target as Node)) clickedInside = true;
-      });
-      if (!clickedInside) setOpenMenuId(null);
-    }
-    if (openMenuId !== null) {
-      document.addEventListener('mousedown', handleClickOutside);
-    } else {
-      document.removeEventListener('mousedown', handleClickOutside);
-    }
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [openMenuId]);
 
   function parseLocalDateString(dateString: string) {
     const [year, month, day] = dateString.split('-').map(Number);
@@ -223,33 +203,24 @@ const page = () => {
                     )
                     }
                   </div>
-                  <button
-                    className="border border-gray-300 rounded px-3 py-1 text-sm hover:bg-gray-100"
-                    onClick={() => { setSelectedOrder(order); setIsModalOpen(true); }}
-                  >
-                    Ver detalhes do anúncio
-                  </button>
+                  <div className="flex gap-2">
+                    <button
+                      className="border border-gray-300 rounded px-3 py-1 text-sm hover:bg-gray-100"
+                      onClick={() => { setSelectedOrder(order); setIsModalOpen(true); }}
+                    >
+                      Ver detalhes do anúncio
+                    </button>
+                    <button
+                      className="border border-blue-500 text-blue-500 rounded px-3 py-1 text-sm hover:bg-blue-100"
+                      onClick={() => handleTrocarArte(order)}
+                    >
+                      Trocar Arte
+                    </button>
+                  </div>
                 </div>
                 <div className="flex flex-col items-end gap-2 min-w-[120px] h-full justify-between self-stretch">
                   <div className="flex items-center gap-2 w-full justify-end relative">
                     <span className="text-gray-400 text-sm">#{order.id}</span>
-                    <button
-                      className="border border-gray-200 rounded p-1 hover:bg-gray-100"
-                      title="Menu"
-                      onClick={() => setOpenMenuId(openMenuId === order.id ? null : order.id)}
-                    >
-                      <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="12" cy="6" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="18" r="1.5"/></svg>
-                    </button>
-                    {openMenuId === order.id && (
-                      <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg z-50 py-2 border">
-                        <button 
-                          className="block w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100 text-sm"
-                          onClick={() => handleTrocarArte(order)}
-                        >
-                          trocar arte
-                        </button>
-                      </div>
-                    )}
                   </div>
                   <div className="flex-1 flex items-center justify-end">
                     <span className="text-lg font-bold text-gray-800">{order.preco ? Number(order.preco).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : '-'}</span>
