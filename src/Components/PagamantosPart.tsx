@@ -167,7 +167,7 @@ export const PagamantosPart = () => {
     }
 
     try {
-      // Mapeamento explícito: cada campo do frontend para a coluna da tabela order
+      // Mapeamento explícito: cada campo do frontend para a coluna order
       const orderPayload = {
         id_user: user.id,
         id_produto: produtos[0]?.id || null,
@@ -314,11 +314,6 @@ export const PagamantosPart = () => {
        {/* ** (5) Image Upload:  Image Selection / Upload UI (Example) ** */}
        <div className="bg-white rounded-xl shadow border border-gray-100 p-4 md:p-8 flex flex-col gap-4">
           <h2 className="text-xl font-bold mb-1">Imagem da Campanha</h2>
-          {/* Display the image if the URL is available */}
-          {imageUrl && (
-            <img src={imageUrl} alt="Campanha" className="w-full h-40 object-cover rounded-md mb-2" />
-          )}
-
           {/* Input field for the image URL */}
           <input
               type="text"
