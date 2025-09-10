@@ -285,31 +285,31 @@ export const PagamantosPart = () => {
       </div>
 
       {/* Resumo de valores */}
-      <div className="bg-white rounded-xl shadow border border-gray-100 p-4 md:p-8 flex w-full flex-col gap-6">
-        <h2 className="text-xl font-bold mb-2">Resumo de valores</h2>
-        <div className="border-b border-gray-200 mb-4"></div>
-        <div className="flex flex-col gap-2">
-          <div className="flex justify-between items-center text-base">
-            <span>Subtotal</span>
-            <span className="flex flex-col items-end">
-              {precoOriginal !== precoComDesconto && (
-                <span className="text-sm text-gray-400 line-through">R$ {precoOriginal.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</span>
-              )}
-              <span className="font-medium text-black">R$ {precoComDesconto.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</span>
+      <div className="bg-white rounded-xl shadow border border-gray-100 p-4 md:p-8 flex flex-col gap-6">
+          <h2 className="text-xl font-bold mb-2">Resumo de valores</h2>
+          <div className="border-b border-gray-200 mb-4"></div>
+          <div className="flex flex-col gap-2">
+            <div className="flex justify-between items-center text-base">
+              <span>Subtotal</span>
+              <span className="flex flex-col items-end">
+                {precoOriginal !== precoComDesconto && (
+                  <span className="text-sm text-gray-400 line-through">R$ {precoOriginal.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</span>
+                )}
+                <span className="font-medium text-black">R$ {precoComDesconto.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</span>
+              </span>
+            </div>
+            <a href="#" className="text-sm text-gray-700 underline">
+              Possui um cupom de desconto?
+            </a>
+          </div>
+          <div className="border-b border-gray-200 my-2"></div>
+          <div className="flex justify-between items-center text-lg font-bold">
+            <span>Total</span>
+            <span className="text-black">
+              R$ {precoComDesconto.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
             </span>
           </div>
-          <a href="#" className="text-sm text-gray-700 underline">
-            Possui um cupom de desconto?
-          </a>
         </div>
-        <div className="border-b border-gray-200 my-2"></div>
-        <div className="flex justify-between items-center text-lg font-bold">
-          <span>Total</span>
-          <span className="text-black">
-            R$ {precoComDesconto.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-          </span>
-        </div>
-      </div>
 
       {/* Dados do faturamento */}
       <div className="bg-white rounded-xl shadow border border-gray-100 p-4 md:p-8 flex flex-col gap-4">
