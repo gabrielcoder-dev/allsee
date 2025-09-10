@@ -285,7 +285,7 @@ export const PagamantosPart = () => {
       </div>
 
       {/* Resumo de valores */}
-      <div className="bg-white w-full rounded-xl shadow border border-gray-100 p-4 md:p-8 flex flex-col gap-4">
+      <div className="bg-white rounded-xl shadow border border-gray-100 p-4 md:p-8 flex flex-col gap-4 w-full md:w-full">  {/* Adicionado md:w-full */}
           <h2 className="text-xl font-bold mb-2">Resumo de valores</h2>
           <div className="border-b border-gray-200 mb-4"></div>
           <div className="flex flex-col gap-2">
@@ -309,6 +309,19 @@ export const PagamantosPart = () => {
               R$ {precoComDesconto.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
             </span>
           </div>
+        </div>
+
+       {/* ** (5) Image Upload:  Image Selection / Upload UI (Example) ** */}
+       <div className="bg-white rounded-xl shadow border border-gray-100 p-4 md:p-8 flex flex-col gap-4">
+          <h2 className="text-xl font-bold mb-1">Imagem da Campanha</h2>
+          {/* Input field for the image URL */}
+          <input
+              type="text"
+              placeholder="URL da Imagem"
+              className="border rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-200 w-full"
+              value={imageUrl || ""}
+              onChange={(e) => setImageUrl(e.target.value)}
+          />
         </div>
 
       {/* Dados do faturamento */}
