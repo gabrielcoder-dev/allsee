@@ -273,7 +273,7 @@ export const PagamantosPart = () => {
   const router = useRouter();
 
   return (
-    <div className="flex flex-col items-center w-full min-h-screen py-8 bg-[#fcfcfc] px-2 md:px-0">
+    <div className="flex flex-col gap-8 items-center w-full min-h-screen py-8 bg-[#fcfcfc] px-2 md:px-0">
       {/* Título e subtítulo */}
       <div className="text-center flex items-center justify-center flex-col gap-2 px-2 md:px-0">
         <h1 className="text-3xl font-bold">Pagamento</h1>
