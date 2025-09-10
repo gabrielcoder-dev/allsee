@@ -1,3 +1,4 @@
+// c:\Users\Latitude 5490\Desktop\allsee\src\Components\PagamantosPart.tsx
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -97,6 +98,14 @@ export const PagamantosPart = () => {
   const [carregando, setCarregando] = useState(false);
   const [erro, setErro] = useState("");
 
+  // ** (1) Image Upload: State for the selected image URL **
+  const [imageUrl, setImageUrl] = useState<string | null>(formData.selectedImage || null);
+
+  // ** (2) Image Upload: Handle the selected image from form data (if applicable)**
+  useEffect(() => {
+      setImageUrl(formData.selectedImage || null);
+  }, [formData.selectedImage]);
+
   // Função para verificar se todos os campos obrigatórios estão preenchidos (exceto complemento)
   const isFormValid = () => {
     // Pessoa Física
@@ -109,7 +118,8 @@ export const PagamantosPart = () => {
         !!formData.numero &&
         !!formData.bairro &&
         !!formData.cidade &&
-        !!formData.estado
+        !!formData.estado &&
+        !!imageUrl  // Ensure imageUrl is set
       );
     }
     // Pessoa Jurídica
@@ -124,7 +134,8 @@ export const PagamantosPart = () => {
         !!formData.numeroJ &&
         !!formData.bairroJ &&
         !!formData.cidadeJ &&
-        !!formData.estadoJ
+        !!formData.estadoJ &&
+        !!imageUrl // Ensure imageUrl is set
       );
     }
     // Nenhum selecionado
@@ -144,6 +155,13 @@ export const PagamantosPart = () => {
     // Verifica se o usuário está autenticado
     if (!user?.id) {
       setErro("Você precisa estar logado para concluir a compra.");
+      setCarregando(false);
+      return;
+    }
+
+    // ** (3) Image Upload: Validation - Check if an image is selected/provided **
+    if (!imageUrl) {
+      setErro("Por favor, selecione ou faça upload da imagem da campanha.");
       setCarregando(false);
       return;
     }
@@ -188,13 +206,13 @@ export const PagamantosPart = () => {
 
       const orderId = orderData.orderId;
 
-      // {{change 1: Adicionar chamada para criar a arte da campanha}}
+      // ** (4) Image Upload: API call to create arte_campanha **
       const arteCampanhaRes = await fetch("/api/admin/criar-arte-campanha", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           id_order: orderId,
-          caminho_imagem: formData.selectedImage,
+          caminho_imagem: imageUrl, // Pass the image URL to the backend
         }),
       });
       const arteCampanhaData = await arteCampanhaRes.json();
@@ -228,11 +246,11 @@ export const PagamantosPart = () => {
       const response = await fetch("/api/pagamento/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          total, 
+        body: JSON.stringify({
+          total,
           orderId: orderData.orderId,
           arteCampanhaId: arteCampanhaId, // Enviando o ID da arte
-          payerData 
+          payerData
         }),
       });
       const data = await response.json();
@@ -256,277 +274,292 @@ export const PagamantosPart = () => {
 
   return (
     <div className="flex flex-col items-center w-full min-h-screen py-8 bg-[#fcfcfc] px-2 md:px-0">
-      <div className="max-w-2xl w-full mx-auto flex flex-col gap-10">
+      {/* Título e subtítulo */}
+      <div className="text-center flex items-center justify-center flex-col gap-2 px-2 md:px-0">
+        <h1 className="text-3xl font-bold">Pagamento</h1>
+        <p className="text-gray-600 text-base w-64 lg:w-full">
+          Você está a um passo de reservar seu lugar nas telas da <span className="text-orange-600">ALL SEE</span>!
+          <br />
+          Confirme os valores e preencha os dados de faturamento
+        </p>
+      </div>
 
-        {/* Título e subtítulo */}
-        <div className="text-center flex items-center justify-center flex-col gap-2 px-2 md:px-0">
-          <h1 className="text-3xl font-bold">Pagamento</h1>
-          <p className="text-gray-600 text-base w-64 lg:w-full">
-            Você está a um passo de reservar seu lugar nas telas da <span className="text-orange-600">ALL SEE</span>!
-            <br />
-            Confirme os valores e preencha os dados de faturamento
-          </p>
-        </div>
-
-        {/* Resumo de valores */}
-        <div className="bg-white rounded-xl shadow border border-gray-100 p-4 md:p-8 flex flex-col gap-6">
-          <h2 className="text-xl font-bold mb-2">Resumo de valores</h2>
-          <div className="border-b border-gray-200 mb-4"></div>
-          <div className="flex flex-col gap-2">
-            <div className="flex justify-between items-center text-base">
-              <span>Subtotal</span>
-              <span className="flex flex-col items-end">
-                {precoOriginal !== precoComDesconto && (
-                  <span className="text-sm text-gray-400 line-through">R$ {precoOriginal.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</span>
-                )}
-                <span className="font-medium text-black">R$ {precoComDesconto.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</span>
-              </span>
-            </div>
-            <a href="#" className="text-sm text-gray-700 underline">
-              Possui um cupom de desconto?
-            </a>
-          </div>
-          <div className="border-b border-gray-200 my-2"></div>
-          <div className="flex justify-between items-center text-lg font-bold">
-            <span>Total</span>
-            <span className="text-black">
-              R$ {precoComDesconto.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+      {/* Resumo de valores */}
+      <div className="bg-white rounded-xl shadow border border-gray-100 p-4 md:p-8 flex flex-col gap-6">
+        <h2 className="text-xl font-bold mb-2">Resumo de valores</h2>
+        <div className="border-b border-gray-200 mb-4"></div>
+        <div className="flex flex-col gap-2">
+          <div className="flex justify-between items-center text-base">
+            <span>Subtotal</span>
+            <span className="flex flex-col items-end">
+              {precoOriginal !== precoComDesconto && (
+                <span className="text-sm text-gray-400 line-through">R$ {precoOriginal.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</span>
+              )}
+              <span className="font-medium text-black">R$ {precoComDesconto.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</span>
             </span>
           </div>
+          <a href="#" className="text-sm text-gray-700 underline">
+            Possui um cupom de desconto?
+          </a>
+        </div>
+        <div className="border-b border-gray-200 my-2"></div>
+        <div className="flex justify-between items-center text-lg font-bold">
+          <span>Total</span>
+          <span className="text-black">
+            R$ {precoComDesconto.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+          </span>
+        </div>
+      </div>
+
+       {/* ** (5) Image Upload:  Image Selection / Upload UI (Example) ** */}
+       <div className="bg-white rounded-xl shadow border border-gray-100 p-4 md:p-8 flex flex-col gap-4">
+          <h2 className="text-xl font-bold mb-1">Imagem da Campanha</h2>
+          {/* Display the image if the URL is available */}
+          {imageUrl && (
+            <img src={imageUrl} alt="Campanha" className="w-full h-40 object-cover rounded-md mb-2" />
+          )}
+
+          {/* Input field for the image URL */}
+          <input
+              type="text"
+              placeholder="URL da Imagem"
+              className="border rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-200 w-full"
+              value={imageUrl || ""}
+              onChange={(e) => setImageUrl(e.target.value)}
+          />
         </div>
 
-        {/* Dados do faturamento */}
-        <div className="bg-white rounded-xl shadow border border-gray-100 p-4 md:p-8 flex flex-col gap-4">
-          <h2 className="text-xl font-bold mb-1">Dados do faturamento</h2>
-          <p className="text-gray-500 text-sm mb-4">
-            Essas informações serão usadas para fins de faturamento. Escolha a
-            opção que melhor se aplica a você.
-          </p>
-          <div className="flex flex-col gap-0">
-            {/* Pessoa Física */}
-            <div
-              className={`flex items-center px-4 h-14 border-b border-gray-200 cursor-pointer bg-gray-50 rounded-t-lg select-none ${
-                openAccordion === "fisica" ? "font-semibold" : ""
+      {/* Dados do faturamento */}
+      <div className="bg-white rounded-xl shadow border border-gray-100 p-4 md:p-8 flex flex-col gap-4">
+        <h2 className="text-xl font-bold mb-1">Dados do faturamento</h2>
+        <p className="text-gray-500 text-sm mb-4">
+          Essas informações serão usadas para fins de faturamento. Escolha a
+          opção que melhor se aplica a você.
+        </p>
+        <div className="flex flex-col gap-0">
+          {/* Pessoa Física */}
+          <div
+            className={`flex items-center px-4 h-14 border-b border-gray-200 cursor-pointer bg-gray-50 rounded-t-lg select-none ${
+              openAccordion === "fisica" ? "font-semibold" : ""
+            }`}
+            onClick={() =>
+              setOpenAccordion(openAccordion === "fisica" ? null : "fisica")
+            }
+          >
+            <span
+              className={`mr-2 text-gray-500 transition-transform ${
+                openAccordion === "fisica" ? "rotate-90" : ""
               }`}
-              onClick={() =>
-                setOpenAccordion(openAccordion === "fisica" ? null : "fisica")
-              }
             >
-              <span
-                className={`mr-2 text-gray-500 transition-transform ${
-                  openAccordion === "fisica" ? "rotate-90" : ""
-                }`}
-              >
-                &#8250;
-              </span>
-              <span className="font-medium text-sm text-gray-800">
-                Pessoa Física
-              </span>
-            </div>
-            {openAccordion === "fisica" && (
-              <div className="bg-white border-b border-gray-200 px-2 md:px-6 py-6 md:py-8 flex flex-col gap-6 animate-fade-in">
-                <div className="grid grid-cols-1 gap-4">
-                  <input
-                    type="text"
-                    placeholder="CPF"
-                    className="border rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-200"
-                    value={formData.cpf}
-                    onChange={(e) => updateFormData({ cpf: e.target.value })}
-                  />
-                </div>
-                <div className="grid grid-cols-1 gap-4">
-                  <input
-                    type="text"
-                    placeholder="Telefone"
-                    className="border rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-200"
-                    value={formData.telefone}
-                    onChange={(e) => updateFormData({ telefone: e.target.value })}
-                  />
-                </div>
-                <hr />
-                <div className="grid grid-cols-1 gap-4">
-                  <input
-                    type="text"
-                    placeholder="CEP"
-                    className="border rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-200"
-                    value={formData.cep}
-                    onChange={(e) => updateFormData({ cep: e.target.value })}
-                  />
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <input
-                    type="text"
-                    placeholder="Endereço"
-                    className="border rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-200"
-                    value={formData.endereco}
-                    onChange={(e) => updateFormData({ endereco: e.target.value })}
-                  />
-                  <input
-                    type="text"
-                    placeholder="Número"
-                    className="border rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-200"
-                    value={formData.numero}
-                    onChange={(e) => updateFormData({ numero: e.target.value })}
-                  />
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <input
-                    type="text"
-                    placeholder="Bairro"
-                    className="border rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-200"
-                    value={formData.bairro}
-                    onChange={(e) => updateFormData({ bairro: e.target.value })}
-                  />
-                  <input
-                    type="text"
-                    placeholder="Complemento"
-                    className="border rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-200"
-                    value={formData.complemento}
-                    onChange={(e) => updateFormData({ complemento: e.target.value })}
-                  />
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <input
-                    type="text"
-                    placeholder="Cidade"
-                    className="border rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-200"
-                    value={formData.cidade}
-                    onChange={(e) => updateFormData({ cidade: e.target.value })}
-                  />
-                  <input
-                    type="text"
-                    placeholder="Estado"
-                    className="border rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-200"
-                    value={formData.estado}
-                    onChange={(e) => updateFormData({ estado: e.target.value })}
-                  />
-                </div>
-                {/* <p className="text-center text-xs text-gray-500">A NOTA FISCAL SERÁ ENCAMINHADA VIA WHATSAPP E E-MAIL</p> */}
-              </div>
-            )}
-            {/* Pessoa Jurídica */}
-            <div
-              className={`flex items-center px-4 h-14 cursor-pointer bg-gray-50 rounded-b-lg select-none ${
-                openAccordion === "juridica" ? "font-semibold" : ""
-              }`}
-              onClick={() =>
-                setOpenAccordion(
-                  openAccordion === "juridica" ? null : "juridica"
-                )
-              }
-            >
-              <span
-                className={`mr-2 text-gray-500 transition-transform ${
-                  openAccordion === "juridica" ? "rotate-90" : ""
-                }`}
-              >
-                &#8250;
-              </span>
-              <span className="font-medium text-sm text-gray-800">
-                Pessoa Jurídica
-              </span>
-            </div>
-            {openAccordion === "juridica" && (
-              <div className="bg-white border-b border-gray-200 px-2 md:px-6 py-6 md:py-8 flex flex-col gap-6 animate-fade-in">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <input
-                    type="text"
-                    placeholder="CNPJ"
-                    className="border rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-200"
-                    value={formData.cnpj}
-                    onChange={(e) => updateFormData({ cnpj: e.target.value })}
-                  />
-                  <input
-                    type="text"
-                    placeholder="Razão Social"
-                    className="border rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-200"
-                    value={formData.razaoSocial}
-                    onChange={(e) => updateFormData({ razaoSocial: e.target.value })}
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <Select value={formData.segmento} onValueChange={(value) => updateFormData({ segmento: value })}>
-                    <SelectTrigger className="px-4 py-6">
-                      <SelectValue placeholder="Setor/Segmento" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="mercado">Mercado</SelectItem>
-                <SelectItem value="banco">Banco</SelectItem>
-                      <SelectItem value="servicos">Serviços</SelectItem>
-                      <SelectItem value="industria">Indústria</SelectItem>
-                      <SelectItem value="outros">Outros</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <input
-                    type="text"
-                    placeholder="Telefone"
-                    className="border rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-200"
-                    value={formData.telefonej}
-                    onChange={(e) => updateFormData({ telefonej: e.target.value })}
-                  />
-                </div>
-                <hr />
-                <div className="grid grid-cols-1 gap-4">
-                  <input
-                    type="text"
-                    placeholder="CEP"
-                    className="border rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-200"
-                    value={formData.cepJ}
-                    onChange={(e) => updateFormData({ cepJ: e.target.value })}
-                  />
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <input
-                    type="text"
-                    placeholder="Endereço"
-                    className="border rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-200"
-                    value={formData.enderecoJ}
-                    onChange={(e) => updateFormData({ enderecoJ: e.target.value })}
-                  />
-                  <input
-                    type="text"
-                    placeholder="Número"
-                    className="border rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-200"
-                    value={formData.numeroJ}
-                    onChange={(e) => updateFormData({ numeroJ: e.target.value })}
-                  />
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <input
-                    type="text"
-                    placeholder="Bairro"
-                    className="border rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-200"
-                    value={formData.bairroJ}
-                    onChange={(e) => updateFormData({ bairroJ: e.target.value })}
-                  />
-                  <input
-                    type="text"
-                    placeholder="Complemento"
-                    className="border rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-200"
-                    value={formData.complementoJ}
-                    onChange={(e) => updateFormData({ complementoJ: e.target.value })}
-                  />
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <input
-                    type="text"
-                    placeholder="Cidade"
-                    className="border rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-200"
-                    value={formData.cidadeJ}
-                    onChange={(e) => updateFormData({ cidadeJ: e.target.value })}
-                  />
-                  <input
-                    type="text"
-                    placeholder="Estado"
-                    className="border rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-200"
-                    value={formData.estadoJ}
-                    onChange={(e) => updateFormData({ estadoJ: e.target.value })}
-                  />
-                </div>
-                {/* <p className="text-center text-xs text-gray-500">A NOTA FISCAL SERÁ ENCAMINHADA VIA WHATSAPP E E-MAIL</p> */}
-              </div>
-            )}
+              &#8250;
+            </span>
+            <span className="font-medium text-sm text-gray-800">
+              Pessoa Física
+            </span>
           </div>
+          {openAccordion === "fisica" && (
+            <div className="bg-white border-b border-gray-200 px-2 md:px-6 py-6 md:py-8 flex flex-col gap-6 animate-fade-in">
+              <div className="grid grid-cols-1 gap-4">
+                <input
+                  type="text"
+                  placeholder="CPF"
+                  className="border rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-200"
+                  value={formData.cpf}
+                  onChange={(e) => updateFormData({ cpf: e.target.value })}
+                />
+              </div>
+              <div className="grid grid-cols-1 gap-4">
+                <input
+                  type="text"
+                  placeholder="Telefone"
+                  className="border rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-200"
+                  value={formData.telefone}
+                  onChange={(e) => updateFormData({ telefone: e.target.value })}
+                />
+              </div>
+              <hr />
+              <div className="grid grid-cols-1 gap-4">
+                <input
+                  type="text"
+                  placeholder="CEP"
+                  className="border rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-200"
+                  value={formData.cep}
+                  onChange={(e) => updateFormData({ cep: e.target.value })}
+                />
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <input
+                  type="text"
+                  placeholder="Endereço"
+                  className="border rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-200"
+                  value={formData.endereco}
+                  onChange={(e) => updateFormData({ endereco: e.target.value })}
+                />
+                <input
+                  type="text"
+                  placeholder="Número"
+                  className="border rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-200"
+                  value={formData.numero}
+                  onChange={(e) => updateFormData({ numero: e.target.value })}
+                />
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <input
+                  type="text"
+                  placeholder="Bairro"
+                  className="border rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-200"
+                  value={formData.bairro}
+                  onChange={(e) => updateFormData({ bairro: e.target.value })}
+                />
+                <input
+                  type="text"
+                  placeholder="Complemento"
+                  className="border rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-200"
+                  value={formData.complemento}
+                  onChange={(e) => updateFormData({ complemento: e.target.value })}
+                />
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <input
+                  type="text"
+                  placeholder="Cidade"
+                  className="border rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-200"
+                  value={formData.cidade}
+                  onChange={(e) => updateFormData({ cidade: e.target.value })}
+                />
+                <input
+                  type="text"
+                  placeholder="Estado"
+                  className="border rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-200"
+                  value={formData.estado}
+                  onChange={(e) => updateFormData({ estado: e.target.value })}
+                />
+              </div>
+              {/* <p className="text-center text-xs text-gray-500">A NOTA FISCAL SERÁ ENCAMINHADA VIA WHATSAPP E E-MAIL</p> */}
+            </div>
+          )}
+          {/* Pessoa Jurídica */}
+          <div
+            className={`flex items-center px-4 h-14 cursor-pointer bg-gray-50 rounded-b-lg select-none ${
+              openAccordion === "juridica" ? "font-semibold" : ""
+            }`}
+            onClick={() =>
+              setOpenAccordion(
+                openAccordion === "juridica" ? null : "juridica"
+              )
+            }
+          >
+            <span
+              className={`mr-2 text-gray-500 transition-transform ${
+                openAccordion === "juridica" ? "rotate-90" : ""
+              }`}
+            >
+              &#8250;
+            </span>
+            <span className="font-medium text-sm text-gray-800">
+              Pessoa Jurídica
+            </span>
+          </div>
+          {openAccordion === "juridica" && (
+            <div className="bg-white border-b border-gray-200 px-2 md:px-6 py-6 md:py-8 flex flex-col gap-6 animate-fade-in">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <input
+                  type="text"
+                  placeholder="CNPJ"
+                  className="border rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-200"
+                  value={formData.cnpj}
+                  onChange={(e) => updateFormData({ cnpj: e.target.value })}
+                />
+                <input
+                  type="text"
+                  placeholder="Razão Social"
+                  className="border rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-200"
+                  value={formData.razaoSocial}
+                  onChange={(e) => updateFormData({ razaoSocial: e.target.value })}
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <Select value={formData.segmento} onValueChange={(value) => updateFormData({ segmento: value })}>
+                  <SelectTrigger className="px-4 py-6">
+                    <SelectValue placeholder="Setor/Segmento" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="mercado">Mercado</SelectItem>
+                <SelectItem value="banco">Banco</SelectItem>
+                    <SelectItem value="servicos">Serviços</SelectItem>
+                    <SelectItem value="industria">Indústria</SelectItem>
+                    <SelectItem value="outros">Outros</SelectItem>
+                  </SelectContent>
+                </Select>
+                <input
+                  type="text"
+                  placeholder="Telefone"
+                  className="border rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-200"
+                  value={formData.telefonej}
+                  onChange={(e) => updateFormData({ telefonej: e.target.value })}
+                />
+              </div>
+              <hr />
+              <div className="grid grid-cols-1 gap-4">
+                <input
+                  type="text"
+                  placeholder="CEP"
+                  className="border rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-200"
+                  value={formData.cepJ}
+                  onChange={(e) => updateFormData({ cepJ: e.target.value })}
+                />
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <input
+                  type="text"
+                  placeholder="Endereço"
+                  className="border rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-200"
+                  value={formData.enderecoJ}
+                  onChange={(e) => updateFormData({ enderecoJ: e.target.value })}
+                />
+                <input
+                  type="text"
+                  placeholder="Número"
+                  className="border rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-200"
+                  value={formData.numeroJ}
+                  onChange={(e) => updateFormData({ numeroJ: e.target.value })}
+                />
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <input
+                  type="text"
+                  placeholder="Bairro"
+                  className="border rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-200"
+                  value={formData.bairroJ}
+                  onChange={(e) => updateFormData({ bairroJ: e.target.value })}
+                />
+                <input
+                  type="text"
+                  placeholder="Complemento"
+                  className="border rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-200"
+                  value={formData.complementoJ}
+                  onChange={(e) => updateFormData({ complementoJ: e.target.value })}
+                />
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <input
+                  type="text"
+                  placeholder="Cidade"
+                  className="border rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-200"
+                  value={formData.cidadeJ}
+                  onChange={(e) => updateFormData({ cidadeJ: e.target.value })}
+                />
+                <input
+                  type="text"
+                  placeholder="Estado"
+                  className="border rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-200"
+                  value={formData.estadoJ}
+                  onChange={(e) => updateFormData({ estadoJ: e.target.value })}
+                />
+              </div>
+              {/* <p className="text-center text-xs text-gray-500">A NOTA FISCAL SERÁ ENCAMINHADA VIA WHATSAPP E E-MAIL</p> */}
+            </div>
+          )}
         </div>
 
         {/* Mensagem de erro */}
@@ -554,14 +587,6 @@ export const PagamantosPart = () => {
           >
             {carregando ? "Processando..." : "Concluir"}
           </Button>
-          {/* Debug info */}
-          {process.env.NODE_ENV === 'development' && (
-            <div className="text-xs text-gray-500 mt-2">
-              Debug: carregando={carregando.toString()}, 
-              produtos={produtos.length}, 
-              formValido={isFormValid().toString()}
-            </div>
-          )}
         </div>
       </div>
     </div>
