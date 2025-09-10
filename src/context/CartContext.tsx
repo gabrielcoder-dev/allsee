@@ -126,38 +126,6 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [mounted])
 
-  // // 🔄 Carregar form data do localStorage
-  // useEffect(() => {
-  //   const storedFormData = localStorage.getItem('formData')
-  //   if (storedFormData) {
-  //     const parsedFormData = JSON.parse(storedFormData)
-  //     setFormData({
-  //       ...parsedFormData,
-  //       cpf: parsedFormData.cpf || "",
-  //       telefone: parsedFormData.telefone || "",
-  //       cep: parsedFormData.cep || "",
-  //       endereco: parsedFormData.endereco || "",
-  //       numero: parsedFormData.numero || "",
-  //       bairro: parsedFormData.bairro || "",
-  //       complemento: parsedFormData.complemento || "",
-  //       cidade: parsedFormData.cidade || "",
-  //       estado: parsedFormData.estado || "",
-  //       cnpj: parsedFormData.cnpj || "",
-  //       razaoSocial: parsedFormData.razaoSocial || "",
-  //       segmento: parsedFormData.segmento || "",
-  //       telefoneJ: parsedFormData.telefonej || "",
-  //       cepJ: parsedFormData.cepJ || "",
-  //       enderecoJ: parsedFormData.enderecoJ || "",
-  //       numeroJ: parsedFormData.numeroJ || "",
-  //       bairroJ: parsedFormData.bairroJ || "",
-  //       complementoJ: parsedFormData.complementoJ || "",
-  //       cidadeJ: parsedFormData.cidadeJ || "",
-  //       estadoJ: parsedFormData.estadoJ || "",
-  //     });
-  //   }
-  // }, []);
-
-  // 💾 Salvar carrinho no localStorage sempre que mudar
   useEffect(() => {
     if (!mounted) return;
     
