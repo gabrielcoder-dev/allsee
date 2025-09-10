@@ -285,7 +285,7 @@ export const PagamantosPart = () => {
       </div>
 
       {/* Resumo de valores */}
-      <div className="bg-white rounded-xl shadow border border-gray-100 p-4 md:p-8 flex flex-col gap-4">
+      <div className="bg-white w-full rounded-xl shadow border border-gray-100 p-4 md:p-8 flex flex-col gap-4">
           <h2 className="text-xl font-bold mb-2">Resumo de valores</h2>
           <div className="border-b border-gray-200 mb-4"></div>
           <div className="flex flex-col gap-2">
