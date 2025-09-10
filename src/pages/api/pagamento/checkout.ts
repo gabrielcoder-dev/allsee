@@ -1,3 +1,4 @@
+// src/pages/api/pagamento/checkout.ts
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { Preference } from 'mercadopago';
 import { mercadoPagoClient, validateMercadoPagoConfig } from '@/services/mercado-pago';
@@ -8,11 +9,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    const { total, orderId, payerData } = req.body;
+    const { total, orderId, arteCampanhaId, payerData } = req.body; // Recebendo arteCampanhaId
 
-    // Validações
-    if (!total || !orderId) {
-      return res.status(400).json({ error: 'Total e orderId são obrigatórios' });
+    // 1. Validar dados
+    if (!total || !orderId || !arteCampanhaId || !payerData) { // Validando arteCampanhaId
+      return res.status(400).json({ success: false, error: 'Dados incompletos' });
     }
 
     if (typeof total !== 'number' || total <= 0) {
@@ -25,6 +26,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     console.log('🛒 Iniciando checkout:', {
       orderId,
       total,
+      arteCampanhaId, // Mostrando que recebemos o ID da arte
       hasPayerData: !!payerData
     });
 
@@ -46,10 +48,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const preferenceBody: any = {
       items: [
         {
-          id: `order-${orderId}`,
-          title: 'Anúncio Allsee',
+          title: 'Reserva de espaço na All See',
           quantity: 1,
-          currency_id: 'BRL',
           unit_price: total,
         },
       ],
@@ -60,6 +60,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       },
       auto_return: 'approved',
       external_reference: orderId,
+      payer: payerData,
       notification_url: computedWebhookUrl,
       payment_methods: {
         installments: 1,
@@ -85,11 +86,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         } : undefined,
         address: payerData.cep ? {
           zip_code: payerData.cep.replace(/\D/g, ''),
-          street_name: payerData.endereco || '',
-          street_number: payerData.numero || '',
-          neighborhood: payerData.bairro || '',
-          city: payerData.cidade || '',
-          state: payerData.estado || ''
+          street_name: preferenceBody.payer.addressJ || '',
+          street_number: preferenceBody.payer.numeroJ || '',
+          neighborhood: preferenceBody.payer.bairroJ || '',
+          city: preferenceBody.payer.cidadeJ || '',
+          state: preferenceBody.payer.estadoJ || ''
         } : undefined
       };
     }
@@ -106,13 +107,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     });
 
     return res.status(200).json({ 
-      success: true,
+      success: true, 
       init_point: result.init_point,
       preference_id: result.id
     });
 
   } catch (error: any) {
-    console.error('❌ Erro no checkout:', error);
+    console.error("❌ Erro no checkout:", error);
     
     // Log detalhado do erro
     if (error.message) {
@@ -122,9 +123,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       console.error('Causa do erro:', error.cause);
     }
     
-    return res.status(500).json({ 
-      error: 'Erro ao processar checkout',
-      details: error.message || 'Erro desconhecido'
-    });
+    return res.status(500).json({ success: false, error: 'Erro interno do servidor' });
   }
 }

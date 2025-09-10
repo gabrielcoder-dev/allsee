@@ -1,5 +1,5 @@
 import { HeaderResume } from '@/Components/HeaderResume'
-import PagamantosPart from '@/Components/PagamantosPart'
+import { PagamantosPart } from '@/Components/PagamantosPart'
 import React from 'react'
 
 const page = () => {

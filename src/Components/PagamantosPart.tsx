@@ -8,7 +8,7 @@ import {
   SelectContent,
   SelectItem,
   SelectValue,
-} from "./ui/select";
+} from "@/Components/ui/select";
 import { useCart } from "@/context/CartContext";
 import { SiPix } from "react-icons/si";
 import { FaRegCreditCard } from "react-icons/fa";
@@ -18,7 +18,7 @@ import { useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { useUser } from "@supabase/auth-helpers-react";
 
-const PagamantosPart = () => {
+export const PagamantosPart = () => {
   const user = useUser();
   const { produtos, selectedDurationGlobal, formData, updateFormData } = useCart();
   // Duração fixa igual ao padrão do carrinho
@@ -30,7 +30,7 @@ const PagamantosPart = () => {
     if (formData.cpf && formData.cep && formData.endereco) {
       setOpenAccordion("fisica");
     }
-    // Se já temos dados de pessoa jurídica preenchidos, seleciona automaticamente
+    // Se já temos dados de pessoa jurídica preenchidos, e seleciona automaticamente
     else if (formData.cnpj && formData.razaoSocial) {
       setOpenAccordion("juridica");
     }
@@ -151,49 +151,65 @@ const PagamantosPart = () => {
     try {
       // Mapeamento explícito: cada campo do frontend para a coluna da tabela order
       const orderPayload = {
-        id_user: user.id, // id_user: id do usuário autenticado (agora sempre string e nunca null)
-        id_produto: produtos[0]?.id || null, // id_produto: id do produto selecionado (primeiro do carrinho)
-        nome_campanha: formData.campaignName || null, // nome_campanha: input de nome da campanha (CartResume)
-        duracao_campanha: selectedDurationGlobal || null, // duracao_campanha: valor do select de duração
-        inicio_campanha: formData.startDate ? formData.startDate.split('T')[0] : null, // inicio_campanha: valor do popover de data, formato yyyy-MM-dd, igual ao exibido
-        arte_campanha: formData.selectedImage || null, // arte_campanha: arquivo selecionado no input de arte (base64 ou url)
-        cpf: formData.cpf || null, // cpf: input de CPF (PagamantosPart)
-        cnpj: formData.cnpj || null, // cnpj: input de CNPJ (PagamantosPart)
-        razao_social: formData.razaoSocial || null, // razao_social: input de razão social (PagamantosPart)
-        setor: formData.segmento || null, // setor: select de setor (PagamantosPart)
-        telefone: formData.telefone || formData.telefonej || null, // telefone: input de telefone (PF ou PJ)
-        cep: formData.cep || formData.cepJ || null, // cep: input de CEP (PF ou PJ)
-        endereco: formData.endereco || formData.enderecoJ || null, // endereco: input de endereço (PF ou PJ)
-        numero: formData.numero || formData.numeroJ || null, // numero: input de número (PF ou PJ)
-        bairro: formData.bairro || formData.bairroJ || null, // bairro: input de bairro (PF ou PJ)
+        id_user: user.id,
+        id_produto: produtos[0]?.id || null,
+        nome_campanha: formData.campaignName || null,
+        duracao_campanha: selectedDurationGlobal || null,
+        inicio_campanha: formData.startDate ? formData.startDate.split('T')[0] : null,
+        cpf: formData.cpf || null,
+        cnpj: formData.cnpj || null,
+        razao_social: formData.razaoSocial || null,
+        setor: formData.segmento || null,
+        telefone: formData.telefone || formData.telefonej || null,
+        cep: formData.cep || formData.cepJ || null,
+        endereco: formData.endereco || formData.enderecoJ || null,
+        numero: formData.numero || formData.numeroJ || null,
+        bairro: formData.bairro || formData.bairroJ || null,
         complemento: formData.complemento || formData.complementoJ || null,
-        cidade: formData.cidade || formData.cidadeJ || null, // cidade: input de cidade (PF ou PJ)
-        estado: formData.estado || formData.estadoJ || null, // estado: input de estado (PF ou PJ)
-        preco: precoComDesconto, // preço total exibido no resumo de valores
+        cidade: formData.cidade || formData.cidadeJ || null,
+        estado: formData.estadoJ || null,
+        preco: precoComDesconto,
       };
-      console.log('Payload enviado para o backend:', orderPayload);
-      console.log("Payload do pedido:", orderPayload);
 
-      // 1. Criar order no banco
-      console.log("📤 Enviando dados para criar-compra...");
+      console.log('Payload enviado para criar order:', orderPayload);
       const orderRes = await fetch("/api/pagamento/criar-compra", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(orderPayload),
       });
       const orderData = await orderRes.json();
-      console.log("📥 Resposta do criar-compra:", orderData);
-      
+
       if (!orderData.success || !orderData.orderId) {
         console.error("❌ Erro ao criar pedido:", orderData);
         setErro(orderData.error || "Erro ao criar pedido");
         setCarregando(false);
         return;
       }
-      
-      console.log("✅ Order criado com sucesso, ID:", orderData.orderId);
 
-      // 2. Preparar dados do pagador
+      const orderId = orderData.orderId;
+
+      // {{change 1: Adicionar chamada para criar a arte da campanha}}
+      const arteCampanhaRes = await fetch("/api/admin/criar-arte-campanha", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id_order: orderId,
+          caminho_imagem: formData.selectedImage,
+        }),
+      });
+      const arteCampanhaData = await arteCampanhaRes.json();
+
+      if (!arteCampanhaData.success || !arteCampanhaData.arte_campanha_id) {
+        console.error("❌ Erro ao criar arte da campanha:", arteCampanhaData);
+        setErro(arteCampanhaData.error || "Erro ao criar arte da campanha");
+        setCarregando(false);
+        return;
+      }
+
+      const arteCampanhaId = arteCampanhaData.arte_campanha_id;
+
+      console.log('✅ Arte da campanha criada com sucesso, ID:', arteCampanhaId);
+
       const payerData = {
         name: formData.cpf ? 'Pessoa Física' : formData.razaoSocial || 'Cliente Allsee',
         email: user.email || 'cliente@allsee.com',
@@ -203,11 +219,11 @@ const PagamantosPart = () => {
         endereco: formData.endereco || formData.enderecoJ || null,
         numero: formData.numero || formData.numeroJ || null,
         bairro: formData.bairro || formData.bairroJ || null,
+        complemento: formData.complemento || formData.complementoJ || null,
         cidade: formData.cidade || formData.cidadeJ || null,
-        estado: formData.estado || formData.estadoJ || null,
+        estado: formData.estadoJ || null,
       };
 
-      // 3. Chamar checkout com orderId e dados do pagador
       console.log("💳 Enviando dados para checkout...");
       const response = await fetch("/api/pagamento/checkout", {
         method: "POST",
@@ -215,12 +231,12 @@ const PagamantosPart = () => {
         body: JSON.stringify({ 
           total, 
           orderId: orderData.orderId,
+          arteCampanhaId: arteCampanhaId, // Enviando o ID da arte
           payerData 
         }),
       });
       const data = await response.json();
-      console.log("📥 Resposta do checkout:", data);
-      
+
       if (data.success && data.init_point) {
         console.log("✅ Redirecionando para:", data.init_point);
         window.location.href = data.init_point;
@@ -238,8 +254,6 @@ const PagamantosPart = () => {
 
   const router = useRouter();
 
-  // Remover qualquer referência a funções, estados ou variáveis que não existem mais (ex: handleConcluir, formData, campos de pessoa física/jurídica, nome de campanha, imagem, etc). Deixe apenas o fluxo de pagamento essencial e o que for necessário para funcionamento do componente.
-
   return (
     <div className="flex flex-col items-center w-full min-h-screen py-8 bg-[#fcfcfc] px-2 md:px-0">
       <div className="max-w-2xl w-full mx-auto flex flex-col gap-10">
@@ -253,7 +267,6 @@ const PagamantosPart = () => {
             Confirme os valores e preencha os dados de faturamento
           </p>
         </div>
-
 
         {/* Resumo de valores */}
         <div className="bg-white rounded-xl shadow border border-gray-100 p-4 md:p-8 flex flex-col gap-6">
@@ -388,7 +401,7 @@ const PagamantosPart = () => {
                     onChange={(e) => updateFormData({ estado: e.target.value })}
                   />
                 </div>
-                {/* <p className='text-center text-xs text-gray-500'>A NOTA FISCAL SERÁ ENCAMINHADA VIA WHATSAPP E E-MAIL</p> */}
+                {/* <p className="text-center text-xs text-gray-500">A NOTA FISCAL SERÁ ENCAMINHADA VIA WHATSAPP E E-MAIL</p> */}
               </div>
             )}
             {/* Pessoa Jurídica */}
@@ -510,9 +523,7 @@ const PagamantosPart = () => {
                     onChange={(e) => updateFormData({ estadoJ: e.target.value })}
                   />
                 </div>
-                <p className="text-center text-xs text-gray-500">
-                  A NOTA FISCAL SERÁ ENCAMINHADA VIA WHATSAPP E E-MAIL
-                </p>
+                {/* <p className="text-center text-xs text-gray-500">A NOTA FISCAL SERÁ ENCAMINHADA VIA WHATSAPP E E-MAIL</p> */}
               </div>
             )}
           </div>
@@ -556,5 +567,3 @@ const PagamantosPart = () => {
     </div>
   );
 };
-
-export default PagamantosPart;
