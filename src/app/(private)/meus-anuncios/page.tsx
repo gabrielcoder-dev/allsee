@@ -1,4 +1,6 @@
 // src/Components/ReplacementAdmin.tsx
+"use client"
+
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import ImageAprove from "@/assets/restaurante-2.jpg"; // Altere para sua imagem padrão
