@@ -16,7 +16,7 @@ interface Order {
   nome_campanha: string;
   inicio_campanha: string;
   duracao_campanha: number;
-  arte_campanha_id: number;
+  arte_campanha_id: number | null; // Allow arte_campanha_id to be null
 }
 
 interface Anuncio {
@@ -46,31 +46,36 @@ const MeusAnuncios = () => {
         }
 
         const userId = user.id;
-        console.log("User ID:", userId); // Log the user ID
+        console.log("User ID:", userId);
 
         // Fetch orders for the current user
         const { data: orders, error: ordersError } = await supabase
           .from("order")
           .select(`id, nome_campanha, inicio_campanha, duracao_campanha, arte_campanha_id`)
-          .eq("id_user", userId); // Filter by id_user
+          .eq("id_user", userId);
 
         if (ordersError) {
           setError(ordersError.message);
-          console.error("Orders error:", ordersError); // Log the error
+          console.error("Orders error:", ordersError);
           return;
         }
 
         if (!orders || orders.length === 0) {
           setAnuncios([]);
           setLoading(false);
-          console.log("No orders found for this user."); // Log if no orders are found
+          console.log("No orders found for this user.");
           return;
         }
 
-        console.log("Fetched orders:", orders); // Log the fetched orders
+        console.log("Fetched orders:", orders);
 
         // Fetch arte_campanha data for each order
         const anunciosPromises = orders.map(async (order: Order) => {
+           if (order.arte_campanha_id === null) {
+            console.warn(`Skipping order ${order.id} because arte_campanha_id is null`);
+            return null;
+          }
+
           const { data: arteCampanha, error: arteCampanhaError } = await supabase
             .from("arte_campanha")
             .select("caminho_imagem")
