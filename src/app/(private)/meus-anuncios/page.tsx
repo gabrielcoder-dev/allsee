@@ -9,6 +9,7 @@ import { supabase } from "@/lib/supabase";
 interface ArteCampanha {
   id: number;
   caminho_imagem: string;
+  id_order: string; // Alterado para id_order
 }
 
 interface Order {
@@ -16,7 +17,6 @@ interface Order {
   nome_campanha: string;
   inicio_campanha: string;
   duracao_campanha: number;
-  arte_campanha_id: number | null; // Allow arte_campanha_id to be null
 }
 
 interface Anuncio {
@@ -48,52 +48,54 @@ const MeusAnuncios = () => {
         const userId = user.id;
         console.log("User ID:", userId);
 
-        // Fetch orders for the current user
-        const { data: orders, error: ordersError } = await supabase
-          .from("order")
-          .select(`id, nome_campanha, inicio_campanha, duracao_campanha, arte_campanha_id`)
-          .eq("id_user", userId);
+        // Fetch arte_campanha data for the current user
+        const { data: arteCampanhas, error: arteCampanhasError } = await supabase
+          .from("arte_campanha")
+          .select(`id, caminho_imagem, id_order`); // Remove filtro id_user
 
-        if (ordersError) {
-          setError(ordersError.message);
-          console.error("Orders error:", ordersError);
+        if (arteCampanhasError) {
+          setError(arteCampanhasError.message);
+          console.error("arteCampanhas error:", arteCampanhasError);
           return;
         }
 
-        if (!orders || orders.length === 0) {
+        if (!arteCampanhas || arteCampanhas.length === 0) {
           setAnuncios([]);
           setLoading(false);
-          console.log("No orders found for this user.");
+          console.log("No arteCampanhas found for this user.");
           return;
         }
 
-        console.log("Fetched orders:", orders);
+        console.log("Fetched arteCampanhas:", arteCampanhas);
 
-        // Fetch arte_campanha data for each order
-        const anunciosPromises = orders.map(async (order: Order) => {
-           if (order.arte_campanha_id === null) {
-            console.warn(`Skipping order ${order.id} because arte_campanha_id is null`);
+        // Fetch orders for the current user
+        const anunciosPromises = arteCampanhas.map(async (arteCampanha: ArteCampanha) => {
+          // Fetch orders para pegar o nome, inicio e fim da campanha
+          const { data: orders, error: ordersError } = await supabase
+            .from("order")
+            .select(`id, nome_campanha, inicio_campanha, duracao_campanha`)
+            .eq("id", arteCampanha.id_order) // Busca order pelo id da arteCampanha
+
+          if (ordersError) {
+            setError(ordersError.message);
+            console.error("Orders error:", ordersError);
             return null;
           }
 
-          const { data: arteCampanha, error: arteCampanhaError } = await supabase
-            .from("arte_campanha")
-            .select("caminho_imagem")
-            .eq("id", order.arte_campanha_id)
-            .single();
-
-          if (arteCampanhaError) {
-            console.error("Erro ao buscar arte_campanha:", arteCampanhaError);
+          if (!orders || orders.length === 0) {
+            setAnuncios([]);
+            setLoading(false);
+            console.log("No orders found for this user.");
             return null;
           }
 
-          const fim_campanha = new Date(order.inicio_campanha);
-          fim_campanha.setDate(fim_campanha.getDate() + order.duracao_campanha);
+          const fim_campanha = new Date(orders[0].inicio_campanha);
+          fim_campanha.setDate(fim_campanha.getDate() + orders[0].duracao_campanha);
 
           return {
-            id: order.id,
-            nome_campanha: order.nome_campanha,
-            inicio_campanha: order.inicio_campanha,
+            id: arteCampanha.id,
+            nome_campanha: orders[0].nome_campanha,
+            inicio_campanha: orders[0].inicio_campanha,
             fim_campanha: fim_campanha.toLocaleDateString(),
             caminho_imagem: arteCampanha?.caminho_imagem || "",
           };
@@ -101,7 +103,6 @@ const MeusAnuncios = () => {
 
         const anunciosData = (await Promise.all(anunciosPromises)).filter(Boolean) as Anuncio[];
         setAnuncios(anunciosData);
-
 
       } catch (err: any) {
         setError(err.message);
@@ -148,9 +149,8 @@ const MeusAnuncios = () => {
           ))}
         </div>
       )}
-      
     </div>
   );
-}
+};
 
 export default MeusAnuncios;
