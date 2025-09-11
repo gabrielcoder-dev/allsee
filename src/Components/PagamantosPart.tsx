@@ -213,6 +213,7 @@ export const PagamantosPart = () => {
         body: JSON.stringify({
           id_order: orderId,
           caminho_imagem: imageUrl, // Pass the image URL to the backend
+          id_user: user.id,
         }),
       });
       const arteCampanhaData = await arteCampanhaRes.json();
@@ -287,7 +288,7 @@ export const PagamantosPart = () => {
       {/* Resumo de valores */}
      
 
-      {/* Dados do faturamento */}
+      {/* Dados do faturamento */}\
       <div className="bg-white rounded-xl shadow border border-gray-100 p-4 md:p-8 flex flex-col gap-8">
       
       
@@ -557,7 +558,7 @@ export const PagamantosPart = () => {
           </div>
         )}
 
-        {/* Botão voltar e concluir */}
+        {/* Botão voltar e concluir */}\
         <div className="flex justify-between items-center px-2 md:px-0 mt-2">
           <Button
             className="bg-gray-200 hover:bg-gray-300 text-gray-800 px-8 py-2 rounded-md cursor-pointer"
