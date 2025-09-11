@@ -3,60 +3,98 @@
 
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
-import ImageAprove from "@/assets/restaurante-2.jpg"; // Altere para sua imagem padrão
-import { supabase } from "@/lib/supabase"; // Importe seu cliente Supabase
+import Link from "next/link";
+import { supabase } from "@/lib/supabase";
 
-interface OrderWithReplacement {
+interface ArteCampanha {
   id: number;
-  nome_campanha: string;
-  arte_campanha: string; // the current art
-  new_arte_campanha: string | null;
-  replacement_status: 'pending' | 'approved' | 'rejected' | null;
-  preco: number;
-  inicio_campanha: string;
-  duracao_campanha: number;
-  caminho_imagem: string; // URL da imagem da arte da campanha
+  caminho_imagem: string;
 }
 
-const ReplacementAdmin = () => {
-  const [ordersWithReplacements, setOrdersWithReplacements] = useState<OrderWithReplacement[]>([]);
+interface Order {
+  id: number;
+  nome_campanha: string;
+  inicio_campanha: string;
+  duracao_campanha: number;
+  arte_campanha_id: number;
+  user_id: string; // Add user_id to the interface
+}
+
+interface Anuncio {
+  id: number;
+  nome_campanha: string;
+  inicio_campanha: string;
+  fim_campanha: string;
+  caminho_imagem: string;
+}
+
+const MeusAnuncios = () => {
+  const [anuncios, setAnuncios] = useState<Anuncio[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    async function fetchOrdersWithReplacements() {
+    async function fetchAnuncios() {
       setLoading(true);
       setError(null);
       try {
-        const { data, error } = await supabase
-          .from("order")
-          .select(
-            `
-            *,
-            arte_campanha (
-              caminho_imagem
-            )
-          `
-          )
-          .eq("replacement_status", "pending");
+        const { data: { user } } = await supabase.auth.getUser();
 
-        if (error) {
-          setError(error.message);
-        } else {
-          // Adapta os dados para a estrutura esperada
-          const adaptedOrders = data.map((item) => ({
-            id: item.id,
-            nome_campanha: item.nome_campanha,
-            arte_campanha: item.arte_campanha,
-            new_arte_campanha: item.new_arte_campanha,
-            replacement_status: item.replacement_status,
-            preco: item.preco,
-            inicio_campanha: item.inicio_campanha,
-            duracao_campanha: item.duracao_campanha,
-            caminho_imagem: item.arte_campanha?.caminho_imagem || "",
-          }));
-          setOrdersWithReplacements(adaptedOrders);
+        if (!user) {
+          setError("User not logged in");
+          setLoading(false);
+          return;
         }
+
+        const userId = user.id;
+
+        // Fetch orders for the current user
+        const { data: orders, error: ordersError } = await supabase
+          .from("order")
+          .select(`id, nome_campanha, inicio_campanha, duracao_campanha, arte_campanha_id, user_id`)
+          .eq("user_id", userId); // Filter by user_id
+
+
+        if (ordersError) {
+          setError(ordersError.message);
+          return;
+        }
+
+        if (!orders || orders.length === 0) {
+          setAnuncios([]);
+          setLoading(false);
+          return;
+        }
+
+        // Fetch arte_campanha data for each order
+        const anunciosPromises = orders.map(async (order: Order) => {
+          const { data: arteCampanha, error: arteCampanhaError } = await supabase
+            .from("arte_campanha")
+            .select("caminho_imagem")
+            .eq("id", order.arte_campanha_id)
+            .single();
+
+          if (arteCampanhaError) {
+            console.error("Erro ao buscar arte_campanha:", arteCampanhaError);
+            return null;
+          }
+
+          const fim_campanha = new Date(order.inicio_campanha);
+          fim_campanha.setDate(fim_campanha.getDate() + order.duracao_campanha);
+
+          return {
+            id: order.id,
+            nome_campanha: order.nome_campanha,
+            inicio_campanha: order.inicio_campanha,
+            fim_campanha: fim_campanha.toLocaleDateString(),
+            caminho_imagem: arteCampanha?.caminho_imagem || "",
+          };
+        });
+
+        const anunciosData = (await Promise.all(anunciosPromises)).filter(Boolean) as Anuncio[];
+        setAnuncios(anunciosData);
+
+
       } catch (err: any) {
         setError(err.message);
       } finally {
@@ -64,164 +102,46 @@ const ReplacementAdmin = () => {
       }
     }
 
-    fetchOrdersWithReplacements();
+    fetchAnuncios();
   }, []);
-
-  const handleAccept = async (order: OrderWithReplacement) => {
-    try {
-      setLoading(true);
-      setError(null);
-
-      const { error: updateError } = await supabase
-        .from("order")
-        .update({
-          new_arte_campanha: null,
-          replacement_status: "approved"
-        })
-        .eq("id", order.id);
-
-      if (updateError) {
-        throw new Error(`Erro ao atualizar o pedido: ${updateError.message}`);
-      }
-
-      setOrdersWithReplacements(prevOrders =>
-        prevOrders.filter(o => o.id !== order.id)
-      );
-
-    } catch (err: any) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleReject = async (order: OrderWithReplacement) => {
-    try {
-      setLoading(true);
-      setError(null);
-
-      const { error: updateError } = await supabase
-        .from("order")
-        .update({
-          arte_campanha: order.new_arte_campanha, // Reverter para a arte anterior (que agora está em new_arte_campanha)
-          new_arte_campanha: null, //Limpa a arte
-          replacement_status: "rejected"
-        })
-        .eq("id", order.id);
-
-      if (updateError) {
-        throw new Error(`Erro ao atualizar o pedido: ${updateError.message}`);
-      }
-
-      setOrdersWithReplacements(prevOrders =>
-        prevOrders.filter(o => o.id !== order.id)
-      );
-
-    } catch (err: any) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   return (
     <div className="w-full h-full p-3 md:p-6">
-      <h2 className="text-2xl md:text-3xl font-bold text-orange-600 mb-4 md:mb-6">Solicitações de Substituição</h2>
+      <Link href="/(private)/dashboard" className="flex items-center gap-2 mb-4 text-gray-600 hover:text-orange-600">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor" className="w-6 h-6">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+        </svg>
+        Meus Anuncios
+      </Link>
 
-      {loading && <p>Carregando solicitações...</p>}
-      {error && <p className="text-red-500">Erro: {error}</p>}
+      <h2 className="text-2xl md:text-3xl font-bold text-orange-600 mb-4 md:mb-6">Meus Anúncios</h2>
 
-      <div className="space-y-4 md:space-y-6">
-        {ordersWithReplacements.map((order) => (
-          <div
-            key={order.id}
-            className="flex flex-col md:flex-row md:items-center gap-4 md:gap-6 justify-between border border-gray-300 rounded-xl md:rounded-2xl p-4 md:p-6 bg-white shadow-sm"
-          >
-            <div className="flex items-center gap-3 md:gap-4 min-w-0 flex-1">
-              <div className="flex flex-col gap-2">
-                {/* Current Art (which is the new art) */}
-                <div>
-                  <p className="text-gray-500">Nova Arte Proposta:</p>
-                  <Image
-                    src={order.arte_campanha || ImageAprove} // Mostra a NEW art
-                    alt={`Current art for ${order.nome_campanha}`}
-                    width={96}
-                    height={96}
-                    className="w-16 h-16 md:w-24 md:h-24 rounded-lg md:rounded-xl object-cover flex-shrink-0"
-                  />
-                </div>
-
-                {/* Previous Art */}
-                {order.new_arte_campanha && (
-                  <div>
-                    <p className="text-gray-500">Arte Anterior:</p>
-                    <Image
-                      src={order.new_arte_campanha} // Mostra a OLD art
-                      alt={`Previous art for ${order.nome_campanha}`}
-                      width={96}
-                      height={96}
-                      className="w-16 h-16 md:w-24 md:h-24 rounded-lg md:rounded-xl object-cover flex-shrink-0"
-                    />
-                  </div>
-                )}
-              </div>
-
-              <div className="flex flex-col md:flex-row items-start md:items-center gap-2 md:gap-4 min-w-0 flex-1">
-                <div className="flex items-center gap-2 md:gap-4">
-                  <a
-                    href={order.arte_campanha || undefined}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-gray-500 hover:text-orange-600 text-sm md:text-base font-medium transition-colors"
-                  >
-                    Baixar Nova Arte
-                  </a>
-                  <a
-                    href={order.new_arte_campanha || undefined}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-gray-500 hover:text-orange-600 text-sm md:text-base font-medium transition-colors"
-                  >
-                    Baixar Arte Anterior
-                  </a>
-                  <button className="text-gray-500 hover:text-orange-600 text-sm md:text-base font-medium transition-colors">
-                    Assistir
-                  </button>
-                </div>
-                <div className="text-sm md:text-base">
-                  <p className="font-bold text-gray-800">{order.nome_campanha}</p>
-                  <p className="text-gray-500">Solicitação de substituição</p>
-                </div>
+      {loading ? (
+        <p>Carregando anúncios...</p>
+      ) : error ? (
+        <p className="text-red-500">Erro: {error}</p>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {anuncios.map((anuncio) => (
+            <div key={anuncio.id} className="bg-white rounded-lg shadow-md overflow-hidden">
+              <Image
+                src={anuncio.caminho_imagem}
+                alt={anuncio.nome_campanha}
+                width={600}
+                height={400}
+                className="w-full h-48 object-cover"
+              />
+              <div className="p-4">
+                <h3 className="text-lg font-semibold text-gray-800">{anuncio.nome_campanha}</h3>
+                <p className="text-gray-600">Início: {anuncio.inicio_campanha}</p>
+                <p className="text-gray-600">Fim: {anuncio.fim_campanha}</p>
               </div>
             </div>
-
-            <div className="flex items-center gap-2 md:gap-3 flex-shrink-0">
-              <button
-                className="bg-green-500 hover:bg-green-600 cursor-pointer text-white rounded-lg md:rounded-xl px-3 py-2 font-bold text-xs md:text-sm transition-colors min-w-[70px]"
-                onClick={() => handleAccept(order)}
-                disabled={loading}
-              >
-                Aceitar
-              </button>
-              <button
-                className="bg-red-500 hover:bg-red-600 cursor-pointer text-white rounded-lg md:rounded-xl px-3 py-2 font-bold text-xs md:text-sm transition-colors min-w-[70px]"
-                onClick={() => handleReject(order)}
-                disabled={loading}
-              >
-                Recusar
-              </button>
-            </div>
-          </div>
-        ))}
-
-        {ordersWithReplacements.length === 0 && !loading && !error && (
-          <div className="text-center py-4 text-gray-500">
-            Nenhuma solicitação de substituição pendente.
-          </div>
-        )}
-      </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 };
 
-export default ReplacementAdmin;
+export default MeusAnuncios;
