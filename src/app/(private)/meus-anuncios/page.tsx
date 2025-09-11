@@ -46,6 +46,7 @@ const MeusAnuncios = () => {
         }
 
         const userId = user.id;
+        console.log("User ID:", userId); // Log the user ID
 
         // Fetch orders for the current user
         const { data: orders, error: ordersError } = await supabase
@@ -53,17 +54,20 @@ const MeusAnuncios = () => {
           .select(`id, nome_campanha, inicio_campanha, duracao_campanha, arte_campanha_id`)
           .eq("id_user", userId); // Filter by id_user
 
-
         if (ordersError) {
           setError(ordersError.message);
+          console.error("Orders error:", ordersError); // Log the error
           return;
         }
 
         if (!orders || orders.length === 0) {
           setAnuncios([]);
           setLoading(false);
+          console.log("No orders found for this user."); // Log if no orders are found
           return;
         }
+
+        console.log("Fetched orders:", orders); // Log the fetched orders
 
         // Fetch arte_campanha data for each order
         const anunciosPromises = orders.map(async (order: Order) => {
