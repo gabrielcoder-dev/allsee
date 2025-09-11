@@ -51,7 +51,8 @@ const MeusAnuncios = () => {
         // Fetch arte_campanha data for the current user
         const { data: arteCampanhas, error: arteCampanhasError } = await supabase
           .from("arte_campanha")
-          .select(`id, caminho_imagem, id_order`); // Remove filtro id_user
+          .select(`id, caminho_imagem, id_order`)
+          .eq('id_user', userId);
 
         if (arteCampanhasError) {
           setError(arteCampanhasError.message);
