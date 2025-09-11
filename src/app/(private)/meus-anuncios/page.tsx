@@ -17,7 +17,6 @@ interface Order {
   inicio_campanha: string;
   duracao_campanha: number;
   arte_campanha_id: number;
-  id_user: string; // Add id_user to the interface
 }
 
 interface Anuncio {
@@ -51,7 +50,7 @@ const MeusAnuncios = () => {
         // Fetch orders for the current user
         const { data: orders, error: ordersError } = await supabase
           .from("order")
-          .select(`id, nome_campanha, inicio_campanha, duracao_campanha, arte_campanha_id, id_user`)
+          .select(`id, nome_campanha, inicio_campanha, duracao_campanha, arte_campanha_id`)
           .eq("id_user", userId); // Filter by id_user
 
 
@@ -144,3 +143,5 @@ const MeusAnuncios = () => {
     </div>
   );
 }
+
+export default MeusAnuncios;
