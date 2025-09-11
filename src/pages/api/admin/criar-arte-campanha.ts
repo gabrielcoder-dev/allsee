@@ -15,15 +15,15 @@ export default async function handler(
   }
 
   try {
-    const { id_order, caminho_imagem } = req.body;
+    const { id_order, caminho_imagem, id_user } = req.body;
 
-    if (!id_order || !caminho_imagem) {
+    if (!id_order || !caminho_imagem || !id_user) {
       return res.status(400).json({ error: 'Missing required fields' });
     }
 
     const { data: arteCampanha, error } = await supabase
       .from('arte_campanha')
-      .insert([{ id_order, caminho_imagem }])
+      .insert([{ id_order, caminho_imagem, id_user }])
       .select()
       .single();
 
