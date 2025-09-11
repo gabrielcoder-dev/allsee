@@ -1,4 +1,4 @@
-// src/Components/ReplacementAdmin.tsx
+// src/app/(private)/meus-anuncios/page.tsx
 "use client"
 
 import React, { useState, useEffect } from "react";
@@ -15,6 +15,7 @@ interface OrderWithReplacement {
   preco: number;
   inicio_campanha: string;
   duracao_campanha: number;
+  caminho_imagem: string; // URL da imagem da arte da campanha
 }
 
 const ReplacementAdmin = () => {
@@ -29,13 +30,32 @@ const ReplacementAdmin = () => {
       try {
         const { data, error } = await supabase
           .from("order")
-          .select("*, new_arte_campanha")
+          .select(
+            `
+            *,
+            arte_campanha (
+              caminho_imagem
+            )
+          `
+          )
           .eq("replacement_status", "pending");
 
         if (error) {
           setError(error.message);
         } else {
-          setOrdersWithReplacements(data || []);
+          // Adapta os dados para a estrutura esperada
+          const adaptedOrders = data.map((item) => ({
+            id: item.id,
+            nome_campanha: item.nome_campanha,
+            arte_campanha: item.arte_campanha,
+            new_arte_campanha: item.new_arte_campanha,
+            replacement_status: item.replacement_status,
+            preco: item.preco,
+            inicio_campanha: item.inicio_campanha,
+            duracao_campanha: item.duracao_campanha,
+            caminho_imagem: item.arte_campanha?.caminho_imagem || "",
+          }));
+          setOrdersWithReplacements(adaptedOrders);
         }
       } catch (err: any) {
         setError(err.message);
