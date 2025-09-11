@@ -7,7 +7,8 @@ import ImageModal from "./ImageModal";
 
 interface Order {
   id: number;
-  arte_campanha: string | null;
+  caminho_imagem: string | null;
+  order_id: number;
 }
 
 const isVideo = (url: string) => {
@@ -23,11 +24,17 @@ const AproveitionAdmin = () => {
     async function fetchOrders() {
       setLoading(true);
       const { data, error } = await supabase
-        .from("order")
-        .select("id, arte_campanha")
+        .from("arte_campanha")
+        .select("id, caminho_imagem, id_order")
         .order("id", { ascending: false });
+
       if (!error && data) {
-        setOrders(data);
+        const adaptedOrders = data.map((item) => ({
+          id: item.id,
+          caminho_imagem: item.caminho_imagem,
+          order_id: item.id_order,
+        }));
+        setOrders(adaptedOrders);
       }
       setLoading(false);
     }
@@ -57,24 +64,24 @@ const AproveitionAdmin = () => {
             className="flex flex-col md:flex-row md:items-center gap-3 md:gap-4 justify-between border border-gray-300 rounded-xl md:rounded-2xl p-3 md:p-4 bg-white shadow-sm"
           >
             <div className="flex items-center gap-3 md:gap-4 min-w-0 flex-1">
-              {order.arte_campanha ? (
-                order.arte_campanha.startsWith("data:image") || order.arte_campanha.match(/\.(jpg|jpeg|png|gif|bmp|webp)$/i) ? (
+              {order.caminho_imagem ? (
+                order.caminho_imagem.startsWith("data:image") || order.caminho_imagem.match(/\.(jpg|jpeg|png|gif|bmp|webp)$/i) ? (
                   <img
-                    src={order.arte_campanha}
-                    alt={`Arte do pedido ${order.id}`}
+                    src={order.caminho_imagem}
+                    alt={`Arte do pedido ${order.order_id}`}
                     className="w-16 h-16 md:w-24 md:h-24 rounded-lg md:rounded-xl object-cover flex-shrink-0"
                   />
-                ) : isVideo(order.arte_campanha) ? (
+                ) : isVideo(order.caminho_imagem) ? (
                   <video
-                    src={order.arte_campanha}
+                    src={order.caminho_imagem}
                     className="w-16 h-16 md:w-24 md:h-24 rounded-lg md:rounded-xl object-cover flex-shrink-0"
                     controls={false}
                     preload="metadata"
                   />
                 ) : (
                   <Image
-                    src={order.arte_campanha}
-                    alt={`Arte do pedido ${order.id}`}
+                    src={order.caminho_imagem}
+                    alt={`Arte do pedido ${order.order_id}`}
                     width={96}
                     height={96}
                     className="w-16 h-16 md:w-24 md:h-24 rounded-lg md:rounded-xl object-cover flex-shrink-0"
@@ -89,30 +96,30 @@ const AproveitionAdmin = () => {
                 <div className="flex items-center gap-2 md:gap-4">
                   <button
                     className="text-gray-500 hover:text-orange-600 text-sm md:text-base font-medium transition-colors"
-                    onClick={() => order.arte_campanha && handleDownload(order.arte_campanha, order.id)}
+                    onClick={() => order.caminho_imagem && handleDownload(order.caminho_imagem, order.order_id)}
                   >
                     Baixar
                   </button>
                   <button
                     className="text-gray-500 hover:text-orange-600 text-sm md:text-base font-medium transition-colors"
-                    onClick={() => order.arte_campanha && setModalFile({ url: order.arte_campanha, id: order.id })}
+                    onClick={() => order.caminho_imagem && setModalFile({ url: order.caminho_imagem, id: order.order_id })}
                   >
                     Assistir
                   </button>
                 </div>
-                <span className="text-sm md:text-base font-bold text-gray-700">Pedido #{order.id}</span>
+                <span className="text-sm md:text-base font-bold text-gray-700">Pedido #{order.order_id}</span>
               </div>
             </div>
             <div className="flex items-center gap-2 md:gap-3 flex-shrink-0">
               <button
                 className="bg-green-500 hover:bg-green-600 cursor-pointer text-white rounded-lg md:rounded-xl px-3 py-2 font-bold text-xs md:text-sm transition-colors min-w-[70px]"
-                onClick={() => localStorage.setItem(`order_${order.id}`, "aprovado")}
+                onClick={() => localStorage.setItem(`order_${order.order_id}`, "aprovado")}
               >
                 Aprovar
               </button>
               <button
                 className="bg-red-500 hover:bg-red-600 cursor-pointer text-white rounded-lg md:rounded-xl px-3 py-2 font-bold text-xs md:text-sm transition-colors min-w-[70px]"
-                onClick={() => localStorage.setItem(`order_${order.id}`, "rejeitado")}
+                onClick={() => localStorage.setItem(`order_${order.order_id}`, "rejeitado")}
               >
                 Recusar
               </button>
