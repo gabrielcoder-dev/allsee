@@ -158,7 +158,11 @@ const MeusAnuncios = () => {
                       <p className="text-gray-600 text-xs">Início: {anuncio.inicio_campanha}</p> |
                       <p className="text-gray-600 text-xs">Periodo de Duração: <span className="text-orange-600 font-bold">{anuncio.duracao_campanha_semanas} Semanas</span></p>
                     </div>
-                    <p>
+                    <p className={
+                      status === "aprovado" ? "text-green-500"
+                        : status === "rejeitado" ? "text-red-500"
+                          : "text-yellow-500"
+                    }>
                       {status === "aprovado" ? (
                         "Arte Aceita"
                       ) : status === "rejeitado" ? (
