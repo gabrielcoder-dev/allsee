@@ -28,6 +28,7 @@ interface Anuncio {
   caminho_imagem: string;
   duracao_campanha_semanas: number;
   preco: number;
+  order_id: number;
 }
 
 const MeusAnuncios = () => {
@@ -98,6 +99,7 @@ const MeusAnuncios = () => {
 
           return {
             id: arteCampanha.id,
+            order_id: orders[0].id,
             nome_campanha: orders[0].nome_campanha,
             inicio_campanha: orders[0].inicio_campanha,
             fim_campanha: fim_campanha.toLocaleDateString(),
@@ -138,7 +140,7 @@ const MeusAnuncios = () => {
       ) : (
         <div className="flex flex-col gap-4 p-4 ">
           {anuncios.map((anuncio) => {
-            const status = localStorage.getItem(`order_${anuncio.id}`) || "Arte em Análise...";
+            const status = localStorage.getItem(`order_${anuncio.order_id}`) || "Arte em Análise...";
 
             return (
               <div key={anuncio.id} className="flex p-4 items-center justify-between w-full rounded-2xl border border-gray-200">
