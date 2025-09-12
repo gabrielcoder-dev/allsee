@@ -23,7 +23,6 @@ interface Anuncio {
   id: number;
   nome_campanha: string;
   inicio_campanha: string;
-  fim_campanha: string;
   caminho_imagem: string;
 }
 
@@ -131,21 +130,31 @@ const MeusAnuncios = () => {
       ) : error ? (
         <p className="text-red-500">Erro: {error}</p>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="flex flex-col gap-4 p-2">
           {anuncios.map((anuncio) => (
-            <div key={anuncio.id} className="bg-white rounded-lg shadow-md overflow-hidden">
+            <div key={anuncio.id} className="flex items-center justify-between w-full">
               <Image
                 src={anuncio.caminho_imagem}
                 alt={anuncio.nome_campanha}
                 width={600}
                 height={400}
-                className="w-full h-48 object-cover"
+                className="w-28 h-28 object-cover"
               />
               <div className="p-4">
                 <h3 className="text-lg font-semibold text-gray-800">{anuncio.nome_campanha}</h3>
-                <p className="text-gray-600">Início: {anuncio.inicio_campanha}</p>
-                <p className="text-gray-600">Fim: {anuncio.fim_campanha}</p>
+                <div className="flex items-center gap-2">
+                <p className="text-gray-600">Início: {anuncio.inicio_campanha}</p> |
+                <p className="text-gray-600">Periodo de Duração: </p>
+                </div>
+                <p>Arte em Analise...</p>
+                <div className="flex items-center gap-2">
+                <button className="w-full p-2">Ver detalhes da campanha</button>
+                <button className="w-full p-2 border border-blue-500 text-blue-500">Trocar arte</button>
+                </div>
+                
               </div>
+
+              <h2 className="font-bold">R$ preço</h2>
             </div>
           ))}
         </div>
