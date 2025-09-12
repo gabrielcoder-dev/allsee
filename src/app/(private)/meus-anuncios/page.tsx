@@ -3,7 +3,6 @@
 
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
-import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/router";
 
