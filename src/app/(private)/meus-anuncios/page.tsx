@@ -35,6 +35,8 @@ const MeusAnuncios = () => {
   const [anuncios, setAnuncios] = useState<Anuncio[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedAnuncioId, setSelectedAnuncioId] = useState<number | null>(null);
 
   useEffect(() => {
     async function fetchAnuncios() {
@@ -173,7 +175,10 @@ const MeusAnuncios = () => {
                     </p>
                     <div className="flex items-center gap-2">
                       <button className="w-60 text-xs rounded-sm p-2 whitespace-nowrap border border-gray-300">Ver detalhes da campanha</button>
-                      <button className="text-xs rounded-sm w-24 p-2 border border-blue-500 text-blue-500">Trocar arte</button>
+                      <button className="text-xs rounded-sm w-24 p-2 border border-blue-500 text-blue-500" onClick={() => {
+                        setIsModalOpen(true);
+                        setSelectedAnuncioId(anuncio.id);
+                      }}>Trocar arte</button>
                     </div>
                   </div>
                 </div>
@@ -181,6 +186,22 @@ const MeusAnuncios = () => {
               </div>
             );
           })}
+        </div>
+      )}
+      {isModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+          <div className="bg-white p-4 rounded-lg">
+            <h2 className="text-lg font-semibold mb-2">Trocar Arte</h2>
+            <input type="file" />
+            <div className="flex justify-end gap-2 mt-4">
+              <button className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded" onClick={() => setIsModalOpen(false)}>
+                Cancelar
+              </button>
+              <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                Trocar
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
