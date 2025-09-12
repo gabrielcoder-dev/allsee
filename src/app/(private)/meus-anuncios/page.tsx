@@ -156,8 +156,8 @@ const MeusAnuncios = () => {
                   </div>
                   <p>Arte em Analise...</p>
                   <div className="flex items-center gap-2">
-                    <button className="w-full text-xs rounded-2xl p-2 whitespace-nowrap border border-gray-300">Ver detalhes da campanha</button>
-                    <button className="w-full text-xs rounded-2xl p-2 border border-blue-500 text-blue-500">Trocar arte</button>
+                    <button className="w-full text-xs rounded-sm p-2 whitespace-nowrap border border-gray-300">Ver detalhes da campanha</button>
+                    <button className="text-xs rounded-sm w-16 p-2 border border-blue-500 text-blue-500">Trocar arte</button>
                   </div>
                 </div>
 
