@@ -148,7 +148,7 @@ const MeusAnuncios = () => {
                   height={400}
                   className="w-28 h-28 object-cover rounded-md"
                 />
-                <div className="w-1/2">
+                <div className="w-1/2 flex flex-col gap-2">
                   <h3 className="text-lg font-semibold text-gray-800">{anuncio.nome_campanha}</h3>
                   <div className="flex items-center gap-2">
                     <p className="text-gray-600 text-xs">Início: {anuncio.inicio_campanha}</p> |
