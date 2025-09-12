@@ -115,7 +115,7 @@ const MeusAnuncios = () => {
   }, []);
 
   return (
-    <div className="w-full mx-16 h-full p-3 md:p-6">
+    <div className="w-full px-16 h-full p-3 md:p-6">
       <Link href="/(private)/dashboard" className="flex items-center gap-2 mb-4 text-gray-600 hover:text-orange-600">
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor" className="w-6 h-6">
           <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
@@ -130,7 +130,7 @@ const MeusAnuncios = () => {
       ) : error ? (
         <p className="text-red-500">Erro: {error}</p>
       ) : (
-        <div className="flex flex-col gap-4 p-2">
+        <div className="flex flex-col gap-4 p-2 shadow-2xl">
           {anuncios.map((anuncio) => (
             <div key={anuncio.id} className="flex items-center justify-between w-full">
               <Image
