@@ -154,6 +154,7 @@ const MeusAnuncios = () => {
             { caminho_imagem: base64String, id_campanha: anuncio.order_id }
           ]);
 
+      
         if (insertError) {
           console.error("Erro ao inserir o caminho da imagem:", insertError);
           setError(insertError.message);
@@ -219,8 +220,7 @@ const MeusAnuncios = () => {
                   <div className="w-1/2 flex flex-col gap-1">
                     <h3 className="text-lg font-semibold text-gray-800">{anuncio.nome_campanha}</h3>
                     <div className="flex items-center gap-2">
-                      <p className="text-gray-600 text-xs">Início: {anuncio.inicio_campanha}</p> |
-                      <p className="text-gray-600 text-xs">Periodo de Duração: <span className="text-orange-600 font-bold">{anuncio.duracao_campanha_semanas} Semanas</span></p>
+                      <p className="text-gray-600 text-xs">Início: {anuncio.inicio_campanha}</p> |\n                      <p className="text-gray-600 text-xs\">Periodo de Duração: <span className="text-orange-600 font-bold">{anuncio.duracao_campanha_semanas} Semanas</span></p>
                     </div>
                     <p className={
                       status === "aprovado" ? "text-green-500"
@@ -275,6 +275,7 @@ const MeusAnuncios = () => {
           </div>
         </div>
       )}
+      <ToastContainer />
     </div>
   );
 };
