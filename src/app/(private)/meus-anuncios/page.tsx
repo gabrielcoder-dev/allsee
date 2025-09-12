@@ -102,7 +102,7 @@ const MeusAnuncios = () => {
             inicio_campanha: orders[0].inicio_campanha,
             fim_campanha: fim_campanha.toLocaleDateString(),
             caminho_imagem: arteCampanha?.caminho_imagem || "",
-            duracao_campanha_semanas: Math.floor(orders[0].duracao_campanha / 7),
+            duracao_campanha_semanas: Math.max(1, Math.floor(orders[0].duracao_campanha / 7)),
             preco: orders[0].preco
           };
         });
