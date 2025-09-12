@@ -130,7 +130,7 @@ const MeusAnuncios = () => {
       ) : error ? (
         <p className="text-red-500">Erro: {error}</p>
       ) : (
-        <div className="flex flex-col gap-4 p-2 shadow-2xl">
+        <div className="flex flex-col gap-4 p-4 rounded-2xl border border-gray-200 shadow-2xl">
           {anuncios.map((anuncio) => (
             <div key={anuncio.id} className="flex items-center justify-between w-full">
 
