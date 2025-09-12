@@ -17,13 +17,17 @@ interface Order {
   nome_campanha: string;
   inicio_campanha: string;
   duracao_campanha: number;
+  preco: number;
 }
 
 interface Anuncio {
   id: number;
   nome_campanha: string;
   inicio_campanha: string;
+  fim_campanha: string;
   caminho_imagem: string;
+  duracao_campanha_semanas: number;
+  preco: number;
 }
 
 const MeusAnuncios = () => {
@@ -73,7 +77,7 @@ const MeusAnuncios = () => {
           // Fetch orders para pegar o nome, inicio e fim da campanha
           const { data: orders, error: ordersError } = await supabase
             .from("order")
-            .select(`id, nome_campanha, inicio_campanha, duracao_campanha`)
+            .select(`id, nome_campanha, inicio_campanha, duracao_campanha, preco`)
             .eq("id", arteCampanha.id_order) // Busca order pelo id da arteCampanha
 
           if (ordersError) {
@@ -98,6 +102,8 @@ const MeusAnuncios = () => {
             inicio_campanha: orders[0].inicio_campanha,
             fim_campanha: fim_campanha.toLocaleDateString(),
             caminho_imagem: arteCampanha?.caminho_imagem || "",
+            duracao_campanha_semanas: Math.floor(orders[0].duracao_campanha / 7),
+            preco: orders[0].preco
           };
         });
 
@@ -140,17 +146,17 @@ const MeusAnuncios = () => {
                   alt={anuncio.nome_campanha}
                   width={600}
                   height={400}
-                  className="w-28 h-28 object-cover"
+                  className="w-28 h-28 object-cover rounded-md"
                 />
-                <div>
+                <div className="w-1/2">
                   <h3 className="text-lg font-semibold text-gray-800">{anuncio.nome_campanha}</h3>
                   <div className="flex items-center gap-2">
                     <p className="text-gray-600">Início: {anuncio.inicio_campanha}</p> |
-                    <p className="text-gray-600">Periodo de Duração: </p>
+                    <p className="text-gray-600">Periodo de Duração: {anuncio.duracao_campanha_semanas} Semanas</p>
                   </div>
                   <p>Arte em Analise...</p>
                   <div className="flex items-center gap-2">
-                    <button className="w-full p-2">Ver detalhes da campanha</button>
+                    <button className="w-full p-2 whitespace-nowrap border border-gray-300">Ver detalhes da campanha</button>
                     <button className="w-full p-2 border border-blue-500 text-blue-500">Trocar arte</button>
                   </div>
                 </div>
@@ -158,7 +164,7 @@ const MeusAnuncios = () => {
 
               </div>
 
-              <h2 className="font-bold">R$ preço</h2>
+              <h2 className="font-bold">R$ {anuncio.preco}</h2>
             </div>
           ))}
         </div>
