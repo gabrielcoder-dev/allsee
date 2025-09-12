@@ -5,6 +5,7 @@ import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
+import { useRouter } from "next/router";
 
 interface ArteCampanha {
   id: number;
@@ -34,6 +35,8 @@ const MeusAnuncios = () => {
   const [anuncios, setAnuncios] = useState<Anuncio[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
+
 
   useEffect(() => {
     async function fetchAnuncios() {
@@ -122,12 +125,12 @@ const MeusAnuncios = () => {
 
   return (
     <div className="w-full h-full p-3 md:px-32">
-      <Link href="/(private)/dashboard" className="flex items-center gap-2 mb-4 text-gray-600 hover:text-orange-600">
+      <p onClick={() => router.push('/results')} className="flex items-center gap-2 mb-4 text-gray-600 hover:text-orange-600">
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor" className="w-6 h-6">
           <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
         </svg>
-        Meus Anuncios
-      </Link>
+        Voltar
+      </p>
 
       <h2 className="text-2xl md:text-3xl font-bold text-orange-600 mb-4 md:mb-6">Meus Anúncios</h2>
 
