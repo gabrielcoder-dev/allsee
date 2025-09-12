@@ -37,6 +37,7 @@ const MeusAnuncios = () => {
   const [error, setError] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedAnuncioId, setSelectedAnuncioId] = useState<number | null>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   useEffect(() => {
     async function fetchAnuncios() {
@@ -124,6 +125,56 @@ const MeusAnuncios = () => {
     fetchAnuncios();
   }, []);
 
+  const handleTrocarArte = async () => {
+    if (!selectedFile || !selectedAnuncioId) {
+      console.error("Nenhum arquivo selecionado ou ID do anúncio não definido.");
+      return;
+    }
+
+    try {
+      // Encontrar o order_id correspondente ao selectedAnuncioId (arte_campanha.id)
+      const anuncio = anuncios.find(anuncio => anuncio.id === selectedAnuncioId);
+      if (!anuncio) {
+        console.error("Anúncio não encontrado.");
+        return;
+      }
+
+      // Converter o arquivo para base64
+      const reader = new FileReader();
+      reader.readAsDataURL(selectedFile);
+      reader.onload = async () => {
+        const base64String = reader.result as string;
+
+        // Enviar o caminho da imagem e o ID do arte_campanha para a tabela arte_troca_campanha
+        const { error: insertError } = await supabase
+          .from('arte_troca_campanha')
+          .insert([
+            { caminho_imagem: base64String, id_campanha: anuncio.order_id }
+          ]);
+
+        if (insertError) {
+          console.error("Erro ao inserir o caminho da imagem:", insertError);
+          setError(insertError.message);
+          return;
+        }
+
+        console.log("Arquivo enviado e caminho da imagem inserido com sucesso!");
+        setIsModalOpen(false);
+      };
+
+      reader.onerror = (error) => {
+        console.error("Erro ao ler o arquivo:", error);
+        setError("Erro ao ler o arquivo.");
+      };
+
+
+    } catch (err: any) {
+      console.error("Erro ao trocar a arte:", err);
+      setError(err.message);
+    }
+  };
+
+
   return (
     <div className="w-full h-full p-3 md:px-32">
       <Link href="/results" className="flex text-sm items-center gap-2 mb-4 text-gray-600 hover:text-orange-600">
@@ -157,8 +208,7 @@ const MeusAnuncios = () => {
                   <div className="w-1/2 flex flex-col gap-1">
                     <h3 className="text-lg font-semibold text-gray-800">{anuncio.nome_campanha}</h3>
                     <div className="flex items-center gap-2">
-                      <p className="text-gray-600 text-xs">Início: {anuncio.inicio_campanha}</p> |
-                      <p className="text-gray-600 text-xs">Periodo de Duração: <span className="text-orange-600 font-bold">{anuncio.duracao_campanha_semanas} Semanas</span></p>
+                      <p className="text-gray-600 text-xs">Início: {anuncio.inicio_campanha}</p> |\n                      <p className="text-gray-600 text-xs\">Periodo de Duração: <span className="text-orange-600 font-bold\">{anuncio.duracao_campanha_semanas} Semanas</span></p>
                     </div>
                     <p className={
                       status === "aprovado" ? "text-green-500"
@@ -190,19 +240,23 @@ const MeusAnuncios = () => {
       )}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 bg-opacity-50" onClick={() => setIsModalOpen(false)}>
-          <div className="bg-white p-4 rounded-lg">
+          <div className="bg-white p-4 rounded-lg" onClick={(e) => e.stopPropagation()}>
             <h2 className="text-lg font-semibold mb-2">Trocar Arte</h2>
             <input
               type="file"
               accept="image/*,video/*"
               id="upload-art"
               className="border border-gray-200 p-2"
+              onChange={(e) => {
+                const file = e.target.files && e.target.files[0];
+                setSelectedFile(file || null);
+              }}
             />
             <div className="flex justify-end gap-2 mt-4">
               <button className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded" onClick={() => setIsModalOpen(false)}>
                 Cancelar
               </button>
-              <button className="bg-orange-600 hover:bg-orange-500 text-white font-bold py-2 px-4 rounded">
+              <button className="bg-orange-600 hover:bg-orange-500 text-white font-bold py-2 px-4 rounded" onClick={handleTrocarArte}>
                 Trocar
               </button>
             </div>
