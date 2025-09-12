@@ -133,25 +133,26 @@ const MeusAnuncios = () => {
         <div className="flex flex-col gap-4 p-2 shadow-2xl">
           {anuncios.map((anuncio) => (
             <div key={anuncio.id} className="flex items-center justify-between w-full">
-              <Image
-                src={anuncio.caminho_imagem}
-                alt={anuncio.nome_campanha}
-                width={600}
-                height={400}
-                className="w-28 h-28 object-cover"
-              />
+
               <div className="p-4">
+                <Image
+                  src={anuncio.caminho_imagem}
+                  alt={anuncio.nome_campanha}
+                  width={600}
+                  height={400}
+                  className="w-28 h-28 object-cover"
+                />
                 <h3 className="text-lg font-semibold text-gray-800">{anuncio.nome_campanha}</h3>
                 <div className="flex items-center gap-2">
-                <p className="text-gray-600">Início: {anuncio.inicio_campanha}</p> |
-                <p className="text-gray-600">Periodo de Duração: </p>
+                  <p className="text-gray-600">Início: {anuncio.inicio_campanha}</p> |
+                  <p className="text-gray-600">Periodo de Duração: </p>
                 </div>
                 <p>Arte em Analise...</p>
                 <div className="flex items-center gap-2">
-                <button className="w-full p-2">Ver detalhes da campanha</button>
-                <button className="w-full p-2 border border-blue-500 text-blue-500">Trocar arte</button>
+                  <button className="w-full p-2">Ver detalhes da campanha</button>
+                  <button className="w-full p-2 border border-blue-500 text-blue-500">Trocar arte</button>
                 </div>
-                
+
               </div>
 
               <h2 className="font-bold">R$ preço</h2>
