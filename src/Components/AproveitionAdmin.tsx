@@ -20,6 +20,10 @@ const AproveitionAdmin = () => {
   const [loading, setLoading] = useState(true);
   const [modalFile, setModalFile] = useState<{ url: string; id: number } | null>(null);
 
+  const getOrderStatus = (orderId: number) => {
+    return localStorage.getItem(`order_${orderId}`) || "pendente";
+  };
+
   useEffect(() => {
     async function fetchOrders() {
       setLoading(true);
@@ -113,15 +117,29 @@ const AproveitionAdmin = () => {
             <div className="flex items-center gap-2 md:gap-3 flex-shrink-0">
               <button
                 className="bg-green-500 hover:bg-green-600 cursor-pointer text-white rounded-lg md:rounded-xl px-3 py-2 font-bold text-xs md:text-sm transition-colors min-w-[70px]"
-                onClick={() => localStorage.setItem(`order_${order.order_id}`, "aprovado")}
+                onClick={() => {
+                  const currentStatus = getOrderStatus(order.order_id);
+                  if (currentStatus === "aprovado") {
+                    localStorage.removeItem(`order_${order.order_id}`);
+                  } else {
+                    localStorage.setItem(`order_${order.order_id}`, "aprovado");
+                  }
+                }}
               >
-                Aprovar
+                {getOrderStatus(order.order_id) === "aprovado" ? "Remover Aprovação" : "Aprovar"}
               </button>
               <button
                 className="bg-red-500 hover:bg-red-600 cursor-pointer text-white rounded-lg md:rounded-xl px-3 py-2 font-bold text-xs md:text-sm transition-colors min-w-[70px]"
-                onClick={() => localStorage.setItem(`order_${order.order_id}`, "rejeitado")}
+                onClick={() => {
+                  const currentStatus = getOrderStatus(order.order_id);
+                  if (currentStatus === "rejeitado") {
+                    localStorage.removeItem(`order_${order.order_id}`);
+                  } else {
+                    localStorage.setItem(`order_${order.order_id}`, "rejeitado");
+                  }
+                }}
               >
-                Recusar
+                {getOrderStatus(order.order_id) === "rejeitado" ? "Remover Rejeição" : "Recusar"}
               </button>
             </div>
           </div>

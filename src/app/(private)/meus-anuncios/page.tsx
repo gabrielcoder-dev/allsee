@@ -137,36 +137,44 @@ const MeusAnuncios = () => {
         <p className="text-red-500">Erro: {error}</p>
       ) : (
         <div className="flex flex-col gap-4 p-4 ">
-          {anuncios.map((anuncio) => (
-            <div key={anuncio.id} className="flex p-4 items-center justify-between w-full rounded-2xl border border-gray-200">
+          {anuncios.map((anuncio) => {
+            const status = localStorage.getItem(`order_${anuncio.id}`) || "Arte em Análise...";
 
-              <div className="flex items-center gap-4 w-full">
-                <Image
-                  src={anuncio.caminho_imagem}
-                  alt={anuncio.nome_campanha}
-                  width={600}
-                  height={400}
-                  className="w-28 h-28 object-cover rounded-md"
-                />
-                <div className="w-1/2 flex flex-col gap-1">
-                  <h3 className="text-lg font-semibold text-gray-800">{anuncio.nome_campanha}</h3>
-                  <div className="flex items-center gap-2">
-                    <p className="text-gray-600 text-xs">Início: {anuncio.inicio_campanha}</p> |
-                    <p className="text-gray-600 text-xs">Periodo de Duração: <span className="text-orange-600 font-bold">{anuncio.duracao_campanha_semanas} Semanas</span></p>
-                  </div>
-                  <p>Arte em Analise...</p>
-                  <div className="flex items-center gap-2">
-                    <button className="w-60 text-xs rounded-sm p-2 whitespace-nowrap border border-gray-300">Ver detalhes da campanha</button>
-                    <button className="text-xs rounded-sm w-24 p-2 border border-blue-500 text-blue-500">Trocar arte</button>
+            return (
+              <div key={anuncio.id} className="flex p-4 items-center justify-between w-full rounded-2xl border border-gray-200">
+                <div className="flex items-center gap-4 w-full">
+                  <Image
+                    src={anuncio.caminho_imagem}
+                    alt={anuncio.nome_campanha}
+                    width={600}
+                    height={400}
+                    className="w-28 h-28 object-cover rounded-md"
+                  />
+                  <div className="w-1/2 flex flex-col gap-1">
+                    <h3 className="text-lg font-semibold text-gray-800">{anuncio.nome_campanha}</h3>
+                    <div className="flex items-center gap-2">
+                      <p className="text-gray-600 text-xs">Início: {anuncio.inicio_campanha}</p> |
+                      <p className="text-gray-600 text-xs">Periodo de Duração: <span className="text-orange-600 font-bold">{anuncio.duracao_campanha_semanas} Semanas</span></p>
+                    </div>
+                    <p>
+                      {status === "aprovado" ? (
+                        "Arte Aceita"
+                      ) : status === "rejeitado" ? (
+                        "Arte Não Aceita"
+                      ) : (
+                        "Arte em Análise..."
+                      )}
+                    </p>
+                    <div className="flex items-center gap-2">
+                      <button className="w-60 text-xs rounded-sm p-2 whitespace-nowrap border border-gray-300">Ver detalhes da campanha</button>
+                      <button className="text-xs rounded-sm w-24 p-2 border border-blue-500 text-blue-500">Trocar arte</button>
+                    </div>
                   </div>
                 </div>
-
-
+                <h2 className="font-bold">R$ {anuncio.preco}</h2>
               </div>
-
-              <h2 className="font-bold">R$ {anuncio.preco}</h2>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>
