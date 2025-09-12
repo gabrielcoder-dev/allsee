@@ -196,7 +196,7 @@ const MeusAnuncios = () => {
               type="file"
               accept="image/*,video/*"
               id="upload-art"
-              className="hidden"
+              className="border border-gray-200"
             />
             <div className="flex justify-end gap-2 mt-4">
               <button className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded" onClick={() => setIsModalOpen(false)}>
