@@ -13,28 +13,23 @@ import Image from "next/image";
 const Testimonials = () => {
   return (
     <div className="carousel-container my-16">
-      <div className="carousel-wrapper flex items-center animate-slide gap-[200px]">
-        <Image alt='allRede' src={allRede} className="carousel-image w-40" />
-        <Image alt='atacadao' src={atacadaoImg} className="carousel-image w-40" />
-        <Image alt='boraAli' src={boraAli} className="carousel-image rounded-2xl w-20 h-20" />
-        <Image alt='oboticario' src={oboticarioImg} className="carousel-image w-40" />
-        <Image alt='sicoob' src={sicoobImg} className="carousel-image w-40" />
-        <Image alt='transtermat' src={transtermatImg} className="carousel-image w-40" />
-        <Image alt='ttImg' src={ttImg} className="carousel-image rounded-2xl w-40" />
-        <Image alt='allRede' src={allRede} className="carousel-image w-40" />
-        <Image alt='atacadao' src={atacadaoImg} className="carousel-image w-40" />
-        <Image alt='boraAli' src={boraAli} className="carousel-image rounded-2xl w-20 h-20" />
-        <Image alt='oboticario' src={oboticarioImg} className="carousel-image w-40" />
-        <Image alt='sicoob' src={sicoobImg} className="carousel-image w-40" />
-        <Image alt='transtermat' src={transtermatImg} className="carousel-image w-40" />
-        <Image alt='ttImg' src={ttImg} className="carousel-image rounded-2xl w-40" />
-        <Image alt='allRede' src={allRede} className="carousel-image w-40" />
-        <Image alt='atacadao' src={atacadaoImg} className="carousel-image w-40" />
-        <Image alt='boraAli' src={boraAli} className="carousel-image rounded-2xl w-20 h-20" />
-        <Image alt='oboticario' src={oboticarioImg} className="carousel-image w-40" />
-        <Image alt='sicoob' src={sicoobImg} className="carousel-image w-40" />
-        <Image alt='transtermat' src={transtermatImg} className="carousel-image w-40" />
-        <Image alt='ttImg' src={ttImg} className="carousel-image rounded-2xl w-40" />
+      <div className="carousel-wrapper flex items-center">
+        <div className="carousel-slide flex items-center gap-[150px]">
+          <Image alt='allRede' src={allRede} className="carousel-image w-40" />
+          <Image alt='atacadao' src={atacadaoImg} className="carousel-image w-40" />
+          <Image alt='boraAli' src={boraAli} className="carousel-image rounded-2xl w-20 h-20" />
+          <Image alt='oboticario' src={oboticarioImg} className="carousel-image w-40" />
+          <Image alt='sicoob' src={sicoobImg} className="carousel-image w-40" />
+          <Image alt='transtermat' src={transtermatImg} className="carousel-image w-40" />
+          <Image alt='ttImg' src={ttImg} className="carousel-image rounded-2xl w-40" />
+          <Image alt='allRede' src={allRede} className="carousel-image w-40" />
+          <Image alt='atacadao' src={atacadaoImg} className="carousel-image w-40" />
+          <Image alt='boraAli' src={boraAli} className="carousel-image rounded-2xl w-20 h-20" />
+          <Image alt='oboticario' src={oboticarioImg} className="carousel-image w-40" />
+          <Image alt='sicoob' src={sicoobImg} className="carousel-image w-40" />
+          <Image alt='transtermat' src={transtermatImg} className="carousel-image w-40" />
+          <Image alt='ttImg' src={ttImg} className="carousel-image rounded-2xl w-40" />
+        </div>
       </div>
       <style jsx>{`
         .carousel-container {
@@ -44,11 +39,19 @@ const Testimonials = () => {
 
         .carousel-wrapper {
           display: flex;
-          animation: slide 20s linear infinite;
+          width: 200%; /* Double the width */
+          animation: slide 30s linear infinite; /* Increased animation duration */
+        }
+
+        .carousel-slide {
+          display: flex;
+          width: auto; /* Each slide takes 50% */
+          gap: 100px; 
         }
 
         .carousel-image {
-          flex-shrink: 0; /* Prevent images from shrinking */
+          flex-shrink: 0;
+          margin: 0 120px;
         }
 
         @keyframes slide {
@@ -56,7 +59,7 @@ const Testimonials = () => {
             transform: translateX(0);
           }
           100% {
-            transform: translateX(-100%);
+            transform: translateX(-50%); /* Move by 50% */
           }
         }
       `}</style>
