@@ -28,7 +28,6 @@ interface Anuncio {
   caminho_imagem: string;
   duracao_campanha_semanas: number;
   preco: number;
-  duracao_campanha: number;
 }
 
 const MeusAnuncios = () => {
@@ -104,8 +103,7 @@ const MeusAnuncios = () => {
             fim_campanha: fim_campanha.toLocaleDateString(),
             caminho_imagem: arteCampanha?.caminho_imagem || "",
             duracao_campanha_semanas: Math.max(1, Math.floor(orders[0].duracao_campanha / 7)),
-            preco: orders[0].preco,
-            duracao_campanha: orders[0].duracao_campanha
+            preco: orders[0].preco
           };
         });
 
