@@ -1,205 +1,193 @@
 // src/Components/ReplacementAdmin.tsx
 "use client"
 
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import Image from "next/image";
 import ImageAprove from "@/assets/restaurante-2.jpg"; // Altere para sua imagem padrão
 import { supabase } from "@/lib/supabase";
 
-interface OrderWithReplacement {
+interface Order {
   id: number;
-  nome_campanha: string;
-  arte_campanha: string;
-  new_arte_campanha: string | null;
-  replacement_status: 'pending' | 'approved' | 'rejected' | null;
-  preco: number;
-  inicio_campanha: string;
-  duracao_campanha: number;
+  caminho_imagem: string | null;
+  order_id: number;
 }
 
+const isVideo = (url: string) => {
+  return url.match(/\.(mp4|webm|ogg)$/i) || url.startsWith("data:video");
+};
+
 const ReplacementAdmin = () => {
-  const [ordersWithReplacements, setOrdersWithReplacements] = useState<OrderWithReplacement[]>([]);
+  const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [modalFile, setModalFile] = useState<{ url: string; id: number } | null>(null);
+
+  const getOrderStatus = async (orderId: number): Promise<string> => {
+    const { data, error } = await supabase
+      .from('arte_troca_campanha')
+      .select('status')
+      .eq('id', orderId)
+      .single();
+
+    if (error) {
+      console.error('Error fetching order status:', error);
+      return 'pendente';
+    }
+
+    return data ? data.status : 'pendente';
+  };
+
 
   useEffect(() => {
-    async function fetchOrdersWithReplacements() {
+    async function fetchOrders() {
       setLoading(true);
-      setError(null);
-      try {
-        const { data, error } = await supabase
-          .from("order")
-          .select("*")
-          .eq("replacement_status", "pending");
+      const { data, error } = await supabase
+        .from("arte_troca_campanha")
+        .select("id, caminho_imagem, id_campanha")
+        .order("id", { ascending: false });
 
-        if (error) {
-          setError(error.message);
-        } else {
-          setOrdersWithReplacements(data || []);
-        }
-      } catch (err: any) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
+      if (!error && data) {
+        const adaptedOrders = data.map((item) => ({
+          id: item.id,
+          caminho_imagem: item.caminho_imagem,
+          order_id: item.id_campanha,
+        }));
+        setOrders(adaptedOrders);
       }
+      setLoading(false);
     }
-
-    fetchOrdersWithReplacements();
+    fetchOrders();
   }, []);
 
-  const handleAccept = async (order: OrderWithReplacement) => {
-    try {
-      setLoading(true);
-      setError(null);
-
-      const { error: updateError } = await supabase
-        .from("order")
-        .update({
-          arte_campanha: order.new_arte_campanha,
-          new_arte_campanha: null,
-          replacement_status: "approved"
-        })
-        .eq("id", order.id);
-
-      if (updateError) {
-        throw new Error(`Erro ao atualizar o pedido: ${updateError.message}`);
-      }
-
-      setOrdersWithReplacements(prevOrders =>
-        prevOrders.filter(o => o.id !== order.id)
-      );
-
-    } catch (err: any) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
+  const handleDownload = (url: string, id: number) => {
+    // Cria um link temporário para download
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `arquivo-pedido-${id}`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
   };
 
-  const handleReject = async (order: OrderWithReplacement) => {
-    try {
-      setLoading(true);
-      setError(null);
-
-      const { error: updateError } = await supabase
-        .from("order")
-        .update({
-          new_arte_campanha: null,
-          replacement_status: "rejected"
-        })
-        .eq("id", order.id);
-
-      if (updateError) {
-        throw new Error(`Erro ao atualizar o pedido: ${updateError.message}`);
-      }
-
-      setOrdersWithReplacements(prevOrders =>
-        prevOrders.filter(o => o.id !== order.id)
-      );
-
-    } catch (err: any) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
+  if (loading) return <div className="p-4">Carregando pedidos...</div>;
+  if (!orders.length) return <div className="p-4">Nenhum pedido encontrado.</div>;
 
   return (
-    <div className="w-full h-full p-3 md:p-6">
-      <h2 className="text-2xl md:text-3xl font-bold text-orange-600 mb-4 md:mb-6">Solicitações de Substituição</h2>
-
-      {loading && <p>Carregando solicitações...</p>}
-      {error && <p className="text-red-500">Erro: {error}</p>}
-
-      <div className="space-y-4 md:space-y-6">
-        {ordersWithReplacements.map((order) => (
+    <div className="w-full h-full p-3 md:p-6 overflow-auto">
+      <h2 className="text-2xl md:text-3xl font-bold text-orange-600 mb-4 md:mb-6">Aprovação de Pedidos</h2>
+      <div className="space-y-3 md:space-y-4">
+        {orders.map((order) => (
           <div
             key={order.id}
-            className="flex flex-col md:flex-row md:items-center gap-4 md:gap-6 justify-between border border-gray-300 rounded-xl md:rounded-2xl p-4 md:p-6 bg-white shadow-sm"
+            className="flex flex-col md:flex-row md:items-center gap-3 md:gap-4 justify-between border border-gray-300 rounded-xl md:rounded-2xl p-3 md:p-4 bg-white shadow-sm"
           >
             <div className="flex items-center gap-3 md:gap-4 min-w-0 flex-1">
-              <div className="flex flex-col gap-2">
-                {/* Current Art */}
-                <div>
-                  <p className="text-gray-500">Arte Atual:</p>
+              {order.caminho_imagem ? (
+                order.caminho_imagem.startsWith("data:image") || order.caminho_imagem.match(/\.(jpg|jpeg|png|gif|bmp|webp)$/i) ? (
+                  <img
+                    src={order.caminho_imagem}
+                    alt={`Arte do pedido ${order.order_id}`}
+                    className="w-16 h-16 md:w-24 md:h-24 rounded-lg md:rounded-xl object-cover flex-shrink-0"
+                  />
+                ) : isVideo(order.caminho_imagem) ? (
+                  <video
+                    src={order.caminho_imagem}
+                    className="w-16 h-16 md:w-24 md:h-24 rounded-lg md:rounded-xl object-cover flex-shrink-0"
+                    controls={false}
+                    preload="metadata"
+                  />
+                ) : (
                   <Image
-                    src={order.arte_campanha || ImageAprove}
-                    alt={`Current art for ${order.nome_campanha}`}
+                    src={order.caminho_imagem}
+                    alt={`Arte do pedido ${order.order_id}`}
                     width={96}
                     height={96}
                     className="w-16 h-16 md:w-24 md:h-24 rounded-lg md:rounded-xl object-cover flex-shrink-0"
                   />
+                )
+              ) : (
+                <div className="w-16 h-16 md:w-24 md:h-24 bg-gray-200 rounded-lg md:rounded-xl flex items-center justify-center text-gray-400 flex-shrink-0">
+                  <span className="text-xs md:text-sm">Sem imagem</span>
                 </div>
-
-                {/* Proposed New Art */}
-                {order.new_arte_campanha && (
-                  <div>
-                    <p className="text-gray-500">Nova Arte Proposta:</p>
-                    <Image
-                      src={order.new_arte_campanha}
-                      alt={`Proposed new art for ${order.nome_campanha}`}
-                      width={96}
-                      height={96}
-                      className="w-16 h-16 md:w-24 md:h-24 rounded-lg md:rounded-xl object-cover flex-shrink-0"
-                    />
-                  </div>
-                )}
-              </div>
-
+              )}
               <div className="flex flex-col md:flex-row items-start md:items-center gap-2 md:gap-4 min-w-0 flex-1">
                 <div className="flex items-center gap-2 md:gap-4">
-                <a
-                    href={order.new_arte_campanha ?? undefined}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                  <button
                     className="text-gray-500 hover:text-orange-600 text-sm md:text-base font-medium transition-colors"
+                    onClick={() => order.caminho_imagem && handleDownload(order.caminho_imagem, order.order_id)}
                   >
-                    Baixar Nova Arte
-                  </a>
-                  <a
-                    href={order.arte_campanha ?? undefined}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                    Baixar
+                  </button>
+                  <button
                     className="text-gray-500 hover:text-orange-600 text-sm md:text-base font-medium transition-colors"
+                    onClick={() => order.caminho_imagem && setModalFile({ url: order.caminho_imagem, id: order.order_id })}
                   >
-                    Baixar Arte Atual
-                  </a>
-                  <button className="text-gray-500 hover:text-orange-600 text-sm md:text-base font-medium transition-colors">
                     Assistir
                   </button>
                 </div>
-                <div className="text-sm md:text-base">
-                  <p className="font-bold text-gray-800">{order.nome_campanha}</p>
-                  <p className="text-gray-500">Solicitação de substituição</p>
-                </div>
+                <span className="text-sm md:text-base font-bold text-gray-700">Pedido #{order.order_id}</span>
               </div>
             </div>
-
             <div className="flex items-center gap-2 md:gap-3 flex-shrink-0">
               <button
                 className="bg-green-500 hover:bg-green-600 cursor-pointer text-white rounded-lg md:rounded-xl px-3 py-2 font-bold text-xs md:text-sm transition-colors min-w-[70px]"
-                onClick={() => handleAccept(order)}
-                disabled={loading}
+                onClick={() => localStorage.setItem(`order_${order.order_id}`, "aprovado")}
               >
-                Aceitar
+                Aprovar
               </button>
               <button
                 className="bg-red-500 hover:bg-red-600 cursor-pointer text-white rounded-lg md:rounded-xl px-3 py-2 font-bold text-xs md:text-sm transition-colors min-w-[70px]"
-                onClick={() => handleReject(order)}
-                disabled={loading}
+                onClick={() => localStorage.setItem(`order_${order.order_id}`, "rejeitado")}
               >
                 Recusar
               </button>
             </div>
           </div>
         ))}
-
-        {ordersWithReplacements.length === 0 && !loading && !error && (
-          <div className="text-center py-4 text-gray-500">
-            Nenhuma solicitação de substituição pendente.
-          </div>
-        )}
       </div>
+
+      {/* Modal para assistir arquivo */}
+      {modalFile && (
+        <div className="fixed inset-0 z-[9999] flex items-end justify-center md:items-center md:justify-center p-4">
+          <div className="absolute inset-0 bg-black/50" onClick={() => setModalFile(null)}></div>
+          <div className="relative bg-white rounded-xl md:rounded-2xl shadow-2xl p-4 md:p-7 max-w-2xl w-full flex flex-col items-center opacity-100 z-10" onClick={e => e.stopPropagation()}>
+            <button
+              className="absolute top-2 right-2 cursor-pointer text-gray-400 hover:text-gray-700 text-xl font-bold p-2"
+              onClick={() => setModalFile(null)}
+              aria-label="Fechar"
+            >
+              ×
+            </button>
+            {modalFile.url.startsWith("data:image") || modalFile.url.match(/\.(jpg|jpeg|png|gif|bmp|webp)$/i) ? (
+              <img
+                src={modalFile.url}
+                alt={`Arquivo do pedido ${modalFile.id}`}
+                className="object-contain max-h-[300px] md:max-h-[400px] w-auto rounded mb-4 shadow-lg"
+              />
+            ) : isVideo(modalFile.url) ? (
+              <video
+                src={modalFile.url}
+                controls
+                className="object-contain max-h-[300px] md:max-h-[400px] w-auto rounded mb-4 shadow-lg"
+                autoPlay
+              />
+            ) : (
+              <Image
+                src={modalFile.url}
+                alt={`Arquivo do pedido ${modalFile.id}`}
+                width={400}
+                height={400}
+                className="object-contain max-h-[300px] md:max-h-[400px] w-auto rounded mb-4 shadow-lg"
+              />
+            )}
+            <button
+              className="bg-orange-500 hover:bg-orange-600 text-white rounded-lg md:rounded-xl px-4 py-2 font-bold text-sm md:text-base mt-2 transition-colors"
+              onClick={() => handleDownload(modalFile.url, modalFile.id)}
+            >
+              Baixar arquivo
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
