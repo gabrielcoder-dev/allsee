@@ -21,22 +21,6 @@ const ReplacementAdmin = () => {
   const [loading, setLoading] = useState(true);
   const [modalFile, setModalFile] = useState<{ url: string; id: number } | null>(null);
 
-  const getOrderStatus = async (orderId: number): Promise<string> => {
-    const { data, error } = await supabase
-      .from('arte_troca_campanha')
-      .select('status')
-      .eq('id', orderId)
-      .single();
-
-    if (error) {
-      console.error('Error fetching order status:', error);
-      return 'pendente';
-    }
-
-    return data ? data.status : 'pendente';
-  };
-
-
   useEffect(() => {
     async function fetchOrders() {
       setLoading(true);
@@ -67,6 +51,52 @@ const ReplacementAdmin = () => {
     a.click();
     document.body.removeChild(a);
   };
+
+  const handleApprove = async (orderId: number) => {
+    const { error } = await supabase
+      .from('arte_troca_campanha')
+      .update({ status: 'aprovado' })
+      .eq('id', orderId);
+
+    if (error) {
+      console.error('Error updating order status:', error);
+    } else {
+      // Refresh orders after update
+      fetchOrders();
+    }
+  };
+
+  const handleReject = async (orderId: number) => {
+    const { error } = await supabase
+      .from('arte_troca_campanha')
+      .update({ status: 'rejeitado' })
+      .eq('id', orderId);
+
+    if (error) {
+      console.error('Error updating order status:', error);
+    } else {
+      // Refresh orders after update
+      fetchOrders();
+    }
+  };
+
+  async function fetchOrders() {
+    setLoading(true);
+    const { data, error } = await supabase
+      .from("arte_troca_campanha")
+      .select("id, caminho_imagem, id_campanha")
+      .order("id", { ascending: false });
+
+    if (!error && data) {
+      const adaptedOrders = data.map((item) => ({
+        id: item.id,
+        caminho_imagem: item.caminho_imagem,
+        order_id: item.id_campanha,
+      }));
+      setOrders(adaptedOrders);
+    }
+    setLoading(false);
+  }
 
   if (loading) return <div className="p-4">Carregando pedidos...</div>;
   if (!orders.length) return <div className="p-4">Nenhum pedido encontrado.</div>;
@@ -130,13 +160,13 @@ const ReplacementAdmin = () => {
             <div className="flex items-center gap-2 md:gap-3 flex-shrink-0">
               <button
                 className="bg-green-500 hover:bg-green-600 cursor-pointer text-white rounded-lg md:rounded-xl px-3 py-2 font-bold text-xs md:text-sm transition-colors min-w-[70px]"
-                onClick={() => localStorage.setItem(`order_${order.order_id}`, "aprovado")}
+                onClick={() => handleApprove(order.id)}
               >
                 Aprovar
               </button>
               <button
                 className="bg-red-500 hover:bg-red-600 cursor-pointer text-white rounded-lg md:rounded-xl px-3 py-2 font-bold text-xs md:text-sm transition-colors min-w-[70px]"
-                onClick={() => localStorage.setItem(`order_${order.order_id}`, "rejeitado")}
+                onClick={() => handleReject(order.id)}
               >
                 Recusar
               </button>

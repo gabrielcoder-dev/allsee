@@ -31,6 +31,7 @@ interface Anuncio {
   duracao_campanha_semanas: number;
   preco: number;
   order_id: number;
+  status: string | null;
 }
 
 const MeusAnuncios = () => {
@@ -78,6 +79,19 @@ const MeusAnuncios = () => {
 
         console.log("Fetched arteCampanhas:", arteCampanhas);
 
+         // Fetch arte_troca_campanha data for the current user
+         const { data: arteTrocaCampanhas, error: arteTrocaCampanhasError } = await supabase
+         .from("arte_troca_campanha")
+         .select(`id, id_campanha, status`)
+
+       if (arteTrocaCampanhasError) {
+         setError(arteTrocaCampanhasError.message);
+         console.error("arteTrocaCampanhas error:", arteTrocaCampanhasError);
+         return;
+       }
+
+       console.log("Fetched arteTrocaCampanhas:", arteTrocaCampanhas);
+
         // Fetch orders for the current user
         const anunciosPromises = arteCampanhas.map(async (arteCampanha: ArteCampanha) => {
           // Fetch orders para pegar o nome, inicio e fim da campanha
@@ -99,6 +113,9 @@ const MeusAnuncios = () => {
             return null;
           }
 
+           // Find the corresponding arteTrocaCampanha
+           const arteTrocaCampanha = arteTrocaCampanhas?.find(atc => atc.id_campanha === orders[0].id);
+
           const fim_campanha = new Date(orders[0].inicio_campanha);
           fim_campanha.setDate(fim_campanha.getDate() + orders[0].duracao_campanha);
 
@@ -110,7 +127,8 @@ const MeusAnuncios = () => {
             fim_campanha: fim_campanha.toLocaleDateString(),
             caminho_imagem: arteCampanha?.caminho_imagem || "",
             duracao_campanha_semanas: Math.max(1, Math.floor(orders[0].duracao_campanha / 7)),
-            preco: orders[0].preco
+            preco: orders[0].preco,
+            status: arteTrocaCampanha ? arteTrocaCampanha.status : null,
           };
         });
 
@@ -147,14 +165,13 @@ const MeusAnuncios = () => {
       reader.onload = async () => {
         const base64String = reader.result as string;
 
-        // Enviar o caminho da imagem e o ID do arte_campanha para a tabela arte_troca_campanha
+        // Enviar o caminho da imagem, ID do arte_campanha e status para a tabela arte_troca_campanha
         const { error: insertError } = await supabase
           .from('arte_troca_campanha')
           .insert([
-            { caminho_imagem: base64String, id_campanha: anuncio.order_id }
+            { caminho_imagem: base64String, id_campanha: anuncio.order_id, status: 'analise' }
           ]);
 
-      
         if (insertError) {
           console.error("Erro ao inserir o caminho da imagem:", insertError);
           setError(insertError.message);
@@ -165,8 +182,7 @@ const MeusAnuncios = () => {
         setIsModalOpen(false);
         toast.success('Arte trocada com sucesso!', {
           position: "top-right",
-          autoClose: 5000,
-          hideProgressBar: false,
+          autoClose: 5000,          hideProgressBar: false,
           closeOnClick: true,
           pauseOnHover: true,
           draggable: true,
@@ -205,7 +221,12 @@ const MeusAnuncios = () => {
       ) : (
         <div className="flex flex-col gap-4 p-4 ">
           {anuncios.map((anuncio) => {
-            const status = localStorage.getItem(`order_${anuncio.order_id}`) || "Arte em Análise...";
+            let statusText = "Arte em Análise...";
+            if (anuncio.status === "aprovado") {
+              statusText = "Arte Aceita";
+            } else if (anuncio.status === "rejeitado") {
+              statusText = "Arte Não Aceita";
+            }
 
             return (
               <div key={anuncio.id} className="flex p-4 items-center justify-between w-full rounded-2xl border border-gray-200">
@@ -223,17 +244,11 @@ const MeusAnuncios = () => {
                       <p className="text-gray-600 text-xs">Início: {anuncio.inicio_campanha}</p> |\n                      <p className="text-gray-600 text-xs\">Periodo de Duração: <span className="text-orange-600 font-bold">{anuncio.duracao_campanha_semanas} Semanas</span></p>
                     </div>
                     <p className={
-                      status === "aprovado" ? "text-green-500"
-                        : status === "rejeitado" ? "text-red-500"
+                      anuncio.status === "aprovado" ? "text-green-500"
+                        : anuncio.status === "rejeitado" ? "text-red-500"
                           : "text-yellow-500"
                     }>
-                      {status === "aprovado" ? (
-                        "Arte Aceita"
-                      ) : status === "rejeitado" ? (
-                        "Arte Não Aceita"
-                      ) : (
-                        "Arte em Análise..."
-                      )}
+                      {statusText}
                     </p>
                     <div className="flex items-center gap-2">
                       <button className="w-60 text-xs rounded-sm p-2 whitespace-nowrap border border-gray-300">Ver detalhes da campanha</button>
