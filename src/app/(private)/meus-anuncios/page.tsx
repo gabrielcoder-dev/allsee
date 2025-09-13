@@ -82,7 +82,7 @@ const MeusAnuncios = () => {
          // Fetch arte_troca_campanha data for the current user
          const { data: arteTrocaCampanhas, error: arteTrocaCampanhasError } = await supabase
          .from("arte_troca_campanha")
-         .select(`id, id_campanha`)
+         .select(`id, id_campanha, status`)
 
        if (arteTrocaCampanhasError) {
          setError(arteTrocaCampanhasError.message);
@@ -119,8 +119,10 @@ const MeusAnuncios = () => {
           const fim_campanha = new Date(orders[0].inicio_campanha);
           fim_campanha.setDate(fim_campanha.getDate() + orders[0].duracao_campanha);
 
-          // Retrieve status from local storage
-          const status = localStorage.getItem(`anuncio_${arteCampanha.id}_status`) || null;
+           // Retrieve status from arteTrocaCampanhas or local storage
+           const arteTrocaCampanhaStatus = arteTrocaCampanhas?.find(atc => atc.id_campanha === orders[0].id)?.status || null;
+           const localStorageStatus = localStorage.getItem(`anuncio_${arteCampanha.id}_status`) || null;
+           const status = arteTrocaCampanhaStatus || localStorageStatus;
 
           return {
             id: arteCampanha.id,
