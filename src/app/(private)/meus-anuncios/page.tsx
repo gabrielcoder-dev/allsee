@@ -82,7 +82,7 @@ const MeusAnuncios = () => {
          // Fetch arte_troca_campanha data for the current user
          const { data: arteTrocaCampanhas, error: arteTrocaCampanhasError } = await supabase
          .from("arte_troca_campanha")
-         .select(`id, id_campanha, status`)
+         .select(`id, id_campanha`)
 
        if (arteTrocaCampanhasError) {
          setError(arteTrocaCampanhasError.message);
@@ -119,6 +119,9 @@ const MeusAnuncios = () => {
           const fim_campanha = new Date(orders[0].inicio_campanha);
           fim_campanha.setDate(fim_campanha.getDate() + orders[0].duracao_campanha);
 
+          // Retrieve status from local storage
+          const status = localStorage.getItem(`anuncio_${arteCampanha.id}_status`) || null;
+
           return {
             id: arteCampanha.id,
             order_id: orders[0].id,
@@ -128,7 +131,7 @@ const MeusAnuncios = () => {
             caminho_imagem: arteCampanha?.caminho_imagem || "",
             duracao_campanha_semanas: Math.max(1, Math.floor(orders[0].duracao_campanha / 7)),
             preco: orders[0].preco,
-            status: arteTrocaCampanha ? arteTrocaCampanha.status : null,
+            status: status,
           };
         });
 
@@ -169,7 +172,7 @@ const MeusAnuncios = () => {
         const { error: insertError } = await supabase
           .from('arte_troca_campanha')
           .insert([
-            { caminho_imagem: base64String, id_campanha: anuncio.order_id, status: 'analise' }
+            { caminho_imagem: base64String, id_campanha: anuncio.order_id }
           ]);
 
         if (insertError) {
@@ -241,7 +244,8 @@ const MeusAnuncios = () => {
                   <div className="w-1/2 flex flex-col gap-1">
                     <h3 className="text-lg font-semibold text-gray-800">{anuncio.nome_campanha}</h3>
                     <div className="flex items-center gap-2">
-                      <p className="text-gray-600 text-xs">Início: {anuncio.inicio_campanha}</p> |\n                      <p className="text-gray-600 text-xs\">Periodo de Duração: <span className="text-orange-600 font-bold">{anuncio.duracao_campanha_semanas} Semanas</span></p>
+                      <p className="text-gray-600 text-xs">Início: {anuncio.inicio_campanha}</p> |
+                      <p className="text-gray-600 text-xs">Periodo de Duração: <span className="text-orange-600 font-bold">{anuncio.duracao_campanha_semanas} Semanas</span></p>
                     </div>
                     <p className={
                       anuncio.status === "aprovado" ? "text-green-500"
