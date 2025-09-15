@@ -1,10 +1,9 @@
-// src/Components/ReplacementAdmin.tsx
-"use client"
-
+// src/Components/AproveitionAdmin.tsx
+"use client";
 import React, { useEffect, useState } from "react";
 import Image from "next/image";
-import ImageAprove from "@/assets/restaurante-2.jpg"; // Altere para sua imagem padrão
 import { supabase } from "@/lib/supabase";
+import ImageModal from "./ImageModal";
 
 interface Order {
   id: number;
@@ -16,13 +15,13 @@ const isVideo = (url: string) => {
   return url.match(/\.(mp4|webm|ogg)$/i) || url.startsWith("data:video");
 };
 
-const ReplacementAdmin = () => {
+const ReplecementAdmin = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [modalFile, setModalFile] = useState<{ url: string; id: number } | null>(null);
 
   const getOrderStatus = (orderId: number) => {
-    return localStorage.getItem(`replacement_order_${orderId}`) || "pendente";
+    return localStorage.getItem(`order_${orderId}`) || "pendente";
   };
 
   useEffect(() => {
@@ -30,14 +29,14 @@ const ReplacementAdmin = () => {
       setLoading(true);
       const { data, error } = await supabase
         .from("arte_troca_campanha")
-        .select("id, caminho_imagem, id_campanha")
+        .select("id, caminho_imagem, id_order")
         .order("id", { ascending: false });
 
       if (!error && data) {
         const adaptedOrders = data.map((item) => ({
           id: item.id,
           caminho_imagem: item.caminho_imagem,
-          order_id: item.id_campanha,
+          order_id: item.id_order,
         }));
         setOrders(adaptedOrders);
       }
@@ -55,54 +54,6 @@ const ReplacementAdmin = () => {
     a.click();
     document.body.removeChild(a);
   };
-
-  const handleApprove = async (orderId: number) => {
-    const { error } = await supabase
-      .from('arte_troca_campanha')
-      .update({ status: 'aprovado' })
-      .eq('id', orderId);
-
-    if (error) {
-      console.error('Error updating order status:', error);
-    } else {
-      localStorage.setItem(`replacement_order_${orderId}`, "aprovado");
-      // Refresh orders after update
-      fetchOrders();
-    }
-  };
-
-  const handleReject = async (orderId: number) => {
-    const { error } = await supabase
-      .from('arte_troca_campanha')
-      .update({ status: 'rejeitado' })
-      .eq('id', orderId);
-
-    if (error) {
-      console.error('Error updating order status:', error);
-    } else {
-      localStorage.setItem(`replacement_order_${orderId}`, "rejeitado");
-      // Refresh orders after update
-      fetchOrders();
-    }
-  };
-
-  async function fetchOrders() {
-    setLoading(true);
-    const { data, error } = await supabase
-      .from("arte_troca_campanha")
-      .select("id, caminho_imagem, id_campanha")
-      .order("id", { ascending: false });
-
-    if (!error && data) {
-      const adaptedOrders = data.map((item) => ({
-        id: item.id,
-        caminho_imagem: item.caminho_imagem,
-        order_id: item.id_campanha,
-      }));
-      setOrders(adaptedOrders);
-    }
-    setLoading(false);
-  }
 
   if (loading) return <div className="p-4">Carregando pedidos...</div>;
   if (!orders.length) return <div className="p-4">Nenhum pedido encontrado.</div>;
@@ -167,28 +118,28 @@ const ReplacementAdmin = () => {
               <button
                 className="bg-green-500 hover:bg-green-600 cursor-pointer text-white rounded-lg md:rounded-xl px-3 py-2 font-bold text-xs md:text-sm transition-colors min-w-[70px]"
                 onClick={() => {
-                  const currentStatus = getOrderStatus(order.id);
+                  const currentStatus = getOrderStatus(order.order_id);
                   if (currentStatus === "aprovado") {
-                    localStorage.removeItem(`replacement_order_${order.id}`);
+                    localStorage.removeItem(`order_${order.order_id}`);
                   } else {
-                    handleApprove(order.id);
+                    localStorage.setItem(`order_${order.order_id}`, "aprovado");
                   }
                 }}
               >
-                {getOrderStatus(order.id) === "aprovado" ? "Remover Aprovação" : "Aprovar"}
+                {getOrderStatus(order.order_id) === "aprovado" ? "Remover Aprovação" : "Aprovar"}
               </button>
               <button
                 className="bg-red-500 hover:bg-red-600 cursor-pointer text-white rounded-lg md:rounded-xl px-3 py-2 font-bold text-xs md:text-sm transition-colors min-w-[70px]"
                 onClick={() => {
-                  const currentStatus = getOrderStatus(order.id);
+                  const currentStatus = getOrderStatus(order.order_id);
                   if (currentStatus === "rejeitado") {
-                    localStorage.removeItem(`replacement_order_${order.id}`);
+                    localStorage.removeItem(`order_${order.order_id}`);
                   } else {
-                    handleReject(order.id);
+                    localStorage.setItem(`order_${order.order_id}`, "rejeitado");
                   }
                 }}
               >
-                {getOrderStatus(order.id) === "rejeitado" ? "Remover Rejeição" : "Recusar"}
+                {getOrderStatus(order.order_id) === "rejeitado" ? "Remover Rejeição" : "Recusar"}
               </button>
             </div>
           </div>
@@ -242,4 +193,4 @@ const ReplacementAdmin = () => {
   );
 };
 
-export default ReplacementAdmin;
+export default ReplecementAdmin;
