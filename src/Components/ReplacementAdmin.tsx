@@ -60,39 +60,12 @@ const ReplacementAdmin = () => {
     document.body.removeChild(a);
   };
 
-  const handleApprove = async (orderId: number) => {
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL as string;
-    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string;
-
-    const supabase = createClient(supabaseUrl, supabaseAnonKey);
-
-    const { error } = await supabase
-      .from('arte_troca_campanha')
-      .update({ status: 'aprovado' })
-      .eq('id', orderId);
-
-    if (error) {
-      console.error('Error updating order status:', error);
-    } else {
-      localStorage.setItem(`replacement_order_${orderId}`, "aprovado");
-    }
+  const handleApprove = (orderId: number) => {
+    localStorage.setItem(`replacement_order_${orderId}`, "aprovado");
   };
 
-  const handleReject = async (orderId: number) => {
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL as string;
-    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string;
-
-    const supabase = createClient(supabaseUrl, supabaseAnonKey);
-    const { error } = await supabase
-      .from('arte_troca_campanha')
-      .update({ status: 'rejeitado' })
-      .eq('id', orderId);
-
-    if (error) {
-      console.error('Error updating order status:', error);
-    } else {
-      localStorage.setItem(`replacement_order_${orderId}`, "rejeitado");
-    }
+  const handleReject = (orderId: number) => {
+    localStorage.setItem(`replacement_order_${orderId}`, "rejeitado");
   };
 
   if (loading) return <div className="p-4">Carregando pedidos...</div>;
