@@ -15,13 +15,13 @@ const isVideo = (url: string) => {
   return url.match(/\.(mp4|webm|ogg)$/i) || url.startsWith("data:video");
 };
 
-const ReplecementAdmin = () => {
+const ReplacementAdmin = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [modalFile, setModalFile] = useState<{ url: string; id: number } | null>(null);
 
   const getOrderStatus = (orderId: number) => {
-    return localStorage.getItem(`order_${orderId}`) || "pendente";
+    return localStorage.getItem(`replacement_order_${orderId}`) || "pendente";
   };
 
   useEffect(() => {
@@ -73,6 +73,8 @@ const ReplecementAdmin = () => {
 
     if (error) {
       console.error('Error updating order status:', error);
+    } else {
+      localStorage.setItem(`replacement_order_${orderId}`, "aprovado");
     }
   };
 
@@ -88,6 +90,8 @@ const ReplecementAdmin = () => {
 
     if (error) {
       console.error('Error updating order status:', error);
+    } else {
+      localStorage.setItem(`replacement_order_${orderId}`, "rejeitado");
     }
   };
 
@@ -156,9 +160,9 @@ const ReplecementAdmin = () => {
                 onClick={() => {
                   const currentStatus = getOrderStatus(order.order_id);
                   if (currentStatus === "aprovado") {
-                    localStorage.removeItem(`order_${order.order_id}`);
+                    localStorage.removeItem(`replacement_order_${order.order_id}`);
                   } else {
-                    localStorage.setItem(`order_${order.order_id}`, "aprovado");
+                    handleApprove(order.id);
                   }
                 }}
               >
@@ -169,9 +173,9 @@ const ReplecementAdmin = () => {
                 onClick={() => {
                   const currentStatus = getOrderStatus(order.order_id);
                   if (currentStatus === "rejeitado") {
-                    localStorage.removeItem(`order_${order.order_id}`);
+                    localStorage.removeItem(`replacement_order_${order.order_id}`);
                   } else {
-                    localStorage.setItem(`order_${order.order_id}`, "rejeitado");
+                    handleReject(order.id);
                   }
                 }}
               >
@@ -229,4 +233,4 @@ const ReplecementAdmin = () => {
   );
 };
 
-export default ReplecementAdmin;
+export default ReplacementAdmin;
