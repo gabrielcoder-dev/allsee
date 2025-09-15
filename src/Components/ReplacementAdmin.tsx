@@ -21,6 +21,10 @@ const ReplacementAdmin = () => {
   const [loading, setLoading] = useState(true);
   const [modalFile, setModalFile] = useState<{ url: string; id: number } | null>(null);
 
+  const getOrderStatus = (orderId: number) => {
+    return localStorage.getItem(`replacement_order_${orderId}`) || "pendente";
+  };
+
   useEffect(() => {
     async function fetchOrders() {
       setLoading(true);
@@ -61,6 +65,7 @@ const ReplacementAdmin = () => {
     if (error) {
       console.error('Error updating order status:', error);
     } else {
+      localStorage.setItem(`replacement_order_${orderId}`, "aprovado");
       // Refresh orders after update
       fetchOrders();
     }
@@ -75,6 +80,7 @@ const ReplacementAdmin = () => {
     if (error) {
       console.error('Error updating order status:', error);
     } else {
+      localStorage.setItem(`replacement_order_${orderId}`, "rejeitado");
       // Refresh orders after update
       fetchOrders();
     }
@@ -160,15 +166,29 @@ const ReplacementAdmin = () => {
             <div className="flex items-center gap-2 md:gap-3 flex-shrink-0">
               <button
                 className="bg-green-500 hover:bg-green-600 cursor-pointer text-white rounded-lg md:rounded-xl px-3 py-2 font-bold text-xs md:text-sm transition-colors min-w-[70px]"
-                onClick={() => handleApprove(order.id)}
+                onClick={() => {
+                  const currentStatus = getOrderStatus(order.id);
+                  if (currentStatus === "aprovado") {
+                    localStorage.removeItem(`replacement_order_${order.id}`);
+                  } else {
+                    handleApprove(order.id);
+                  }
+                }}
               >
-                Aprovar
+                {getOrderStatus(order.id) === "aprovado" ? "Remover Aprovação" : "Aprovar"}
               </button>
               <button
                 className="bg-red-500 hover:bg-red-600 cursor-pointer text-white rounded-lg md:rounded-xl px-3 py-2 font-bold text-xs md:text-sm transition-colors min-w-[70px]"
-                onClick={() => handleReject(order.id)}
+                onClick={() => {
+                  const currentStatus = getOrderStatus(order.id);
+                  if (currentStatus === "rejeitado") {
+                    localStorage.removeItem(`replacement_order_${order.id}`);
+                  } else {
+                    handleReject(order.id);
+                  }
+                }}
               >
-                Recusar
+                {getOrderStatus(order.id) === "rejeitado" ? "Remover Rejeição" : "Recusar"}
               </button>
             </div>
           </div>

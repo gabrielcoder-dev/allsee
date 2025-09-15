@@ -183,6 +183,9 @@ const MeusAnuncios = () => {
           return;
         }
 
+        // Remove o status do localStorage para que a arte volte para "Em Análise"
+        localStorage.removeItem(`anuncio_${selectedAnuncioId}_status`);
+
         console.log("Arquivo enviado e caminho da imagem inserido com sucesso!");
         setIsModalOpen(false);
         toast.success('Arte trocada com sucesso!', {
