@@ -8,7 +8,7 @@ import ImageModal from "./ImageModal";
 interface Order {
   id: number;
   caminho_imagem: string | null;
-  order_id: number;
+  id_campanha: number;
 }
 
 const isVideo = (url: string) => {
@@ -34,14 +34,14 @@ const ReplacementAdmin = () => {
       setLoading(true);
       const { data, error } = await supabase
         .from("arte_troca_campanha")
-        .select("id, caminho_imagem, id_order")
+        .select("id, caminho_imagem, id_campanha")
         .order("id", { ascending: false });
 
       if (!error && data) {
         const adaptedOrders = data.map((item) => ({
           id: item.id,
           caminho_imagem: item.caminho_imagem,
-          order_id: item.id_order,
+          id_campanha: item.id_campanha,
         }));
         setOrders(adaptedOrders);
       }
@@ -85,7 +85,7 @@ const ReplacementAdmin = () => {
                 order.caminho_imagem.startsWith("data:image") || order.caminho_imagem.match(/\.(jpg|jpeg|png|gif|bmp|webp)$/i) ? (
                   <img
                     src={order.caminho_imagem}
-                    alt={`Arte do pedido ${order.order_id}`}
+                    alt={`Arte do pedido ${order.id_campanha}`}
                     className="w-16 h-16 md:w-24 md:h-24 rounded-lg md:rounded-xl object-cover flex-shrink-0"
                   />
                 ) : isVideo(order.caminho_imagem) ? (
@@ -98,7 +98,7 @@ const ReplacementAdmin = () => {
                 ) : (
                   <Image
                     src={order.caminho_imagem}
-                    alt={`Arte do pedido ${order.order_id}`}
+                    alt={`Arte do pedido ${order.id_campanha}`}
                     width={96}
                     height={96}
                     className="w-16 h-16 md:w-24 md:h-24 rounded-lg md:rounded-xl object-cover flex-shrink-0"
@@ -113,46 +113,46 @@ const ReplacementAdmin = () => {
                 <div className="flex items-center gap-2 md:gap-4">
                   <button
                     className="text-gray-500 hover:text-orange-600 text-sm md:text-base font-medium transition-colors"
-                    onClick={() => order.caminho_imagem && handleDownload(order.caminho_imagem, order.order_id)}
+                    onClick={() => order.caminho_imagem && handleDownload(order.caminho_imagem, order.id_campanha)}
                   >
                     Baixar
                   </button>
                   <button
                     className="text-gray-500 hover:text-orange-600 text-sm md:text-base font-medium transition-colors"
-                    onClick={() => order.caminho_imagem && setModalFile({ url: order.caminho_imagem, id: order.order_id })}
+                    onClick={() => order.caminho_imagem && setModalFile({ url: order.caminho_imagem, id: order.id_campanha })}
                   >
                     Assistir
                   </button>
                 </div>
-                <span className="text-sm md:text-base font-bold text-gray-700">Pedido #{order.order_id}</span>
+                <span className="text-sm md:text-base font-bold text-gray-700">Pedido #{order.id_campanha}</span>
               </div>
             </div>
             <div className="flex items-center gap-2 md:gap-3 flex-shrink-0">
               <button
                 className="bg-green-500 hover:bg-green-600 cursor-pointer text-white rounded-lg md:rounded-xl px-3 py-2 font-bold text-xs md:text-sm transition-colors min-w-[70px]"
                 onClick={() => {
-                  const currentStatus = getOrderStatus(order.order_id);
+                  const currentStatus = getOrderStatus(order.id_campanha);
                   if (currentStatus === "aprovado") {
-                    localStorage.removeItem(`replacement_order_${order.order_id}`);
+                    localStorage.removeItem(`replacement_order_${order.id_campanha}`);
                   } else {
                     handleApprove(order.id);
                   }
                 }}
               >
-                {getOrderStatus(order.order_id) === "aprovado" ? "Remover Aprovação" : "Aprovar"}
+                {getOrderStatus(order.id_campanha) === "aprovado" ? "Remover Aprovação" : "Aprovar"}
               </button>
               <button
                 className="bg-red-500 hover:bg-red-600 cursor-pointer text-white rounded-lg md:rounded-xl px-3 py-2 font-bold text-xs md:text-sm transition-colors min-w-[70px]"
                 onClick={() => {
-                  const currentStatus = getOrderStatus(order.order_id);
+                  const currentStatus = getOrderStatus(order.id_campanha);
                   if (currentStatus === "rejeitado") {
-                    localStorage.removeItem(`replacement_order_${order.order_id}`);
+                    localStorage.removeItem(`replacement_order_${order.id_campanha}`);
                   } else {
                     handleReject(order.id);
                   }
                 }}
               >
-                {getOrderStatus(order.order_id) === "rejeitado" ? "Remover Rejeição" : "Recusar"}
+                {getOrderStatus(order.id_campanha) === "rejeitado" ? "Remover Rejeição" : "Recusar"}
               </button>
             </div>
           </div>
