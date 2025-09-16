@@ -9,6 +9,11 @@ import {
   SelectValue,
 } from "@/Components/ui/select";
 import { Calendar } from "@/Components/ui/calendar";
+
+// Função utilitária para criar string yyyy-MM-dd
+function toYMD(date: Date): string {
+  return date.toISOString().slice(0, 10);
+}
 import { useState, useEffect, useRef } from "react";
 import {
   Popover,
@@ -503,7 +508,15 @@ export default function CartResume({ onCartArtSelected, onCampaignNameChange, ar
                     <Calendar
                       mode="single"
                       selected={startDate && /^\d{4}-\d{2}-\d{2}$/.test(startDate) ? parseLocalDateString(startDate) : undefined}
-                      onSelect={handleStartDateChange}
+                      onSelect={(date) => {
+                        if (date) handleStartDateChange(date);
+                      }}
+                      disabled={(date) => {
+                        const today = new Date();
+                        const twoDaysFromNow = new Date(today);
+                        twoDaysFromNow.setDate(today.getDate() + 2);
+                        return date < twoDaysFromNow;
+                      }}
                       initialFocus
                     />
                   </PopoverContent>
