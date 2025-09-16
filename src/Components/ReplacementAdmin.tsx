@@ -62,10 +62,12 @@ const ReplacementAdmin = () => {
 
   const handleApprove = (orderId: number) => {
     localStorage.setItem(`replacement_order_${orderId}`, "aprovado");
+    window.dispatchEvent(new Event('storage'));
   };
 
   const handleReject = (orderId: number) => {
     localStorage.setItem(`replacement_order_${orderId}`, "rejeitado");
+    window.dispatchEvent(new Event('storage'));
   };
 
   if (loading) return <div className="p-4">Carregando pedidos...</div>;

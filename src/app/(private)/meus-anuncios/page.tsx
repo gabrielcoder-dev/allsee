@@ -1,5 +1,5 @@
 // src/app/(private)/meus-anuncios/page.tsx
-"use client"
+"use client";
 
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
@@ -41,8 +41,13 @@ const MeusAnuncios = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedAnuncioId, setSelectedAnuncioId] = useState<number | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [refresh, setRefresh] = useState(false);
 
   useEffect(() => {
+    window.addEventListener('storage', () => {
+      setRefresh(!refresh);
+    });
+
     async function fetchAnuncios() {
       setLoading(true);
       setError(null);
@@ -82,7 +87,7 @@ const MeusAnuncios = () => {
          // Fetch arte_troca_campanha data for the current user
          const { data: arteTrocaCampanhas, error: arteTrocaCampanhasError } = await supabase
          .from("arte_troca_campanha")
-         .select(`id, id_campanha`)
+         .select(`id, id_campanha`);
 
        if (arteTrocaCampanhasError) {
          setError(arteTrocaCampanhasError.message);
@@ -148,7 +153,7 @@ const MeusAnuncios = () => {
     }
 
     fetchAnuncios();
-  }, []);
+  }, [refresh]);
 
   const handleTrocarArte = async () => {
     if (!selectedFile || !selectedAnuncioId) {
@@ -237,39 +242,41 @@ const MeusAnuncios = () => {
             }
 
             return (
-              <div key={anuncio.id} className="flex p-4 items-center justify-between w-full rounded-2xl border border-gray-200">
-                <div className="flex items-center gap-4 w-full">
-                  <Image
-                    src={anuncio.caminho_imagem}
-                    alt={anuncio.nome_campanha}
-                    width={600}
-                    height={400}
-                    className="w-28 h-28 object-cover rounded-md"
-                  />
-                  <div className="w-1/2 flex flex-col gap-1">
-                    <h3 className="text-lg font-semibold text-gray-800">{anuncio.nome_campanha}</h3>
-                    <div className="flex items-center gap-2">
-                      <p className="text-gray-600 text-xs">Início: {anuncio.inicio_campanha}</p> |
-                      <p className="text-gray-600 text-xs">Periodo de Duração: <span className="text-orange-600 font-bold">{anuncio.duracao_campanha_semanas} Semanas</span></p>
-                    </div>
-                    <p className={
-                      anuncio.status === "aprovado" ? "text-green-500"
-                        : anuncio.status === "rejeitado" ? "text-red-500"
-                          : "text-yellow-500"
-                    }>
-                      {statusText}
-                    </p>
-                    <div className="flex items-center gap-2">
-                      <button className="w-60 text-xs rounded-sm p-2 whitespace-nowrap border border-gray-300">Ver detalhes da campanha</button>
-                      <button className="text-xs rounded-sm w-24 p-2 border border-blue-500 text-blue-500" onClick={() => {
-                        setIsModalOpen(true);
-                        setSelectedAnuncioId(anuncio.id);
-                      }}>Trocar arte</button>
+              <>
+                <div key={anuncio.id} className="flex p-4 items-center justify-between w-full rounded-2xl border border-gray-200">
+                  <div className="flex items-center gap-4 w-full">
+                    <Image
+                      src={anuncio.caminho_imagem}
+                      alt={anuncio.nome_campanha}
+                      width={600}
+                      height={400}
+                      className="w-28 h-28 object-cover rounded-md"
+                    />
+                    <div className="w-1/2 flex flex-col gap-1">
+                      <h3 className="text-lg font-semibold text-gray-800">{anuncio.nome_campanha}</h3>
+                      <div className="flex items-center gap-2">
+                        <p className="text-gray-600 text-xs">Início: {anuncio.inicio_campanha}</p> |
+                        <p className="text-gray-600 text-xs">Periodo de Duração: <span className="text-orange-600 font-bold">{anuncio.duracao_campanha_semanas} Semanas</span></p>
+                      </div>
+                      <p className={
+                        anuncio.status === "aprovado" ? "text-green-500"
+                          : anuncio.status === "rejeitado" ? "text-red-500"
+                            : "text-yellow-500"
+                      }>
+                        {statusText}
+                      </p>
+                      <div className="flex items-center gap-2">
+                        <button className="w-60 text-xs rounded-sm p-2 whitespace-nowrap border border-gray-300">Ver detalhes da campanha</button>
+                        <button className="text-xs rounded-sm w-24 p-2 border border-blue-500 text-blue-500" onClick={() => {
+                          setIsModalOpen(true);
+                          setSelectedAnuncioId(anuncio.id);
+                        }}>Trocar arte</button>
+                      </div>
                     </div>
                   </div>
+                  <h2 className="font-bold">R$ {anuncio.preco}</h2>
                 </div>
-                <h2 className="font-bold">R$ {anuncio.preco}</h2>
-              </div>
+              </>
             );
           })}
         </div>
