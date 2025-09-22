@@ -39,13 +39,13 @@ const Testimonials = () => {
 
         .carousel-wrapper {
           display: flex;
-          width: 200%;
-          animation: slide 15s linear infinite;
+          width: 200%; /* Double the width */
+          animation: slide 30s linear infinite; /* Increased animation duration */
         }
 
         .carousel-slide {
           display: flex;
-          width: 50%;
+          width: auto; /* Each slide takes 50% */
           gap: 100px; 
         }
 
@@ -59,7 +59,7 @@ const Testimonials = () => {
             transform: translateX(0);
           }
           100% {
-            transform: translateX(-50%);
+            transform: translateX(-50%); /* Move by 50% */
           }
         }
       `}</style>
