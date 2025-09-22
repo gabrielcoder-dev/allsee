@@ -39,7 +39,11 @@ const MeusAnuncios = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [selectedAnuncioId, setSelectedAnuncioId] = useState<number | null>(null);
+  const [selectedAnuncioDetails, setSelectedAnuncioDetails] = useState<Anuncio | null>(null);
+  const [orderDetails, setOrderDetails] = useState<any>(null);
+  const [loadingDetails, setLoadingDetails] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [refresh, setRefresh] = useState(false);
 
@@ -163,6 +167,29 @@ const MeusAnuncios = () => {
 
     fetchAnuncios();
   }, [refresh]);
+
+  const fetchOrderDetails = async (orderId: number) => {
+    setLoadingDetails(true);
+    try {
+      const { data, error } = await supabase
+        .from('order')
+        .select('*')
+        .eq('id', orderId)
+        .single();
+
+      if (error) {
+        console.error('Erro ao buscar detalhes da order:', error);
+        setOrderDetails(null);
+      } else {
+        setOrderDetails(data);
+      }
+    } catch (err) {
+      console.error('Erro ao buscar detalhes da order:', err);
+      setOrderDetails(null);
+    } finally {
+      setLoadingDetails(false);
+    }
+  };
 
   const handleTrocarArte = async () => {
     if (!selectedFile || !selectedAnuncioId) {
@@ -313,7 +340,14 @@ const MeusAnuncios = () => {
                   </div>
                   
                   <div className="flex gap-2">
-                    <button className="flex-1 text-xs font-medium py-2 px-3 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors">
+                    <button 
+                      className="flex-1 text-xs font-medium py-2 px-3 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors"
+                      onClick={() => {
+                        setSelectedAnuncioDetails(anuncio);
+                        fetchOrderDetails(anuncio.order_id);
+                        setIsDetailsModalOpen(true);
+                      }}
+                    >
                       Ver detalhes
                     </button>
                     <button 
@@ -409,6 +443,100 @@ const MeusAnuncios = () => {
           </div>
         </div>
       )}
+
+      {/* Modal de Detalhes */}
+      {isDetailsModalOpen && selectedAnuncioDetails && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={() => {
+          setIsDetailsModalOpen(false);
+          setOrderDetails(null);
+          setSelectedAnuncioDetails(null);
+        }}>
+          <div className="bg-white rounded-2xl w-full max-w-md mx-auto shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            {/* Header do modal */}
+            <div className="p-6 border-b border-gray-100">
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-semibold text-gray-900">Detalhes da Campanha</h2>
+                <button 
+                  onClick={() => {
+                    setIsDetailsModalOpen(false);
+                    setOrderDetails(null);
+                    setSelectedAnuncioDetails(null);
+                  }}
+                  className="p-1 hover:bg-gray-100 rounded-full transition-colors"
+                >
+                  <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            {/* Conteúdo do modal */}
+            <div className="p-6">
+              {loadingDetails ? (
+                <div className="flex justify-center items-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-600"></div>
+                  <span className="ml-3 text-gray-600">Carregando detalhes...</span>
+                </div>
+              ) : orderDetails ? (
+                <div className="space-y-4">
+                  {/* Imagem */}
+                  <div className="flex justify-center">
+                    <Image
+                      src={selectedAnuncioDetails?.caminho_imagem || ''}
+                      alt={orderDetails.nome_campanha || ''}
+                      width={200}
+                      height={200}
+                      className="w-32 h-32 object-cover rounded-lg"
+                    />
+                  </div>
+
+                  {/* Informações */}
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                      <span className="text-sm font-medium text-gray-600">Nome da Campanha:</span>
+                      <span className="text-sm font-semibold text-gray-900">{orderDetails.nome_campanha}</span>
+                    </div>
+
+                    <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                      <span className="text-sm font-medium text-gray-600">Data de Início:</span>
+                      <span className="text-sm font-semibold text-gray-900">{orderDetails.inicio_campanha}</span>
+                    </div>
+
+                    <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                      <span className="text-sm font-medium text-gray-600">Duração:</span>
+                      <span className="text-sm font-semibold text-orange-600">{orderDetails.duracao_campanha} dias</span>
+                    </div>
+
+                    <div className="flex justify-between items-center py-3 bg-orange-50 rounded-lg px-3">
+                      <span className="text-sm font-medium text-gray-600">Preço Total:</span>
+                      <span className="text-lg font-bold text-orange-600">R$ {orderDetails.preco?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <p className="text-gray-500">Erro ao carregar detalhes da campanha</p>
+                </div>
+              )}
+              
+              <div className="mt-6">
+                <button 
+                  className="w-full py-3 px-4 rounded-xl bg-orange-600 text-white font-medium hover:bg-orange-700 transition-colors" 
+                  onClick={() => {
+                    setIsDetailsModalOpen(false);
+                    setOrderDetails(null);
+                    setSelectedAnuncioDetails(null);
+                  }}
+                >
+                  Fechar
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       <ToastContainer />
     </div>
   );
