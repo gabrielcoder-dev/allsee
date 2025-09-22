@@ -149,7 +149,7 @@ const MeusAnuncios = () => {
             inicio_campanha: orders[0].inicio_campanha,
             fim_campanha: fim_campanha.toLocaleDateString(),
             caminho_imagem: arteCampanha?.caminho_imagem || "",
-            duracao_campanha_semanas: Math.max(1, Math.floor(orders[0].duracao_campanha / 7)),
+            duracao_campanha_semanas: orders[0].duracao_campanha, // Agora armazena dias
             preco: orders[0].preco,
             status: status,
           };
@@ -317,7 +317,7 @@ const MeusAnuncios = () => {
                     </div>
                     <div className="text-right">
                       <p className="text-lg font-bold text-orange-600">R$ {anuncio.preco.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
-                      <p className="text-xs text-gray-500">{anuncio.duracao_campanha_semanas} semanas</p>
+                      <p className="text-xs text-gray-500">{anuncio.duracao_campanha_semanas} dias</p>
                     </div>
                   </div>
                 </div>
@@ -505,7 +505,7 @@ const MeusAnuncios = () => {
 
                     <div className="flex justify-between items-center py-2 border-b border-gray-100">
                       <span className="text-sm font-medium text-gray-600">Duração:</span>
-                      <span className="text-sm font-semibold text-orange-600">{orderDetails.duracao_campanha} dias</span>
+                      <span className="text-sm font-semibold text-orange-600">{orderDetails.duracao_campanha} semanas</span>
                     </div>
 
                     <div className="flex justify-between items-center py-3 bg-orange-50 rounded-lg px-3">
