@@ -244,7 +244,7 @@ const MeusAnuncios = () => {
             </svg>
             Voltar
           </Link>
-          <h1 className="text-3xl font-bold text-orange-600">Meus Anúncios</h1>
+          <h1 className="text-3xl text-orange-600">Meus Anúncios</h1>
         </div>
       </div>
 
