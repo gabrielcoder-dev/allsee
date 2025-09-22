@@ -263,7 +263,7 @@ const MeusAnuncios = () => {
               statusText = "Arte Aceita";
               statusColor = "green";
             } else if (anuncio.status === "rejeitado") {
-              statusText = "Arte Recusada";
+              statusText = "Arte não aceita, tente novamente!";
               statusColor = "red";
             }
             
