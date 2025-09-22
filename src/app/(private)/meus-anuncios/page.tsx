@@ -234,22 +234,22 @@ const MeusAnuncios = () => {
 
 
   return (
-    <div className="w-full h-full p-3 md:px-32">
+    <div className="w-full h-full p-3 sm:p-4 md:px-8 lg:px-32">
       <Link href="/results" className="flex text-sm items-center gap-2 mb-4 text-gray-600 hover:text-orange-600">
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor" className="w-6 h-6">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor" className="w-5 h-5 sm:w-6 sm:h-6">
           <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
         </svg>
         Voltar
       </Link>
 
-      <h2 className="text-2xl md:text-3xl font-bold text-orange-600 mb-4 md:mb-6">Meus Anúncios</h2>
+      <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-orange-600 mb-4 md:mb-6">Meus Anúncios</h2>
 
       {loading ? (
         <p>Carregando anúncios...</p>
       ) : error ? (
         <p className="text-red-500">Erro: {error}</p>
       ) : (
-        <div className="flex flex-col gap-4 p-4 ">
+        <div className="flex flex-col gap-3 sm:gap-4 p-2 sm:p-4">
           {anuncios.map((anuncio) => {
             let statusText = "Arte em Análise...";
             if (anuncio.status === "aprovado") {
@@ -263,32 +263,36 @@ const MeusAnuncios = () => {
 
             return (
               <>
-                <div key={anuncio.id} className="flex p-4 items-center justify-between w-full rounded-2xl border border-gray-200">
-                  <div className="flex items-center gap-4 w-full">
+                <div key={anuncio.id} className="flex flex-col sm:flex-row p-3 sm:p-4 items-start sm:items-center justify-between w-full rounded-xl sm:rounded-2xl border border-gray-200 gap-3 sm:gap-4">
+                  {/* Imagem e conteúdo principal */}
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 w-full">
                     <Image
                       src={anuncio.caminho_imagem}
                       alt={anuncio.nome_campanha}
                       width={600}
                       height={400}
-                      className="w-28 h-28 object-cover rounded-md"
+                      className="w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28 object-cover rounded-md flex-shrink-0"
                     />
-                    <div className="w-1/2 flex flex-col gap-1">
-                      <h3 className="text-lg font-semibold text-gray-800">{anuncio.nome_campanha}</h3>
-                      <div className="flex items-center gap-2">
-                        <p className="text-gray-600 text-xs">Início: {anuncio.inicio_campanha}</p> |
-                        <p className="text-gray-600 text-xs">Periodo de Duração: <span className="text-orange-600 font-bold">{anuncio.duracao_campanha_semanas} Semanas</span></p>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-base sm:text-lg font-semibold text-gray-800 mb-1 sm:mb-2">{anuncio.nome_campanha}</h3>
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 mb-1 sm:mb-2">
+                        <p className="text-gray-600 text-xs">Início: {anuncio.inicio_campanha}</p>
+                        <span className="hidden sm:inline">|</span>
+                        <p className="text-gray-600 text-xs">Período: <span className="text-orange-600 font-bold">{anuncio.duracao_campanha_semanas} Semanas</span></p>
                       </div>
-                      <p className={
+                      <p className={`text-sm sm:text-base font-medium mb-2 sm:mb-3 ${
                         anuncio.status === "aprovado" ? "text-green-500"
                           : anuncio.status === "rejeitado" ? "text-red-500"
                             : "text-yellow-500"
-                      }>
+                      }`}>
                         {statusText}
                       </p>
-                      <div className="flex items-center gap-2">
-                        <button className="w-60 text-xs rounded-sm p-2 whitespace-nowrap border border-gray-300">Ver detalhes da campanha</button>
+                      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
+                        <button className="w-full sm:w-auto text-xs rounded-sm p-2 whitespace-nowrap border border-gray-300 hover:bg-gray-50 transition-colors">
+                          Ver detalhes da campanha
+                        </button>
                         <button 
-                          className={`text-xs rounded-sm w-24 p-2 border ${
+                          className={`w-full sm:w-auto text-xs rounded-sm p-2 border transition-colors ${
                             statusText === "Arte em Análise..." 
                               ? "border-gray-300 text-gray-400 cursor-not-allowed" 
                               : "border-blue-500 text-blue-500 hover:bg-blue-50"
@@ -306,7 +310,11 @@ const MeusAnuncios = () => {
                       </div>
                     </div>
                   </div>
-                  <h2 className="font-bold">R$ {anuncio.preco}</h2>
+                  {/* Preço */}
+                  <div className="w-full sm:w-auto flex justify-between sm:flex-col items-center sm:items-end gap-2">
+                    <span className="text-sm sm:text-base text-gray-600 sm:hidden">Preço:</span>
+                    <h2 className="font-bold text-lg sm:text-xl text-orange-600">R$ {anuncio.preco.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</h2>
+                  </div>
                 </div>
               </>
             );
@@ -314,25 +322,42 @@ const MeusAnuncios = () => {
         </div>
       )}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 bg-opacity-50" onClick={() => setIsModalOpen(false)}>
-          <div className="bg-white p-4 rounded-lg" onClick={(e) => e.stopPropagation()}>
-            <h2 className="text-lg font-semibold mb-2">Trocar Arte</h2>
-            <input
-              type="file"
-              accept="image/*,video/*"
-              id="upload-art"
-              className="border border-gray-200 p-2"
-              onChange={(e) => {
-                const file = e.target.files && e.target.files[0];
-                setSelectedFile(file || null);
-              }}
-            />
-            <div className="flex justify-end gap-2 mt-4">
-              <button className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded" onClick={() => setIsModalOpen(false)}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 bg-opacity-50 p-4" onClick={() => setIsModalOpen(false)}>
+          <div className="bg-white p-4 sm:p-6 rounded-lg w-full max-w-md mx-auto" onClick={(e) => e.stopPropagation()}>
+            <h2 className="text-lg sm:text-xl font-semibold mb-4 text-gray-800">Trocar Arte</h2>
+            <div className="mb-4">
+              <label htmlFor="upload-art" className="block text-sm font-medium text-gray-700 mb-2">
+                Selecionar nova arte
+              </label>
+              <input
+                type="file"
+                accept="image/*,video/*"
+                id="upload-art"
+                className="w-full border border-gray-300 rounded-md p-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                onChange={(e) => {
+                  const file = e.target.files && e.target.files[0];
+                  setSelectedFile(file || null);
+                }}
+              />
+              {selectedFile && (
+                <p className="text-xs text-green-600 mt-1">
+                  Arquivo selecionado: {selectedFile.name}
+                </p>
+              )}
+            </div>
+            <div className="flex flex-col sm:flex-row justify-end gap-2 sm:gap-3">
+              <button 
+                className="w-full sm:w-auto bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded transition-colors" 
+                onClick={() => setIsModalOpen(false)}
+              >
                 Cancelar
               </button>
-              <button className="bg-orange-600 hover:bg-orange-500 text-white font-bold py-2 px-4 rounded" onClick={handleTrocarArte}>
-                Trocar
+              <button 
+                className="w-full sm:w-auto bg-orange-600 hover:bg-orange-500 text-white font-bold py-2 px-4 rounded transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed" 
+                onClick={handleTrocarArte}
+                disabled={!selectedFile}
+              >
+                Trocar Arte
               </button>
             </div>
           </div>
