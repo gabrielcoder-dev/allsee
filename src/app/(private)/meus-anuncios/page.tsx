@@ -234,10 +234,10 @@ const MeusAnuncios = () => {
 
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen">
       {/* Header fixo */}
-      <div className="sticky top-0 bg-white z-10">
-        <div className="px-6 py-3 max-w-4xl mx-auto">
+      <div className="sticky top-0 z-10">
+        <div className="px-6 pt-8 max-w-4xl mx-auto">
           <Link href="/results" className="flex items-center gap-3 text-xl font-semibold text-black hover:text-gray-700 mb-4">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" stroke="currentColor" className="w-5 h-5">
               <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
