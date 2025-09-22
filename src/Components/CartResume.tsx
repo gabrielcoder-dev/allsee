@@ -472,7 +472,7 @@ export default function CartResume({ onCartArtSelected, onCampaignNameChange, ar
               )}
             </div>
             {/* Bloco de duração como select global e início */}
-            <div className="flex flex-col sm:flex-row gap-4 mb-2 items-start sm:items-end">
+            <div className="flex flex-col sm:flex-row gap-4 mb-2 items-start sm:items-start">
               <div className="flex flex-col gap-1">
                 <label className="block text-xs text-gray-500 font-bold mb-1">Duração</label>
                 <Select value={duration} onValueChange={handleDurationChange}>
@@ -488,7 +488,7 @@ export default function CartResume({ onCartArtSelected, onCampaignNameChange, ar
                   </SelectContent>
                 </Select>
               </div>
-              <div>
+              <div className="flex flex-col gap-1">
                 <span className="block text-xs text-gray-500 font-bold mb-1">Início</span>
                 <Popover>
                   <PopoverTrigger asChild>
