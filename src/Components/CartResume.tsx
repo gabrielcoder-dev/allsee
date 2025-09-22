@@ -106,11 +106,12 @@ const renderTypeScreenBadge = (type: string | undefined) => {
   }
 };
 
-export default function CartResume({ onCartArtSelected, onCampaignNameChange, artError, campaignError }: {
+export default function CartResume({ onCartArtSelected, onCampaignNameChange, artError, campaignError, dateError }: {
   onCartArtSelected?: (selected: boolean) => void,
   onCampaignNameChange?: (name: string) => void,
   artError?: string,
-  campaignError?: string
+  campaignError?: string,
+  dateError?: string
 } = {}) {
   const { 
     produtos, 
@@ -493,10 +494,12 @@ export default function CartResume({ onCartArtSelected, onCampaignNameChange, ar
                   <PopoverTrigger asChild>
                     <Button
                       variant="outline"
-                      className="w-full sm:w-auto bg-gray-50 rounded-lg px-3 py-2 flex items-center gap-2"
+                      className={`w-full sm:w-auto rounded-lg px-3 py-2 flex items-center gap-2 ${
+                        dateError ? 'border-red-500 bg-red-50' : 'bg-gray-50'
+                      }`}
                     >
-                      <CalendarIcon className="w-4 h-4 text-orange-500" />
-                      <span>
+                      <CalendarIcon className={`w-4 h-4 ${dateError ? 'text-red-500' : 'text-orange-500'}`} />
+                      <span className={dateError ? 'text-red-500' : ''}>
                         {startDate && /^\d{4}-\d{2}-\d{2}$/.test(startDate)
                           ? formatDateBR(parseLocalDateString(startDate))
                           : "início"}
@@ -521,6 +524,9 @@ export default function CartResume({ onCartArtSelected, onCampaignNameChange, ar
                     />
                   </PopoverContent>
                 </Popover>
+                {dateError && (
+                  <span className="text-red-500 text-xs mt-1 block">{dateError}</span>
+                )}
               </div>
             </div>
             {/* Performance projetada */}

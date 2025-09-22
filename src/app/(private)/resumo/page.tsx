@@ -16,6 +16,7 @@ const page = () => {
   const { produtos, formData, removerProduto } = useCart();
   const [artError, setArtError] = useState<string | undefined>(undefined);
   const [campaignError, setCampaignError] = useState<string | undefined>(undefined);
+  const [dateError, setDateError] = useState<string | undefined>(undefined);
 
   // Validação automática dos itens do carrinho ao abrir a página
   useEffect(() => {
@@ -59,13 +60,21 @@ const page = () => {
     } else {
       setCampaignError(undefined);
     }
+    if (!formData.startDate || !/^\d{4}-\d{2}-\d{2}$/.test(formData.startDate)) {
+      setDateError('Por favor, selecione uma data de início.');
+      hasError = true;
+    } else {
+      setDateError(undefined);
+    }
     if (hasError) {
-      if (!formData.isArtSelected && !formData.campaignName.trim()) {
-        toast.warning('Por favor, selecione uma arte e escolha um nome para a campanha.');
+      if (!formData.isArtSelected && !formData.campaignName.trim() && !formData.startDate) {
+        toast.warning('Por favor, selecione uma arte, escolha um nome para a campanha e selecione uma data de início.');
       } else if (!formData.isArtSelected) {
         toast.warning('Por favor, selecione uma arte para avançar.');
       } else if (!formData.campaignName.trim()) {
         toast.warning('Por favor, escolha um nome para a campanha.');
+      } else if (!formData.startDate) {
+        toast.warning('Por favor, selecione uma data de início.');
       }
       return;
     }
@@ -79,6 +88,7 @@ const page = () => {
         <CartResume 
           artError={artError}
           campaignError={campaignError}
+          dateError={dateError}
         />
       </div>
       <div className="flex items-center justify-between p-5 border-t border-gray-200">
