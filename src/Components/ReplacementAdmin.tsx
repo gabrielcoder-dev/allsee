@@ -137,7 +137,7 @@ const ReplacementAdmin = () => {
                   if (currentStatus === "aprovado") {
                     localStorage.removeItem(`replacement_order_${order.id_campanha}`);
                   } else {
-                    handleApprove(order.id);
+                    handleApprove(order.id_campanha);
                   }
                 }}
               >
@@ -150,7 +150,7 @@ const ReplacementAdmin = () => {
                   if (currentStatus === "rejeitado") {
                     localStorage.removeItem(`replacement_order_${order.id_campanha}`);
                   } else {
-                    handleReject(order.id);
+                    handleReject(order.id_campanha);
                   }
                 }}
               >

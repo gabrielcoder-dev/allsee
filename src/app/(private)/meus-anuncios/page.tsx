@@ -127,7 +127,8 @@ const MeusAnuncios = () => {
            // Retrieve status from arteTrocaCampanhas or local storage
            const arteTrocaCampanhaStatus = arteTrocaCampanhas?.find(atc => atc.id_campanha === orders[0].id) || null;
            const localStorageStatus = localStorage.getItem(`order_${orders[0].id}`) || null;
-           const status = arteTrocaCampanhaStatus || localStorageStatus;
+           const replacementStatus = localStorage.getItem(`replacement_order_${orders[0].id}`) || null;
+           const status = replacementStatus || arteTrocaCampanhaStatus || localStorageStatus;
 
           return {
             id: arteCampanha.id,
