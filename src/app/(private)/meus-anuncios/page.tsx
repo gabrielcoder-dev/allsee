@@ -126,7 +126,7 @@ const MeusAnuncios = () => {
 
            // Retrieve status from arteTrocaCampanhas or local storage
            const arteTrocaCampanhaStatus = arteTrocaCampanhas?.find(atc => atc.id_campanha === orders[0].id) || null;
-           const localStorageStatus = localStorage.getItem(`anuncio_${arteCampanha.id}_status`) || null;
+           const localStorageStatus = localStorage.getItem(`order_${orders[0].id}`) || null;
            const status = arteTrocaCampanhaStatus || localStorageStatus;
 
           return {
@@ -189,7 +189,7 @@ const MeusAnuncios = () => {
         }
 
         // Remove o status do localStorage para que a arte volte para "Em Análise"
-        localStorage.removeItem(`anuncio_${selectedAnuncioId}_status`);
+        localStorage.removeItem(`order_${anuncio.order_id}`);
 
         console.log("Arquivo enviado e caminho da imagem inserido com sucesso!");
         setIsModalOpen(false);
@@ -238,7 +238,7 @@ const MeusAnuncios = () => {
             if (anuncio.status === "aprovado") {
               statusText = "Arte Aceita";
             } else if (anuncio.status === "rejeitado") {
-              statusText = "Arte Não Aceita";
+              statusText = "Arte Recusada";
             }
 
             return (
