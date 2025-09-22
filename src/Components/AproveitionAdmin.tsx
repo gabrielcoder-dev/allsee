@@ -19,6 +19,7 @@ const AproveitionAdmin = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [modalFile, setModalFile] = useState<{ url: string; id: number } | null>(null);
+  const [hiddenOrders, setHiddenOrders] = useState<Set<number>>(new Set());
 
   const getOrderStatus = (orderId: number) => {
     return localStorage.getItem(`order_${orderId}`) || "pendente";
@@ -62,7 +63,7 @@ const AproveitionAdmin = () => {
     <div className="w-full h-full p-3 md:p-6 overflow-auto">
       <h2 className="text-2xl md:text-3xl font-bold text-orange-600 mb-4 md:mb-6">Aprovação de Pedidos</h2>
       <div className="space-y-3 md:space-y-4">
-        {orders.map((order) => (
+        {orders.filter(order => !hiddenOrders.has(order.order_id)).map((order) => (
           <div
             key={order.id}
             className="flex flex-col md:flex-row md:items-center gap-3 md:gap-4 justify-between border border-gray-300 rounded-xl md:rounded-2xl p-3 md:p-4 bg-white shadow-sm"
@@ -121,8 +122,14 @@ const AproveitionAdmin = () => {
                   const currentStatus = getOrderStatus(order.order_id);
                   if (currentStatus === "aprovado") {
                     localStorage.removeItem(`order_${order.order_id}`);
+                    setHiddenOrders(prev => {
+                      const newSet = new Set(prev);
+                      newSet.delete(order.order_id);
+                      return newSet;
+                    });
                   } else {
                     localStorage.setItem(`order_${order.order_id}`, "aprovado");
+                    setHiddenOrders(prev => new Set(prev).add(order.order_id));
                   }
                 }}
               >
@@ -134,8 +141,14 @@ const AproveitionAdmin = () => {
                   const currentStatus = getOrderStatus(order.order_id);
                   if (currentStatus === "rejeitado") {
                     localStorage.removeItem(`order_${order.order_id}`);
+                    setHiddenOrders(prev => {
+                      const newSet = new Set(prev);
+                      newSet.delete(order.order_id);
+                      return newSet;
+                    });
                   } else {
                     localStorage.setItem(`order_${order.order_id}`, "rejeitado");
+                    setHiddenOrders(prev => new Set(prev).add(order.order_id));
                   }
                 }}
               >

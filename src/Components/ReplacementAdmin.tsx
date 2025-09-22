@@ -60,14 +60,84 @@ const ReplacementAdmin = () => {
     document.body.removeChild(a);
   };
 
-  const handleApprove = (orderId: number) => {
-    localStorage.setItem(`replacement_order_${orderId}`, "aprovado");
-    window.dispatchEvent(new Event('storage'));
+  const handleApprove = async (orderId: number, imagePath: string) => {
+    try {
+      // 1. Primeiro, transferir a imagem para arte_campanha
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL as string;
+      const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string;
+      const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
+      // Buscar o arte_campanha correspondente pelo id_campanha
+      const { data: arteCampanha, error: fetchError } = await supabase
+        .from('arte_campanha')
+        .select('id')
+        .eq('id_order', orderId)
+        .single();
+
+      if (fetchError) {
+        console.error('Erro ao buscar arte_campanha:', fetchError);
+        return;
+      }
+
+      // Atualizar o caminho_imagem na tabela arte_campanha
+      const { error: updateError } = await supabase
+        .from('arte_campanha')
+        .update({ caminho_imagem: imagePath })
+        .eq('id', arteCampanha.id);
+
+      if (updateError) {
+        console.error('Erro ao atualizar arte_campanha:', updateError);
+        return;
+      }
+
+      // 2. Excluir o registro da tabela arte_troca_campanha
+      const { error: deleteError } = await supabase
+        .from('arte_troca_campanha')
+        .delete()
+        .eq('id_campanha', orderId);
+
+      if (deleteError) {
+        console.error('Erro ao excluir arte_troca_campanha:', deleteError);
+        return;
+      }
+
+      // 3. Atualizar o localStorage e remover o card
+      localStorage.setItem(`replacement_order_${orderId}`, "aprovado");
+      setOrders(prev => prev.filter(order => order.id_campanha !== orderId));
+      window.dispatchEvent(new Event('storage'));
+
+      console.log('Arte aprovada e transferida com sucesso!');
+    } catch (error) {
+      console.error('Erro ao aprovar arte:', error);
+    }
   };
 
-  const handleReject = (orderId: number) => {
-    localStorage.setItem(`replacement_order_${orderId}`, "rejeitado");
-    window.dispatchEvent(new Event('storage'));
+  const handleReject = async (orderId: number) => {
+    try {
+      // Excluir o registro da tabela arte_troca_campanha
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL as string;
+      const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string;
+      const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
+      const { error: deleteError } = await supabase
+        .from('arte_troca_campanha')
+        .delete()
+        .eq('id_campanha', orderId);
+
+      if (deleteError) {
+        console.error('Erro ao excluir arte_troca_campanha:', deleteError);
+        return;
+      }
+
+      // Atualizar o localStorage e remover o card
+      localStorage.setItem(`replacement_order_${orderId}`, "rejeitado");
+      setOrders(prev => prev.filter(order => order.id_campanha !== orderId));
+      window.dispatchEvent(new Event('storage'));
+
+      console.log('Arte rejeitada e excluída com sucesso!');
+    } catch (error) {
+      console.error('Erro ao rejeitar arte:', error);
+    }
   };
 
   if (loading) return <div className="p-4">Carregando pedidos...</div>;
@@ -137,7 +207,7 @@ const ReplacementAdmin = () => {
                   if (currentStatus === "aprovado") {
                     localStorage.removeItem(`replacement_order_${order.id_campanha}`);
                   } else {
-                    handleApprove(order.id_campanha);
+                    handleApprove(order.id_campanha, order.caminho_imagem || "");
                   }
                 }}
               >
