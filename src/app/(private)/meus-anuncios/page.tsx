@@ -287,10 +287,22 @@ const MeusAnuncios = () => {
                       </p>
                       <div className="flex items-center gap-2">
                         <button className="w-60 text-xs rounded-sm p-2 whitespace-nowrap border border-gray-300">Ver detalhes da campanha</button>
-                        <button className="text-xs rounded-sm w-24 p-2 border border-blue-500 text-blue-500" onClick={() => {
-                          setIsModalOpen(true);
-                          setSelectedAnuncioId(anuncio.id);
-                        }}>Trocar arte</button>
+                        <button 
+                          className={`text-xs rounded-sm w-24 p-2 border ${
+                            statusText === "Arte em Análise..." 
+                              ? "border-gray-300 text-gray-400 cursor-not-allowed" 
+                              : "border-blue-500 text-blue-500 hover:bg-blue-50"
+                          }`}
+                          onClick={() => {
+                            if (statusText !== "Arte em Análise...") {
+                              setIsModalOpen(true);
+                              setSelectedAnuncioId(anuncio.id);
+                            }
+                          }}
+                          disabled={statusText === "Arte em Análise..."}
+                        >
+                          Trocar arte
+                        </button>
                       </div>
                     </div>
                   </div>
