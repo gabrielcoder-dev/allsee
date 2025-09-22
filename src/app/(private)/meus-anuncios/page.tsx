@@ -234,131 +234,177 @@ const MeusAnuncios = () => {
 
 
   return (
-    <div className="w-full h-full p-3 sm:p-4 md:px-8 lg:px-32">
-      <Link href="/results" className="flex text-sm items-center gap-2 mb-4 text-gray-600 hover:text-orange-600">
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor" className="w-5 h-5 sm:w-6 sm:h-6">
-          <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
-        </svg>
-        Voltar
-      </Link>
+    <div className="min-h-screen bg-gray-50">
+      {/* Header fixo */}
+      <div className="sticky top-0 bg-white shadow-sm border-b z-10">
+        <div className="px-4 py-3">
+          <Link href="/results" className="flex items-center gap-2 text-sm text-gray-600 hover:text-orange-600 mb-3">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor" className="w-4 h-4">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+            </svg>
+            Voltar
+          </Link>
+          <h1 className="text-lg font-bold text-gray-900">Meus Anúncios</h1>
+        </div>
+      </div>
 
-      <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-orange-600 mb-4 md:mb-6">Meus Anúncios</h2>
-
-      {loading ? (
+      {/* Conteúdo principal */}
+      <div className="px-4 py-4 max-w-7xl mx-auto">
+        {loading ? (
         <p>Carregando anúncios...</p>
       ) : error ? (
         <p className="text-red-500">Erro: {error}</p>
       ) : (
-        <div className="flex flex-col gap-3 sm:gap-4 p-2 sm:p-4">
+        <div className="grid gap-4 md:gap-6">
           {anuncios.map((anuncio) => {
             let statusText = "Arte em Análise...";
+            let statusColor = "yellow";
             if (anuncio.status === "aprovado") {
               statusText = "Arte Aceita";
+              statusColor = "green";
             } else if (anuncio.status === "rejeitado") {
               statusText = "Arte Recusada";
+              statusColor = "red";
             }
             
             // Debug: verificar o status
             console.log(`Anúncio ${anuncio.id} - Status: ${anuncio.status}, StatusText: ${statusText}`);
 
             return (
-              <>
-                <div key={anuncio.id} className="flex flex-col sm:flex-row p-3 sm:p-4 items-start sm:items-center justify-between w-full rounded-xl sm:rounded-2xl border border-gray-200 gap-3 sm:gap-4">
-                  {/* Imagem e conteúdo principal */}
-                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 w-full">
-                    <Image
-                      src={anuncio.caminho_imagem}
-                      alt={anuncio.nome_campanha}
-                      width={600}
-                      height={400}
-                      className="w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28 object-cover rounded-md flex-shrink-0"
-                    />
-                    <div className="flex-1 min-w-0">
-                      <h3 className="text-base sm:text-lg font-semibold text-gray-800 mb-1 sm:mb-2">{anuncio.nome_campanha}</h3>
-                      <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 mb-1 sm:mb-2">
-                        <p className="text-gray-600 text-xs">Início: {anuncio.inicio_campanha}</p>
-                        <span className="hidden sm:inline">|</span>
-                        <p className="text-gray-600 text-xs">Período: <span className="text-orange-600 font-bold">{anuncio.duracao_campanha_semanas} Semanas</span></p>
-                      </div>
-                      <p className={`text-sm sm:text-base font-medium mb-2 sm:mb-3 ${
-                        anuncio.status === "aprovado" ? "text-green-500"
-                          : anuncio.status === "rejeitado" ? "text-red-500"
-                            : "text-yellow-500"
-                      }`}>
-                        {statusText}
-                      </p>
-                      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
-                        <button className="w-full sm:w-auto text-xs rounded-sm p-2 whitespace-nowrap border border-gray-300 hover:bg-gray-50 transition-colors">
-                          Ver detalhes da campanha
-                        </button>
-                        <button 
-                          className={`w-full sm:w-auto text-xs rounded-sm p-2 border transition-colors ${
-                            statusText === "Arte em Análise..." 
-                              ? "border-gray-300 text-gray-400 cursor-not-allowed" 
-                              : "border-blue-500 text-blue-500 hover:bg-blue-50"
-                          }`}
-                          onClick={() => {
-                            if (statusText !== "Arte em Análise...") {
-                              setIsModalOpen(true);
-                              setSelectedAnuncioId(anuncio.id);
-                            }
-                          }}
-                          disabled={statusText === "Arte em Análise..."}
-                        >
-                          Trocar arte
-                        </button>
+              <div key={anuncio.id} className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                {/* Header do card */}
+                <div className="p-4 border-b border-gray-100">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <Image
+                        src={anuncio.caminho_imagem}
+                        alt={anuncio.nome_campanha}
+                        width={60}
+                        height={60}
+                        className="w-12 h-12 object-cover rounded-lg"
+                      />
+                      <div>
+                        <h3 className="font-semibold text-gray-900 text-sm">{anuncio.nome_campanha}</h3>
+                        <p className="text-xs text-gray-500">Início: {anuncio.inicio_campanha}</p>
                       </div>
                     </div>
-                  </div>
-                  {/* Preço */}
-                  <div className="w-full sm:w-auto flex justify-between sm:flex-col items-center sm:items-end gap-2">
-                    <span className="text-sm sm:text-base text-gray-600 sm:hidden">Preço:</span>
-                    <h2 className="font-bold text-lg sm:text-xl text-orange-600">R$ {anuncio.preco.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</h2>
+                    <div className="text-right">
+                      <p className="text-lg font-bold text-orange-600">R$ {anuncio.preco.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+                      <p className="text-xs text-gray-500">{anuncio.duracao_campanha_semanas} semanas</p>
+                    </div>
                   </div>
                 </div>
-              </>
+
+                {/* Status e ações */}
+                <div className="p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium ${
+                      statusColor === "green" ? "bg-green-100 text-green-700" :
+                      statusColor === "red" ? "bg-red-100 text-red-700" :
+                      "bg-yellow-100 text-yellow-700"
+                    }`}>
+                      <div className={`w-2 h-2 rounded-full ${
+                        statusColor === "green" ? "bg-green-500" :
+                        statusColor === "red" ? "bg-red-500" :
+                        "bg-yellow-500"
+                      }`}></div>
+                      {statusText}
+                    </div>
+                  </div>
+                  
+                  <div className="flex gap-2">
+                    <button className="flex-1 text-xs font-medium py-2 px-3 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors">
+                      Ver detalhes
+                    </button>
+                    <button 
+                      className={`flex-1 text-xs font-medium py-2 px-3 rounded-lg border transition-colors ${
+                        statusText === "Arte em Análise..." 
+                          ? "border-gray-200 text-gray-400 cursor-not-allowed" 
+                          : "border-orange-200 text-orange-600 hover:bg-orange-50"
+                      }`}
+                      onClick={() => {
+                        if (statusText !== "Arte em Análise...") {
+                          setIsModalOpen(true);
+                          setSelectedAnuncioId(anuncio.id);
+                        }
+                      }}
+                      disabled={statusText === "Arte em Análise..."}
+                    >
+                      Trocar arte
+                    </button>
+                  </div>
+                </div>
+              </div>
             );
           })}
         </div>
-      )}
+        )}
+      </div>
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 bg-opacity-50 p-4" onClick={() => setIsModalOpen(false)}>
-          <div className="bg-white p-4 sm:p-6 rounded-lg w-full max-w-md mx-auto" onClick={(e) => e.stopPropagation()}>
-            <h2 className="text-lg sm:text-xl font-semibold mb-4 text-gray-800">Trocar Arte</h2>
-            <div className="mb-4">
-              <label htmlFor="upload-art" className="block text-sm font-medium text-gray-700 mb-2">
-                Selecionar nova arte
-              </label>
-              <input
-                type="file"
-                accept="image/*,video/*"
-                id="upload-art"
-                className="w-full border border-gray-300 rounded-md p-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                onChange={(e) => {
-                  const file = e.target.files && e.target.files[0];
-                  setSelectedFile(file || null);
-                }}
-              />
-              {selectedFile && (
-                <p className="text-xs text-green-600 mt-1">
-                  Arquivo selecionado: {selectedFile.name}
-                </p>
-              )}
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={() => setIsModalOpen(false)}>
+          <div className="bg-white rounded-2xl w-full max-w-sm mx-auto shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            {/* Header do modal */}
+            <div className="p-6 border-b border-gray-100">
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-semibold text-gray-900">Trocar Arte</h2>
+                <button 
+                  onClick={() => setIsModalOpen(false)}
+                  className="p-1 hover:bg-gray-100 rounded-full transition-colors"
+                >
+                  <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
             </div>
-            <div className="flex flex-col sm:flex-row justify-end gap-2 sm:gap-3">
-              <button 
-                className="w-full sm:w-auto bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded transition-colors" 
-                onClick={() => setIsModalOpen(false)}
-              >
-                Cancelar
-              </button>
-              <button 
-                className="w-full sm:w-auto bg-orange-600 hover:bg-orange-500 text-white font-bold py-2 px-4 rounded transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed" 
-                onClick={handleTrocarArte}
-                disabled={!selectedFile}
-              >
-                Trocar Arte
-              </button>
+
+            {/* Conteúdo do modal */}
+            <div className="p-6">
+              <div className="mb-6">
+                <label htmlFor="upload-art" className="block text-sm font-medium text-gray-700 mb-3">
+                  Selecionar nova arte
+                </label>
+                <div className="relative">
+                  <input
+                    type="file"
+                    accept="image/*,video/*"
+                    id="upload-art"
+                    className="w-full border-2 border-dashed border-gray-300 rounded-xl p-4 text-sm focus:outline-none focus:border-orange-500 focus:bg-orange-50 transition-colors file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-orange-100 file:text-orange-700 hover:file:bg-orange-200"
+                    onChange={(e) => {
+                      const file = e.target.files && e.target.files[0];
+                      setSelectedFile(file || null);
+                    }}
+                  />
+                </div>
+                {selectedFile && (
+                  <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-lg">
+                    <div className="flex items-center gap-2">
+                      <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      <p className="text-xs text-green-700 font-medium">
+                        {selectedFile.name}
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
+              
+              <div className="flex gap-3">
+                <button 
+                  className="flex-1 py-3 px-4 rounded-xl border border-gray-200 text-gray-600 font-medium hover:bg-gray-50 transition-colors" 
+                  onClick={() => setIsModalOpen(false)}
+                >
+                  Cancelar
+                </button>
+                <button 
+                  className="flex-1 py-3 px-4 rounded-xl bg-orange-600 text-white font-medium hover:bg-orange-700 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed" 
+                  onClick={handleTrocarArte}
+                  disabled={!selectedFile}
+                >
+                  Trocar Arte
+                </button>
+              </div>
             </div>
           </div>
         </div>
