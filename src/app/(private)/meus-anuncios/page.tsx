@@ -317,7 +317,7 @@ const MeusAnuncios = () => {
                     </div>
                     <div className="text-right">
                       <p className="text-lg font-bold text-orange-600">R$ {anuncio.preco.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
-                      <p className="text-xs text-gray-500">{anuncio.duracao_campanha_semanas} dias</p>
+                      <p className="text-xs text-gray-500">{anuncio.duracao_campanha_semanas} semanas</p>
                     </div>
                   </div>
                 </div>
