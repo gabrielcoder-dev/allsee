@@ -238,13 +238,13 @@ const MeusAnuncios = () => {
       {/* Header fixo */}
       <div className="sticky top-0 bg-white z-10">
         <div className="px-6 py-3 max-w-4xl mx-auto">
-          <Link href="/results" className="flex items-center gap-3 text-xl font-bold text-black hover:text-gray-700 mb-4">
+          <Link href="/results" className="flex items-center gap-3 text-xl font-semibold text-black hover:text-gray-700 mb-4">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" stroke="currentColor" className="w-5 h-5">
               <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
             </svg>
             Voltar
           </Link>
-          <h1 className="text-3xl text-orange-600">Meus Anúncios</h1>
+          <h1 className="text-3xl font-bold text-orange-600">Meus Anúncios</h1>
         </div>
       </div>
 
