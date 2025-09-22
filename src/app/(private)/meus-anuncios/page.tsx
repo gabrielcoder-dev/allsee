@@ -237,7 +237,7 @@ const MeusAnuncios = () => {
     <div className="min-h-screen bg-gray-50">
       {/* Header fixo */}
       <div className="sticky top-0 bg-white shadow-sm border-b z-10">
-        <div className="px-4 py-3">
+        <div className="px-6 py-3 max-w-4xl mx-auto">
           <Link href="/results" className="flex items-center gap-2 text-sm text-gray-600 hover:text-orange-600 mb-3">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor" className="w-4 h-4">
               <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
@@ -249,13 +249,13 @@ const MeusAnuncios = () => {
       </div>
 
       {/* Conteúdo principal */}
-      <div className="px-4 py-4 max-w-7xl mx-auto">
+      <div className="px-6 py-4 max-w-4xl mx-auto">
         {loading ? (
         <p>Carregando anúncios...</p>
       ) : error ? (
         <p className="text-red-500">Erro: {error}</p>
       ) : (
-        <div className="grid gap-4 md:gap-6">
+        <div className="grid gap-4 md:gap-6 pb-8">
           {anuncios.map((anuncio) => {
             let statusText = "Arte em Análise...";
             let statusColor = "yellow";
