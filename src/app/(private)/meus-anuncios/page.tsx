@@ -129,6 +129,14 @@ const MeusAnuncios = () => {
            const localStorageStatus = localStorage.getItem(`order_${orders[0].id}`) || null;
            const replacementStatus = localStorage.getItem(`replacement_order_${orders[0].id}`) || null;
            const status = replacementStatus || arteTrocaCampanhaStatus || localStorageStatus;
+           
+           // Debug: verificar todos os status
+           console.log(`Order ${orders[0].id}:`, {
+             arteTrocaCampanhaStatus,
+             localStorageStatus,
+             replacementStatus,
+             finalStatus: status
+           });
 
           return {
             id: arteCampanha.id,
@@ -169,6 +177,8 @@ const MeusAnuncios = () => {
         console.error("Anúncio não encontrado.");
         return;
       }
+      
+      console.log(`Trocando arte para anuncio.id: ${selectedAnuncioId}, order_id: ${anuncio.order_id}`);
 
       // Converter o arquivo para base64
       const reader = new FileReader();
@@ -191,6 +201,9 @@ const MeusAnuncios = () => {
 
         // Remove o status do localStorage para que a arte volte para "Em Análise"
         localStorage.removeItem(`order_${anuncio.order_id}`);
+        localStorage.removeItem(`replacement_order_${anuncio.order_id}`);
+        
+        console.log(`Removendo status do localStorage para order ${anuncio.order_id}`);
 
         console.log("Arquivo enviado e caminho da imagem inserido com sucesso!");
         setIsModalOpen(false);
@@ -202,6 +215,9 @@ const MeusAnuncios = () => {
           draggable: true,
           progress: undefined,
         });
+        
+        // Atualizar a página para mostrar o novo status
+        setRefresh(!refresh);
       };
 
       reader.onerror = (error) => {
@@ -241,6 +257,9 @@ const MeusAnuncios = () => {
             } else if (anuncio.status === "rejeitado") {
               statusText = "Arte Recusada";
             }
+            
+            // Debug: verificar o status
+            console.log(`Anúncio ${anuncio.id} - Status: ${anuncio.status}, StatusText: ${statusText}`);
 
             return (
               <>
