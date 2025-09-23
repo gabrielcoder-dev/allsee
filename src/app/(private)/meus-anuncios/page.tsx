@@ -48,13 +48,23 @@ const MeusAnuncios = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [refresh, setRefresh] = useState(false);
   const [diasRestantes, setDiasRestantes] = useState<number | null>(null);
+  const [alcanceAtual, setAlcanceAtual] = useState<number>(0);
 
-  // Atualizar dias restantes a cada minuto
+  // Atualizar dias restantes e alcance atual a cada minuto
   useEffect(() => {
     const interval = setInterval(() => {
       if (orderDetails) {
         const dias = calcularDiasRestantes(orderDetails.inicio_campanha, orderDetails.duracao_campanha);
         setDiasRestantes(dias);
+        
+        if (orderDetails.alcance_campanha) {
+          const alcance = calcularAlcanceAtual(
+            orderDetails.alcance_campanha, 
+            orderDetails.inicio_campanha, 
+            orderDetails.duracao_campanha
+          );
+          setAlcanceAtual(alcance);
+        }
       }
     }, 60000); // Atualiza a cada minuto
 
@@ -206,34 +216,63 @@ const MeusAnuncios = () => {
     return Math.max(0, diasRestantes); // Retorna 0 se já passou do prazo
   };
 
-  // Função para calcular distribuição de alcance por hora
-  const calcularDistribuicaoAlcance = (alcanceTotal: number, diasRestantes: number) => {
-    if (diasRestantes <= 0) return [];
+  // Função para calcular alcance atual baseado nas horas passadas desde o início
+  const calcularAlcanceAtual = (alcanceTotal: number, inicioCampanha: string, duracaoCampanha: number) => {
+    const dataAtual = new Date();
+    const dataInicio = new Date(inicioCampanha);
     
-    const horasPorDia = 10; // 7h às 17h = 10 horas
-    const totalHoras = diasRestantes * horasPorDia;
+    // Se ainda não começou, retorna 0
+    if (dataAtual < dataInicio) return 0;
+    
+    const duracaoDias = duracaoCampanha * 7;
+    const dataFim = new Date(dataInicio);
+    dataFim.setDate(dataFim.getDate() + duracaoDias);
+    
+    // Se já terminou, retorna o total
+    if (dataAtual >= dataFim) return alcanceTotal;
+    
+    // Calcular horas passadas desde o início (apenas horário comercial: 7h às 17h)
+    const horasPassadas = calcularHorasPassadas(dataInicio, dataAtual);
+    const totalHoras = duracaoDias * 10; // 10 horas por dia
+    
     const alcancePorHora = Math.floor(alcanceTotal / totalHoras);
     let resto = alcanceTotal % totalHoras;
     
-    const distribuicao = [];
-    let alcanceAcumulado = 0;
+    let alcanceAtual = 0;
     
-    for (let dia = 0; dia < diasRestantes; dia++) {
-      for (let hora = 7; hora < 17; hora++) {
-        let alcanceHora = alcancePorHora;
-        
-        // Distribuir o resto nas primeiras horas
-        if (resto > 0) {
-          alcanceHora += 1;
-          resto--;
-        }
-        
-        alcanceAcumulado += alcanceHora;
-        distribuicao.push(alcanceAcumulado);
+    for (let i = 0; i < horasPassadas; i++) {
+      let alcanceHora = alcancePorHora;
+      
+      // Distribuir o resto nas primeiras horas
+      if (resto > 0) {
+        alcanceHora += 1;
+        resto--;
       }
+      
+      alcanceAtual += alcanceHora;
     }
     
-    return distribuicao;
+    return alcanceAtual;
+  };
+
+  // Função para calcular horas passadas no horário comercial
+  const calcularHorasPassadas = (dataInicio: Date, dataAtual: Date) => {
+    let horasPassadas = 0;
+    const dataAtualCalculo = new Date(dataInicio);
+    
+    while (dataAtualCalculo < dataAtual) {
+      const diaDaSemana = dataAtualCalculo.getDay();
+      const hora = dataAtualCalculo.getHours();
+      
+      // Só conta dias úteis (1-5) e horário comercial (7-16)
+      if (diaDaSemana >= 1 && diaDaSemana <= 5 && hora >= 7 && hora < 17) {
+        horasPassadas++;
+      }
+      
+      dataAtualCalculo.setHours(dataAtualCalculo.getHours() + 1);
+    }
+    
+    return horasPassadas;
   };
 
   const fetchOrderDetails = async (orderId: number) => {
@@ -254,6 +293,15 @@ const MeusAnuncios = () => {
         if (data) {
           const dias = calcularDiasRestantes(data.inicio_campanha, data.duracao_campanha);
           setDiasRestantes(dias);
+          
+          if (data.alcance_campanha) {
+            const alcance = calcularAlcanceAtual(
+              data.alcance_campanha, 
+              data.inicio_campanha, 
+              data.duracao_campanha
+            );
+            setAlcanceAtual(alcance);
+          }
         }
       }
     } catch (err) {
@@ -524,6 +572,7 @@ const MeusAnuncios = () => {
           setOrderDetails(null);
           setSelectedAnuncioDetails(null);
           setDiasRestantes(null);
+          setAlcanceAtual(0);
         }}>
           <div className="bg-white rounded-2xl w-full max-w-md mx-auto shadow-2xl" onClick={(e) => e.stopPropagation()}>
             {/* Header do modal */}
@@ -598,31 +647,21 @@ const MeusAnuncios = () => {
                       </span>
                     </div>
 
+                    {orderDetails.alcance_campanha && (
+                      <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                        <span className="text-sm font-medium text-gray-600">Alcance por Hora:</span>
+                        <span className="text-sm font-semibold text-blue-600">
+                          {alcanceAtual.toLocaleString('pt-BR')}
+                        </span>
+                      </div>
+                    )}
+
                     <div className="flex justify-between items-center py-3 bg-orange-50 rounded-lg px-3">
                       <span className="text-sm font-medium text-gray-600">Preço Total:</span>
                       <span className="text-lg font-bold text-orange-600">R$ {orderDetails.preco?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
                     </div>
                   </div>
 
-                  {/* Seção de Alcance por Hora */}
-                  {orderDetails.alcance_campanha && diasRestantes !== null && (
-                    <div className="mt-6">
-                      <h3 className="text-lg font-semibold text-gray-900 mb-4">Alcance por Hora</h3>
-                      
-                      <div className="max-h-64 overflow-y-auto space-y-2">
-                        {calcularDistribuicaoAlcance(orderDetails.alcance_campanha, diasRestantes).map((alcance, index) => (
-                          <div key={index} className="flex justify-between items-center py-2 border-b border-gray-100">
-                            <span className="text-sm font-medium text-gray-600">
-                              Hora {index + 1}:
-                            </span>
-                            <span className="text-sm font-semibold text-blue-600">
-                              {alcance.toLocaleString('pt-BR')}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
                 </div>
               ) : (
                 <div className="text-center py-8">
