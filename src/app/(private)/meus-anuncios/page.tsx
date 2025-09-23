@@ -206,6 +206,38 @@ const MeusAnuncios = () => {
     return Math.max(0, diasRestantes); // Retorna 0 se já passou do prazo
   };
 
+  // Função para calcular distribuição de alcance por hora
+  const calcularDistribuicaoAlcance = (alcanceTotal: number, diasRestantes: number) => {
+    if (diasRestantes <= 0) return [];
+    
+    const horasPorDia = 10; // 7h às 17h = 10 horas
+    const totalHoras = diasRestantes * horasPorDia;
+    const alcancePorHora = Math.floor(alcanceTotal / totalHoras);
+    let resto = alcanceTotal % totalHoras;
+    
+    const distribuicao = [];
+    
+    for (let dia = 0; dia < diasRestantes; dia++) {
+      for (let hora = 7; hora < 17; hora++) {
+        let alcanceHora = alcancePorHora;
+        
+        // Distribuir o resto nas primeiras horas
+        if (resto > 0) {
+          alcanceHora += 1;
+          resto--;
+        }
+        
+        distribuicao.push({
+          dia: dia + 1,
+          hora: `${hora.toString().padStart(2, '0')}:00`,
+          alcanceHora
+        });
+      }
+    }
+    
+    return distribuicao;
+  };
+
   const fetchOrderDetails = async (orderId: number) => {
     setLoadingDetails(true);
     try {
@@ -573,6 +605,26 @@ const MeusAnuncios = () => {
                       <span className="text-lg font-bold text-orange-600">R$ {orderDetails.preco?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
                     </div>
                   </div>
+
+                  {/* Seção de Alcance por Hora */}
+                  {orderDetails.alcance_campanha && diasRestantes !== null && (
+                    <div className="mt-6">
+                      <h3 className="text-lg font-semibold text-gray-900 mb-4">Alcance por Hora</h3>
+                      
+                      <div className="max-h-64 overflow-y-auto border border-gray-200 rounded-lg">
+                        {calcularDistribuicaoAlcance(orderDetails.alcance_campanha, diasRestantes).map((item, index) => (
+                          <div key={index} className="px-4 py-3 border-b border-gray-100 hover:bg-gray-50 flex justify-between items-center">
+                            <span className="text-sm font-medium text-gray-900">
+                              Dia {item.dia} - {item.hora}
+                            </span>
+                            <span className="text-sm font-semibold text-blue-600">
+                              {item.alcanceHora.toLocaleString('pt-BR')}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               ) : (
                 <div className="text-center py-8">
