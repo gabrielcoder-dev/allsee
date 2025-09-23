@@ -20,6 +20,7 @@ const AproveitionAdmin = () => {
   const [loading, setLoading] = useState(true);
   const [modalFile, setModalFile] = useState<{ url: string; id: number } | null>(null);
   const [hiddenOrders, setHiddenOrders] = useState<Set<number>>(new Set());
+  const [isInitialized, setIsInitialized] = useState(false);
 
   const getOrderStatus = (orderId: number) => {
     return localStorage.getItem(`order_${orderId}`) || "pendente";
@@ -39,7 +40,9 @@ const AproveitionAdmin = () => {
           }
         }
       }
+      console.log('Hidden orders loaded:', Array.from(hidden));
       setHiddenOrders(hidden);
+      setIsInitialized(true);
     };
     loadHiddenOrders();
   }, []);
@@ -75,14 +78,18 @@ const AproveitionAdmin = () => {
     document.body.removeChild(a);
   };
 
-  if (loading) return <div className="p-4">Carregando pedidos...</div>;
+  if (loading || !isInitialized) return <div className="p-4">Carregando pedidos...</div>;
   if (!orders.length) return <div className="p-4">Nenhum pedido encontrado.</div>;
 
   return (
     <div className="w-full h-full p-3 md:p-6 overflow-auto">
       <h2 className="text-2xl md:text-3xl font-bold text-orange-600 mb-4 md:mb-6">Aprovação de Pedidos</h2>
       <div className="space-y-3 md:space-y-4">
-        {orders.filter(order => !hiddenOrders.has(order.order_id)).map((order) => (
+        {orders.filter(order => {
+          const isHidden = hiddenOrders.has(order.order_id);
+          console.log(`Order ${order.order_id} is hidden:`, isHidden);
+          return !isHidden;
+        }).map((order) => (
           <div
             key={order.id}
             className="flex flex-col md:flex-row md:items-center gap-3 md:gap-4 justify-between border border-gray-300 rounded-xl md:rounded-2xl p-3 md:p-4 bg-white shadow-sm"
@@ -138,8 +145,13 @@ const AproveitionAdmin = () => {
               <button
                 className="bg-green-500 hover:bg-green-600 cursor-pointer text-white rounded-lg md:rounded-xl px-3 py-2 font-bold text-xs md:text-sm transition-colors min-w-[70px]"
                 onClick={() => {
+                  console.log('Aprovando order:', order.order_id);
                   localStorage.setItem(`order_${order.order_id}`, "aprovado");
-                  setHiddenOrders(prev => new Set(prev).add(order.order_id));
+                  setHiddenOrders(prev => {
+                    const newSet = new Set(prev).add(order.order_id);
+                    console.log('New hidden orders:', Array.from(newSet));
+                    return newSet;
+                  });
                 }}
               >
                 Aprovar
@@ -147,8 +159,13 @@ const AproveitionAdmin = () => {
               <button
                 className="bg-red-500 hover:bg-red-600 cursor-pointer text-white rounded-lg md:rounded-xl px-3 py-2 font-bold text-xs md:text-sm transition-colors min-w-[70px]"
                 onClick={() => {
+                  console.log('Rejeitando order:', order.order_id);
                   localStorage.setItem(`order_${order.order_id}`, "rejeitado");
-                  setHiddenOrders(prev => new Set(prev).add(order.order_id));
+                  setHiddenOrders(prev => {
+                    const newSet = new Set(prev).add(order.order_id);
+                    console.log('New hidden orders:', Array.from(newSet));
+                    return newSet;
+                  });
                 }}
               >
                 Recusar
