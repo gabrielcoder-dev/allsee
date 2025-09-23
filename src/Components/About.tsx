@@ -37,7 +37,8 @@ export default function About() {
                 <MdEmail />
               </div>
               <div>
-                <h3 className="font-bold text-black text-xl">allseecontatos@gmail.com</h3>
+                <h3 className="font-bold text-black text-xl">E-mail</h3>
+                <p className="text-sm text-gray-500">allseecontatos@gmail.com</p>
               </div>
             </div>
 
@@ -47,7 +48,8 @@ export default function About() {
                 <Smartphone />
               </div>
               <div>
-                <h3 className="font-bold text-black text-xl">(66) 9 9976-9524</h3>
+                <h3 className="font-bold text-black text-xl">Telefone</h3>
+                <p className="text-sm text-gray-500">(66) 9 9976-9524</p>
               </div>
             </div>
           </div>
