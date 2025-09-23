@@ -28,7 +28,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       empresa: dados.empresa,
       nicho: dados.nicho,
       valor: dados.valor,
-      inicio_campanha: dados.inicio_campanha
+      inicio_campanha: dados.inicio_campanha,
+      alcance_campanha: dados.alcance_campanha,
+      duracao_campanha: dados.duracao_campanha
     });
 
     // Criar order com status pendente

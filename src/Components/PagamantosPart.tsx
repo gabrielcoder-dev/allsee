@@ -167,6 +167,27 @@ export const PagamantosPart = () => {
     }
 
     try {
+      // Função para calcular alcance total da campanha
+      const calcularAlcanceCampanha = () => {
+        let total = 0;
+        produtos.forEach((p) => {
+          let views = Number(p.views) || 0;
+          const durationsTrue = [
+            p.duration_2,
+            p.duration_4,
+            p.duration_12,
+            p.duration_24,
+          ].filter(Boolean).length;
+          if (durationsTrue > 1) {
+            if (selectedDurationGlobal === "4") views = views * 2;
+            if (selectedDurationGlobal === "12") views = views * 6;
+            if (selectedDurationGlobal === "24") views = views * 12;
+          }
+          total += views;
+        });
+        return total;
+      };
+
       // Mapeamento explícito: cada campo do frontend para a coluna order
       const orderPayload = {
         id_user: user.id,
@@ -174,6 +195,7 @@ export const PagamantosPart = () => {
         nome_campanha: formData.campaignName || null,
         duracao_campanha: selectedDurationGlobal || null,
         inicio_campanha: formData.startDate ? formData.startDate.split('T')[0] : null,
+        alcance_campanha: calcularAlcanceCampanha(),
         cpf: formData.cpf || null,
         cnpj: formData.cnpj || null,
         razao_social: formData.razaoSocial || null,
@@ -190,6 +212,7 @@ export const PagamantosPart = () => {
       };
 
       console.log('Payload enviado para criar order:', orderPayload);
+      console.log('🎯 Alcance da campanha calculado:', calcularAlcanceCampanha());
       const orderRes = await fetch("/api/pagamento/criar-compra", {
         method: "POST",
         headers: { "Content-Type": "application/json" },

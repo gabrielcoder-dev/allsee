@@ -20,6 +20,7 @@ interface Order {
   inicio_campanha: string;
   duracao_campanha: number;
   preco: number;
+  alcance_campanha: number;
 }
 
 interface Anuncio {
