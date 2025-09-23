@@ -44,3 +44,11 @@ export default async function handler(
     return res.status(500).json({ success: false, error: 'Erro ao criar arte da campanha' });
   }
 }
+
+export const config = {
+  api: {
+    bodyParser: {
+      sizeLimit: '1gb',
+    },
+  },
+};

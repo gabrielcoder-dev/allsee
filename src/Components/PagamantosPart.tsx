@@ -166,6 +166,13 @@ export const PagamantosPart = () => {
       return;
     }
 
+    // ** (3.1) Image Upload: Validation - Check if base64 image is too large **
+    if (imageUrl && imageUrl.length > 1.3 * 1024 * 1024 * 1024) { // ~1.3GB em base64 = ~1GB original
+      setErro("A imagem é muito grande. Por favor, use uma imagem menor (máximo 1GB).");
+      setCarregando(false);
+      return;
+    }
+
     try {
       // Função para calcular alcance total da campanha
       const calcularAlcanceCampanha = () => {
@@ -230,15 +237,41 @@ export const PagamantosPart = () => {
       const orderId = orderData.orderId;
 
       // ** (4) Image Upload: API call to create arte_campanha **
+      const artePayload = {
+        id_order: orderId,
+        caminho_imagem: imageUrl, // Pass the image URL to the backend
+        id_user: user.id,
+      };
+      
+      console.log('📤 Enviando arte da campanha:', {
+        id_order: orderId,
+        id_user: user.id,
+        imageSize: imageUrl ? imageUrl.length : 0,
+        imagePreview: imageUrl ? imageUrl.substring(0, 50) + '...' : null
+      });
+      
       const arteCampanhaRes = await fetch("/api/admin/criar-arte-campanha", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          id_order: orderId,
-          caminho_imagem: imageUrl, // Pass the image URL to the backend
-          id_user: user.id,
-        }),
+        body: JSON.stringify(artePayload),
       });
+      
+      if (!arteCampanhaRes.ok) {
+        console.error("❌ Erro HTTP na criação da arte:", {
+          status: arteCampanhaRes.status,
+          statusText: arteCampanhaRes.statusText,
+          url: arteCampanhaRes.url
+        });
+        
+        if (arteCampanhaRes.status === 413) {
+          setErro("A imagem é muito grande. Por favor, use uma imagem menor (máximo 1GB).");
+        } else {
+          setErro(`Erro ao criar arte da campanha: ${arteCampanhaRes.status} ${arteCampanhaRes.statusText}`);
+        }
+        setCarregando(false);
+        return;
+      }
+      
       const arteCampanhaData = await arteCampanhaRes.json();
 
       if (!arteCampanhaData.success || !arteCampanhaData.arte_campanha_id) {
