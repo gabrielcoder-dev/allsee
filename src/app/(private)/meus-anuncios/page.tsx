@@ -186,6 +186,11 @@ const MeusAnuncios = () => {
     const dataInicio = new Date(inicioCampanha);
     const dataAtual = new Date();
     
+    // Se ainda não chegou na data de início, retorna a duração total
+    if (dataAtual < dataInicio) {
+      return duracaoSemanas * 7;
+    }
+    
     // Converter semanas para dias
     const duracaoDias = duracaoSemanas * 7;
     
@@ -549,8 +554,16 @@ const MeusAnuncios = () => {
 
                     <div className="flex justify-between items-center py-2 border-b border-gray-100">
                       <span className="text-sm font-medium text-gray-600">Dias Restantes:</span>
-                      <span className={`text-sm font-semibold ${diasRestantes === 0 ? 'text-red-600' : diasRestantes && diasRestantes <= 7 ? 'text-yellow-600' : 'text-green-600'}`}>
-                        {diasRestantes !== null ? `${diasRestantes} dias` : 'Calculando...'}
+                      <span className={`text-sm font-semibold ${
+                        diasRestantes === 0 ? 'text-red-600' : 
+                        diasRestantes && diasRestantes <= 7 ? 'text-yellow-600' : 
+                        diasRestantes === orderDetails.duracao_campanha * 7 ? 'text-blue-600' : 'text-green-600'
+                      }`}>
+                        {diasRestantes !== null ? 
+                          (diasRestantes === orderDetails.duracao_campanha * 7 ? 
+                            `Campanha ainda não iniciou (${diasRestantes} dias)` : 
+                            `${diasRestantes} dias`) : 
+                          'Calculando...'}
                       </span>
                     </div>
 
