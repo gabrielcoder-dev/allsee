@@ -578,20 +578,6 @@ const MeusAnuncios = () => {
                   <p className="text-gray-500">Erro ao carregar detalhes da campanha</p>
                 </div>
               )}
-              
-              <div className="mt-6">
-                <button 
-                  className="w-full py-3 px-4 rounded-xl bg-orange-600 text-white font-medium hover:bg-orange-700 transition-colors" 
-                  onClick={() => {
-                    setIsDetailsModalOpen(false);
-                    setOrderDetails(null);
-                    setSelectedAnuncioDetails(null);
-                    setDiasRestantes(null);
-                  }}
-                >
-                  Fechar
-                </button>
-              </div>
             </div>
           </div>
         </div>
