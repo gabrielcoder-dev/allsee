@@ -46,6 +46,19 @@ const MeusAnuncios = () => {
   const [loadingDetails, setLoadingDetails] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [refresh, setRefresh] = useState(false);
+  const [diasRestantes, setDiasRestantes] = useState<number | null>(null);
+
+  // Atualizar dias restantes a cada minuto
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (orderDetails) {
+        const dias = calcularDiasRestantes(orderDetails.inicio_campanha, orderDetails.duracao_campanha);
+        setDiasRestantes(dias);
+      }
+    }, 60000); // Atualiza a cada minuto
+
+    return () => clearInterval(interval);
+  }, [orderDetails]);
 
   useEffect(() => {
     window.addEventListener('storage', () => {
@@ -168,6 +181,25 @@ const MeusAnuncios = () => {
     fetchAnuncios();
   }, [refresh]);
 
+  // Função para calcular dias restantes
+  const calcularDiasRestantes = (inicioCampanha: string, duracaoSemanas: number) => {
+    const dataInicio = new Date(inicioCampanha);
+    const dataAtual = new Date();
+    
+    // Converter semanas para dias
+    const duracaoDias = duracaoSemanas * 7;
+    
+    // Calcular data de fim da campanha
+    const dataFim = new Date(dataInicio);
+    dataFim.setDate(dataFim.getDate() + duracaoDias);
+    
+    // Calcular diferença em dias
+    const diferencaMs = dataFim.getTime() - dataAtual.getTime();
+    const diasRestantes = Math.ceil(diferencaMs / (1000 * 60 * 60 * 24));
+    
+    return Math.max(0, diasRestantes); // Retorna 0 se já passou do prazo
+  };
+
   const fetchOrderDetails = async (orderId: number) => {
     setLoadingDetails(true);
     try {
@@ -182,6 +214,11 @@ const MeusAnuncios = () => {
         setOrderDetails(null);
       } else {
         setOrderDetails(data);
+        // Calcular dias restantes quando os detalhes são carregados
+        if (data) {
+          const dias = calcularDiasRestantes(data.inicio_campanha, data.duracao_campanha);
+          setDiasRestantes(dias);
+        }
       }
     } catch (err) {
       console.error('Erro ao buscar detalhes da order:', err);
@@ -450,6 +487,7 @@ const MeusAnuncios = () => {
           setIsDetailsModalOpen(false);
           setOrderDetails(null);
           setSelectedAnuncioDetails(null);
+          setDiasRestantes(null);
         }}>
           <div className="bg-white rounded-2xl w-full max-w-md mx-auto shadow-2xl" onClick={(e) => e.stopPropagation()}>
             {/* Header do modal */}
@@ -461,6 +499,7 @@ const MeusAnuncios = () => {
                     setIsDetailsModalOpen(false);
                     setOrderDetails(null);
                     setSelectedAnuncioDetails(null);
+                    setDiasRestantes(null);
                   }}
                   className="p-1 hover:bg-gray-100 rounded-full transition-colors"
                 >
@@ -508,6 +547,13 @@ const MeusAnuncios = () => {
                       <span className="text-sm font-semibold text-orange-600">{orderDetails.duracao_campanha} semanas</span>
                     </div>
 
+                    <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                      <span className="text-sm font-medium text-gray-600">Dias Restantes:</span>
+                      <span className={`text-sm font-semibold ${diasRestantes === 0 ? 'text-red-600' : diasRestantes && diasRestantes <= 7 ? 'text-yellow-600' : 'text-green-600'}`}>
+                        {diasRestantes !== null ? `${diasRestantes} dias` : 'Calculando...'}
+                      </span>
+                    </div>
+
                     <div className="flex justify-between items-center py-3 bg-orange-50 rounded-lg px-3">
                       <span className="text-sm font-medium text-gray-600">Preço Total:</span>
                       <span className="text-lg font-bold text-orange-600">R$ {orderDetails.preco?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
@@ -527,6 +573,7 @@ const MeusAnuncios = () => {
                     setIsDetailsModalOpen(false);
                     setOrderDetails(null);
                     setSelectedAnuncioDetails(null);
+                    setDiasRestantes(null);
                   }}
                 >
                   Fechar
