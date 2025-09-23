@@ -25,6 +25,25 @@ const AproveitionAdmin = () => {
     return localStorage.getItem(`order_${orderId}`) || "pendente";
   };
 
+  // Carrega itens ocultos do localStorage na inicialização
+  useEffect(() => {
+    const loadHiddenOrders = () => {
+      const hidden = new Set<number>();
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith('order_')) {
+          const orderId = parseInt(key.replace('order_', ''));
+          const status = localStorage.getItem(key);
+          if (status === 'aprovado' || status === 'rejeitado') {
+            hidden.add(orderId);
+          }
+        }
+      }
+      setHiddenOrders(hidden);
+    };
+    loadHiddenOrders();
+  }, []);
+
   useEffect(() => {
     async function fetchOrders() {
       setLoading(true);
@@ -119,40 +138,20 @@ const AproveitionAdmin = () => {
               <button
                 className="bg-green-500 hover:bg-green-600 cursor-pointer text-white rounded-lg md:rounded-xl px-3 py-2 font-bold text-xs md:text-sm transition-colors min-w-[70px]"
                 onClick={() => {
-                  const currentStatus = getOrderStatus(order.order_id);
-                  if (currentStatus === "aprovado") {
-                    localStorage.removeItem(`order_${order.order_id}`);
-                    setHiddenOrders(prev => {
-                      const newSet = new Set(prev);
-                      newSet.delete(order.order_id);
-                      return newSet;
-                    });
-                  } else {
-                    localStorage.setItem(`order_${order.order_id}`, "aprovado");
-                    setHiddenOrders(prev => new Set(prev).add(order.order_id));
-                  }
+                  localStorage.setItem(`order_${order.order_id}`, "aprovado");
+                  setHiddenOrders(prev => new Set(prev).add(order.order_id));
                 }}
               >
-                {getOrderStatus(order.order_id) === "aprovado" ? "Remover Aprovação" : "Aprovar"}
+                Aprovar
               </button>
               <button
                 className="bg-red-500 hover:bg-red-600 cursor-pointer text-white rounded-lg md:rounded-xl px-3 py-2 font-bold text-xs md:text-sm transition-colors min-w-[70px]"
                 onClick={() => {
-                  const currentStatus = getOrderStatus(order.order_id);
-                  if (currentStatus === "rejeitado") {
-                    localStorage.removeItem(`order_${order.order_id}`);
-                    setHiddenOrders(prev => {
-                      const newSet = new Set(prev);
-                      newSet.delete(order.order_id);
-                      return newSet;
-                    });
-                  } else {
-                    localStorage.setItem(`order_${order.order_id}`, "rejeitado");
-                    setHiddenOrders(prev => new Set(prev).add(order.order_id));
-                  }
+                  localStorage.setItem(`order_${order.order_id}`, "rejeitado");
+                  setHiddenOrders(prev => new Set(prev).add(order.order_id));
                 }}
               >
-                {getOrderStatus(order.order_id) === "rejeitado" ? "Remover Rejeição" : "Recusar"}
+                Recusar
               </button>
             </div>
           </div>
