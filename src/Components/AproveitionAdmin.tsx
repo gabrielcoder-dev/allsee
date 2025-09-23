@@ -61,18 +61,14 @@ const AproveitionAdmin = () => {
     <div className="w-full h-full p-3 md:p-6 overflow-auto">
       <h2 className="text-2xl md:text-3xl font-bold text-orange-600 mb-4 md:mb-6">Aprovação de Pedidos</h2>
       <div className="space-y-3 md:space-y-4">
-        {orders.map((order) => {
+        {orders.filter(order => {
           const status = getOrderStatus(order.order_id);
-          const isProcessed = status === 'aprovado' || status === 'rejeitado';
-          
+          return status !== 'aprovado' && status !== 'rejeitado';
+        }).map((order) => {
           return (
           <div
             key={order.id}
-            className={`flex flex-col md:flex-row md:items-center gap-3 md:gap-4 justify-between border rounded-xl md:rounded-2xl p-3 md:p-4 shadow-sm transition-all ${
-              isProcessed 
-                ? 'border-gray-200 bg-gray-50 opacity-60' 
-                : 'border-gray-300 bg-white'
-            }`}
+            className="flex flex-col md:flex-row md:items-center gap-3 md:gap-4 justify-between border border-gray-300 rounded-xl md:rounded-2xl p-3 md:p-4 bg-white shadow-sm"
           >
             <div className="flex items-center gap-3 md:gap-4 min-w-0 flex-1">
               {order.caminho_imagem ? (
@@ -118,56 +114,33 @@ const AproveitionAdmin = () => {
                     Assistir
                   </button>
                 </div>
-                <span className={`text-sm md:text-base font-bold ${
-                  isProcessed ? 'text-gray-500 line-through' : 'text-gray-700'
-                }`}>
+                <span className="text-sm md:text-base font-bold text-gray-700">
                   Pedido #{order.order_id}
-                  {isProcessed && (
-                    <span className={`ml-2 text-xs px-2 py-1 rounded-full ${
-                      status === 'aprovado' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
-                    }`}>
-                      {status === 'aprovado' ? 'APROVADO' : 'REJEITADO'}
-                    </span>
-                  )}
                 </span>
               </div>
             </div>
             <div className="flex items-center gap-2 md:gap-3 flex-shrink-0">
               <button
-                className={`rounded-lg md:rounded-xl px-3 py-2 font-bold text-xs md:text-sm transition-colors min-w-[70px] ${
-                  isProcessed 
-                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
-                    : 'bg-green-500 hover:bg-green-600 cursor-pointer text-white'
-                }`}
+                className="bg-green-500 hover:bg-green-600 cursor-pointer text-white rounded-lg md:rounded-xl px-3 py-2 font-bold text-xs md:text-sm transition-colors min-w-[70px]"
                 onClick={() => {
-                  if (!isProcessed) {
-                    console.log('Aprovando order:', order.order_id);
-                    localStorage.setItem(`order_${order.order_id}`, "aprovado");
-                    // Forçar re-render para atualizar o visual
-                    window.location.reload();
-                  }
+                  console.log('Aprovando order:', order.order_id);
+                  localStorage.setItem(`order_${order.order_id}`, "aprovado");
+                  // Forçar re-render para atualizar o visual
+                  window.location.reload();
                 }}
-                disabled={isProcessed}
               >
-                {status === 'aprovado' ? 'Aprovado' : 'Aprovar'}
+                Aprovar
               </button>
               <button
-                className={`rounded-lg md:rounded-xl px-3 py-2 font-bold text-xs md:text-sm transition-colors min-w-[70px] ${
-                  isProcessed 
-                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
-                    : 'bg-red-500 hover:bg-red-600 cursor-pointer text-white'
-                }`}
+                className="bg-red-500 hover:bg-red-600 cursor-pointer text-white rounded-lg md:rounded-xl px-3 py-2 font-bold text-xs md:text-sm transition-colors min-w-[70px]"
                 onClick={() => {
-                  if (!isProcessed) {
-                    console.log('Rejeitando order:', order.order_id);
-                    localStorage.setItem(`order_${order.order_id}`, "rejeitado");
-                    // Forçar re-render para atualizar o visual
-                    window.location.reload();
-                  }
+                  console.log('Rejeitando order:', order.order_id);
+                  localStorage.setItem(`order_${order.order_id}`, "rejeitado");
+                  // Forçar re-render para atualizar o visual
+                  window.location.reload();
                 }}
-                disabled={isProcessed}
               >
-                {status === 'rejeitado' ? 'Rejeitado' : 'Recusar'}
+                Recusar
               </button>
             </div>
           </div>
