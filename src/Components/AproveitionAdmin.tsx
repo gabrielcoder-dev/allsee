@@ -19,33 +19,9 @@ const AproveitionAdmin = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [modalFile, setModalFile] = useState<{ url: string; id: number } | null>(null);
-  const [hiddenOrders, setHiddenOrders] = useState<Set<number>>(new Set());
-  const [isInitialized, setIsInitialized] = useState(false);
-
   const getOrderStatus = (orderId: number) => {
     return localStorage.getItem(`order_${orderId}`) || "pendente";
   };
-
-  // Carrega itens ocultos do localStorage na inicialização
-  useEffect(() => {
-    const loadHiddenOrders = () => {
-      const hidden = new Set<number>();
-      for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        if (key && key.startsWith('order_')) {
-          const orderId = parseInt(key.replace('order_', ''));
-          const status = localStorage.getItem(key);
-          if (status === 'aprovado' || status === 'rejeitado') {
-            hidden.add(orderId);
-          }
-        }
-      }
-      console.log('Hidden orders loaded:', Array.from(hidden));
-      setHiddenOrders(hidden);
-      setIsInitialized(true);
-    };
-    loadHiddenOrders();
-  }, []);
 
   useEffect(() => {
     async function fetchOrders() {
@@ -78,21 +54,25 @@ const AproveitionAdmin = () => {
     document.body.removeChild(a);
   };
 
-  if (loading || !isInitialized) return <div className="p-4">Carregando pedidos...</div>;
+  if (loading) return <div className="p-4">Carregando pedidos...</div>;
   if (!orders.length) return <div className="p-4">Nenhum pedido encontrado.</div>;
 
   return (
     <div className="w-full h-full p-3 md:p-6 overflow-auto">
       <h2 className="text-2xl md:text-3xl font-bold text-orange-600 mb-4 md:mb-6">Aprovação de Pedidos</h2>
       <div className="space-y-3 md:space-y-4">
-        {orders.filter(order => {
-          const isHidden = hiddenOrders.has(order.order_id);
-          console.log(`Order ${order.order_id} is hidden:`, isHidden);
-          return !isHidden;
-        }).map((order) => (
+        {orders.map((order) => {
+          const status = getOrderStatus(order.order_id);
+          const isProcessed = status === 'aprovado' || status === 'rejeitado';
+          
+          return (
           <div
             key={order.id}
-            className="flex flex-col md:flex-row md:items-center gap-3 md:gap-4 justify-between border border-gray-300 rounded-xl md:rounded-2xl p-3 md:p-4 bg-white shadow-sm"
+            className={`flex flex-col md:flex-row md:items-center gap-3 md:gap-4 justify-between border rounded-xl md:rounded-2xl p-3 md:p-4 shadow-sm transition-all ${
+              isProcessed 
+                ? 'border-gray-200 bg-gray-50 opacity-60' 
+                : 'border-gray-300 bg-white'
+            }`}
           >
             <div className="flex items-center gap-3 md:gap-4 min-w-0 flex-1">
               {order.caminho_imagem ? (
@@ -138,41 +118,61 @@ const AproveitionAdmin = () => {
                     Assistir
                   </button>
                 </div>
-                <span className="text-sm md:text-base font-bold text-gray-700">Pedido #{order.order_id}</span>
+                <span className={`text-sm md:text-base font-bold ${
+                  isProcessed ? 'text-gray-500 line-through' : 'text-gray-700'
+                }`}>
+                  Pedido #{order.order_id}
+                  {isProcessed && (
+                    <span className={`ml-2 text-xs px-2 py-1 rounded-full ${
+                      status === 'aprovado' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                    }`}>
+                      {status === 'aprovado' ? 'APROVADO' : 'REJEITADO'}
+                    </span>
+                  )}
+                </span>
               </div>
             </div>
             <div className="flex items-center gap-2 md:gap-3 flex-shrink-0">
               <button
-                className="bg-green-500 hover:bg-green-600 cursor-pointer text-white rounded-lg md:rounded-xl px-3 py-2 font-bold text-xs md:text-sm transition-colors min-w-[70px]"
+                className={`rounded-lg md:rounded-xl px-3 py-2 font-bold text-xs md:text-sm transition-colors min-w-[70px] ${
+                  isProcessed 
+                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
+                    : 'bg-green-500 hover:bg-green-600 cursor-pointer text-white'
+                }`}
                 onClick={() => {
-                  console.log('Aprovando order:', order.order_id);
-                  localStorage.setItem(`order_${order.order_id}`, "aprovado");
-                  setHiddenOrders(prev => {
-                    const newSet = new Set(prev).add(order.order_id);
-                    console.log('New hidden orders:', Array.from(newSet));
-                    return newSet;
-                  });
+                  if (!isProcessed) {
+                    console.log('Aprovando order:', order.order_id);
+                    localStorage.setItem(`order_${order.order_id}`, "aprovado");
+                    // Forçar re-render para atualizar o visual
+                    window.location.reload();
+                  }
                 }}
+                disabled={isProcessed}
               >
-                Aprovar
+                {status === 'aprovado' ? 'Aprovado' : 'Aprovar'}
               </button>
               <button
-                className="bg-red-500 hover:bg-red-600 cursor-pointer text-white rounded-lg md:rounded-xl px-3 py-2 font-bold text-xs md:text-sm transition-colors min-w-[70px]"
+                className={`rounded-lg md:rounded-xl px-3 py-2 font-bold text-xs md:text-sm transition-colors min-w-[70px] ${
+                  isProcessed 
+                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
+                    : 'bg-red-500 hover:bg-red-600 cursor-pointer text-white'
+                }`}
                 onClick={() => {
-                  console.log('Rejeitando order:', order.order_id);
-                  localStorage.setItem(`order_${order.order_id}`, "rejeitado");
-                  setHiddenOrders(prev => {
-                    const newSet = new Set(prev).add(order.order_id);
-                    console.log('New hidden orders:', Array.from(newSet));
-                    return newSet;
-                  });
+                  if (!isProcessed) {
+                    console.log('Rejeitando order:', order.order_id);
+                    localStorage.setItem(`order_${order.order_id}`, "rejeitado");
+                    // Forçar re-render para atualizar o visual
+                    window.location.reload();
+                  }
                 }}
+                disabled={isProcessed}
               >
-                Recusar
+                {status === 'rejeitado' ? 'Rejeitado' : 'Recusar'}
               </button>
             </div>
           </div>
-        ))}
+          );
+        })}
       </div>
 
       {/* Modal para assistir arquivo */}
