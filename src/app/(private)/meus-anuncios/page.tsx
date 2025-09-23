@@ -216,6 +216,7 @@ const MeusAnuncios = () => {
     let resto = alcanceTotal % totalHoras;
     
     const distribuicao = [];
+    let alcanceAcumulado = 0;
     
     for (let dia = 0; dia < diasRestantes; dia++) {
       for (let hora = 7; hora < 17; hora++) {
@@ -227,11 +228,8 @@ const MeusAnuncios = () => {
           resto--;
         }
         
-        distribuicao.push({
-          dia: dia + 1,
-          hora: `${hora.toString().padStart(2, '0')}:00`,
-          alcanceHora
-        });
+        alcanceAcumulado += alcanceHora;
+        distribuicao.push(alcanceAcumulado);
       }
     }
     
@@ -611,14 +609,14 @@ const MeusAnuncios = () => {
                     <div className="mt-6">
                       <h3 className="text-lg font-semibold text-gray-900 mb-4">Alcance por Hora</h3>
                       
-                      <div className="max-h-64 overflow-y-auto border border-gray-200 rounded-lg">
-                        {calcularDistribuicaoAlcance(orderDetails.alcance_campanha, diasRestantes).map((item, index) => (
-                          <div key={index} className="px-4 py-3 border-b border-gray-100 hover:bg-gray-50 flex justify-between items-center">
-                            <span className="text-sm font-medium text-gray-900">
-                              Dia {item.dia} - {item.hora}
+                      <div className="max-h-64 overflow-y-auto space-y-2">
+                        {calcularDistribuicaoAlcance(orderDetails.alcance_campanha, diasRestantes).map((alcance, index) => (
+                          <div key={index} className="flex justify-between items-center py-2 border-b border-gray-100">
+                            <span className="text-sm font-medium text-gray-600">
+                              Hora {index + 1}:
                             </span>
                             <span className="text-sm font-semibold text-blue-600">
-                              {item.alcanceHora.toLocaleString('pt-BR')}
+                              {alcance.toLocaleString('pt-BR')}
                             </span>
                           </div>
                         ))}
