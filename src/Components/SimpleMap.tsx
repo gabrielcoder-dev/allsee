@@ -308,11 +308,13 @@ export default function SimpleMap({ anunciosFiltrados, onCityFound, userNicho, s
     );
   }
 
+  console.log('🗺️ SimpleMap renderizando - isFullscreen:', isFullscreen, 'mapHeight:', mapHeight, 'headerTop:', headerTop)
+  
   return (
     <div
-      className={`${isFullscreen ? 'fixed left-0 right-0 w-full z-50' : 'hidden xl:flex w-[400px]'} flex-shrink-0 z-0 map-container relative`}
+      className={`${isFullscreen ? 'fixed left-0 right-0 w-full z-[9999]' : 'hidden xl:flex w-[400px]'} flex-shrink-0 z-0 map-container relative`}
       style={{ 
-        height: `${mapHeight}px`, 
+        height: isFullscreen && mapHeight === 0 ? 'calc(100vh - 64px)' : `${mapHeight}px`, 
         background: '#fff',
         top: isFullscreen ? `${headerTop}px` : '0px' // Começar abaixo do header quando em fullscreen
       }}
