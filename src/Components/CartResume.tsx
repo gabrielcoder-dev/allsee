@@ -254,14 +254,27 @@ export default function CartResume({ onCartArtSelected, onCampaignNameChange, ar
           console.error('Erro ao converter arquivo para Base64:', error);
         }
       } else {
-        // Para vídeo, salva apenas previewUrl e flag no contexto/localStorage
-        updateFormData({
-          selectedImage: null,
-          previewUrl: url,
-          isArtSelected: true
-        });
-        const formDataStorage = JSON.parse(localStorage.getItem('formData') || '{}');
-        localStorage.setItem('formData', JSON.stringify({ ...formDataStorage, selectedImage: null, previewUrl: url, isArtSelected: true }));
+        // Para vídeo, converte para base64 e salva no contexto/localStorage
+        try {
+          const base64 = await fileToBase64(file);
+          updateFormData({
+            selectedImage: base64,
+            previewUrl: url,
+            isArtSelected: true
+          });
+          const formDataStorage = JSON.parse(localStorage.getItem('formData') || '{}');
+          localStorage.setItem('formData', JSON.stringify({ ...formDataStorage, selectedImage: base64, previewUrl: url, isArtSelected: true }));
+        } catch (error) {
+          console.error('Erro ao converter vídeo para Base64:', error);
+          // Fallback: salva apenas previewUrl se a conversão falhar
+          updateFormData({
+            selectedImage: null,
+            previewUrl: url,
+            isArtSelected: true
+          });
+          const formDataStorage = JSON.parse(localStorage.getItem('formData') || '{}');
+          localStorage.setItem('formData', JSON.stringify({ ...formDataStorage, selectedImage: null, previewUrl: url, isArtSelected: true }));
+        }
         // Gerar thumbnail do vídeo
         try {
           const thumbnail = await generateVideoThumbnail(file);

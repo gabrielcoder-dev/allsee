@@ -98,10 +98,10 @@ export const PagamantosPart = () => {
   const [carregando, setCarregando] = useState(false);
   const [erro, setErro] = useState("");
 
-  // ** (1) Image Upload: State for the selected image URL **
+  // ** (1) Image/Video Upload: State for the selected file URL (base64) **
   const [imageUrl, setImageUrl] = useState<string | null>(formData.selectedImage || null);
 
-  // ** (2) Image Upload: Handle the selected image from form data (if applicable)**
+  // ** (2) Image/Video Upload: Handle the selected file from form data (if applicable)**
   useEffect(() => {
       setImageUrl(formData.selectedImage || null);
   }, [formData.selectedImage]);
@@ -159,16 +159,16 @@ export const PagamantosPart = () => {
       return;
     }
 
-    // ** (3) Image Upload: Validation - Check if an image is selected/provided **
+    // ** (3) Image/Video Upload: Validation - Check if an image/video is selected/provided **
     if (!imageUrl) {
-      setErro("Por favor, selecione ou faça upload da imagem da campanha.");
+      setErro("Por favor, selecione ou faça upload da arte da campanha (imagem ou vídeo).");
       setCarregando(false);
       return;
     }
 
-    // ** (3.1) Image Upload: Validation - Check if base64 image is too large **
+    // ** (3.1) Image/Video Upload: Validation - Check if base64 file is too large **
     if (imageUrl && imageUrl.length > 1.3 * 1024 * 1024 * 1024) { // ~1.3GB em base64 = ~1GB original
-      setErro("A imagem é muito grande. Por favor, use uma imagem menor (máximo 1GB).");
+      setErro("O arquivo é muito grande. Por favor, use um arquivo menor (máximo 1GB).");
       setCarregando(false);
       return;
     }
@@ -236,18 +236,19 @@ export const PagamantosPart = () => {
 
       const orderId = orderData.orderId;
 
-      // ** (4) Image Upload: API call to create arte_campanha **
+      // ** (4) Image/Video Upload: API call to create arte_campanha **
       const artePayload = {
         id_order: orderId,
-        caminho_imagem: imageUrl, // Pass the image URL to the backend
+        caminho_imagem: imageUrl, // Pass the image/video base64 to the backend
         id_user: user.id,
       };
       
       console.log('📤 Enviando arte da campanha:', {
         id_order: orderId,
         id_user: user.id,
-        imageSize: imageUrl ? imageUrl.length : 0,
-        imagePreview: imageUrl ? imageUrl.substring(0, 50) + '...' : null
+        fileSize: imageUrl ? imageUrl.length : 0,
+        filePreview: imageUrl ? imageUrl.substring(0, 50) + '...' : null,
+        fileType: imageUrl ? (imageUrl.startsWith('data:image/') ? 'image' : 'video') : 'unknown'
       });
       
       const arteCampanhaRes = await fetch("/api/admin/criar-arte-campanha", {
@@ -264,7 +265,7 @@ export const PagamantosPart = () => {
         });
         
         if (arteCampanhaRes.status === 413) {
-          setErro("A imagem é muito grande. Por favor, use uma imagem menor (máximo 1GB).");
+          setErro("O arquivo é muito grande. Por favor, use um arquivo menor (máximo 1GB).");
         } else {
           setErro(`Erro ao criar arte da campanha: ${arteCampanhaRes.status} ${arteCampanhaRes.statusText}`);
         }
