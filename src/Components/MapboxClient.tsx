@@ -275,8 +275,6 @@ export default function Mapbox({ anunciosFiltrados, onCityFound, userNicho, isFu
   // Verificação adicional de segurança
   if (typeof window === 'undefined') return null
 
-  console.log('🗺️ Renderizando mapa - isFullscreen:', isFullscreen, 'mapHeight:', mapHeight)
-  
   return (
     <div
       className={`${isFullscreen ? 'fixed inset-0 w-full' : 'hidden xl:flex w-[400px]'} flex-shrink-0 z-0 map-container`}
