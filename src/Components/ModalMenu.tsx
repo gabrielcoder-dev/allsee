@@ -2,6 +2,7 @@ import React, { useRef, useEffect } from 'react';
 import { X, ChevronDown, ChevronUp, Star, Image as ImageIcon, Menu, List, User, LogOut, MessageCircle, GlobeLockIcon } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
+import { useUserRole } from '@/hooks/useUserRole';
 
 interface ModalMenuProps {
   open: boolean;
@@ -11,6 +12,7 @@ interface ModalMenuProps {
 export default function ModalMenu({ open, onClose }: ModalMenuProps) {
   const modalRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
+  const { isAdmin } = useUserRole();
 
   // Fecha ao clicar fora do modal
   useEffect(() => {
@@ -64,16 +66,18 @@ export default function ModalMenu({ open, onClose }: ModalMenuProps) {
             <span className="text-sm text-left leading-tight">meus anúncios</span>
           </button>
 
-          <button
-            className="flex flex-col items-start justify-center gap-2 p-6 rounded-xl bg-gray-100 text-gray-700 font-semibold shadow hover:bg-gray-200 transition cursor-pointer"
-            onClick={() => {
-              router.push('/dashboard');
-              onClose();
-            }}
-          >
-            <GlobeLockIcon size={24} />
-            <span className="text-sm text-left leading-tight">Dashboard</span>
-          </button>
+          {isAdmin && (
+            <button
+              className="flex flex-col items-start justify-center gap-2 p-6 rounded-xl bg-gray-100 text-gray-700 font-semibold shadow hover:bg-gray-200 transition cursor-pointer"
+              onClick={() => {
+                router.push('/dashboard');
+                onClose();
+              }}
+            >
+              <GlobeLockIcon size={24} />
+              <span className="text-sm text-left leading-tight">Dashboard</span>
+            </button>
+          )}
         </div>
         {/* Accordions (simples, sem animação) */}
 
