@@ -30,6 +30,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       valor: dados.valor,
       inicio_campanha: dados.inicio_campanha,
       alcance_campanha: dados.alcance_campanha,
+      exibicoes_campanha: dados.exibicoes_campanha,
       duracao_campanha: dados.duracao_campanha
     });
 

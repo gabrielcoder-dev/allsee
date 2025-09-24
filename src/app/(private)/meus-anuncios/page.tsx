@@ -21,6 +21,7 @@ interface Order {
   duracao_campanha: number;
   preco: number;
   alcance_campanha: number;
+  exibicoes_campanha: number;
 }
 
 interface Anuncio {
@@ -253,6 +254,45 @@ const MeusAnuncios = () => {
     }
     
     return alcanceAtual;
+  };
+
+  // Função para calcular exibições atual baseado nas horas passadas desde o início
+  const calcularExibicoesAtual = (exibicoesTotal: number, inicioCampanha: string, duracaoCampanha: number) => {
+    const dataAtual = new Date();
+    const dataInicio = new Date(inicioCampanha);
+    
+    // Se ainda não começou, retorna 0
+    if (dataAtual < dataInicio) return 0;
+    
+    const duracaoDias = duracaoCampanha * 7;
+    const dataFim = new Date(dataInicio);
+    dataFim.setDate(dataFim.getDate() + duracaoDias);
+    
+    // Se já terminou, retorna o total
+    if (dataAtual >= dataFim) return exibicoesTotal;
+    
+    // Calcular horas passadas desde o início (apenas horário comercial: 7h às 17h)
+    const horasPassadas = calcularHorasPassadas(dataInicio, dataAtual);
+    const totalHoras = duracaoDias * 10; // 10 horas por dia
+    
+    const exibicoesPorHora = Math.floor(exibicoesTotal / totalHoras);
+    let resto = exibicoesTotal % totalHoras;
+    
+    let exibicoesAtual = 0;
+    
+    for (let i = 0; i < horasPassadas; i++) {
+      let exibicoesHora = exibicoesPorHora;
+      
+      // Distribuir o resto nas primeiras horas
+      if (resto > 0) {
+        exibicoesHora += 1;
+        resto--;
+      }
+      
+      exibicoesAtual += exibicoesHora;
+    }
+    
+    return exibicoesAtual;
   };
 
   // Função para calcular horas passadas no horário comercial
@@ -652,6 +692,22 @@ const MeusAnuncios = () => {
                         <span className="text-sm font-medium text-gray-600">Alcance por Hora:</span>
                         <span className="text-sm font-semibold text-blue-600">
                           {alcanceAtual.toLocaleString('pt-BR')}
+                        </span>
+                      </div>
+                    )}
+
+                    {orderDetails.exibicoes_campanha && (
+                      <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                        <span className="text-sm font-medium text-gray-600">Exibições por Hora:</span>
+                        <span className="text-sm font-semibold text-green-600">
+                          {(() => {
+                            const exibicoes = calcularExibicoesAtual(
+                              orderDetails.exibicoes_campanha, 
+                              orderDetails.inicio_campanha, 
+                              orderDetails.duracao_campanha
+                            );
+                            return exibicoes.toLocaleString('pt-BR');
+                          })()}
                         </span>
                       </div>
                     )}

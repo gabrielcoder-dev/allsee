@@ -195,6 +195,30 @@ export const PagamantosPart = () => {
         return total;
       };
 
+      // Função para calcular exibições total da campanha
+      const calcularExibicoesCampanha = () => {
+        let total = 0;
+        produtos.forEach((p) => {
+          // Para exibições, só consideramos produtos digitais (como no CartResume)
+          if ((p.type_screen?.toLowerCase?.() || 'digital') === 'digital') {
+            let display = Number(p.display) || 0;
+            const durationsTrue = [
+              p.duration_2,
+              p.duration_4,
+              p.duration_12,
+              p.duration_24,
+            ].filter(Boolean).length;
+            if (durationsTrue > 1) {
+              if (selectedDurationGlobal === "4") display = display * 2;
+              if (selectedDurationGlobal === "12") display = display * 6;
+              if (selectedDurationGlobal === "24") display = display * 12;
+            }
+            total += display;
+          }
+        });
+        return total;
+      };
+
       // Mapeamento explícito: cada campo do frontend para a coluna order
       const orderPayload = {
         id_user: user.id,
@@ -203,6 +227,7 @@ export const PagamantosPart = () => {
         duracao_campanha: selectedDurationGlobal || null,
         inicio_campanha: formData.startDate ? formData.startDate.split('T')[0] : null,
         alcance_campanha: calcularAlcanceCampanha(),
+        exibicoes_campanha: calcularExibicoesCampanha(),
         cpf: formData.cpf || null,
         cnpj: formData.cnpj || null,
         razao_social: formData.razaoSocial || null,
@@ -220,6 +245,7 @@ export const PagamantosPart = () => {
 
       console.log('Payload enviado para criar order:', orderPayload);
       console.log('🎯 Alcance da campanha calculado:', calcularAlcanceCampanha());
+      console.log('📺 Exibições da campanha calculadas:', calcularExibicoesCampanha());
       const orderRes = await fetch("/api/pagamento/criar-compra", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
