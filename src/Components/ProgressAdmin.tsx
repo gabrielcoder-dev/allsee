@@ -33,6 +33,7 @@ const ProgressAdmin = () => {
   const [campanhas, setCampanhas] = useState<CampanhaCompleta[]>([]);
   const [loading, setLoading] = useState(true);
   const [exibicoesAtuais, setExibicoesAtuais] = useState<{ [key: number]: number }>({});
+  const [alcanceAtual, setAlcanceAtual] = useState<{ [key: number]: number }>({});
 
   // Função para calcular dias restantes (mesma lógica do meus-anuncios)
   const calcularDiasRestantes = (inicioCampanha: string, duracaoSemanas: number) => {
@@ -118,6 +119,73 @@ const ProgressAdmin = () => {
     return exibicoesTotal;
   };
 
+  // Função para calcular horas passadas no horário comercial (mesma lógica do meus-anuncios)
+  const calcularHorasPassadas = (dataInicio: Date, dataAtual: Date) => {
+    let horasPassadas = 0;
+    const dataAtualCalculo = new Date(dataInicio);
+
+    while (dataAtualCalculo < dataAtual) {
+      const diaSemana = dataAtualCalculo.getDay(); // 0 = domingo, 6 = sábado
+      
+      // Pular fins de semana (sábado = 6, domingo = 0)
+      if (diaSemana !== 0 && diaSemana !== 6) {
+        const horaAtual = dataAtualCalculo.getHours();
+        
+        // Horário comercial: 7h às 17h
+        if (horaAtual >= 7 && horaAtual < 17) {
+          horasPassadas++;
+        }
+      }
+      
+      dataAtualCalculo.setHours(dataAtualCalculo.getHours() + 1);
+    }
+
+    return horasPassadas;
+  };
+
+  // Função para calcular alcance dinâmico (mesma lógica do meus-anuncios)
+  const calcularAlcanceDinamico = (alcanceTotal: number, inicioCampanha: string, duracaoSemanas: number) => {
+    const dataInicio = new Date(inicioCampanha);
+    const dataAtual = new Date();
+    
+    // Definir o início real da campanha como 7h do dia de início
+    const inicioReal = new Date(dataInicio);
+    inicioReal.setHours(7, 0, 0, 0); // 7h da manhã do dia de início
+    
+    // Se ainda não começou, retorna 0
+    if (dataAtual < inicioReal) return 0;
+    
+    const duracaoDias = duracaoSemanas * 7;
+    const dataFim = new Date(inicioReal);
+    dataFim.setDate(dataFim.getDate() + duracaoDias);
+    
+    // Se já terminou, retorna o total
+    if (dataAtual >= dataFim) return alcanceTotal;
+    
+    // Calcular horas passadas desde o início (apenas horário comercial: 7h às 17h)
+    const horasPassadas = calcularHorasPassadas(inicioReal, dataAtual);
+    const totalHoras = duracaoDias * 10; // 10 horas por dia (excluindo fins de semana)
+    
+    const alcancePorHora = Math.floor(alcanceTotal / totalHoras);
+    let resto = alcanceTotal % totalHoras;
+    
+    let alcanceAtualCalculado = 0;
+    
+    for (let i = 0; i < horasPassadas; i++) {
+      let alcanceHora = alcancePorHora;
+      
+      // Distribuir o resto nas primeiras horas
+      if (resto > 0) {
+        alcanceHora += 1;
+        resto--;
+      }
+      
+      alcanceAtualCalculado += alcanceHora;
+    }
+    
+    return alcanceAtualCalculado;
+  };
+
   // Função para formatar números grandes
   const formatarNumero = (numero: number | null | undefined) => {
     if (numero === null || numero === undefined || isNaN(numero)) {
@@ -181,10 +249,11 @@ const ProgressAdmin = () => {
     buscarCampanhas();
   }, []);
 
-  // Atualizar exibições a cada minuto
+  // Atualizar exibições e alcance a cada minuto
   useEffect(() => {
     const interval = setInterval(() => {
       const novasExibicoes: { [key: number]: number } = {};
+      const novoAlcance: { [key: number]: number } = {};
       
       campanhas.forEach((campanha) => {
         const exibicoes = calcularExibicoesDinamicas(
@@ -192,9 +261,17 @@ const ProgressAdmin = () => {
           campanha.order.duracao_campanha
         );
         novasExibicoes[campanha.arte.id] = exibicoes;
+        
+        const alcance = calcularAlcanceDinamico(
+          campanha.order.alcance_campanha || 0,
+          campanha.order.inicio_campanha,
+          campanha.order.duracao_campanha
+        );
+        novoAlcance[campanha.arte.id] = alcance;
       });
       
       setExibicoesAtuais(novasExibicoes);
+      setAlcanceAtual(novoAlcance);
     }, 60000); // Atualiza a cada minuto
 
     return () => clearInterval(interval);
@@ -271,7 +348,7 @@ const ProgressAdmin = () => {
                   <div className="flex flex-col gap-1 p-3 bg-gray-50 rounded-lg">
                     <p className="text-gray-700 font-bold text-sm md:text-base">Alcance</p>
                     <p className="text-gray-500 text-lg md:text-xl font-semibold">
-                      {formatarNumero(campanha.order.alcance_campanha || 0)}
+                      {formatarNumero(alcanceAtual[campanha.arte.id] || calcularAlcanceDinamico(campanha.order.alcance_campanha || 0, campanha.order.inicio_campanha, campanha.order.duracao_campanha))}
                     </p>
                   </div>
                   <div className="flex flex-col gap-1 p-3 bg-gray-50 rounded-lg">
