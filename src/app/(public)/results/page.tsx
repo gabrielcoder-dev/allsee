@@ -248,7 +248,7 @@ const Page = () => {
         </div>
 
         {/* Mapa - Desktop */}
-        <div className={`${isMapFullscreen ? 'w-full' : 'hidden xl:block w-[400px]'}`}>
+        <div className={`${isMapFullscreen ? 'fixed inset-0 w-full z-50' : 'hidden xl:block w-[400px]'}`}>
           <Mapbox 
             anunciosFiltrados={anunciosFiltrados} 
             onCityFound={handleCityFound} 
