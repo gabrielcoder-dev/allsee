@@ -102,7 +102,6 @@ export default function SimpleMap({ anunciosFiltrados, onCityFound, userNicho, s
   onToggleMapView?: () => void
 }) {
   const [mapHeight, setMapHeight] = useState<number>(0)
-  const [headerTop, setHeaderTop] = useState<number>(64)
   const [markers, setMarkers] = useState<MarkerType[]>([])
   const [loading, setLoading] = useState(true)
   const [mounted, setMounted] = useState(false)
@@ -137,20 +136,12 @@ export default function SimpleMap({ anunciosFiltrados, onCityFound, userNicho, s
       try {
         const header = document.getElementById('header-price')
         const headerHeight = header ? header.offsetHeight : 64
-        const headerTopPosition = header ? header.offsetTop + header.offsetHeight : 64
         const viewportHeight = window.visualViewport
           ? window.visualViewport.height
           : window.innerHeight
         
-        // Atualizar posição do header
-        setHeaderTop(headerTopPosition)
-        
-        // Se estiver em modo tela cheia, usar toda a altura disponível menos o header
-        if (isFullscreen) {
-          setMapHeight(viewportHeight - headerHeight)
-        } else {
-          setMapHeight(viewportHeight - headerHeight)
-        }
+        // Sempre usar a altura disponível menos o header
+        setMapHeight(viewportHeight - headerHeight)
       } catch (error) {
         console.error('Erro ao calcular altura do mapa:', error);
         setMapHeight(600); // altura padrão
@@ -169,7 +160,7 @@ export default function SimpleMap({ anunciosFiltrados, onCityFound, userNicho, s
         window.visualViewport.removeEventListener('scroll', updateHeight)
       }
     }
-  }, [mounted, isFullscreen])
+  }, [mounted])
 
   // Cleanup adicional quando componente for desmontado
   useEffect(() => {
@@ -308,22 +299,16 @@ export default function SimpleMap({ anunciosFiltrados, onCityFound, userNicho, s
     );
   }
 
-  console.log('🗺️ SimpleMap renderizando - isFullscreen:', isFullscreen, 'mapHeight:', mapHeight, 'headerTop:', headerTop)
-  
   return (
     <div
-      className={`${isFullscreen ? 'fixed left-0 right-0 w-full z-[99999]' : 'hidden xl:flex w-[400px]'} flex-shrink-0 z-0 map-container relative`}
-      style={{ 
-        height: isFullscreen && mapHeight === 0 ? 'calc(100vh - 64px)' : `${mapHeight}px`, 
-        background: '#fff',
-        top: isFullscreen ? `${headerTop}px` : '0px' // Começar abaixo do header quando em fullscreen
-      }}
+      className={`${isFullscreen ? 'w-full' : 'hidden xl:flex w-[400px]'} flex-shrink-0 z-0 map-container relative`}
+      style={{ height: `${mapHeight}px`, background: '#fff' }}
     >
       {/* Botão de alternância do mapa */}
       {onToggleMapView && (
         <button
           onClick={onToggleMapView}
-          className="absolute top-4 right-4 z-[100000] map-toggle-button rounded-lg px-4 py-2 flex items-center gap-2 text-sm font-medium transition-colors bg-white shadow-lg border"
+          className="absolute top-4 right-4 z-[1000] map-toggle-button rounded-lg px-4 py-2 flex items-center gap-2 text-sm font-medium transition-colors bg-white shadow-lg border"
         >
           {isFullscreen ? (
             <>
