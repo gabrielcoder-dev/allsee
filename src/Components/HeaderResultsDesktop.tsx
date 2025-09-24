@@ -136,7 +136,7 @@ const HeaderResultsDesktop = ({ onDurationChange, selectedDuration, onTipoMidiaC
 
   return (
     <>
-      <div className="w-full hidden px-12 py-3 lg:flex top-0 left-0 right-0 z-30 justify-between items-center gap-4 ">
+      <div className="w-full border-b border-gray-200 hidden px-12 py-3 lg:flex top-0 left-0 right-0 z-30 justify-between items-center gap-4 ">
 
         <Image
         src={logoImg}
