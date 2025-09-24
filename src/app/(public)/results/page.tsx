@@ -249,7 +249,7 @@ const Page = () => {
 
         {/* Mapa - Desktop */}
         <div 
-          className={`${isMapFullscreen ? 'fixed left-0 right-0 w-full z-[9998]' : 'hidden xl:block w-[400px]'}`}
+          className={`${isMapFullscreen ? 'fixed left-0 right-0 w-full z-[99998]' : 'hidden xl:block w-[400px]'}`}
           style={{ top: isMapFullscreen ? '64px' : '0px' }}
         >
           <Mapbox 

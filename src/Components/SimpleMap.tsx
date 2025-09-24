@@ -312,7 +312,7 @@ export default function SimpleMap({ anunciosFiltrados, onCityFound, userNicho, s
   
   return (
     <div
-      className={`${isFullscreen ? 'fixed left-0 right-0 w-full z-[9999]' : 'hidden xl:flex w-[400px]'} flex-shrink-0 z-0 map-container relative`}
+      className={`${isFullscreen ? 'fixed left-0 right-0 w-full z-[99999]' : 'hidden xl:flex w-[400px]'} flex-shrink-0 z-0 map-container relative`}
       style={{ 
         height: isFullscreen && mapHeight === 0 ? 'calc(100vh - 64px)' : `${mapHeight}px`, 
         background: '#fff',
@@ -323,7 +323,7 @@ export default function SimpleMap({ anunciosFiltrados, onCityFound, userNicho, s
       {onToggleMapView && (
         <button
           onClick={onToggleMapView}
-          className="absolute top-4 right-4 z-[1000] map-toggle-button rounded-lg px-4 py-2 flex items-center gap-2 text-sm font-medium transition-colors bg-white shadow-lg border"
+          className="absolute top-4 right-4 z-[100000] map-toggle-button rounded-lg px-4 py-2 flex items-center gap-2 text-sm font-medium transition-colors bg-white shadow-lg border"
         >
           {isFullscreen ? (
             <>
