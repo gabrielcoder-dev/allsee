@@ -56,7 +56,10 @@ const ProgressAdmin = () => {
   };
 
   // Função para formatar números grandes
-  const formatarNumero = (numero: number) => {
+  const formatarNumero = (numero: number | null | undefined) => {
+    if (numero === null || numero === undefined || isNaN(numero)) {
+      return "0";
+    }
     if (numero >= 1000) {
       return (numero / 1000).toLocaleString("pt-BR", {
         minimumFractionDigits: 1,
@@ -147,13 +150,13 @@ const ProgressAdmin = () => {
                 <div className="flex flex-col md:flex-row items-center md:items-start gap-3 md:gap-4 flex-shrink-0">
                   <Image
                     src={campanha.arte.caminho_imagem}
-                    alt={campanha.order.nome_campanha}
+                    alt={campanha.order.nome_campanha || "Campanha"}
                     width={128}
                     height={128}
                     className="w-20 h-20 md:w-32 md:h-32 rounded-xl md:rounded-2xl object-cover"
                   />
                   <div className="text-center md:text-left">
-                    <p className="font-bold text-gray-800 text-sm md:text-base">{campanha.order.nome_campanha}</p>
+                    <p className="font-bold text-gray-800 text-sm md:text-base">{campanha.order.nome_campanha || "Campanha sem nome"}</p>
                     <p className="text-gray-500 text-xs md:text-sm">Campanha Ativa</p>
                   </div>
                 </div>
@@ -163,13 +166,13 @@ const ProgressAdmin = () => {
                   <div className="flex flex-col gap-1 p-3 bg-gray-50 rounded-lg">
                     <p className="text-gray-700 font-bold text-sm md:text-base">Exibições</p>
                     <p className="text-gray-500 text-lg md:text-xl font-semibold">
-                      {formatarNumero(campanha.order.exibicoes_campanha)}
+                      {formatarNumero(campanha.order.exibicoes_campanha || 0)}
                     </p>
                   </div>
                   <div className="flex flex-col gap-1 p-3 bg-gray-50 rounded-lg">
                     <p className="text-gray-700 font-bold text-sm md:text-base">Alcance</p>
                     <p className="text-gray-500 text-lg md:text-xl font-semibold">
-                      {formatarNumero(campanha.order.alcance_campanha)}
+                      {formatarNumero(campanha.order.alcance_campanha || 0)}
                     </p>
                   </div>
                   <div className="flex flex-col gap-1 p-3 bg-gray-50 rounded-lg">
