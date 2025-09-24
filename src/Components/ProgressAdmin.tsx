@@ -239,7 +239,16 @@ const ProgressAdmin = () => {
                   />
                   <div className="text-center md:text-left">
                     <p className="font-bold text-gray-800 text-sm md:text-base">{campanha.order.nome_campanha || "Campanha sem nome"}</p>
-                    <p className="text-gray-500 text-xs md:text-sm">Campanha Ativa</p>
+                    <p className="text-gray-500 text-xs md:text-sm">
+                      {(() => {
+                        const dataInicio = new Date(campanha.order.inicio_campanha);
+                        const inicioReal = new Date(dataInicio);
+                        inicioReal.setHours(7, 0, 0, 0); // 7h da manhã do dia de início
+                        const dataAtual = new Date();
+                        
+                        return dataAtual >= inicioReal ? "Campanha Ativa" : "Campanha ainda não começou";
+                      })()}
+                    </p>
                   </div>
                 </div>
                 
