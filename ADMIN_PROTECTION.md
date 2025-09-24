@@ -22,8 +22,9 @@ Foi implementada uma proteção básica para a rota `/dashboard` focada na exper
 ### Como Funciona:
 
 1. **Verificação de Autenticação**: O middleware verifica se existe token de acesso
-2. **Proteção de UI**: O botão de dashboard só aparece no menu para admins
-3. **Acesso Direto**: Usuários podem acessar `/dashboard` diretamente se autenticados
+2. **Verificação de Role**: A página do dashboard verifica se o usuário é admin
+3. **Proteção de UI**: O botão de dashboard só aparece no menu para admins
+4. **Redirecionamento**: Usuários não-admin são redirecionados para a página inicial
 
 ### Estrutura da Tabela `profiles`:
 
@@ -50,12 +51,14 @@ WHERE id = 'user-uuid-here';
 
 ### Testando a Implementação:
 
-1. **Usuário Normal**: Não vê botão dashboard no menu
-2. **Usuário Admin**: Vê botão dashboard no menu
+1. **Usuário Normal**: Não vê botão dashboard no menu e é redirecionado se tentar acessar `/dashboard`
+2. **Usuário Admin**: Vê botão dashboard no menu e pode acessar `/dashboard` normalmente
 3. **Usuário Não Autenticado**: É redirecionado para login antes de qualquer verificação
 
 ### Segurança:
 
 - ✅ Verificação de autenticação no middleware
+- ✅ Verificação de role na página
 - ✅ Proteção de UI (botão oculto)
-- ✅ Acesso controlado pela interface
+- ✅ Redirecionamento automático
+- ✅ Loading states para melhor UX
