@@ -102,6 +102,7 @@ export default function SimpleMap({ anunciosFiltrados, onCityFound, userNicho, s
   onToggleMapView?: () => void
 }) {
   const [mapHeight, setMapHeight] = useState<number>(0)
+  const [headerTop, setHeaderTop] = useState<number>(64)
   const [markers, setMarkers] = useState<MarkerType[]>([])
   const [loading, setLoading] = useState(true)
   const [mounted, setMounted] = useState(false)
@@ -136,13 +137,17 @@ export default function SimpleMap({ anunciosFiltrados, onCityFound, userNicho, s
       try {
         const header = document.getElementById('header-price')
         const headerHeight = header ? header.offsetHeight : 64
+        const headerTopPosition = header ? header.offsetTop + header.offsetHeight : 64
         const viewportHeight = window.visualViewport
           ? window.visualViewport.height
           : window.innerHeight
         
-        // Se estiver em modo tela cheia, usar toda a altura disponível
+        // Atualizar posição do header
+        setHeaderTop(headerTopPosition)
+        
+        // Se estiver em modo tela cheia, usar toda a altura disponível menos o header
         if (isFullscreen) {
-          setMapHeight(viewportHeight)
+          setMapHeight(viewportHeight - headerHeight)
         } else {
           setMapHeight(viewportHeight - headerHeight)
         }
@@ -305,8 +310,12 @@ export default function SimpleMap({ anunciosFiltrados, onCityFound, userNicho, s
 
   return (
     <div
-      className={`${isFullscreen ? 'fixed inset-0 w-full z-50' : 'hidden xl:flex w-[400px]'} flex-shrink-0 z-0 map-container relative`}
-      style={{ height: `${mapHeight}px`, background: '#fff' }}
+      className={`${isFullscreen ? 'fixed left-0 right-0 w-full z-50' : 'hidden xl:flex w-[400px]'} flex-shrink-0 z-0 map-container relative`}
+      style={{ 
+        height: `${mapHeight}px`, 
+        background: '#fff',
+        top: isFullscreen ? `${headerTop}px` : '0px' // Começar abaixo do header quando em fullscreen
+      }}
     >
       {/* Botão de alternância do mapa */}
       {onToggleMapView && (
