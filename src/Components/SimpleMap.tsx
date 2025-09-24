@@ -140,8 +140,12 @@ export default function SimpleMap({ anunciosFiltrados, onCityFound, userNicho, s
           ? window.visualViewport.height
           : window.innerHeight
         
-        // Sempre usar a altura disponível menos o header
-        setMapHeight(viewportHeight - headerHeight)
+        // Se estiver em modo tela cheia, usar toda a altura disponível
+        if (isFullscreen) {
+          setMapHeight(viewportHeight)
+        } else {
+          setMapHeight(viewportHeight - headerHeight)
+        }
       } catch (error) {
         console.error('Erro ao calcular altura do mapa:', error);
         setMapHeight(600); // altura padrão
@@ -160,7 +164,7 @@ export default function SimpleMap({ anunciosFiltrados, onCityFound, userNicho, s
         window.visualViewport.removeEventListener('scroll', updateHeight)
       }
     }
-  }, [mounted])
+  }, [mounted, isFullscreen])
 
   // Cleanup adicional quando componente for desmontado
   useEffect(() => {
@@ -301,7 +305,7 @@ export default function SimpleMap({ anunciosFiltrados, onCityFound, userNicho, s
 
   return (
     <div
-      className={`${isFullscreen ? 'w-full' : 'hidden xl:flex w-[400px]'} flex-shrink-0 z-0 map-container relative`}
+      className={`${isFullscreen ? 'fixed inset-0 w-full z-50' : 'hidden xl:flex w-[400px]'} flex-shrink-0 z-0 map-container relative`}
       style={{ height: `${mapHeight}px`, background: '#fff' }}
     >
       {/* Botão de alternância do mapa */}
