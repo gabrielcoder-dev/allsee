@@ -215,7 +215,7 @@ export default function Mapbox({ anunciosFiltrados, onCityFound, userNicho, isFu
       
       // Se estiver em modo tela cheia, usar toda a altura disponível
       if (isFullscreen) {
-        setMapHeight(viewportHeight - headerHeight)
+        setMapHeight(viewportHeight)
       } else {
         setMapHeight(viewportHeight - headerHeight)
       }
@@ -275,7 +275,7 @@ export default function Mapbox({ anunciosFiltrados, onCityFound, userNicho, isFu
 
   return (
     <div
-      className={`${isFullscreen ? 'w-full' : 'hidden xl:flex w-[400px]'} flex-shrink-0 z-0 map-container`}
+      className={`${isFullscreen ? 'fixed inset-0 w-full' : 'hidden xl:flex w-[400px]'} flex-shrink-0 z-0 map-container`}
       style={{ height: `${mapHeight}px`, background: '#fff' }}
     >
              <MapContainer
