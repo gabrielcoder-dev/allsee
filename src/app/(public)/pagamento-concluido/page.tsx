@@ -1,13 +1,40 @@
-import Link from 'next/link';
+'use client';
+
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 
 export default function PagamentoConcluido() {
+  const router = useRouter();
+
+  useEffect(() => {
+    // Redireciona automaticamente para /meus-anuncios após 2 segundos
+    const timer = setTimeout(() => {
+      router.push('/meus-anuncios');
+    }, 2000);
+
+    return () => clearTimeout(timer);
+  }, [router]);
+
   return (
     <div style={{ textAlign: 'center', marginTop: 50 }}>
       <h1>Pagamento concluído com sucesso!</h1>
       <p>Obrigado pela sua compra.</p>
-      <Link href="/results">
-        <button style={{ marginTop: 20 }}>Voltar a comprar</button>
-      </Link>
+      <p>Redirecionando para seus anúncios...</p>
+      <div style={{ marginTop: 20 }}>
+        <button 
+          onClick={() => router.push('/meus-anuncios')}
+          style={{ 
+            padding: '10px 20px', 
+            backgroundColor: '#f97316', 
+            color: 'white', 
+            border: 'none', 
+            borderRadius: '5px', 
+            cursor: 'pointer' 
+          }}
+        >
+          Ir para Meus Anúncios
+        </button>
+      </div>
     </div>
   );
 } 

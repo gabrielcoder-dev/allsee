@@ -54,9 +54,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         },
       ],
       back_urls: {
-        success: `${req.headers.origin}/pagamento-concluido?orderId=${orderId}`,
-        failure: `${req.headers.origin}/pagamento-concluido?orderId=${orderId}&status=failed`,
-        pending: `${req.headers.origin}/pagamento-concluido?orderId=${orderId}&status=pending`,
+        success: `${req.headers.origin}/meus-anuncios?orderId=${orderId}&status=success`,
+        failure: `${req.headers.origin}/meus-anuncios?orderId=${orderId}&status=failed`,
+        pending: `${req.headers.origin}/meus-anuncios?orderId=${orderId}&status=pending`,
       },
       auto_return: 'approved',
       external_reference: orderId,
