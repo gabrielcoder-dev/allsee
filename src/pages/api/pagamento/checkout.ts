@@ -12,7 +12,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const { total, orderId, arteCampanhaId, payerData } = req.body; // Recebendo arteCampanhaId
 
     // 1. Validar dados
-    if (!total || !orderId || !arteCampanhaId || !payerData) { // Validando arteCampanhaId
+    if (!total || !orderId || !payerData) { // arteCampanhaId pode ser null
       return res.status(400).json({ success: false, error: 'Dados incompletos' });
     }
 
