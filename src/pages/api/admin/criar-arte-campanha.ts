@@ -61,6 +61,10 @@ export default async function handler(
     });
 
     // ✅ Resposta mínima para evitar erro 413
+    // Definir headers para evitar problemas de tamanho
+    res.setHeader('Content-Type', 'application/json');
+    res.setHeader('Cache-Control', 'no-cache');
+    
     return res.status(200).json({ 
       success: true, 
       arte_campanha_id: arteCampanha.id 
@@ -77,5 +81,6 @@ export const config = {
     bodyParser: {
       sizeLimit: '1.5gb',
     },
+    responseLimit: '1.5gb',
   },
 };
