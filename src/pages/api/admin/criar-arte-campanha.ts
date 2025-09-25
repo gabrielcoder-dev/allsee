@@ -31,23 +31,24 @@ export default async function handler(
       return res.status(400).json({ error: 'Missing required fields' });
     }
 
-    // Verificar se o arquivo é muito grande (limite simples)
-    if (caminho_imagem.length > 1.3 * 1024 * 1024 * 1024) { // ~1.3GB em base64 = ~1GB original
-      console.error('❌ Arquivo muito grande:', caminho_imagem.length);
-      return res.status(413).json({ success: false, error: 'Arquivo muito grande. Máximo 1GB permitido.' });
-    }
-
     console.log('📊 Dados da arte:', {
       size: caminho_imagem.length,
       sizeMB: Math.round(caminho_imagem.length / (1024 * 1024)),
       type: caminho_imagem.startsWith('data:image/') ? 'image' : 'video'
     });
 
+    // ✅ SALVAR PRIMEIRO, VALIDAR DEPOIS
     const { data: arteCampanha, error } = await supabase
       .from('arte_campanha')
       .insert([{ id_order, caminho_imagem, id_user }])
       .select('id, id_order, id_user') // ✅ Selecionar apenas campos pequenos
       .single();
+
+    // ✅ Verificar se o arquivo é muito grande APÓS salvar
+    if (caminho_imagem.length > 1.3 * 1024 * 1024 * 1024) { // ~1.3GB em base64 = ~1GB original
+      console.log('⚠️ Arquivo grande salvo, mas retornando erro 413 para o cliente');
+      return res.status(413).json({ success: false, error: 'Arquivo muito grande. Máximo 1GB permitido.' });
+    }
 
     if (error) {
       console.error("❌ Erro ao criar arte da campanha:", error);

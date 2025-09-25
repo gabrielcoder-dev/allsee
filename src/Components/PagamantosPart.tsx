@@ -309,15 +309,21 @@ export const PagamantosPart = () => {
         return;
       }
 
-      // ✅ Se erro 413, assumir que foi salvo e continuar
+      // ✅ Se erro 413, tentar pegar o ID da resposta mesmo assim
       let arteCampanhaId = null;
       if (arteCampanhaRes.ok) {
         const arteCampanhaData = await arteCampanhaRes.json();
         arteCampanhaId = arteCampanhaData.arte_campanha_id;
       } else if (arteCampanhaRes.status === 413) {
-        // ✅ Erro 413 - assumir que foi salvo mas não temos o ID
-        console.log("⚠️ Erro 413 - assumindo que arte foi salva...");
-        arteCampanhaId = null; // Continuar sem arte
+        // ✅ Erro 413 - tentar pegar o ID mesmo com erro
+        try {
+          const arteCampanhaData = await arteCampanhaRes.json();
+          arteCampanhaId = arteCampanhaData.arte_campanha_id;
+          console.log("✅ Arte salva com sucesso mesmo com erro 413, ID:", arteCampanhaId);
+        } catch (error) {
+          console.log("⚠️ Erro 413 - não foi possível pegar ID da arte...");
+          arteCampanhaId = null;
+        }
       }
 
       console.log('✅ Arte da campanha processada, ID:', arteCampanhaId);
