@@ -275,7 +275,7 @@ export const PagamantosPart = () => {
 
       const orderId = orderData.orderId;
 
-      // ** (4) Image/Video Upload: API call to create arte_campanha **
+      // ** (4) Image/Video Upload: Sistema de chunks para arquivos grandes **
       console.log('📤 Enviando arte da campanha:', {
         id_order: orderId,
         id_user: user.id,
@@ -284,49 +284,29 @@ export const PagamantosPart = () => {
         fileType: artData ? (artData.startsWith('data:image/') ? 'image' : 'video') : 'unknown'
       });
 
-      const artePayload = {
-        id_order: orderId,
-        caminho_imagem: artData,
-        id_user: user.id,
-      };
+      let arteCampanhaId = null;
       
-      const arteCampanhaRes = await fetch("/api/admin/criar-arte-campanha", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(artePayload),
-      });
-      
-      // ✅ Ignorar erro 413 - os dados estão sendo salvos mesmo assim
-      if (!arteCampanhaRes.ok && arteCampanhaRes.status !== 413) {
-        console.error("❌ Erro HTTP na criação da arte:", {
-          status: arteCampanhaRes.status,
-          statusText: arteCampanhaRes.statusText,
-          url: arteCampanhaRes.url
-        });
+      try {
+        // Importar dinamicamente para evitar problemas de SSR
+        const { uploadInChunks } = await import('@/lib/chunkUpload');
         
-        setErro(`Erro ao criar arte da campanha: ${arteCampanhaRes.status} ${arteCampanhaRes.statusText}`);
+        const uploadResult = await uploadInChunks(artData, orderId, user.id);
+        
+        if (uploadResult.success) {
+          arteCampanhaId = uploadResult.arte_campanha_id;
+          console.log('✅ Arte da campanha criada com sucesso, ID:', arteCampanhaId);
+        } else {
+          console.error('❌ Erro no upload:', uploadResult.error);
+          setErro(`Erro ao fazer upload da arte: ${uploadResult.error}`);
+          setCarregando(false);
+          return;
+        }
+      } catch (error) {
+        console.error('❌ Erro no sistema de upload:', error);
+        setErro('Erro ao fazer upload da arte');
         setCarregando(false);
         return;
       }
-
-      // ✅ Se erro 413, tentar pegar o ID da resposta mesmo assim
-      let arteCampanhaId = null;
-      if (arteCampanhaRes.ok) {
-        const arteCampanhaData = await arteCampanhaRes.json();
-        arteCampanhaId = arteCampanhaData.arte_campanha_id;
-      } else if (arteCampanhaRes.status === 413) {
-        // ✅ Erro 413 - tentar pegar o ID mesmo com erro
-        try {
-          const arteCampanhaData = await arteCampanhaRes.json();
-          arteCampanhaId = arteCampanhaData.arte_campanha_id;
-          console.log("✅ Arte salva com sucesso mesmo com erro 413, ID:", arteCampanhaId);
-        } catch (error) {
-          console.log("⚠️ Erro 413 - não foi possível pegar ID da arte...");
-          arteCampanhaId = null;
-        }
-      }
-
-      console.log('✅ Arte da campanha processada, ID:', arteCampanhaId);
 
       const payerData = {
         name: formData.cpf ? 'Pessoa Física' : formData.razaoSocial || 'Cliente Allsee',

@@ -80,8 +80,8 @@ export default async function handler(
 export const config = {
   api: {
     bodyParser: {
-      sizeLimit: '1.5gb',
+      sizeLimit: '50mb', // Reduzir para evitar erro 413
     },
-    responseLimit: '1.5gb',
+    responseLimit: '50mb',
   },
 };
