@@ -24,12 +24,7 @@ export default function ModalLogin({ onClose }: { onClose: () => void }) {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: "https://allseeads.com.br/results",
-          queryParams: {
-            access_type: 'offline',
-            prompt: 'select_account',
-            hd: 'allseeads.com.br'
-          }
+          redirectTo: "https://allseeads.com.br/results"
         }
       })
       if (error) {
@@ -50,12 +45,7 @@ export default function ModalLogin({ onClose }: { onClose: () => void }) {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: "https://allseeads.com.br/results",
-          queryParams: {
-            access_type: 'offline',
-            prompt: 'select_account',
-            hd: 'allseeads.com.br'
-          }
+          redirectTo: "https://allseeads.com.br/results"
         }
       })
       if (error) {
