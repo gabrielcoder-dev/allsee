@@ -229,8 +229,17 @@ export default function CartResume({ onCartArtSelected, onCampaignNameChange, ar
       const isVideo = file.type.startsWith("video/");
       const maxSize = isVideo ? 100 * 1024 * 1024 : 5 * 1024 * 1024; // 100MB ou 5MB
 
+      console.log('🔍 Debug upload de arquivo:', {
+        fileName: file.name,
+        fileSize: file.size,
+        fileSizeMB: Math.round(file.size / (1024 * 1024)),
+        fileType: file.type,
+        isVideo,
+        maxSizeMB: Math.round(maxSize / (1024 * 1024))
+      });
+
       if (file.size > maxSize) {
-        alert(`O arquivo é muito grande. O limite é de ${isVideo ? "100MB para vídeos" : "5MB para imagens"}.`);
+        alert(`O arquivo é muito grande. O limite é de ${isVideo ? "100MB para vídeos" : "5MB para imagens"}. Arquivo atual: ${Math.round(file.size / (1024 * 1024))}MB`);
         return;
       }
 
@@ -255,6 +264,12 @@ export default function CartResume({ onCartArtSelected, onCampaignNameChange, ar
         // Para vídeo, converte para base64 e salva apenas no contexto
         try {
           const base64 = await fileToBase64(file);
+          console.log('🔍 Debug conversão para base64:', {
+            originalSizeMB: Math.round(file.size / (1024 * 1024)),
+            base64Length: base64.length,
+            base64LengthMB: Math.round(base64.length / (1024 * 1024)),
+            compressionRatio: Math.round((base64.length / file.size) * 100) + '%'
+          });
           updateFormData({
             selectedImage: base64,
             previewUrl: url,
