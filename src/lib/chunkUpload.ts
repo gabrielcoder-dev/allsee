@@ -57,7 +57,7 @@ export async function uploadFileInChunks(
         uploadId
       });
 
-      const response = await fetch(`${uploadEndpoint}/chunk`, {
+      const response = await fetch(`${uploadEndpoint}?action=chunk`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(chunkData)
@@ -70,7 +70,7 @@ export async function uploadFileInChunks(
 
     // Finalizar upload
     console.log('✅ Finalizando upload:', uploadId);
-    const finalizeResponse = await fetch(`${uploadEndpoint}/finalize`, {
+    const finalizeResponse = await fetch(`${uploadEndpoint}?action=finalize`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ uploadId })
