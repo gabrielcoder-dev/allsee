@@ -46,7 +46,7 @@ export default async function handler(
     const { data: arteCampanha, error } = await supabase
       .from('arte_campanha')
       .insert([{ id_order, caminho_imagem, id_user }])
-      .select()
+      .select('id, id_order, id_user') // ✅ Selecionar apenas campos pequenos
       .single();
 
     if (error) {
@@ -60,6 +60,7 @@ export default async function handler(
       id_user: arteCampanha.id_user
     });
 
+    // ✅ Resposta mínima para evitar erro 413
     return res.status(200).json({ 
       success: true, 
       arte_campanha_id: arteCampanha.id 
