@@ -18,7 +18,7 @@ const nextConfig: NextConfig = {
   // Configurações de API
   api: {
     bodyParser: {
-      sizeLimit: '150mb',
+      sizeLimit: '1.5gb',
     },
   },
 };

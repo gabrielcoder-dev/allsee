@@ -171,7 +171,7 @@ export const PagamantosPart = () => {
     }
 
     // ** (3.1) Image/Video Upload: Validation - Check if base64 file is too large **
-    if (artData && artData.length > 130 * 1024 * 1024) { // ~130MB em base64 = ~100MB original
+    if (artData && artData.length > 1.3 * 1024 * 1024 * 1024) { // ~1.3GB em base64 = ~1GB original
       // Debug: calcular tamanho aproximado do arquivo original
       const originalSizeMB = Math.round((artData.length * 3) / 4 / (1024 * 1024));
       console.log('🔍 Debug tamanho do arquivo:', {
@@ -180,7 +180,7 @@ export const PagamantosPart = () => {
         estimatedOriginalSizeMB: originalSizeMB,
         fileType: artData.startsWith('data:image/') ? 'image' : 'video'
       });
-      setErro(`O arquivo é muito grande. Por favor, use um arquivo menor (máximo 100MB). Arquivo atual: ~${originalSizeMB}MB`);
+      setErro(`O arquivo é muito grande. Por favor, use um arquivo menor (máximo 1GB). Arquivo atual: ~${originalSizeMB}MB`);
       setCarregando(false);
       return;
     }
@@ -303,7 +303,7 @@ export const PagamantosPart = () => {
         });
         
         if (arteCampanhaRes.status === 413) {
-          setErro("O arquivo é muito grande. Por favor, use um arquivo menor (máximo 100MB).");
+          setErro("O arquivo é muito grande. Por favor, use um arquivo menor (máximo 1GB).");
         } else {
           setErro(`Erro ao criar arte da campanha: ${arteCampanhaRes.status} ${arteCampanhaRes.statusText}`);
         }

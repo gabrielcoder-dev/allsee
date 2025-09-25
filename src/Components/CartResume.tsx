@@ -225,9 +225,9 @@ export default function CartResume({ onCartArtSelected, onCampaignNameChange, ar
   const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      // Limite de tamanho (5MB para imagem, 100MB para vídeo)
+      // Limite de tamanho (1GB para imagem e vídeo)
       const isVideo = file.type.startsWith("video/");
-      const maxSize = isVideo ? 100 * 1024 * 1024 : 5 * 1024 * 1024; // 100MB ou 5MB
+      const maxSize = 1 * 1024 * 1024 * 1024; // 1GB para ambos
 
       console.log('🔍 Debug upload de arquivo:', {
         fileName: file.name,
@@ -239,7 +239,7 @@ export default function CartResume({ onCartArtSelected, onCampaignNameChange, ar
       });
 
       if (file.size > maxSize) {
-        alert(`O arquivo é muito grande. O limite é de ${isVideo ? "100MB para vídeos" : "5MB para imagens"}. Arquivo atual: ${Math.round(file.size / (1024 * 1024))}MB`);
+        alert(`O arquivo é muito grande. O limite é de 1GB para imagens e vídeos. Arquivo atual: ${Math.round(file.size / (1024 * 1024))}MB`);
         return;
       }
 

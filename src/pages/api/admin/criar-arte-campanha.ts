@@ -32,9 +32,9 @@ export default async function handler(
     }
 
     // Verificar se o arquivo é muito grande
-    if (isFileTooLarge(caminho_imagem, 100)) { // 100MB limite
+    if (isFileTooLarge(caminho_imagem, 1000)) { // 1000MB (1GB) limite
       console.error('❌ Arquivo muito grande:', caminho_imagem.length);
-      return res.status(413).json({ success: false, error: 'Arquivo muito grande. Máximo 100MB permitido.' });
+      return res.status(413).json({ success: false, error: 'Arquivo muito grande. Máximo 1GB permitido.' });
     }
 
     // Otimizar dados para armazenamento
@@ -80,7 +80,7 @@ export default async function handler(
 export const config = {
   api: {
     bodyParser: {
-      sizeLimit: '150mb',
+      sizeLimit: '1.5gb',
     },
   },
 };
