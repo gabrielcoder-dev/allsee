@@ -10,6 +10,17 @@ const nextConfig: NextConfig = {
     };
     return config;
   },
+  // Configurações para lidar com arquivos grandes
+  experimental: {
+    // Aumentar o limite de tamanho do body parser
+    serverComponentsExternalPackages: [],
+  },
+  // Configurações de API
+  api: {
+    bodyParser: {
+      sizeLimit: '150mb',
+    },
+  },
 };
 
 export default nextConfig;

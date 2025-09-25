@@ -225,12 +225,12 @@ export default function CartResume({ onCartArtSelected, onCampaignNameChange, ar
   const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      // Limite de tamanho (5MB para imagem, 1GB para vídeo)
+      // Limite de tamanho (5MB para imagem, 100MB para vídeo)
       const isVideo = file.type.startsWith("video/");
-      const maxSize = isVideo ? 1 * 1024 * 1024 * 1024 : 5 * 1024 * 1024; // 1GB ou 5MB
+      const maxSize = isVideo ? 100 * 1024 * 1024 : 5 * 1024 * 1024; // 100MB ou 5MB
 
       if (file.size > maxSize) {
-        alert(`O arquivo é muito grande. O limite é de ${isVideo ? "1GB para vídeos" : "5MB para imagens"}.`);
+        alert(`O arquivo é muito grande. O limite é de ${isVideo ? "100MB para vídeos" : "5MB para imagens"}.`);
         return;
       }
 
@@ -240,7 +240,7 @@ export default function CartResume({ onCartArtSelected, onCampaignNameChange, ar
 
       if (!isVideo) {
         setVideoThumbnail(null);
-        // Salva imagem em base64 no localStorage
+        // Salva imagem em base64 apenas no contexto
         try {
           const base64 = await fileToBase64(file);
           updateFormData({
@@ -248,13 +248,11 @@ export default function CartResume({ onCartArtSelected, onCampaignNameChange, ar
             previewUrl: url,
             isArtSelected: true
           });
-          const formDataStorage = JSON.parse(localStorage.getItem('formData') || '{}');
-          localStorage.setItem('formData', JSON.stringify({ ...formDataStorage, selectedImage: base64, previewUrl: url, isArtSelected: true }));
         } catch (error) {
           console.error('Erro ao converter arquivo para Base64:', error);
         }
       } else {
-        // Para vídeo, converte para base64 e salva no contexto/localStorage
+        // Para vídeo, converte para base64 e salva apenas no contexto
         try {
           const base64 = await fileToBase64(file);
           updateFormData({
@@ -262,8 +260,6 @@ export default function CartResume({ onCartArtSelected, onCampaignNameChange, ar
             previewUrl: url,
             isArtSelected: true
           });
-          const formDataStorage = JSON.parse(localStorage.getItem('formData') || '{}');
-          localStorage.setItem('formData', JSON.stringify({ ...formDataStorage, selectedImage: base64, previewUrl: url, isArtSelected: true }));
         } catch (error) {
           console.error('Erro ao converter vídeo para Base64:', error);
           // Fallback: salva apenas previewUrl se a conversão falhar
@@ -272,8 +268,6 @@ export default function CartResume({ onCartArtSelected, onCampaignNameChange, ar
             previewUrl: url,
             isArtSelected: true
           });
-          const formDataStorage = JSON.parse(localStorage.getItem('formData') || '{}');
-          localStorage.setItem('formData', JSON.stringify({ ...formDataStorage, selectedImage: null, previewUrl: url, isArtSelected: true }));
         }
         // Gerar thumbnail do vídeo
         try {
@@ -291,18 +285,14 @@ export default function CartResume({ onCartArtSelected, onCampaignNameChange, ar
   const handleDurationChange = (value: string) => {
     setDuration(value);
     setSelectedDurationGlobal(value);
-    // Salva no localStorage
-    const formDataStorage = JSON.parse(localStorage.getItem('formData') || '{}');
-    localStorage.setItem('formData', JSON.stringify({ ...formDataStorage, selectedDurationGlobal: value }));
+    // O contexto já gerencia a persistência automaticamente
   };
 
   const handleCampaignNameChange = (value: string) => {
     setCampaignName(value);
     updateFormData({ campaignName: value });
     if (onCampaignNameChange) onCampaignNameChange(value);
-    // Salva no localStorage
-    const formDataStorage = JSON.parse(localStorage.getItem('formData') || '{}');
-    localStorage.setItem('formData', JSON.stringify({ ...formDataStorage, campaignName: value }));
+    // O contexto já gerencia a persistência automaticamente
   };
 
   const handleStartDateChange = (date: Date | undefined) => {
@@ -311,9 +301,7 @@ export default function CartResume({ onCartArtSelected, onCampaignNameChange, ar
     const ymd = date.toISOString().slice(0, 10);
     setStartDate(ymd);
     updateFormData({ startDate: ymd });
-    // Salva no localStorage
-    const formDataStorage = JSON.parse(localStorage.getItem('formData') || '{}');
-    localStorage.setItem('formData', JSON.stringify({ ...formDataStorage, startDate: ymd }));
+    // O contexto já gerencia a persistência automaticamente
   };
 
   const handleRemoveImage = () => {
@@ -324,9 +312,7 @@ export default function CartResume({ onCartArtSelected, onCampaignNameChange, ar
       previewUrl: null,
       isArtSelected: false
     });
-    // Salva no localStorage
-    const formDataStorage = JSON.parse(localStorage.getItem('formData') || '{}');
-    localStorage.setItem('formData', JSON.stringify({ ...formDataStorage, selectedImage: null, previewUrl: null, isArtSelected: false }));
+    // O contexto já gerencia a persistência automaticamente
     if (onCartArtSelected) onCartArtSelected(false);
   };
 

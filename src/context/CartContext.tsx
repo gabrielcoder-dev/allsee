@@ -137,11 +137,33 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [produtos, mounted])
 
-  // // 💾 Salvar form data no localStorage sempre que mudar
-  // useEffect(() => {
-  //   console.log("Salvando form data no localStorage:", formData);
-  //   localStorage.setItem('formData', JSON.stringify(formData))
-  // }, [formData])
+  // 🔄 Carregar form data do localStorage
+  useEffect(() => {
+    if (!mounted) return;
+    
+    try {
+      const storedFormData = localStorage.getItem('formData');
+      if (storedFormData) {
+        const parsedFormData = JSON.parse(storedFormData);
+        console.log("Form data carregado do localStorage:", parsedFormData);
+        setFormData(prev => ({ ...prev, ...parsedFormData }));
+      }
+    } catch (error) {
+      console.warn('Erro ao carregar form data do localStorage:', error);
+    }
+  }, [mounted]);
+
+  // 💾 Salvar form data no localStorage sempre que mudar
+  useEffect(() => {
+    if (!mounted) return;
+    
+    try {
+      console.log("Salvando form data no localStorage:", formData);
+      localStorage.setItem('formData', JSON.stringify(formData));
+    } catch (error) {
+      console.warn('Erro ao salvar form data no localStorage:', error);
+    }
+  }, [formData, mounted]);
 
   const adicionarProduto = (produto: Produto) => {
     console.log("🛒 Adicionando produto ao carrinho:", {

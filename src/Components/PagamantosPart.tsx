@@ -108,6 +108,9 @@ export const PagamantosPart = () => {
 
   // Função para verificar se todos os campos obrigatórios estão preenchidos (exceto complemento)
   const isFormValid = () => {
+    // Verificar se há arte selecionada (imagem ou vídeo)
+    const hasArtSelected = !!formData.selectedImage || !!formData.previewUrl || !!imageUrl;
+    
     // Pessoa Física
     if (openAccordion === "fisica") {
       return (
@@ -119,7 +122,7 @@ export const PagamantosPart = () => {
         !!formData.bairro &&
         !!formData.cidade &&
         !!formData.estado &&
-        !!imageUrl  // Ensure imageUrl is set
+        hasArtSelected  // Ensure art is selected (image or video)
       );
     }
     // Pessoa Jurídica
@@ -135,7 +138,7 @@ export const PagamantosPart = () => {
         !!formData.bairroJ &&
         !!formData.cidadeJ &&
         !!formData.estadoJ &&
-        !!imageUrl // Ensure imageUrl is set
+        hasArtSelected // Ensure art is selected (image or video)
       );
     }
     // Nenhum selecionado
@@ -160,15 +163,16 @@ export const PagamantosPart = () => {
     }
 
     // ** (3) Image/Video Upload: Validation - Check if an image/video is selected/provided **
-    if (!imageUrl) {
+    const artData = formData.selectedImage || imageUrl;
+    if (!artData) {
       setErro("Por favor, selecione ou faça upload da arte da campanha (imagem ou vídeo).");
       setCarregando(false);
       return;
     }
 
     // ** (3.1) Image/Video Upload: Validation - Check if base64 file is too large **
-    if (imageUrl && imageUrl.length > 1.3 * 1024 * 1024 * 1024) { // ~1.3GB em base64 = ~1GB original
-      setErro("O arquivo é muito grande. Por favor, use um arquivo menor (máximo 1GB).");
+    if (artData && artData.length > 130 * 1024 * 1024) { // ~130MB em base64 = ~100MB original
+      setErro("O arquivo é muito grande. Por favor, use um arquivo menor (máximo 100MB).");
       setCarregando(false);
       return;
     }
@@ -265,16 +269,16 @@ export const PagamantosPart = () => {
       // ** (4) Image/Video Upload: API call to create arte_campanha **
       const artePayload = {
         id_order: orderId,
-        caminho_imagem: imageUrl, // Pass the image/video base64 to the backend
+        caminho_imagem: artData, // Pass the image/video base64 to the backend
         id_user: user.id,
       };
       
       console.log('📤 Enviando arte da campanha:', {
         id_order: orderId,
         id_user: user.id,
-        fileSize: imageUrl ? imageUrl.length : 0,
-        filePreview: imageUrl ? imageUrl.substring(0, 50) + '...' : null,
-        fileType: imageUrl ? (imageUrl.startsWith('data:image/') ? 'image' : 'video') : 'unknown'
+        fileSize: artData ? artData.length : 0,
+        filePreview: artData ? artData.substring(0, 50) + '...' : null,
+        fileType: artData ? (artData.startsWith('data:image/') ? 'image' : 'video') : 'unknown'
       });
       
       const arteCampanhaRes = await fetch("/api/admin/criar-arte-campanha", {
