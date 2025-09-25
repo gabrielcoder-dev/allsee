@@ -1,7 +1,7 @@
 // c:\Users\Latitude 5490\Desktop\allsee\src\pages\api/admin/criar-arte-campanha.ts
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { createClient } from '@supabase/supabase-js';
-import { optimizeForStorage, isFileTooLarge } from '@/lib/compression';
+// Removido sistema de compressão - usando armazenamento direto simples
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
@@ -31,27 +31,21 @@ export default async function handler(
       return res.status(400).json({ error: 'Missing required fields' });
     }
 
-    // Verificar se o arquivo é muito grande
-    if (isFileTooLarge(caminho_imagem, 1000)) { // 1000MB (1GB) limite
+    // Verificar se o arquivo é muito grande (limite simples)
+    if (caminho_imagem.length > 1.3 * 1024 * 1024 * 1024) { // ~1.3GB em base64 = ~1GB original
       console.error('❌ Arquivo muito grande:', caminho_imagem.length);
       return res.status(413).json({ success: false, error: 'Arquivo muito grande. Máximo 1GB permitido.' });
     }
 
-    // Otimizar dados para armazenamento
-    const optimization = optimizeForStorage(caminho_imagem);
-    const finalData = optimization.optimized;
-    
-    console.log('📊 Otimização de dados:', {
-      originalSize: optimization.originalSize,
-      optimizedSize: optimization.optimizedSize,
-      isOptimized: optimization.isOptimized,
-      compressionRatio: optimization.isOptimized ? 
-        ((optimization.originalSize - optimization.optimizedSize) / optimization.originalSize * 100).toFixed(2) + '%' : '0%'
+    console.log('📊 Dados da arte:', {
+      size: caminho_imagem.length,
+      sizeMB: Math.round(caminho_imagem.length / (1024 * 1024)),
+      type: caminho_imagem.startsWith('data:image/') ? 'image' : 'video'
     });
 
     const { data: arteCampanha, error } = await supabase
       .from('arte_campanha')
-      .insert([{ id_order, caminho_imagem: finalData, id_user }])
+      .insert([{ id_order, caminho_imagem, id_user }])
       .select()
       .single();
 
