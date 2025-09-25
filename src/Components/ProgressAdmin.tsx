@@ -4,6 +4,11 @@ import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import { createClient } from '@supabase/supabase-js';
 
+// Função para detectar se é vídeo
+const isVideo = (url: string) => {
+  return url.match(/\.(mp4|webm|ogg)$/i) || url.startsWith("data:video");
+};
+
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
@@ -305,15 +310,25 @@ const ProgressAdmin = () => {
             
             return (
               <div key={campanha.arte.id} className="flex flex-col md:flex-row items-start gap-4 md:gap-6 border border-gray-300 rounded-xl md:rounded-2xl p-4 md:p-6 bg-white shadow-sm">
-                {/* Imagem + Detalhes */}
+                {/* Imagem/Vídeo + Detalhes */}
                 <div className="flex flex-col md:flex-row items-center md:items-start gap-3 md:gap-4 flex-shrink-0">
-                  <Image
-                    src={campanha.arte.caminho_imagem}
-                    alt={campanha.order.nome_campanha || "Campanha"}
-                    width={128}
-                    height={128}
-                    className="w-20 h-20 md:w-32 md:h-32 rounded-xl md:rounded-2xl object-cover"
-                  />
+                  {isVideo(campanha.arte.caminho_imagem) ? (
+                    <video
+                      src={campanha.arte.caminho_imagem}
+                      className="w-20 h-20 md:w-32 md:h-32 rounded-xl md:rounded-2xl object-cover"
+                      controls={false}
+                      preload="metadata"
+                      muted
+                    />
+                  ) : (
+                    <Image
+                      src={campanha.arte.caminho_imagem}
+                      alt={campanha.order.nome_campanha || "Campanha"}
+                      width={128}
+                      height={128}
+                      className="w-20 h-20 md:w-32 md:h-32 rounded-xl md:rounded-2xl object-cover"
+                    />
+                  )}
                   <div className="text-center md:text-left">
                     <p className="font-bold text-gray-800 text-sm md:text-base">{campanha.order.nome_campanha || "Campanha sem nome"}</p>
                     <div className="flex items-center gap-2">

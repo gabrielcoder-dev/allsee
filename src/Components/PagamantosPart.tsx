@@ -18,6 +18,7 @@ import { PiBarcodeBold } from "react-icons/pi";
 import { useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { useUser } from "@supabase/auth-helpers-react";
+import { uploadFileInChunks, shouldUseChunkUpload } from "@/lib/chunkUpload";
 
 export const PagamantosPart = () => {
   const user = useUser();
@@ -275,52 +276,81 @@ export const PagamantosPart = () => {
       const orderId = orderData.orderId;
 
       // ** (4) Image/Video Upload: API call to create arte_campanha **
-      const artePayload = {
-        id_order: orderId,
-        caminho_imagem: artData, // Pass the image/video base64 to the backend
-        id_user: user.id,
-      };
-      
       console.log('📤 Enviando arte da campanha:', {
         id_order: orderId,
         id_user: user.id,
         fileSize: artData ? artData.length : 0,
         filePreview: artData ? artData.substring(0, 50) + '...' : null,
-        fileType: artData ? (artData.startsWith('data:image/') ? 'image' : 'video') : 'unknown'
+        fileType: artData ? (artData.startsWith('data:image/') ? 'image' : 'video') : 'unknown',
+        shouldUseChunks: shouldUseChunkUpload(artData, 10 * 1024 * 1024) // 10MB threshold
       });
-      
-      const arteCampanhaRes = await fetch("/api/admin/criar-arte-campanha", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(artePayload),
-      });
-      
-      if (!arteCampanhaRes.ok) {
-        console.error("❌ Erro HTTP na criação da arte:", {
-          status: arteCampanhaRes.status,
-          statusText: arteCampanhaRes.statusText,
-          url: arteCampanhaRes.url
+
+      let arteCampanhaId: string;
+
+      // Verificar se deve usar upload em chunks
+      if (shouldUseChunkUpload(artData, 10 * 1024 * 1024)) {
+        console.log('🚀 Usando upload em chunks para arquivo grande');
+        
+        const chunkResult = await uploadFileInChunks(
+          artData,
+          "/api/admin/criar-arte-campanha-chunk",
+          {
+            id_order: orderId,
+            id_user: user.id,
+          },
+          5 * 1024 * 1024 // 5MB por chunk
+        );
+
+        if (!chunkResult.success) {
+          console.error("❌ Erro no upload em chunks:", chunkResult.error);
+          setErro(chunkResult.error || "Erro ao fazer upload da arte em pedaços");
+          setCarregando(false);
+          return;
+        }
+
+        arteCampanhaId = chunkResult.data.arte_campanha_id;
+      } else {
+        console.log('📤 Usando upload direto para arquivo pequeno');
+        
+        const artePayload = {
+          id_order: orderId,
+          caminho_imagem: artData,
+          id_user: user.id,
+        };
+        
+        const arteCampanhaRes = await fetch("/api/admin/criar-arte-campanha", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(artePayload),
         });
         
-        if (arteCampanhaRes.status === 413) {
-          setErro("O arquivo é muito grande. Por favor, use um arquivo menor (máximo 1GB).");
-        } else {
-          setErro(`Erro ao criar arte da campanha: ${arteCampanhaRes.status} ${arteCampanhaRes.statusText}`);
+        if (!arteCampanhaRes.ok) {
+          console.error("❌ Erro HTTP na criação da arte:", {
+            status: arteCampanhaRes.status,
+            statusText: arteCampanhaRes.statusText,
+            url: arteCampanhaRes.url
+          });
+          
+          if (arteCampanhaRes.status === 413) {
+            setErro("O arquivo é muito grande. Por favor, use um arquivo menor (máximo 1GB).");
+          } else {
+            setErro(`Erro ao criar arte da campanha: ${arteCampanhaRes.status} ${arteCampanhaRes.statusText}`);
+          }
+          setCarregando(false);
+          return;
         }
-        setCarregando(false);
-        return;
-      }
-      
-      const arteCampanhaData = await arteCampanhaRes.json();
+        
+        const arteCampanhaData = await arteCampanhaRes.json();
 
-      if (!arteCampanhaData.success || !arteCampanhaData.arte_campanha_id) {
-        console.error("❌ Erro ao criar arte da campanha:", arteCampanhaData);
-        setErro(arteCampanhaData.error || "Erro ao criar arte da campanha");
-        setCarregando(false);
-        return;
-      }
+        if (!arteCampanhaData.success || !arteCampanhaData.arte_campanha_id) {
+          console.error("❌ Erro ao criar arte da campanha:", arteCampanhaData);
+          setErro(arteCampanhaData.error || "Erro ao criar arte da campanha");
+          setCarregando(false);
+          return;
+        }
 
-      const arteCampanhaId = arteCampanhaData.arte_campanha_id;
+        arteCampanhaId = arteCampanhaData.arte_campanha_id;
+      }
 
       console.log('✅ Arte da campanha criada com sucesso, ID:', arteCampanhaId);
 

@@ -8,6 +8,11 @@ import { supabase } from "@/lib/supabase";
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
+// Função para detectar se é vídeo
+const isVideo = (url: string) => {
+  return url.match(/\.(mp4|webm|ogg)$/i) || url.startsWith("data:video");
+};
+
 interface ArteCampanha {
   id: number;
   caminho_imagem: string;
@@ -464,13 +469,23 @@ const MeusAnuncios = () => {
                 <div className="p-4 border-b border-gray-100">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <Image
-                        src={anuncio.caminho_imagem}
-                        alt={anuncio.nome_campanha}
-                        width={60}
-                        height={60}
-                        className="w-12 h-12 object-cover rounded-lg"
-                      />
+                      {isVideo(anuncio.caminho_imagem) ? (
+                        <video
+                          src={anuncio.caminho_imagem}
+                          className="w-12 h-12 object-cover rounded-lg"
+                          controls={false}
+                          preload="metadata"
+                          muted
+                        />
+                      ) : (
+                        <Image
+                          src={anuncio.caminho_imagem}
+                          alt={anuncio.nome_campanha}
+                          width={60}
+                          height={60}
+                          className="w-12 h-12 object-cover rounded-lg"
+                        />
+                      )}
                       <div>
                         <h3 className="font-semibold text-gray-900 text-sm">{anuncio.nome_campanha}</h3>
                         <p className="text-xs text-gray-500">Início: {anuncio.inicio_campanha}</p>
@@ -644,15 +659,24 @@ const MeusAnuncios = () => {
                 </div>
               ) : orderDetails ? (
                 <div className="space-y-4">
-                  {/* Imagem */}
+                  {/* Imagem/Vídeo */}
                   <div className="flex justify-center">
-                    <Image
-                      src={selectedAnuncioDetails?.caminho_imagem || ''}
-                      alt={orderDetails.nome_campanha || ''}
-                      width={200}
-                      height={200}
-                      className="w-32 h-32 object-cover rounded-lg"
-                    />
+                    {selectedAnuncioDetails?.caminho_imagem && isVideo(selectedAnuncioDetails.caminho_imagem) ? (
+                      <video
+                        src={selectedAnuncioDetails.caminho_imagem}
+                        className="w-32 h-32 object-cover rounded-lg"
+                        controls
+                        preload="metadata"
+                      />
+                    ) : (
+                      <Image
+                        src={selectedAnuncioDetails?.caminho_imagem || ''}
+                        alt={orderDetails.nome_campanha || ''}
+                        width={200}
+                        height={200}
+                        className="w-32 h-32 object-cover rounded-lg"
+                      />
+                    )}
                   </div>
 
                   {/* Informações */}
