@@ -27,7 +27,7 @@ export default function ModalLogin({ onClose }: { onClose: () => void }) {
           redirectTo: "https://allseeads.com.br/results",
           queryParams: {
             access_type: 'offline',
-            prompt: 'consent',
+            prompt: 'select_account',
             hd: 'allseeads.com.br'
           }
         }
@@ -53,7 +53,7 @@ export default function ModalLogin({ onClose }: { onClose: () => void }) {
           redirectTo: "https://allseeads.com.br/results",
           queryParams: {
             access_type: 'offline',
-            prompt: 'consent',
+            prompt: 'select_account',
             hd: 'allseeads.com.br'
           }
         }
