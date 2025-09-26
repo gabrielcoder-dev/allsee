@@ -41,5 +41,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/resumo/:path*', '/pagamento/:path*', '/dashboard/:path*', '/api/admin/criar-arte-campanha'],
+  matcher: ['/resumo/:path*', '/pagamento/:path*', '/dashboard/:path*', '/api/admin/criar-arte-campanha', '/api/admin/upload-chunk', '/api/admin/criar-arte-troca-campanha', '/api/admin/upload-chunk-troca', '/api/admin/aceitar-troca'],
 };

@@ -62,10 +62,23 @@ const ReplacementAdmin = () => {
 
   const handleApprove = async (orderId: number, imagePath: string) => {
     try {
-      // 1. Primeiro, transferir a imagem para arte_campanha
+      console.log('🔄 Aceitando troca de arte:', { orderId });
+
+      // Buscar o arte_troca_campanha_id correspondente
       const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL as string;
       const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string;
       const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
+      const { data: arteTroca, error: fetchTrocaError } = await supabase
+        .from('arte_troca_campanha')
+        .select('id')
+        .eq('id_campanha', orderId)
+        .single();
+
+      if (fetchTrocaError) {
+        console.error('❌ Erro ao buscar arte_troca_campanha:', fetchTrocaError);
+        return;
+      }
 
       // Buscar o arte_campanha correspondente pelo id_campanha
       const { data: arteCampanha, error: fetchError } = await supabase
@@ -75,40 +88,45 @@ const ReplacementAdmin = () => {
         .single();
 
       if (fetchError) {
-        console.error('Erro ao buscar arte_campanha:', fetchError);
+        console.error('❌ Erro ao buscar arte_campanha:', fetchError);
         return;
       }
 
-      // Atualizar o caminho_imagem na tabela arte_campanha
-      const { error: updateError } = await supabase
-        .from('arte_campanha')
-        .update({ caminho_imagem: imagePath })
-        .eq('id', arteCampanha.id);
+      console.log('📥 IDs encontrados:', {
+        arte_troca_campanha_id: arteTroca.id,
+        arte_campanha_id: arteCampanha.id
+      });
 
-      if (updateError) {
-        console.error('Erro ao atualizar arte_campanha:', updateError);
+      // Usar o novo endpoint para aceitar a troca
+      const response = await fetch('/api/admin/aceitar-troca', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify({
+          arte_troca_campanha_id: arteTroca.id,
+          arte_campanha_id: arteCampanha.id
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('❌ Erro ao aceitar troca:', errorData.error);
         return;
       }
 
-      // 2. Excluir o registro da tabela arte_troca_campanha
-      const { error: deleteError } = await supabase
-        .from('arte_troca_campanha')
-        .delete()
-        .eq('id_campanha', orderId);
+      const data = await response.json();
+      console.log('✅ Troca aceita com sucesso:', data);
 
-      if (deleteError) {
-        console.error('Erro ao excluir arte_troca_campanha:', deleteError);
-        return;
-      }
-
-      // 3. Atualizar o localStorage e remover o card
+      // Atualizar o localStorage e remover o card
       localStorage.setItem(`replacement_order_${orderId}`, "aprovado");
       setOrders(prev => prev.filter(order => order.id_campanha !== orderId));
       window.dispatchEvent(new Event('storage'));
 
-      console.log('Arte aprovada e transferida com sucesso!');
+      console.log('✅ Arte aprovada e transferida com sucesso!');
     } catch (error) {
-      console.error('Erro ao aprovar arte:', error);
+      console.error('❌ Erro ao aprovar arte:', error);
     }
   };
 

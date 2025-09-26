@@ -357,6 +357,111 @@ const MeusAnuncios = () => {
     }
   };
 
+  // Função para comprimir imagens e reduzir tempo de upload
+  const compressImage = async (base64: string, quality: number = 0.8): Promise<string> => {
+    return new Promise((resolve) => {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      const img = document.createElement('img');
+
+      img.onload = () => {
+        // Redimensionar para máximo 1920x1080 se for maior
+        const maxWidth = 1920;
+        const maxHeight = 1080;
+        let { width, height } = img;
+
+        if (width > maxWidth || height > maxHeight) {
+          const ratio = Math.min(maxWidth / width, maxHeight / height);
+          width = width * ratio;
+          height = height * ratio;
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+
+        // Desenhar imagem redimensionada
+        if (ctx) {
+          ctx.drawImage(img, 0, 0, width, height);
+        }
+
+        // Converter para base64 com qualidade otimizada
+        const compressedBase64 = canvas.toDataURL('image/jpeg', quality);
+        resolve(compressedBase64);
+      };
+
+      img.onerror = () => resolve(base64); // Se der erro, retorna original
+      img.src = base64;
+    });
+  };
+
+  // Função para upload em background (não bloqueia a interface)
+  const uploadTrocaInBackground = async (artData: string, arteTrocaCampanhaId: string, orderId: string, userId: string) => {
+    try {
+      console.log('🚀 Iniciando upload de troca em background...');
+      
+      const maxChunkSize = 1 * 1024 * 1024; // 1MB por chunk
+      
+      if (artData.length <= maxChunkSize) {
+        // Upload direto para arquivos pequenos
+        console.log('📤 Upload direto de troca em background (arquivo pequeno)');
+        const response = await fetch('/api/admin/criar-arte-troca-campanha', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            id_order: orderId,
+            caminho_imagem: artData,
+            id_user: userId
+          })
+        });
+
+        if (response.ok) {
+          console.log('✅ Upload de troca em background concluído (arquivo pequeno)');
+        } else {
+          console.error('❌ Erro no upload de troca em background:', await response.text());
+        }
+      } else {
+        // Upload em chunks para arquivos grandes
+        console.log('📤 Upload em chunks de troca em background (arquivo grande)');
+        const chunks = [];
+        for (let i = 0; i < artData.length; i += maxChunkSize) {
+          chunks.push(artData.slice(i, i + maxChunkSize));
+        }
+        
+        console.log(`📦 Background Troca: Dividindo em ${chunks.length} chunks`);
+        
+        // Enviar chunks com delay menor para background
+        for (let i = 0; i < chunks.length; i++) {
+          const chunkResponse = await fetch('/api/admin/upload-chunk-troca', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              arte_troca_campanha_id: arteTrocaCampanhaId,
+              chunk_index: i,
+              chunk_data: chunks[i],
+              total_chunks: chunks.length
+            })
+          });
+
+          if (!chunkResponse.ok) {
+            console.error(`❌ Erro no chunk ${i} de troca em background:`, await chunkResponse.text());
+            return;
+          }
+
+          console.log(`✅ Background Troca: Chunk ${i + 1}/${chunks.length} enviado`);
+          
+          // Delay menor para background (200ms)
+          if (i < chunks.length - 1) {
+            await new Promise(resolve => setTimeout(resolve, 200));
+          }
+        }
+        
+        console.log('✅ Upload de troca em background concluído (arquivo grande)');
+      }
+    } catch (error) {
+      console.error('❌ Erro no upload de troca em background:', error);
+    }
+  };
+
   const handleTrocarArte = async () => {
     if (!selectedFile || !selectedAnuncioId) {
       console.error("Nenhum arquivo selecionado ou ID do anúncio não definido.");
@@ -377,20 +482,59 @@ const MeusAnuncios = () => {
       const reader = new FileReader();
       reader.readAsDataURL(selectedFile);
       reader.onload = async () => {
-        const base64String = reader.result as string;
+        let base64String = reader.result as string;
 
-        // Enviar o caminho da imagem, ID do arte_campanha e status para a tabela arte_troca_campanha
-        const { error: insertError } = await supabase
-          .from('arte_troca_campanha')
-          .insert([
-            { caminho_imagem: base64String, id_campanha: anuncio.order_id }
-          ]);
+        // Otimizar imagem se for imagem
+        if (base64String.startsWith('data:image/')) {
+          console.log('🖼️ Otimizando imagem...');
+          base64String = await compressImage(base64String, 0.8);
+          console.log('✅ Imagem otimizada');
+        }
 
-        if (insertError) {
-          console.error("Erro ao inserir o caminho da imagem:", insertError);
-          setError(insertError.message);
+        // Obter usuário atual
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+          console.error("Usuário não logado");
+          setError("Usuário não logado");
           return;
         }
+
+        console.log('📤 Preparando upload de troca em background:', {
+          order_id: anuncio.order_id,
+          id_user: user.id,
+          fileType: base64String.startsWith('data:image/') ? 'image' : 'video',
+          fileSizeMB: Math.round(base64String.length / (1024 * 1024))
+        });
+
+        // Criar registro vazio para upload em background
+        const createResponse = await fetch('/api/admin/criar-arte-troca-campanha', {
+          method: 'POST',
+          headers: { 
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          },
+          body: JSON.stringify({
+            id_order: anuncio.order_id,
+            caminho_imagem: '', // Vazio - será preenchido em background
+            id_user: user.id
+          })
+        });
+
+        if (!createResponse.ok) {
+          const errorData = await createResponse.json();
+          throw new Error(errorData.error || 'Erro ao criar registro inicial de troca');
+        }
+
+        const createData = await createResponse.json();
+        const arteTrocaCampanhaId = createData.arte_troca_campanha_id;
+        
+        console.log('✅ Registro de troca criado para upload em background, ID:', arteTrocaCampanhaId);
+
+        // Iniciar upload em background (não bloqueia a interface)
+        uploadTrocaInBackground(base64String, arteTrocaCampanhaId, anuncio.order_id.toString(), user.id);
+        
+        // Mostrar mensagem para o usuário
+        console.log('📤 Upload da arte de troca iniciado em background');
 
         // Remove o status do localStorage para que a arte volte para "Em Análise"
         localStorage.removeItem(`order_${anuncio.order_id}`);
@@ -398,11 +542,12 @@ const MeusAnuncios = () => {
         
         console.log(`Removendo status do localStorage para order ${anuncio.order_id}`);
 
-        console.log("Arquivo enviado e caminho da imagem inserido com sucesso!");
+        console.log("Arquivo de troca enviado e registro criado com sucesso!");
         setIsModalOpen(false);
-        toast.success('Arte trocada com sucesso!', {
+        toast.success('Arte de troca enviada com sucesso!', {
           position: "top-right",
-          autoClose: 5000,          hideProgressBar: false,
+          autoClose: 5000,
+          hideProgressBar: false,
           closeOnClick: true,
           pauseOnHover: true,
           draggable: true,
@@ -417,7 +562,6 @@ const MeusAnuncios = () => {
         console.error("Erro ao ler o arquivo:", error);
         setError("Erro ao ler o arquivo.");
       };
-
 
     } catch (err: any) {
       console.error("Erro ao trocar a arte:", err);
