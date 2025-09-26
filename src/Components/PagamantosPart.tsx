@@ -18,7 +18,9 @@ import { PiBarcodeBold } from "react-icons/pi";
 import { useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { useUser } from "@supabase/auth-helpers-react";
-// Removido sistema de chunks - usando upload direto simples
+import { supabase } from "@/lib/supabase";
+import { STORAGE_CONFIG, validateFileType, validateFileSize, getFileType } from "@/lib/supabase-storage";
+// Upload direto para Supabase Storage (sem limitações do Next.js)
 
 // Função para comprimir imagens e reduzir tempo de upload
 const compressImage = async (base64: string, quality: number = 0.8): Promise<string> => {
@@ -55,6 +57,72 @@ const compressImage = async (base64: string, quality: number = 0.8): Promise<str
     
     img.src = base64;
   });
+};
+
+// Função para converter base64 para File
+const base64ToFile = (base64: string, filename: string): File => {
+  const arr = base64.split(',');
+  const mime = arr[0].match(/:(.*?);/)?.[1] || 'image/jpeg';
+  const bstr = atob(arr[1]);
+  let n = bstr.length;
+  const u8arr = new Uint8Array(n);
+  
+  while (n--) {
+    u8arr[n] = bstr.charCodeAt(n);
+  }
+  
+  return new File([u8arr], filename, { type: mime });
+};
+
+// Função para fazer upload direto para Supabase Storage
+const uploadToSupabaseStorage = async (file: File, orderId: string, userId: string): Promise<string | null> => {
+  try {
+    // Validar tipo e tamanho do arquivo
+    if (!validateFileType(file)) {
+      throw new Error('Tipo de arquivo não suportado. Use apenas imagens (JPG, PNG, GIF) ou vídeos (MP4, MOV, AVI).');
+    }
+
+    if (!validateFileSize(file)) {
+      const maxSizeMB = Math.round(STORAGE_CONFIG.MAX_FILE_SIZE / (1024 * 1024));
+      throw new Error(`Arquivo muito grande. Máximo permitido: ${maxSizeMB}MB.`);
+    }
+
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${orderId}_${userId}_${Date.now()}.${fileExt}`;
+    const fileType = getFileType(file);
+    
+    console.log('📤 Upload direto para Supabase Storage:', {
+      fileName,
+      fileSize: Math.round(file.size / (1024 * 1024)) + 'MB',
+      fileType,
+      bucketName: STORAGE_CONFIG.BUCKET_NAME
+    });
+
+    const { data, error } = await supabase.storage
+      .from(STORAGE_CONFIG.BUCKET_NAME)
+      .upload(fileName, file, {
+        cacheControl: '3600',
+        upsert: false,
+      });
+
+    if (error) {
+      console.error('❌ Erro no upload para Supabase Storage:', error);
+      throw error;
+    }
+
+    console.log('✅ Upload concluído:', data);
+    
+    // Retornar o caminho completo do arquivo
+    const { data: publicUrl } = supabase.storage
+      .from(STORAGE_CONFIG.BUCKET_NAME)
+      .getPublicUrl(fileName);
+    
+    return publicUrl.publicUrl;
+    
+  } catch (error) {
+    console.error('❌ Erro no upload direto:', error);
+    throw error;
+  }
 };
 
 export const PagamantosPart = () => {
@@ -328,25 +396,35 @@ export const PagamantosPart = () => {
 
       const orderId = orderData.orderId;
 
-      // ** (4) Image/Video Upload: Upload direto para criar-arte-campanha **
-      console.log('📤 Enviando arte da campanha:', {
+      // ** (4) Image/Video Upload: Upload direto para Supabase Storage **
+      console.log('📤 Iniciando upload direto para Supabase Storage:', {
         id_order: orderId,
         id_user: user.id,
-        fileSize: optimizedArtData ? optimizedArtData.length : 0,
-        filePreview: optimizedArtData ? optimizedArtData.substring(0, 50) + '...' : null,
-        fileType: optimizedArtData ? (optimizedArtData.startsWith('data:image/') ? 'image' : 'video') : 'unknown'
+        originalSizeMB: artData ? Math.round(artData.length / (1024 * 1024)) : 0,
+        optimizedSizeMB: optimizedArtData ? Math.round(optimizedArtData.length / (1024 * 1024)) : 0,
+        fileType: optimizedArtData ? (optimizedArtData.startsWith('data:image/') ? 'image' : 'video') : 'unknown',
+        optimization: artData && optimizedArtData ? Math.round((1 - optimizedArtData.length / artData.length) * 100) + '%' : '0%'
       });
 
       let arteCampanhaId = null;
       
       try {
-        console.log('📤 Iniciando upload...', {
-          originalSizeMB: artData ? Math.round(artData.length / (1024 * 1024)) : 0,
-          optimizedSizeMB: optimizedArtData ? Math.round(optimizedArtData.length / (1024 * 1024)) : 0,
-          fileType: optimizedArtData ? (optimizedArtData.startsWith('data:image/') ? 'image' : 'video') : 'unknown',
-          optimization: artData && optimizedArtData ? Math.round((1 - optimizedArtData.length / artData.length) * 100) + '%' : '0%'
-        });
+        // Converter base64 para File
+        const fileType = optimizedArtData.startsWith('data:image/') ? 'image' : 'video';
+        const extension = fileType === 'image' ? 'jpg' : 'mp4';
+        const fileName = `arte_campanha_${orderId}.${extension}`;
+        const file = base64ToFile(optimizedArtData, fileName);
+        
+        // Upload direto para Supabase Storage
+        const fileUrl = await uploadToSupabaseStorage(file, orderId, user.id);
+        
+        if (!fileUrl) {
+          throw new Error('Falha ao obter URL do arquivo após upload');
+        }
 
+        console.log('✅ Upload para Supabase Storage concluído:', fileUrl);
+
+        // Criar registro na tabela arte_campanha com a URL do arquivo
         const response = await fetch('/api/admin/criar-arte-campanha', {
           method: 'POST',
           headers: { 
@@ -355,40 +433,25 @@ export const PagamantosPart = () => {
           },
           body: JSON.stringify({
             id_order: orderId,
-            caminho_imagem: optimizedArtData,
+            caminho_imagem: fileUrl, // Agora enviamos a URL em vez do base64
             id_user: user.id
           })
         });
-        
-        // Verificar se a resposta é JSON válida
-        const contentType = response.headers.get('content-type');
-        if (contentType && contentType.includes('application/json')) {
-          if (response.ok) {
-            const data = await response.json();
-            arteCampanhaId = data.arte_campanha_id;
-            console.log('✅ Arte da campanha criada com sucesso, ID:', arteCampanhaId);
-          } else {
-            const errorData = await response.json();
-            console.error('❌ Erro no upload:', errorData.error);
-            setErro(`Erro ao fazer upload da arte: ${errorData.error}`);
-            setCarregando(false);
-            return;
-          }
+
+        if (response.ok) {
+          const data = await response.json();
+          arteCampanhaId = data.arte_campanha_id;
+          console.log('✅ Arte da campanha criada com sucesso, ID:', arteCampanhaId);
         } else {
-          // Resposta não é JSON (provavelmente erro 413)
-          const errorText = await response.text();
-          console.error('❌ Resposta não-JSON:', { status: response.status, text: errorText });
-          
-          if (response.status === 413) {
-            setErro('Arquivo muito grande. Por favor, use um arquivo menor (máximo 1GB).');
-          } else {
-            setErro(`Erro no servidor (${response.status}): ${errorText || 'Erro desconhecido'}`);
-          }
+          const errorData = await response.json();
+          console.error('❌ Erro ao criar registro da arte:', errorData.error);
+          setErro(`Erro ao salvar dados da arte: ${errorData.error}`);
           setCarregando(false);
           return;
         }
+        
       } catch (error: any) {
-        console.error('❌ Erro no upload:', error);
+        console.error('❌ Erro no upload direto:', error);
         setErro(`Erro ao fazer upload da arte: ${error.message || 'Erro de conexão'}`);
         setCarregando(false);
         return;

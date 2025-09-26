@@ -28,29 +28,43 @@ export default async function handler(
       });
     }
 
-    // Validar tipo de arquivo (imagem ou vídeo)
-    if (!caminho_imagem.startsWith('data:image/') && !caminho_imagem.startsWith('data:video/')) {
+    // Validar se é URL do Supabase Storage ou base64 (para compatibilidade)
+    const isSupabaseUrl = caminho_imagem.startsWith('https://') && caminho_imagem.includes('supabase');
+    const isBase64 = caminho_imagem.startsWith('data:');
+    
+    if (!isSupabaseUrl && !isBase64) {
       return res.status(400).json({ 
         success: false, 
-        error: 'Formato não suportado. Use apenas imagens (JPG, PNG, GIF) ou vídeos (MP4, MOV, AVI)' 
+        error: 'Formato não suportado. Use URL do Supabase Storage ou base64' 
       });
     }
 
-    // Validar tamanho do arquivo
-    if (caminho_imagem.length > MAX_BASE64_SIZE) {
-      const currentSizeMB = Math.round(caminho_imagem.length / (1024 * 1024));
-      const maxSizeMB = Math.round(MAX_FILE_SIZE / (1024 * 1024));
-      return res.status(413).json({ 
-        success: false, 
-        error: `Arquivo muito grande. Máximo permitido: ${maxSizeMB}MB. Arquivo atual: ~${currentSizeMB}MB` 
-      });
+    // Se for base64, validar tipo e tamanho (compatibilidade com sistema antigo)
+    if (isBase64) {
+      if (!caminho_imagem.startsWith('data:image/') && !caminho_imagem.startsWith('data:video/')) {
+        return res.status(400).json({ 
+          success: false, 
+          error: 'Formato não suportado. Use apenas imagens (JPG, PNG, GIF) ou vídeos (MP4, MOV, AVI)' 
+        });
+      }
+
+      if (caminho_imagem.length > MAX_BASE64_SIZE) {
+        const currentSizeMB = Math.round(caminho_imagem.length / (1024 * 1024));
+        const maxSizeMB = Math.round(MAX_FILE_SIZE / (1024 * 1024));
+        return res.status(413).json({ 
+          success: false, 
+          error: `Arquivo muito grande. Máximo permitido: ${maxSizeMB}MB. Arquivo atual: ~${currentSizeMB}MB` 
+        });
+      }
     }
 
     console.log('📥 Criando arte da campanha:', {
       id_order,
       id_user,
-      fileType: caminho_imagem.startsWith('data:image/') ? 'image' : 'video',
-      fileSizeMB: Math.round(caminho_imagem.length / (1024 * 1024))
+      uploadType: isSupabaseUrl ? 'URL (Supabase Storage)' : 'base64',
+      fileType: isBase64 ? (caminho_imagem.startsWith('data:image/') ? 'image' : 'video') : 'URL',
+      fileSizeMB: isBase64 ? Math.round(caminho_imagem.length / (1024 * 1024)) : 'N/A (URL)',
+      caminho_preview: isSupabaseUrl ? caminho_imagem.substring(0, 100) + '...' : caminho_imagem.substring(0, 50) + '...'
     });
 
     // Salvar no banco de dados
@@ -100,8 +114,8 @@ export const config = {
   api: {
     externalResolver: true, // Permite bypass do bodyParser padrão do Next.js
     bodyParser: {
-      sizeLimit: '2gb', // Suportar arquivos até 1GB (base64 = ~1.37GB)
-      timeout: 180000, // 3 minutos de timeout (reduzido)
+      sizeLimit: '10mb', // Reduzido - agora só recebe URLs (não base64)
+      timeout: 30000, // 30 segundos (reduzido)
     },
     responseLimit: '10mb', // Resposta pequena
   },
