@@ -1,11 +1,13 @@
-// c:\Users\Latitude 5490\Desktop\allsee\src\pages\api/admin/criar-arte-campanha.ts
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { createClient } from '@supabase/supabase-js';
-// Removido sistema de compressão - usando armazenamento direto simples
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
 const supabase = createClient(supabaseUrl, supabaseKey);
+
+// Constantes para validação
+const MAX_FILE_SIZE = 1024 * 1024 * 1024; // 1GB em bytes
+const MAX_BASE64_SIZE = Math.floor(MAX_FILE_SIZE * 1.37); // ~1.37GB em base64 (1GB original)
 
 export default async function handler(
   req: NextApiRequest,
@@ -18,41 +20,56 @@ export default async function handler(
   try {
     const { id_order, caminho_imagem, id_user } = req.body;
 
-    console.log('📥 Recebendo dados da arte:', {
+    // Validação básica
+    if (!id_order || !caminho_imagem || !id_user) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Campos obrigatórios faltando: id_order, caminho_imagem, id_user' 
+      });
+    }
+
+    // Validar tipo de arquivo (imagem ou vídeo)
+    if (!caminho_imagem.startsWith('data:image/') && !caminho_imagem.startsWith('data:video/')) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Formato não suportado. Use apenas imagens (JPG, PNG, GIF) ou vídeos (MP4, MOV, AVI)' 
+      });
+    }
+
+    // Validar tamanho do arquivo
+    if (caminho_imagem.length > MAX_BASE64_SIZE) {
+      const currentSizeMB = Math.round(caminho_imagem.length / (1024 * 1024));
+      const maxSizeMB = Math.round(MAX_FILE_SIZE / (1024 * 1024));
+      return res.status(413).json({ 
+        success: false, 
+        error: `Arquivo muito grande. Máximo permitido: ${maxSizeMB}MB. Arquivo atual: ~${currentSizeMB}MB` 
+      });
+    }
+
+    console.log('📥 Criando arte da campanha:', {
       id_order,
       id_user,
-      caminho_imagem_size: caminho_imagem ? caminho_imagem.length : 0,
-      caminho_imagem_type: caminho_imagem ? (caminho_imagem.startsWith('data:image/') ? 'image' : 'video') : 'unknown',
-      caminho_imagem_preview: caminho_imagem ? caminho_imagem.substring(0, 50) + '...' : null
+      fileType: caminho_imagem.startsWith('data:image/') ? 'image' : 'video',
+      fileSizeMB: Math.round(caminho_imagem.length / (1024 * 1024))
     });
 
-    if (!id_order || !caminho_imagem || !id_user) {
-      console.error('❌ Campos obrigatórios faltando:', { id_order: !!id_order, caminho_imagem: !!caminho_imagem, id_user: !!id_user });
-      return res.status(400).json({ error: 'Missing required fields' });
-    }
-
-    console.log('📊 Dados da arte:', {
-      size: caminho_imagem.length,
-      sizeMB: Math.round(caminho_imagem.length / (1024 * 1024)),
-      type: caminho_imagem.startsWith('data:image/') ? 'image' : 'video'
-    });
-
-    // ✅ SALVAR PRIMEIRO, VALIDAR DEPOIS
+    // Salvar no banco de dados
     const { data: arteCampanha, error } = await supabase
       .from('arte_campanha')
-      .insert([{ id_order, caminho_imagem, id_user }])
-      .select('id, id_order, id_user') // ✅ Selecionar apenas campos pequenos
+      .insert([{ 
+        id_order, 
+        caminho_imagem, 
+        id_user 
+      }])
+      .select('id, id_order, id_user')
       .single();
-
-    // ✅ Verificar se o arquivo é muito grande APÓS salvar
-    if (caminho_imagem.length > 1.3 * 1024 * 1024 * 1024) { // ~1.3GB em base64 = ~1GB original
-      console.log('⚠️ Arquivo grande salvo, mas retornando erro 413 para o cliente');
-      return res.status(413).json({ success: false, error: 'Arquivo muito grande. Máximo 1GB permitido.' });
-    }
 
     if (error) {
       console.error("❌ Erro ao criar arte da campanha:", error);
-      return res.status(500).json({ success: false, error: error.message });
+      return res.status(500).json({ 
+        success: false, 
+        error: `Erro ao salvar arte: ${error.message}` 
+      });
     }
 
     console.log('✅ Arte da campanha criada com sucesso:', {
@@ -61,8 +78,7 @@ export default async function handler(
       id_user: arteCampanha.id_user
     });
 
-    // ✅ Resposta mínima para evitar erro 413
-    // Definir headers para evitar problemas de tamanho
+    // Headers para otimização
     res.setHeader('Content-Type', 'application/json');
     res.setHeader('Cache-Control', 'no-cache');
     
@@ -71,17 +87,20 @@ export default async function handler(
       arte_campanha_id: arteCampanha.id 
     });
 
-  } catch (error) {
+  } catch (error: any) {
     console.error("❌ Erro no endpoint criar-arte-campanha:", error);
-    return res.status(500).json({ success: false, error: 'Erro ao criar arte da campanha' });
+    return res.status(500).json({ 
+      success: false, 
+      error: 'Erro interno do servidor' 
+    });
   }
 }
 
 export const config = {
   api: {
     bodyParser: {
-      sizeLimit: '2gb', // Suportar arquivos até 1GB (base64 = ~1.3GB)
+      sizeLimit: '2gb', // Suportar arquivos até 1GB (base64 = ~1.37GB)
     },
-    responseLimit: '50mb', // Resposta pequena
+    responseLimit: '10mb', // Resposta pequena
   },
 };

@@ -282,7 +282,7 @@ export const PagamantosPart = () => {
 
       const orderId = orderData.orderId;
 
-      // ** (4) Image/Video Upload: Sistema de chunks para arquivos grandes **
+      // ** (4) Image/Video Upload: Upload direto para criar-arte-campanha **
       console.log('📤 Enviando arte da campanha:', {
         id_order: orderId,
         id_user: user.id,
@@ -294,28 +294,29 @@ export const PagamantosPart = () => {
       let arteCampanhaId = null;
       
       try {
-        // Importar dinamicamente para evitar problemas de SSR
-        const { uploadInChunks } = await import('@/lib/chunkUpload');
-        
-        console.log('📤 Iniciando upload da arte...', {
-          fileSize: artData.length,
-          fileSizeMB: Math.round(artData.length / (1024 * 1024)),
-          fileType: artData.startsWith('data:image/') ? 'image' : 'video'
+        const response = await fetch('/api/admin/criar-arte-campanha', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            id_order: orderId,
+            caminho_imagem: artData,
+            id_user: user.id
+          })
         });
         
-        const uploadResult = await uploadInChunks(artData, orderId, user.id);
-        
-        if (uploadResult.success) {
-          arteCampanhaId = uploadResult.arte_campanha_id;
+        if (response.ok) {
+          const data = await response.json();
+          arteCampanhaId = data.arte_campanha_id;
           console.log('✅ Arte da campanha criada com sucesso, ID:', arteCampanhaId);
         } else {
-          console.error('❌ Erro no upload:', uploadResult.error);
-          setErro(`Erro ao fazer upload da arte: ${uploadResult.error}`);
+          const errorData = await response.json();
+          console.error('❌ Erro no upload:', errorData.error);
+          setErro(`Erro ao fazer upload da arte: ${errorData.error}`);
           setCarregando(false);
           return;
         }
       } catch (error: any) {
-        console.error('❌ Erro no sistema de upload:', error);
+        console.error('❌ Erro no upload:', error);
         setErro(`Erro ao fazer upload da arte: ${error.message || 'Erro desconhecido'}`);
         setCarregando(false);
         return;
