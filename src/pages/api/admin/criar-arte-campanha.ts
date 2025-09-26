@@ -100,6 +100,7 @@ export const config = {
   api: {
     bodyParser: {
       sizeLimit: '2gb', // Suportar arquivos até 1GB (base64 = ~1.37GB)
+      timeout: 180000, // 3 minutos de timeout (reduzido)
     },
     responseLimit: '10mb', // Resposta pequena
   },

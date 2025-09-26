@@ -16,6 +16,36 @@ const nextConfig: NextConfig = {
   serverRuntimeConfig: {
     maxFileSize: '1.5gb',
   },
+  // Otimizações para uploads rápidos
+  compress: true,
+  poweredByHeader: false,
+  // Configurações experimentais para arquivos grandes
+  experimental: {
+    // Permitir payloads grandes
+    serverComponentsExternalPackages: [],
+  },
+  // Headers para permitir uploads grandes
+  async headers() {
+    return [
+      {
+        source: '/api/admin/criar-arte-campanha',
+        headers: [
+          {
+            key: 'Access-Control-Allow-Origin',
+            value: '*',
+          },
+          {
+            key: 'Access-Control-Allow-Methods',
+            value: 'POST, OPTIONS',
+          },
+          {
+            key: 'Access-Control-Allow-Headers',
+            value: 'Content-Type',
+          },
+        ],
+      },
+    ];
+  },
 };
 
 export default nextConfig;

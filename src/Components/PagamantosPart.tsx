@@ -20,6 +20,43 @@ import { ArrowLeft } from "lucide-react";
 import { useUser } from "@supabase/auth-helpers-react";
 // Removido sistema de chunks - usando upload direto simples
 
+// Função para comprimir imagens e reduzir tempo de upload
+const compressImage = async (base64: string, quality: number = 0.8): Promise<string> => {
+  return new Promise((resolve) => {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    const img = new Image();
+    
+    img.onload = () => {
+      // Redimensionar se muito grande (mantém proporção)
+      let { width, height } = img;
+      const maxSize = 1920; // Máximo 1920px
+      
+      if (width > maxSize || height > maxSize) {
+        if (width > height) {
+          height = (height * maxSize) / width;
+          width = maxSize;
+        } else {
+          width = (width * maxSize) / height;
+          height = maxSize;
+        }
+      }
+      
+      canvas.width = width;
+      canvas.height = height;
+      
+      // Desenhar imagem redimensionada
+      ctx?.drawImage(img, 0, 0, width, height);
+      
+      // Converter para base64 com qualidade reduzida
+      const compressedBase64 = canvas.toDataURL('image/jpeg', quality);
+      resolve(compressedBase64);
+    };
+    
+    img.src = base64;
+  });
+};
+
 export const PagamantosPart = () => {
   const user = useUser();
   const { produtos, selectedDurationGlobal, formData, updateFormData } = useCart();
@@ -171,24 +208,33 @@ export const PagamantosPart = () => {
       return;
     }
 
-    // ** (3.1) Image/Video Upload: Validation - Check if base64 file is too large **
-    if (artData && artData.length > 1.3 * 1024 * 1024 * 1024) { // ~1.3GB em base64 = ~1GB original
-      // Debug: calcular tamanho aproximado do arquivo original
-      const originalSizeMB = Math.round((artData.length * 3) / 4 / (1024 * 1024));
-      console.log('🔍 Debug tamanho do arquivo:', {
-        base64Length: artData.length,
-        base64LengthMB: Math.round(artData.length / (1024 * 1024)),
-        estimatedOriginalSizeMB: originalSizeMB,
-        fileType: artData.startsWith('data:image/') ? 'image' : 'video'
-      });
-      setErro(`O arquivo é muito grande. Por favor, use um arquivo menor (máximo 1GB). Arquivo atual: ~${originalSizeMB}MB`);
+    // ** (3.1) Image/Video Upload: Validation - Check file type first **
+    if (artData && !artData.startsWith('data:image/') && !artData.startsWith('data:video/')) {
+      setErro('Formato de arquivo não suportado. Por favor, use uma imagem (JPG, PNG, GIF) ou vídeo (MP4, MOV, AVI).');
       setCarregando(false);
       return;
     }
 
-    // ** (3.2) Image/Video Upload: Validation - Check file type **
-    if (artData && !artData.startsWith('data:image/') && !artData.startsWith('data:video/')) {
-      setErro('Formato de arquivo não suportado. Por favor, use uma imagem (JPG, PNG, GIF) ou vídeo (MP4, MOV, AVI).');
+    // ** (3.2) Image/Video Upload: Compress images to reduce upload time **
+    let optimizedArtData = artData;
+    if (artData && artData.startsWith('data:image/')) {
+      try {
+        optimizedArtData = await compressImage(artData, 0.8); // 80% qualidade
+        console.log('📦 Imagem comprimida:', {
+          originalSize: Math.round(artData.length / (1024 * 1024)),
+          compressedSize: Math.round(optimizedArtData.length / (1024 * 1024)),
+          compression: Math.round((1 - optimizedArtData.length / artData.length) * 100) + '%'
+        });
+      } catch (error) {
+        console.warn('⚠️ Erro na compressão, usando original:', error);
+        optimizedArtData = artData;
+      }
+    }
+
+    // ** (3.3) Image/Video Upload: Validation - Check if optimized file is too large **
+    if (optimizedArtData && optimizedArtData.length > 1.3 * 1024 * 1024 * 1024) { // ~1.3GB em base64 = ~1GB original
+      const originalSizeMB = Math.round((optimizedArtData.length * 3) / 4 / (1024 * 1024));
+      setErro(`O arquivo é muito grande. Por favor, use um arquivo menor (máximo 1GB). Arquivo atual: ~${originalSizeMB}MB`);
       setCarregando(false);
       return;
     }
@@ -286,38 +332,64 @@ export const PagamantosPart = () => {
       console.log('📤 Enviando arte da campanha:', {
         id_order: orderId,
         id_user: user.id,
-        fileSize: artData ? artData.length : 0,
-        filePreview: artData ? artData.substring(0, 50) + '...' : null,
-        fileType: artData ? (artData.startsWith('data:image/') ? 'image' : 'video') : 'unknown'
+        fileSize: optimizedArtData ? optimizedArtData.length : 0,
+        filePreview: optimizedArtData ? optimizedArtData.substring(0, 50) + '...' : null,
+        fileType: optimizedArtData ? (optimizedArtData.startsWith('data:image/') ? 'image' : 'video') : 'unknown'
       });
 
       let arteCampanhaId = null;
       
       try {
+        console.log('📤 Iniciando upload...', {
+          originalSizeMB: artData ? Math.round(artData.length / (1024 * 1024)) : 0,
+          optimizedSizeMB: optimizedArtData ? Math.round(optimizedArtData.length / (1024 * 1024)) : 0,
+          fileType: optimizedArtData ? (optimizedArtData.startsWith('data:image/') ? 'image' : 'video') : 'unknown',
+          optimization: artData && optimizedArtData ? Math.round((1 - optimizedArtData.length / artData.length) * 100) + '%' : '0%'
+        });
+
         const response = await fetch('/api/admin/criar-arte-campanha', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          },
           body: JSON.stringify({
             id_order: orderId,
-            caminho_imagem: artData,
+            caminho_imagem: optimizedArtData,
             id_user: user.id
           })
         });
         
-        if (response.ok) {
-          const data = await response.json();
-          arteCampanhaId = data.arte_campanha_id;
-          console.log('✅ Arte da campanha criada com sucesso, ID:', arteCampanhaId);
+        // Verificar se a resposta é JSON válida
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+          if (response.ok) {
+            const data = await response.json();
+            arteCampanhaId = data.arte_campanha_id;
+            console.log('✅ Arte da campanha criada com sucesso, ID:', arteCampanhaId);
+          } else {
+            const errorData = await response.json();
+            console.error('❌ Erro no upload:', errorData.error);
+            setErro(`Erro ao fazer upload da arte: ${errorData.error}`);
+            setCarregando(false);
+            return;
+          }
         } else {
-          const errorData = await response.json();
-          console.error('❌ Erro no upload:', errorData.error);
-          setErro(`Erro ao fazer upload da arte: ${errorData.error}`);
+          // Resposta não é JSON (provavelmente erro 413)
+          const errorText = await response.text();
+          console.error('❌ Resposta não-JSON:', { status: response.status, text: errorText });
+          
+          if (response.status === 413) {
+            setErro('Arquivo muito grande. Por favor, use um arquivo menor (máximo 1GB).');
+          } else {
+            setErro(`Erro no servidor (${response.status}): ${errorText || 'Erro desconhecido'}`);
+          }
           setCarregando(false);
           return;
         }
       } catch (error: any) {
         console.error('❌ Erro no upload:', error);
-        setErro(`Erro ao fazer upload da arte: ${error.message || 'Erro desconhecido'}`);
+        setErro(`Erro ao fazer upload da arte: ${error.message || 'Erro de conexão'}`);
         setCarregando(false);
         return;
       }
