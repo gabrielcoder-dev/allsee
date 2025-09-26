@@ -20,6 +20,74 @@ import { ArrowLeft } from "lucide-react";
 import { useUser } from "@supabase/auth-helpers-react";
 // Upload otimizado com compressão (sem limitações do Next.js)
 
+// Função para upload em background (não bloqueia o checkout)
+const uploadInBackground = async (artData: string, arteCampanhaId: string, orderId: string, userId: string) => {
+  try {
+    console.log('🚀 Iniciando upload em background...');
+    
+    const maxChunkSize = 1 * 1024 * 1024; // 1MB por chunk
+    
+    if (artData.length <= maxChunkSize) {
+      // Upload direto para arquivos pequenos
+      console.log('📤 Upload direto em background (arquivo pequeno)');
+      const response = await fetch('/api/admin/criar-arte-campanha', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id_order: orderId,
+          caminho_imagem: artData,
+          id_user: userId
+        })
+      });
+
+      if (response.ok) {
+        console.log('✅ Upload em background concluído (arquivo pequeno)');
+      } else {
+        console.error('❌ Erro no upload em background:', await response.text());
+      }
+    } else {
+      // Upload em chunks para arquivos grandes
+      console.log('📤 Upload em chunks em background (arquivo grande)');
+      const chunks = [];
+      for (let i = 0; i < artData.length; i += maxChunkSize) {
+        chunks.push(artData.slice(i, i + maxChunkSize));
+      }
+      
+      console.log(`📦 Background: Dividindo em ${chunks.length} chunks`);
+      
+      // Enviar chunks com delay menor para background
+      for (let i = 0; i < chunks.length; i++) {
+        const chunkResponse = await fetch('/api/admin/upload-chunk', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            arte_campanha_id: arteCampanhaId,
+            chunk_index: i,
+            chunk_data: chunks[i],
+            total_chunks: chunks.length
+          })
+        });
+
+        if (!chunkResponse.ok) {
+          console.error(`❌ Erro no chunk ${i} em background:`, await chunkResponse.text());
+          return;
+        }
+
+        console.log(`✅ Background: Chunk ${i + 1}/${chunks.length} enviado`);
+        
+        // Delay menor para background (200ms)
+        if (i < chunks.length - 1) {
+          await new Promise(resolve => setTimeout(resolve, 200));
+        }
+      }
+      
+      console.log('✅ Upload em background concluído (arquivo grande)');
+    }
+  } catch (error) {
+    console.error('❌ Erro no upload em background:', error);
+  }
+};
+
 // Função para comprimir imagens e reduzir tempo de upload
 const compressImage = async (base64: string, quality: number = 0.8): Promise<string> => {
   return new Promise((resolve) => {
@@ -329,8 +397,8 @@ export const PagamantosPart = () => {
 
       const orderId = orderData.orderId;
 
-      // ** (4) Image/Video Upload: Upload otimizado direto para banco **
-      console.log('📤 Enviando arte da campanha (otimizada):', {
+      // ** (4) Image/Video Upload: Upload em background após checkout **
+      console.log('📤 Preparando upload em background:', {
         id_order: orderId,
         id_user: user.id,
         originalSizeMB: artData ? Math.round(artData.length / (1024 * 1024)) : 0,
@@ -339,111 +407,35 @@ export const PagamantosPart = () => {
         optimization: artData && optimizedArtData ? Math.round((1 - optimizedArtData.length / artData.length) * 100) + '%' : '0%'
       });
 
-      let arteCampanhaId = null;
-      
-      try {
-        // Verificar se o arquivo é muito grande para upload direto
-        const maxChunkSize = 1 * 1024 * 1024; // 1MB por chunk (limite seguro do Vercel)
-        
-        if (optimizedArtData.length <= maxChunkSize) {
-          // Upload direto para arquivos pequenos
-          console.log('📤 Upload direto (arquivo pequeno)');
-          const response = await fetch('/api/admin/criar-arte-campanha', {
-            method: 'POST',
-            headers: { 
-              'Content-Type': 'application/json',
-              'Accept': 'application/json'
-            },
-            body: JSON.stringify({
-              id_order: orderId,
-              caminho_imagem: optimizedArtData,
-              id_user: user.id
-            })
-          });
+      // Criar registro vazio para upload em background
+      const createResponse = await fetch('/api/admin/criar-arte-campanha', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify({
+          id_order: orderId,
+          caminho_imagem: '', // Vazio - será preenchido em background
+          id_user: user.id
+        })
+      });
 
-          if (response.ok) {
-            const data = await response.json();
-            arteCampanhaId = data.arte_campanha_id;
-            console.log('✅ Arte da campanha criada com sucesso, ID:', arteCampanhaId);
-          } else {
-            const errorData = await response.json();
-            console.error('❌ Erro ao criar registro da arte:', errorData.error);
-            setErro(`Erro ao salvar dados da arte: ${errorData.error}`);
-            setCarregando(false);
-            return;
-          }
-        } else {
-          // Upload em chunks para arquivos grandes
-          console.log('📤 Upload em chunks (arquivo grande)');
-          const chunks = [];
-          for (let i = 0; i < optimizedArtData.length; i += maxChunkSize) {
-            chunks.push(optimizedArtData.slice(i, i + maxChunkSize));
-          }
-          
-          console.log(`📦 Dividindo em ${chunks.length} chunks de ${Math.round(maxChunkSize / (1024 * 1024))}MB cada`);
-          
-          // Primeiro, criar o registro vazio
-          const createResponse = await fetch('/api/admin/criar-arte-campanha', {
-            method: 'POST',
-            headers: { 
-              'Content-Type': 'application/json',
-              'Accept': 'application/json'
-            },
-            body: JSON.stringify({
-              id_order: orderId,
-              caminho_imagem: '', // Vazio inicialmente
-              id_user: user.id
-            })
-          });
-
-          if (!createResponse.ok) {
-            const errorData = await createResponse.json();
-            throw new Error(errorData.error || 'Erro ao criar registro inicial');
-          }
-
-          const createData = await createResponse.json();
-          arteCampanhaId = createData.arte_campanha_id;
-          
-          console.log('✅ Registro criado, ID:', arteCampanhaId);
-          
-          // Agora, enviar cada chunk para endpoint separado com delay
-          for (let i = 0; i < chunks.length; i++) {
-            const chunkResponse = await fetch('/api/admin/upload-chunk', {
-              method: 'POST',
-              headers: { 
-                'Content-Type': 'application/json',
-                'Accept': 'application/json'
-              },
-              body: JSON.stringify({
-                arte_campanha_id: arteCampanhaId,
-                chunk_index: i,
-                chunk_data: chunks[i],
-                total_chunks: chunks.length
-              })
-            });
-
-            if (!chunkResponse.ok) {
-              const errorData = await chunkResponse.json();
-              throw new Error(`Erro no chunk ${i}: ${errorData.error}`);
-            }
-
-            console.log(`✅ Chunk ${i + 1}/${chunks.length} enviado`);
-            
-            // Delay entre chunks para dar tempo do servidor processar
-            if (i < chunks.length - 1) {
-              await new Promise(resolve => setTimeout(resolve, 500)); // 500ms delay
-            }
-          }
-          
-          console.log('✅ Todos os chunks enviados com sucesso');
-        }
-        
-      } catch (error: any) {
-        console.error('❌ Erro no upload:', error);
-        setErro(`Erro ao fazer upload da arte: ${error.message || 'Erro de conexão'}`);
-        setCarregando(false);
-        return;
+      if (!createResponse.ok) {
+        const errorData = await createResponse.json();
+        throw new Error(errorData.error || 'Erro ao criar registro inicial');
       }
+
+      const createData = await createResponse.json();
+      const arteCampanhaId = createData.arte_campanha_id;
+      
+      console.log('✅ Registro criado para upload em background, ID:', arteCampanhaId);
+
+      // Iniciar upload em background (não bloqueia o checkout)
+      uploadInBackground(optimizedArtData, arteCampanhaId, orderId, user.id);
+      
+      // Mostrar mensagem para o usuário
+      console.log('📤 Upload da arte iniciado em background - você pode prosseguir com o pagamento');
 
       const payerData = {
         name: formData.cpf ? 'Pessoa Física' : formData.razaoSocial || 'Cliente Allsee',
@@ -466,7 +458,7 @@ export const PagamantosPart = () => {
         body: JSON.stringify({
           total,
           orderId: orderData.orderId,
-          arteCampanhaId: arteCampanhaId, // Enviando o ID da arte
+          arteCampanhaId: arteCampanhaId, // ID da arte (mesmo com upload em background)
           payerData
         }),
       });
