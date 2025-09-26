@@ -1,12 +1,10 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { createClient } from '@supabase/supabase-js';
+import { getChunkData, removeChunkData } from '@/lib/chunkStorage';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
 const supabase = createClient(supabaseUrl, supabaseKey);
-
-// Armazenamento temporário em memória (mesmo do upload-chunk)
-const chunkStorage = new Map<string, { chunks: string[], orderId: string, userId: string, totalChunks: number }>();
 
 export default async function handler(
   req: NextApiRequest,
@@ -23,7 +21,7 @@ export default async function handler(
       return res.status(400).json({ error: 'Missing required fields' });
     }
 
-    const upload = chunkStorage.get(uploadId);
+    const upload = getChunkData(uploadId);
     if (!upload) {
       return res.status(404).json({ error: 'Upload not found' });
     }
@@ -64,7 +62,7 @@ export default async function handler(
     }
 
     // Limpar dados temporários
-    chunkStorage.delete(uploadId);
+    removeChunkData(uploadId);
 
     console.log('✅ Arte da campanha criada com sucesso:', {
       id: arteCampanha.id,

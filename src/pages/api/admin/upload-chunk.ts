@@ -1,7 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-
-// Armazenamento temporário em memória (em produção, usar Redis ou similar)
-const chunkStorage = new Map<string, { chunks: string[], orderId: string, userId: string, totalChunks: number }>();
+import { storeChunk, cleanupOldChunks } from '@/lib/chunkStorage';
 
 export default async function handler(
   req: NextApiRequest,
@@ -18,33 +16,16 @@ export default async function handler(
       return res.status(400).json({ error: 'Missing required fields' });
     }
 
-    // Inicializar ou atualizar storage
-    if (!chunkStorage.has(uploadId)) {
-      chunkStorage.set(uploadId, {
-        chunks: new Array(totalChunks).fill(''),
-        orderId,
-        userId,
-        totalChunks
-      });
-    }
+    // Armazenar chunk usando o sistema compartilhado
+    storeChunk(uploadId, chunkIndex, chunkData, orderId, userId, totalChunks);
 
-    const upload = chunkStorage.get(uploadId)!;
-    upload.chunks[chunkIndex] = chunkData;
-
-    console.log(`📦 Chunk ${chunkIndex + 1}/${totalChunks} recebido para upload ${uploadId}`);
-
-    // Limpar uploads antigos (mais de 1 hora)
-    const oneHourAgo = Date.now() - (60 * 60 * 1000);
-    for (const [id, data] of chunkStorage.entries()) {
-      if (id.includes('_') && parseInt(id.split('_')[1]) < oneHourAgo) {
-        chunkStorage.delete(id);
-      }
-    }
+    // Limpeza periódica de uploads antigos
+    cleanupOldChunks();
 
     return res.status(200).json({ 
       success: true, 
-      receivedChunks: upload.chunks.filter(c => c).length,
-      totalChunks: upload.totalChunks
+      receivedChunks: chunkIndex + 1,
+      totalChunks: totalChunks
     });
 
   } catch (error) {

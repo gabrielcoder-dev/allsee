@@ -1,6 +1,6 @@
 // Sistema de upload em chunks para arquivos grandes
 export const CHUNK_SIZE = 5 * 1024 * 1024; // 5MB por chunk
-export const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100MB máximo
+export const MAX_FILE_SIZE = 1024 * 1024 * 1024; // 1GB máximo
 
 export function splitIntoChunks(base64Data: string): string[] {
   const chunks: string[] = [];
@@ -18,9 +18,18 @@ export async function uploadInChunks(
   userId: string
 ): Promise<{ success: boolean; arte_campanha_id?: string; error?: string }> {
   
+  // Validar tamanho do arquivo
+  if (base64Data.length > MAX_FILE_SIZE * 1.3) { // 1.3x para base64
+    return { 
+      success: false, 
+      error: `Arquivo muito grande. Máximo permitido: ${Math.round(MAX_FILE_SIZE / (1024 * 1024))}MB` 
+    };
+  }
+
   // Se arquivo pequeno, upload direto
   if (base64Data.length <= CHUNK_SIZE) {
     try {
+      console.log('📤 Upload direto (arquivo pequeno)...');
       const response = await fetch('/api/admin/criar-arte-campanha', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -34,9 +43,13 @@ export async function uploadInChunks(
       if (response.ok) {
         const data = await response.json();
         return { success: true, arte_campanha_id: data.arte_campanha_id };
+      } else {
+        const errorData = await response.json();
+        return { success: false, error: errorData.error || 'Erro no upload direto' };
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erro no upload direto:', error);
+      return { success: false, error: error.message || 'Erro no upload direto' };
     }
   }
   

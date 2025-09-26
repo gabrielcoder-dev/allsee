@@ -186,6 +186,13 @@ export const PagamantosPart = () => {
       return;
     }
 
+    // ** (3.2) Image/Video Upload: Validation - Check file type **
+    if (artData && !artData.startsWith('data:image/') && !artData.startsWith('data:video/')) {
+      setErro('Formato de arquivo não suportado. Por favor, use uma imagem (JPG, PNG, GIF) ou vídeo (MP4, MOV, AVI).');
+      setCarregando(false);
+      return;
+    }
+
     try {
       // Função para calcular alcance total da campanha
       const calcularAlcanceCampanha = () => {
@@ -290,6 +297,12 @@ export const PagamantosPart = () => {
         // Importar dinamicamente para evitar problemas de SSR
         const { uploadInChunks } = await import('@/lib/chunkUpload');
         
+        console.log('📤 Iniciando upload da arte...', {
+          fileSize: artData.length,
+          fileSizeMB: Math.round(artData.length / (1024 * 1024)),
+          fileType: artData.startsWith('data:image/') ? 'image' : 'video'
+        });
+        
         const uploadResult = await uploadInChunks(artData, orderId, user.id);
         
         if (uploadResult.success) {
@@ -301,9 +314,9 @@ export const PagamantosPart = () => {
           setCarregando(false);
           return;
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error('❌ Erro no sistema de upload:', error);
-        setErro('Erro ao fazer upload da arte');
+        setErro(`Erro ao fazer upload da arte: ${error.message || 'Erro desconhecido'}`);
         setCarregando(false);
         return;
       }

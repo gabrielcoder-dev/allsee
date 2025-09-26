@@ -76,7 +76,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 export const config = {
   api: {
     bodyParser: {
-      sizeLimit: '10mb',
+      sizeLimit: '50mb', // Aumentado para dados de compra
     },
   },
 };
