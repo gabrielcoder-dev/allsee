@@ -18,9 +18,7 @@ import { PiBarcodeBold } from "react-icons/pi";
 import { useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { useUser } from "@supabase/auth-helpers-react";
-import { supabase } from "@/lib/supabase";
-import { STORAGE_CONFIG, validateFileType, validateFileSize, getFileType } from "@/lib/supabase-storage";
-// Upload direto para Supabase Storage (sem limitações do Next.js)
+// Upload otimizado com compressão (sem limitações do Next.js)
 
 // Função para comprimir imagens e reduzir tempo de upload
 const compressImage = async (base64: string, quality: number = 0.8): Promise<string> => {
@@ -59,71 +57,6 @@ const compressImage = async (base64: string, quality: number = 0.8): Promise<str
   });
 };
 
-// Função para converter base64 para File
-const base64ToFile = (base64: string, filename: string): File => {
-  const arr = base64.split(',');
-  const mime = arr[0].match(/:(.*?);/)?.[1] || 'image/jpeg';
-  const bstr = atob(arr[1]);
-  let n = bstr.length;
-  const u8arr = new Uint8Array(n);
-  
-  while (n--) {
-    u8arr[n] = bstr.charCodeAt(n);
-  }
-  
-  return new File([u8arr], filename, { type: mime });
-};
-
-// Função para fazer upload direto para Supabase Storage
-const uploadToSupabaseStorage = async (file: File, orderId: string, userId: string): Promise<string | null> => {
-  try {
-    // Validar tipo e tamanho do arquivo
-    if (!validateFileType(file)) {
-      throw new Error('Tipo de arquivo não suportado. Use apenas imagens (JPG, PNG, GIF) ou vídeos (MP4, MOV, AVI).');
-    }
-
-    if (!validateFileSize(file)) {
-      const maxSizeMB = Math.round(STORAGE_CONFIG.MAX_FILE_SIZE / (1024 * 1024));
-      throw new Error(`Arquivo muito grande. Máximo permitido: ${maxSizeMB}MB.`);
-    }
-
-    const fileExt = file.name.split('.').pop();
-    const fileName = `${orderId}_${userId}_${Date.now()}.${fileExt}`;
-    const fileType = getFileType(file);
-    
-    console.log('📤 Upload direto para Supabase Storage:', {
-      fileName,
-      fileSize: Math.round(file.size / (1024 * 1024)) + 'MB',
-      fileType,
-      bucketName: STORAGE_CONFIG.BUCKET_NAME
-    });
-
-    const { data, error } = await supabase.storage
-      .from(STORAGE_CONFIG.BUCKET_NAME)
-      .upload(fileName, file, {
-        cacheControl: '3600',
-        upsert: false,
-      });
-
-    if (error) {
-      console.error('❌ Erro no upload para Supabase Storage:', error);
-      throw error;
-    }
-
-    console.log('✅ Upload concluído:', data);
-    
-    // Retornar o caminho completo do arquivo
-    const { data: publicUrl } = supabase.storage
-      .from(STORAGE_CONFIG.BUCKET_NAME)
-      .getPublicUrl(fileName);
-    
-    return publicUrl.publicUrl;
-    
-  } catch (error) {
-    console.error('❌ Erro no upload direto:', error);
-    throw error;
-  }
-};
 
 export const PagamantosPart = () => {
   const user = useUser();
@@ -396,8 +329,8 @@ export const PagamantosPart = () => {
 
       const orderId = orderData.orderId;
 
-      // ** (4) Image/Video Upload: Upload direto para Supabase Storage **
-      console.log('📤 Iniciando upload direto para Supabase Storage:', {
+      // ** (4) Image/Video Upload: Upload otimizado direto para banco **
+      console.log('📤 Enviando arte da campanha (otimizada):', {
         id_order: orderId,
         id_user: user.id,
         originalSizeMB: artData ? Math.round(artData.length / (1024 * 1024)) : 0,
@@ -409,22 +342,7 @@ export const PagamantosPart = () => {
       let arteCampanhaId = null;
       
       try {
-        // Converter base64 para File
-        const fileType = optimizedArtData.startsWith('data:image/') ? 'image' : 'video';
-        const extension = fileType === 'image' ? 'jpg' : 'mp4';
-        const fileName = `arte_campanha_${orderId}.${extension}`;
-        const file = base64ToFile(optimizedArtData, fileName);
-        
-        // Upload direto para Supabase Storage
-        const fileUrl = await uploadToSupabaseStorage(file, orderId, user.id);
-        
-        if (!fileUrl) {
-          throw new Error('Falha ao obter URL do arquivo após upload');
-        }
-
-        console.log('✅ Upload para Supabase Storage concluído:', fileUrl);
-
-        // Criar registro na tabela arte_campanha com a URL do arquivo
+        // Criar registro na tabela arte_campanha com base64 otimizado
         const response = await fetch('/api/admin/criar-arte-campanha', {
           method: 'POST',
           headers: { 
@@ -433,7 +351,7 @@ export const PagamantosPart = () => {
           },
           body: JSON.stringify({
             id_order: orderId,
-            caminho_imagem: fileUrl, // Agora enviamos a URL em vez do base64
+            caminho_imagem: optimizedArtData, // Base64 otimizado (comprimido)
             id_user: user.id
           })
         });
@@ -451,7 +369,7 @@ export const PagamantosPart = () => {
         }
         
       } catch (error: any) {
-        console.error('❌ Erro no upload direto:', error);
+        console.error('❌ Erro no upload:', error);
         setErro(`Erro ao fazer upload da arte: ${error.message || 'Erro de conexão'}`);
         setCarregando(false);
         return;

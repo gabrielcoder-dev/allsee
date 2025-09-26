@@ -1,6 +1,6 @@
 // Configurações para Supabase Storage
 export const STORAGE_CONFIG = {
-  BUCKET_NAME: 'arte-campanhas',
+  BUCKET_NAME: 'public', // Usar bucket público padrão
   MAX_FILE_SIZE: 1024 * 1024 * 1024, // 1GB
   ALLOWED_IMAGE_TYPES: ['image/jpeg', 'image/png', 'image/gif', 'image/webp'],
   ALLOWED_VIDEO_TYPES: ['video/mp4', 'video/mov', 'video/avi', 'video/webm'],
