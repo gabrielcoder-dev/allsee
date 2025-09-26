@@ -5,8 +5,53 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
 const supabase = createClient(supabaseUrl, supabaseKey);
 
-// Armazenamento temporário de chunks (em produção, usar Redis)
-const chunkStorage = new Map<string, { chunks: string[], totalChunks: number, arteId: string }>();
+// Armazenamento temporário de chunks usando arquivos temporários
+import fs from 'fs';
+import path from 'path';
+import os from 'os';
+
+const tempDir = path.join(os.tmpdir(), 'allsee-chunks');
+
+// Criar diretório temporário se não existir
+if (!fs.existsSync(tempDir)) {
+  fs.mkdirSync(tempDir, { recursive: true });
+}
+
+// Função para salvar chunk em arquivo
+const saveChunk = (arteId: string, chunkIndex: number, chunkData: string) => {
+  const chunkFile = path.join(tempDir, `${arteId}_chunk_${chunkIndex}.tmp`);
+  fs.writeFileSync(chunkFile, chunkData);
+};
+
+// Função para ler chunk do arquivo
+const readChunk = (arteId: string, chunkIndex: number): string | null => {
+  const chunkFile = path.join(tempDir, `${arteId}_chunk_${chunkIndex}.tmp`);
+  if (fs.existsSync(chunkFile)) {
+    return fs.readFileSync(chunkFile, 'utf8');
+  }
+  return null;
+};
+
+// Função para verificar chunks recebidos
+const getReceivedChunks = (arteId: string, totalChunks: number): number => {
+  let received = 0;
+  for (let i = 0; i < totalChunks; i++) {
+    if (readChunk(arteId, i)) {
+      received++;
+    }
+  }
+  return received;
+};
+
+// Função para limpar chunks temporários
+const cleanupChunks = (arteId: string, totalChunks: number) => {
+  for (let i = 0; i < totalChunks; i++) {
+    const chunkFile = path.join(tempDir, `${arteId}_chunk_${i}.tmp`);
+    if (fs.existsSync(chunkFile)) {
+      fs.unlinkSync(chunkFile);
+    }
+  }
+};
 
 export default async function handler(
   req: NextApiRequest,
@@ -26,37 +71,38 @@ export default async function handler(
       });
     }
 
-    const chunkKey = `chunk_${arte_campanha_id}`;
-    
     console.log(`📦 Recebendo chunk ${chunk_index + 1}/${total_chunks} para arte ${arte_campanha_id}`);
 
-    // Inicializar ou atualizar storage de chunks
-    if (!chunkStorage.has(chunkKey)) {
-      chunkStorage.set(chunkKey, {
-        chunks: new Array(total_chunks).fill(''),
-        totalChunks: total_chunks,
-        arteId: arte_campanha_id
-      });
-    }
-
-    const chunkData = chunkStorage.get(chunkKey)!;
-    chunkData.chunks[chunk_index] = chunk_data;
+    // Salvar chunk em arquivo temporário
+    saveChunk(arte_campanha_id, chunk_index, chunk_data);
 
     // Se é o último chunk, reconstruir e salvar
     if (chunk_index === total_chunks - 1) {
       console.log('🔧 Reconstruindo arquivo completo...');
       
       // Verificar se todos os chunks foram recebidos
-      const receivedChunks = chunkData.chunks.filter(c => c).length;
+      const receivedChunks = getReceivedChunks(arte_campanha_id, total_chunks);
       if (receivedChunks !== total_chunks) {
+        console.error(`❌ Chunks faltando. Recebidos: ${receivedChunks}, Esperados: ${total_chunks}`);
         return res.status(400).json({ 
           success: false, 
           error: `Chunks faltando. Recebidos: ${receivedChunks}, Esperados: ${total_chunks}` 
         });
       }
 
-      // Reconstruir arquivo completo
-      const fullData = chunkData.chunks.join('');
+      // Reconstruir arquivo completo lendo todos os chunks
+      let fullData = '';
+      for (let i = 0; i < total_chunks; i++) {
+        const chunkData = readChunk(arte_campanha_id, i);
+        if (!chunkData) {
+          console.error(`❌ Chunk ${i} não encontrado`);
+          return res.status(400).json({ 
+            success: false, 
+            error: `Chunk ${i} não encontrado` 
+          });
+        }
+        fullData += chunkData;
+      }
       
       console.log('💾 Salvando arquivo completo:', {
         arteId: arte_campanha_id,
@@ -79,8 +125,8 @@ export default async function handler(
         });
       }
 
-      // Limpar dados temporários
-      chunkStorage.delete(chunkKey);
+      // Limpar arquivos temporários
+      cleanupChunks(arte_campanha_id, total_chunks);
 
       console.log('✅ Arquivo completo salvo com sucesso:', {
         id: updatedRecord.id,
@@ -94,11 +140,12 @@ export default async function handler(
       });
     } else {
       // Chunk intermediário
+      const receivedChunks = getReceivedChunks(arte_campanha_id, total_chunks);
       return res.status(200).json({ 
         success: true, 
         message: `Chunk ${chunk_index + 1}/${total_chunks} recebido`,
-        receivedChunks: chunkData.chunks.filter(c => c).length,
-        totalChunks: chunkData.totalChunks
+        receivedChunks: receivedChunks,
+        totalChunks: total_chunks
       });
     }
 

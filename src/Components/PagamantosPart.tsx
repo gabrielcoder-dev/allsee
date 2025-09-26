@@ -406,7 +406,7 @@ export const PagamantosPart = () => {
           
           console.log('✅ Registro criado, ID:', arteCampanhaId);
           
-          // Agora, enviar cada chunk para endpoint separado
+          // Agora, enviar cada chunk para endpoint separado com delay
           for (let i = 0; i < chunks.length; i++) {
             const chunkResponse = await fetch('/api/admin/upload-chunk', {
               method: 'POST',
@@ -428,6 +428,11 @@ export const PagamantosPart = () => {
             }
 
             console.log(`✅ Chunk ${i + 1}/${chunks.length} enviado`);
+            
+            // Pequeno delay entre chunks para evitar sobrecarga
+            if (i < chunks.length - 1) {
+              await new Promise(resolve => setTimeout(resolve, 100)); // 100ms delay
+            }
           }
           
           console.log('✅ Todos os chunks enviados com sucesso');
