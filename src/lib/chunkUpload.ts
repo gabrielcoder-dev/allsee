@@ -102,8 +102,8 @@ export async function uploadInChunks(
     
     return { success: true, arte_campanha_id: finalizeData.arte_campanha_id };
     
-  } catch (error) {
+  } catch (error: any) {
     console.error('❌ Erro no upload em chunks:', error);
-    return { success: false, error: error.message };
+    return { success: false, error: error.message || 'Erro desconhecido no upload' };
   }
 }
