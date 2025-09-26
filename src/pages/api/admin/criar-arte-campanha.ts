@@ -13,87 +13,11 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
-  if (req.method !== 'POST' && req.method !== 'PUT') {
+  if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method Not Allowed' });
   }
 
   try {
-    // Lógica para PUT (atualização com chunks)
-    if (req.method === 'PUT') {
-      const { arte_campanha_id, chunk_index, chunk_data, total_chunks } = req.body;
-      
-      if (!arte_campanha_id || chunk_index === undefined || !chunk_data || !total_chunks) {
-        return res.status(400).json({ 
-          success: false, 
-          error: 'Campos obrigatórios faltando para chunk' 
-        });
-      }
-
-      console.log(`📦 Recebendo chunk ${chunk_index + 1}/${total_chunks} para arte ${arte_campanha_id}`);
-
-      // Buscar o registro atual
-      const { data: currentRecord, error: fetchError } = await supabase
-        .from('arte_campanha')
-        .select('caminho_imagem')
-        .eq('id', arte_campanha_id)
-        .single();
-
-      if (fetchError) {
-        console.error('❌ Erro ao buscar registro:', fetchError);
-        return res.status(500).json({ 
-          success: false, 
-          error: 'Erro ao buscar registro' 
-        });
-      }
-
-      // Reconstruir o arquivo completo
-      let fullData = currentRecord.caminho_imagem || '';
-      
-      // Simular armazenamento de chunks (em produção, usar Redis ou similar)
-      // Por simplicidade, vamos concatenar diretamente
-      if (chunk_index === 0) {
-        fullData = chunk_data;
-      } else {
-        fullData += chunk_data;
-      }
-
-      // Se é o último chunk, salvar o arquivo completo
-      if (chunk_index === total_chunks - 1) {
-        const { data: updatedRecord, error: updateError } = await supabase
-          .from('arte_campanha')
-          .update({ caminho_imagem: fullData })
-          .eq('id', arte_campanha_id)
-          .select('id, id_order, id_user')
-          .single();
-
-        if (updateError) {
-          console.error('❌ Erro ao salvar arquivo completo:', updateError);
-          return res.status(500).json({ 
-            success: false, 
-            error: 'Erro ao salvar arquivo completo' 
-          });
-        }
-
-        console.log('✅ Arquivo completo salvo:', {
-          id: updatedRecord.id,
-          sizeMB: Math.round(fullData.length / (1024 * 1024))
-        });
-
-        return res.status(200).json({ 
-          success: true, 
-          message: 'Chunk processado e arquivo completo salvo',
-          arte_campanha_id: updatedRecord.id
-        });
-      } else {
-        // Chunk intermediário, apenas confirmar recebimento
-        return res.status(200).json({ 
-          success: true, 
-          message: `Chunk ${chunk_index + 1}/${total_chunks} recebido`
-        });
-      }
-    }
-
-    // Lógica para POST (criação normal)
     const { id_order, caminho_imagem, id_user } = req.body;
 
     // Validação básica
@@ -180,9 +104,9 @@ export const config = {
   api: {
     externalResolver: true, // Permite bypass do bodyParser padrão do Next.js
     bodyParser: {
-      sizeLimit: '2gb', // Suportar arquivos até 1GB (base64 = ~1.37GB)
-      timeout: 300000, // 5 minutos para uploads grandes
+      sizeLimit: '2mb', // Apenas para arquivos pequenos e registros vazios
+      timeout: 30000, // 30 segundos
     },
-    responseLimit: '10mb', // Resposta pequena
+    responseLimit: '1mb', // Resposta pequena
   },
 };

@@ -343,7 +343,7 @@ export const PagamantosPart = () => {
       
       try {
         // Verificar se o arquivo é muito grande para upload direto
-        const maxChunkSize = 5 * 1024 * 1024; // 5MB por chunk
+        const maxChunkSize = 1 * 1024 * 1024; // 1MB por chunk (limite seguro do Vercel)
         
         if (optimizedArtData.length <= maxChunkSize) {
           // Upload direto para arquivos pequenos
@@ -406,10 +406,10 @@ export const PagamantosPart = () => {
           
           console.log('✅ Registro criado, ID:', arteCampanhaId);
           
-          // Agora, enviar cada chunk
+          // Agora, enviar cada chunk para endpoint separado
           for (let i = 0; i < chunks.length; i++) {
-            const chunkResponse = await fetch('/api/admin/criar-arte-campanha', {
-              method: 'PUT',
+            const chunkResponse = await fetch('/api/admin/upload-chunk', {
+              method: 'POST',
               headers: { 
                 'Content-Type': 'application/json',
                 'Accept': 'application/json'
