@@ -98,6 +98,7 @@ export default async function handler(
 
 export const config = {
   api: {
+    externalResolver: true, // Permite bypass do bodyParser padrão do Next.js
     bodyParser: {
       sizeLimit: '2gb', // Suportar arquivos até 1GB (base64 = ~1.37GB)
       timeout: 180000, // 3 minutos de timeout (reduzido)

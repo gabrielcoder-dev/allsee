@@ -19,10 +19,18 @@ const nextConfig: NextConfig = {
   // Otimizações para uploads rápidos
   compress: true,
   poweredByHeader: false,
+  // Configurações específicas para resolver erro 413
+  serverActions: {
+    bodySizeLimit: '2gb',
+  },
   // Configurações experimentais para arquivos grandes
   experimental: {
     // Permitir payloads grandes
     serverComponentsExternalPackages: [],
+    // Desabilitar bodyParser padrão para permitir uploads grandes
+    serverActions: {
+      bodySizeLimit: '2gb',
+    },
   },
   // Headers para permitir uploads grandes
   async headers() {
