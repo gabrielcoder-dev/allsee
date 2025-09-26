@@ -342,30 +342,95 @@ export const PagamantosPart = () => {
       let arteCampanhaId = null;
       
       try {
-        // Criar registro na tabela arte_campanha com base64 otimizado
-        const response = await fetch('/api/admin/criar-arte-campanha', {
-          method: 'POST',
-          headers: { 
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
-          },
-          body: JSON.stringify({
-            id_order: orderId,
-            caminho_imagem: optimizedArtData, // Base64 otimizado (comprimido)
-            id_user: user.id
-          })
-        });
+        // Verificar se o arquivo é muito grande para upload direto
+        const maxChunkSize = 5 * 1024 * 1024; // 5MB por chunk
+        
+        if (optimizedArtData.length <= maxChunkSize) {
+          // Upload direto para arquivos pequenos
+          console.log('📤 Upload direto (arquivo pequeno)');
+          const response = await fetch('/api/admin/criar-arte-campanha', {
+            method: 'POST',
+            headers: { 
+              'Content-Type': 'application/json',
+              'Accept': 'application/json'
+            },
+            body: JSON.stringify({
+              id_order: orderId,
+              caminho_imagem: optimizedArtData,
+              id_user: user.id
+            })
+          });
 
-        if (response.ok) {
-          const data = await response.json();
-          arteCampanhaId = data.arte_campanha_id;
-          console.log('✅ Arte da campanha criada com sucesso, ID:', arteCampanhaId);
+          if (response.ok) {
+            const data = await response.json();
+            arteCampanhaId = data.arte_campanha_id;
+            console.log('✅ Arte da campanha criada com sucesso, ID:', arteCampanhaId);
+          } else {
+            const errorData = await response.json();
+            console.error('❌ Erro ao criar registro da arte:', errorData.error);
+            setErro(`Erro ao salvar dados da arte: ${errorData.error}`);
+            setCarregando(false);
+            return;
+          }
         } else {
-          const errorData = await response.json();
-          console.error('❌ Erro ao criar registro da arte:', errorData.error);
-          setErro(`Erro ao salvar dados da arte: ${errorData.error}`);
-          setCarregando(false);
-          return;
+          // Upload em chunks para arquivos grandes
+          console.log('📤 Upload em chunks (arquivo grande)');
+          const chunks = [];
+          for (let i = 0; i < optimizedArtData.length; i += maxChunkSize) {
+            chunks.push(optimizedArtData.slice(i, i + maxChunkSize));
+          }
+          
+          console.log(`📦 Dividindo em ${chunks.length} chunks de ${Math.round(maxChunkSize / (1024 * 1024))}MB cada`);
+          
+          // Primeiro, criar o registro vazio
+          const createResponse = await fetch('/api/admin/criar-arte-campanha', {
+            method: 'POST',
+            headers: { 
+              'Content-Type': 'application/json',
+              'Accept': 'application/json'
+            },
+            body: JSON.stringify({
+              id_order: orderId,
+              caminho_imagem: '', // Vazio inicialmente
+              id_user: user.id
+            })
+          });
+
+          if (!createResponse.ok) {
+            const errorData = await createResponse.json();
+            throw new Error(errorData.error || 'Erro ao criar registro inicial');
+          }
+
+          const createData = await createResponse.json();
+          arteCampanhaId = createData.arte_campanha_id;
+          
+          console.log('✅ Registro criado, ID:', arteCampanhaId);
+          
+          // Agora, enviar cada chunk
+          for (let i = 0; i < chunks.length; i++) {
+            const chunkResponse = await fetch('/api/admin/criar-arte-campanha', {
+              method: 'PUT',
+              headers: { 
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+              },
+              body: JSON.stringify({
+                arte_campanha_id: arteCampanhaId,
+                chunk_index: i,
+                chunk_data: chunks[i],
+                total_chunks: chunks.length
+              })
+            });
+
+            if (!chunkResponse.ok) {
+              const errorData = await chunkResponse.json();
+              throw new Error(`Erro no chunk ${i}: ${errorData.error}`);
+            }
+
+            console.log(`✅ Chunk ${i + 1}/${chunks.length} enviado`);
+          }
+          
+          console.log('✅ Todos os chunks enviados com sucesso');
         }
         
       } catch (error: any) {
