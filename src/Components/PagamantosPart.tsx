@@ -429,9 +429,9 @@ export const PagamantosPart = () => {
 
             console.log(`✅ Chunk ${i + 1}/${chunks.length} enviado`);
             
-            // Pequeno delay entre chunks para evitar sobrecarga
+            // Delay entre chunks para dar tempo do servidor processar
             if (i < chunks.length - 1) {
-              await new Promise(resolve => setTimeout(resolve, 100)); // 100ms delay
+              await new Promise(resolve => setTimeout(resolve, 500)); // 500ms delay
             }
           }
           
