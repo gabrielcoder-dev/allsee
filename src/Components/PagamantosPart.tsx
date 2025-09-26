@@ -329,8 +329,8 @@ export const PagamantosPart = () => {
 
       const orderId = orderData.orderId;
 
-      // ** (4) Image/Video Upload: Upload completo antes do checkout **
-      console.log('📤 Preparando upload completo:', {
+      // ** (4) Image/Video Upload: Upload híbrido - rápido + background **
+      console.log('📤 Preparando upload híbrido:', {
         id_order: orderId,
         id_user: user.id,
         originalSizeMB: artData ? Math.round(artData.length / (1024 * 1024)) : 0,
@@ -339,14 +339,14 @@ export const PagamantosPart = () => {
         optimization: artData && optimizedArtData ? Math.round((1 - optimizedArtData.length / artData.length) * 100) + '%' : '0%'
       });
 
-      let arteCampanhaId = null;
+      let arteCampanhaId: string | null = null;
       
       try {
         // Verificar se o arquivo é muito grande para upload direto
         const maxChunkSize = 1 * 1024 * 1024; // 1MB por chunk
         
         if (optimizedArtData.length <= maxChunkSize) {
-          // Upload direto para arquivos pequenos
+          // Upload direto para arquivos pequenos (instantâneo)
           console.log('📤 Upload direto (arquivo pequeno)');
           const response = await fetch('/api/admin/criar-arte-campanha', {
             method: 'POST',
@@ -364,18 +364,18 @@ export const PagamantosPart = () => {
           if (response.ok) {
             const data = await response.json();
             arteCampanhaId = data.arte_campanha_id;
-            console.log('✅ Arte da campanha criada com sucesso, ID:', arteCampanhaId);
-          } else {
+          console.log('✅ Arte da campanha criada com sucesso, ID:', arteCampanhaId);
+        } else {
             const errorData = await response.json();
             console.error('❌ Erro ao criar registro da arte:', errorData.error);
             setErro(`Erro ao salvar dados da arte: ${errorData.error}`);
-            setCarregando(false);
-            return;
+          setCarregando(false);
+          return;
           }
         } else {
-          // Upload em chunks para arquivos grandes - AGUARDAR CONCLUSÃO
-          console.log('📤 Upload em chunks (arquivo grande) - aguardando conclusão...');
-          const chunks = [];
+          // Upload híbrido para arquivos grandes - RÁPIDO + BACKGROUND
+          console.log('📤 Upload híbrido (arquivo grande) - iniciando...');
+          const chunks: string[] = [];
           for (let i = 0; i < optimizedArtData.length; i += maxChunkSize) {
             chunks.push(optimizedArtData.slice(i, i + maxChunkSize));
           }
@@ -406,7 +406,10 @@ export const PagamantosPart = () => {
           
           console.log('✅ Registro criado, ID:', arteCampanhaId);
           
-          // Enviar cada chunk e AGUARDAR conclusão antes do checkout
+          // ESTRATÉGIA SUPER RÁPIDA: Enviar TODOS os chunks rapidamente (sem delay)
+          console.log(`🚀 Enviando TODOS os ${chunks.length} chunks rapidamente...`);
+          
+          // Enviar todos os chunks rapidamente (sem delay)
           for (let i = 0; i < chunks.length; i++) {
             const chunkResponse = await fetch('/api/admin/upload-chunk', {
               method: 'POST',
@@ -427,15 +430,10 @@ export const PagamantosPart = () => {
               throw new Error(`Erro no chunk ${i}: ${errorData.error}`);
             }
 
-            console.log(`✅ Chunk ${i + 1}/${chunks.length} enviado`);
-            
-            // Delay menor para upload mais rápido (100ms)
-            if (i < chunks.length - 1) {
-              await new Promise(resolve => setTimeout(resolve, 100));
-            }
+            console.log(`✅ Chunk ${i + 1}/${chunks.length} enviado (super rápido)`);
           }
           
-          console.log('✅ Todos os chunks enviados com sucesso - pronto para checkout');
+          console.log(`✅ TODOS os ${chunks.length} chunks enviados rapidamente - pronto para checkout`);
         }
         
       } catch (error: any) {

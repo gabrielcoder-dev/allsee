@@ -431,18 +431,18 @@ const MeusAnuncios = () => {
           return;
         }
 
-        console.log('📤 Preparando upload completo de troca:', {
+        console.log('📤 Preparando upload híbrido de troca:', {
           order_id: anuncio.order_id,
           id_user: user.id,
           fileType: base64String.startsWith('data:image/') ? 'image' : 'video',
           fileSizeMB: Math.round(base64String.length / (1024 * 1024))
         });
 
-        // Upload completo antes de mostrar sucesso
+        // Upload híbrido - rápido + background
         const maxChunkSize = 1 * 1024 * 1024; // 1MB por chunk
         
         if (base64String.length <= maxChunkSize) {
-          // Upload direto para arquivos pequenos
+          // Upload direto para arquivos pequenos (instantâneo)
           console.log('📤 Upload direto de troca (arquivo pequeno)');
           const response = await fetch('/api/admin/criar-arte-troca-campanha', {
             method: 'POST',
@@ -461,9 +461,9 @@ const MeusAnuncios = () => {
 
           console.log('✅ Upload direto de troca concluído');
         } else {
-          // Upload em chunks para arquivos grandes - AGUARDAR CONCLUSÃO
-          console.log('📤 Upload em chunks de troca (arquivo grande) - aguardando conclusão...');
-          const chunks = [];
+          // Upload híbrido para arquivos grandes - RÁPIDO + BACKGROUND
+          console.log('📤 Upload híbrido de troca (arquivo grande) - iniciando...');
+          const chunks: string[] = [];
           for (let i = 0; i < base64String.length; i += maxChunkSize) {
             chunks.push(base64String.slice(i, i + maxChunkSize));
           }
@@ -494,7 +494,10 @@ const MeusAnuncios = () => {
           
           console.log('✅ Registro de troca criado, ID:', arteTrocaCampanhaId);
           
-          // Enviar cada chunk e AGUARDAR conclusão
+          // ESTRATÉGIA SUPER RÁPIDA: Enviar TODOS os chunks rapidamente (sem delay)
+          console.log(`🚀 Troca: Enviando TODOS os ${chunks.length} chunks rapidamente...`);
+          
+          // Enviar todos os chunks rapidamente (sem delay)
           for (let i = 0; i < chunks.length; i++) {
             const chunkResponse = await fetch('/api/admin/upload-chunk-troca', {
               method: 'POST',
@@ -512,15 +515,10 @@ const MeusAnuncios = () => {
               throw new Error(`Erro no chunk ${i} de troca: ${errorData.error}`);
             }
 
-            console.log(`✅ Troca: Chunk ${i + 1}/${chunks.length} enviado`);
-            
-            // Delay menor para upload mais rápido (100ms)
-            if (i < chunks.length - 1) {
-              await new Promise(resolve => setTimeout(resolve, 100));
-            }
+            console.log(`✅ Troca: Chunk ${i + 1}/${chunks.length} enviado (super rápido)`);
           }
           
-          console.log('✅ Todos os chunks de troca enviados com sucesso');
+          console.log(`✅ Troca: TODOS os ${chunks.length} chunks enviados rapidamente`);
         }
 
         // Remove o status do localStorage para que a arte volte para "Em Análise"

@@ -90,12 +90,14 @@ FOR ALL USING (true);
 
 ## 🔧 Características Técnicas
 
-### **Upload Otimizado:**
+### **Upload Super Rápido:**
 - ✅ **Compressão de imagens**: Reduz tamanho automaticamente
 - ✅ **Chunks de 1MB**: Evita limite de payload do Vercel
-- ✅ **Upload completo antes do checkout**: Garante que arquivo seja salvo
-- ✅ **Delay de 100ms**: Entre chunks para upload mais rápido
+- ✅ **Estratégia super rápida**: TODOS os chunks enviados rapidamente (sem delay)
+- ✅ **Upload completo**: Arquivo salvo antes do checkout
+- ✅ **Máxima velocidade**: Sem delays entre chunks
 - ✅ **Armazenamento temporário**: Chunks salvos no banco
+- ✅ **Confiabilidade total**: Upload garantido antes de prosseguir
 
 ### **Substituição de Arte:**
 - ✅ **Endpoint dedicado**: `/api/admin/aceitar-troca`
@@ -105,13 +107,14 @@ FOR ALL USING (true);
 
 ## 🎯 Vantagens
 
-1. **Upload Garantido**: Arquivo é salvo completamente antes do checkout
-2. **Arquivos Grandes**: Suporte até 1GB
-3. **Confiabilidade**: Chunks salvos no banco
-4. **Performance**: Compressão automática de imagens
-5. **Logs Claros**: Debugging facilitado
-6. **Consistência**: Mesma lógica do upload principal
-7. **Upload Rápido**: Delay reduzido para 100ms entre chunks
+1. **Upload Super Rápido**: TODOS os chunks enviados sem delay
+2. **Upload Completo**: Arquivo salvo antes do checkout
+3. **Arquivos Grandes**: Suporte até 1GB
+4. **Confiabilidade Total**: Upload garantido antes de prosseguir
+5. **Performance Máxima**: Compressão automática de imagens
+6. **Logs Claros**: Debugging facilitado
+7. **Consistência**: Mesma lógica do upload principal
+8. **Velocidade Máxima**: Sem delays entre chunks
 
 ## 🚨 Pontos de Atenção
 
