@@ -34,7 +34,7 @@ export default async function handler(
     if (!chunkStorage.has(chunkKey)) {
       chunkStorage.set(chunkKey, {
         chunks: new Array(total_chunks).fill(''),
-        totalChunks,
+        totalChunks: total_chunks,
         arteId: arte_campanha_id
       });
     }
