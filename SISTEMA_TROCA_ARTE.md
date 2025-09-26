@@ -93,8 +93,8 @@ FOR ALL USING (true);
 ### **Upload Otimizado:**
 - ✅ **Compressão de imagens**: Reduz tamanho automaticamente
 - ✅ **Chunks de 1MB**: Evita limite de payload do Vercel
-- ✅ **Upload em background**: Interface não trava
-- ✅ **Delay de 200ms**: Entre chunks para estabilidade
+- ✅ **Upload completo antes do checkout**: Garante que arquivo seja salvo
+- ✅ **Delay de 100ms**: Entre chunks para upload mais rápido
 - ✅ **Armazenamento temporário**: Chunks salvos no banco
 
 ### **Substituição de Arte:**
@@ -105,12 +105,13 @@ FOR ALL USING (true);
 
 ## 🎯 Vantagens
 
-1. **UX Melhorada**: Upload não bloqueia interface
+1. **Upload Garantido**: Arquivo é salvo completamente antes do checkout
 2. **Arquivos Grandes**: Suporte até 1GB
 3. **Confiabilidade**: Chunks salvos no banco
 4. **Performance**: Compressão automática de imagens
 5. **Logs Claros**: Debugging facilitado
 6. **Consistência**: Mesma lógica do upload principal
+7. **Upload Rápido**: Delay reduzido para 100ms entre chunks
 
 ## 🚨 Pontos de Atenção
 

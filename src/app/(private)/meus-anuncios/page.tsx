@@ -394,74 +394,6 @@ const MeusAnuncios = () => {
     });
   };
 
-  // Função para upload em background (não bloqueia a interface)
-  const uploadTrocaInBackground = async (artData: string, arteTrocaCampanhaId: string, orderId: string, userId: string) => {
-    try {
-      console.log('🚀 Iniciando upload de troca em background...');
-      
-      const maxChunkSize = 1 * 1024 * 1024; // 1MB por chunk
-      
-      if (artData.length <= maxChunkSize) {
-        // Upload direto para arquivos pequenos
-        console.log('📤 Upload direto de troca em background (arquivo pequeno)');
-        const response = await fetch('/api/admin/criar-arte-troca-campanha', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            id_order: orderId,
-            caminho_imagem: artData,
-            id_user: userId
-          })
-        });
-
-        if (response.ok) {
-          console.log('✅ Upload de troca em background concluído (arquivo pequeno)');
-        } else {
-          console.error('❌ Erro no upload de troca em background:', await response.text());
-        }
-      } else {
-        // Upload em chunks para arquivos grandes
-        console.log('📤 Upload em chunks de troca em background (arquivo grande)');
-        const chunks = [];
-        for (let i = 0; i < artData.length; i += maxChunkSize) {
-          chunks.push(artData.slice(i, i + maxChunkSize));
-        }
-        
-        console.log(`📦 Background Troca: Dividindo em ${chunks.length} chunks`);
-        
-        // Enviar chunks com delay menor para background
-        for (let i = 0; i < chunks.length; i++) {
-          const chunkResponse = await fetch('/api/admin/upload-chunk-troca', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              arte_troca_campanha_id: arteTrocaCampanhaId,
-              chunk_index: i,
-              chunk_data: chunks[i],
-              total_chunks: chunks.length
-            })
-          });
-
-          if (!chunkResponse.ok) {
-            console.error(`❌ Erro no chunk ${i} de troca em background:`, await chunkResponse.text());
-            return;
-          }
-
-          console.log(`✅ Background Troca: Chunk ${i + 1}/${chunks.length} enviado`);
-          
-          // Delay menor para background (200ms)
-          if (i < chunks.length - 1) {
-            await new Promise(resolve => setTimeout(resolve, 200));
-          }
-        }
-        
-        console.log('✅ Upload de troca em background concluído (arquivo grande)');
-      }
-    } catch (error) {
-      console.error('❌ Erro no upload de troca em background:', error);
-    }
-  };
-
   const handleTrocarArte = async () => {
     if (!selectedFile || !selectedAnuncioId) {
       console.error("Nenhum arquivo selecionado ou ID do anúncio não definido.");
@@ -499,42 +431,97 @@ const MeusAnuncios = () => {
           return;
         }
 
-        console.log('📤 Preparando upload de troca em background:', {
+        console.log('📤 Preparando upload completo de troca:', {
           order_id: anuncio.order_id,
           id_user: user.id,
           fileType: base64String.startsWith('data:image/') ? 'image' : 'video',
           fileSizeMB: Math.round(base64String.length / (1024 * 1024))
         });
 
-        // Criar registro vazio para upload em background
-        const createResponse = await fetch('/api/admin/criar-arte-troca-campanha', {
-          method: 'POST',
-          headers: { 
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
-          },
-          body: JSON.stringify({
-            id_order: anuncio.order_id,
-            caminho_imagem: '', // Vazio - será preenchido em background
-            id_user: user.id
-          })
-        });
+        // Upload completo antes de mostrar sucesso
+        const maxChunkSize = 1 * 1024 * 1024; // 1MB por chunk
+        
+        if (base64String.length <= maxChunkSize) {
+          // Upload direto para arquivos pequenos
+          console.log('📤 Upload direto de troca (arquivo pequeno)');
+          const response = await fetch('/api/admin/criar-arte-troca-campanha', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              id_order: anuncio.order_id,
+              caminho_imagem: base64String,
+              id_user: user.id
+            })
+          });
 
-        if (!createResponse.ok) {
-          const errorData = await createResponse.json();
-          throw new Error(errorData.error || 'Erro ao criar registro inicial de troca');
+          if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Erro no upload direto de troca');
+          }
+
+          console.log('✅ Upload direto de troca concluído');
+        } else {
+          // Upload em chunks para arquivos grandes - AGUARDAR CONCLUSÃO
+          console.log('📤 Upload em chunks de troca (arquivo grande) - aguardando conclusão...');
+          const chunks = [];
+          for (let i = 0; i < base64String.length; i += maxChunkSize) {
+            chunks.push(base64String.slice(i, i + maxChunkSize));
+          }
+          
+          console.log(`📦 Troca: Dividindo em ${chunks.length} chunks`);
+          
+          // Criar registro vazio
+          const createResponse = await fetch('/api/admin/criar-arte-troca-campanha', {
+            method: 'POST',
+            headers: { 
+              'Content-Type': 'application/json',
+              'Accept': 'application/json'
+            },
+            body: JSON.stringify({
+              id_order: anuncio.order_id,
+              caminho_imagem: '', // Vazio inicialmente
+              id_user: user.id
+            })
+          });
+
+          if (!createResponse.ok) {
+            const errorData = await createResponse.json();
+            throw new Error(errorData.error || 'Erro ao criar registro inicial de troca');
+          }
+
+          const createData = await createResponse.json();
+          const arteTrocaCampanhaId = createData.arte_troca_campanha_id;
+          
+          console.log('✅ Registro de troca criado, ID:', arteTrocaCampanhaId);
+          
+          // Enviar cada chunk e AGUARDAR conclusão
+          for (let i = 0; i < chunks.length; i++) {
+            const chunkResponse = await fetch('/api/admin/upload-chunk-troca', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                arte_troca_campanha_id: arteTrocaCampanhaId,
+                chunk_index: i,
+                chunk_data: chunks[i],
+                total_chunks: chunks.length
+              })
+            });
+
+            if (!chunkResponse.ok) {
+              const errorData = await chunkResponse.json();
+              throw new Error(`Erro no chunk ${i} de troca: ${errorData.error}`);
+            }
+
+            console.log(`✅ Troca: Chunk ${i + 1}/${chunks.length} enviado`);
+            
+            // Delay menor para upload mais rápido (100ms)
+            if (i < chunks.length - 1) {
+              await new Promise(resolve => setTimeout(resolve, 100));
+            }
+          }
+          
+          console.log('✅ Todos os chunks de troca enviados com sucesso');
         }
-
-        const createData = await createResponse.json();
-        const arteTrocaCampanhaId = createData.arte_troca_campanha_id;
-        
-        console.log('✅ Registro de troca criado para upload em background, ID:', arteTrocaCampanhaId);
-
-        // Iniciar upload em background (não bloqueia a interface)
-        uploadTrocaInBackground(base64String, arteTrocaCampanhaId, anuncio.order_id.toString(), user.id);
-        
-        // Mostrar mensagem para o usuário
-        console.log('📤 Upload da arte de troca iniciado em background');
 
         // Remove o status do localStorage para que a arte volte para "Em Análise"
         localStorage.removeItem(`order_${anuncio.order_id}`);
