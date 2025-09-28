@@ -405,14 +405,31 @@ export const PagamantosPart = () => {
           // Upload híbrido para arquivos grandes - ULTRA RÁPIDO COM PARALELISMO
           console.log('📤 Upload híbrido (arquivo grande) - iniciando...');
           
-          // Tamanho do chunk otimizado para evitar erro 413 (Content Too Large)
-          const optimizedChunkSize = 2 * 1024 * 1024; // 2MB por chunk (reduzido para evitar limite do servidor)
+          // Tamanho do chunk otimizado considerando overhead do base64 (~33% maior)
+          const optimizedChunkSize = 1.5 * 1024 * 1024; // 1.5MB por chunk (considerando que base64 aumenta ~33% o tamanho)
           const chunks: string[] = [];
           for (let i = 0; i < optimizedArtData.length; i += optimizedChunkSize) {
             chunks.push(optimizedArtData.slice(i, i + optimizedChunkSize));
           }
           
           console.log(`📦 Dividindo em ${chunks.length} chunks de ${Math.round(optimizedChunkSize / (1024 * 1024))}MB cada`);
+          
+          // Verificar se algum chunk excede o limite de 2MB (considerando overhead do base64)
+          const maxAllowedChunkSize = 1.8 * 1024 * 1024; // 1.8MB máximo por chunk
+          const oversizedChunks = chunks.filter(chunk => chunk.length > maxAllowedChunkSize);
+          
+          if (oversizedChunks.length > 0) {
+            console.warn(`⚠️ ${oversizedChunks.length} chunks excedem o limite de 1.8MB. Reduzindo tamanho...`);
+            // Recalcular com chunks menores
+            const safeChunkSize = 1.2 * 1024 * 1024; // 1.2MB por chunk
+            const newChunks: string[] = [];
+            for (let i = 0; i < optimizedArtData.length; i += safeChunkSize) {
+              newChunks.push(optimizedArtData.slice(i, i + safeChunkSize));
+            }
+            chunks.length = 0; // Limpar array
+            chunks.push(...newChunks); // Adicionar novos chunks
+            console.log(`📦 Recalculado: ${chunks.length} chunks de ${Math.round(safeChunkSize / (1024 * 1024))}MB cada`);
+          }
           
           // Primeiro, criar o registro vazio
           const createResponse = await fetch('/api/admin/criar-arte-campanha', {
@@ -501,19 +518,50 @@ export const PagamantosPart = () => {
           const parallelLimit = 3; // Máximo 3 chunks simultâneos (reduzido de 5)
           const uploadPromises: Promise<void>[] = [];
           
-          for (let i = 0; i < chunks.length; i += parallelLimit) {
-            const batch = [];
-            for (let j = 0; j < parallelLimit && (i + j) < chunks.length; j++) {
-              batch.push(uploadChunkWithRetry(i + j));
+          try {
+            for (let i = 0; i < chunks.length; i += parallelLimit) {
+              const batch = [];
+              for (let j = 0; j < parallelLimit && (i + j) < chunks.length; j++) {
+                batch.push(uploadChunkWithRetry(i + j));
+              }
+              uploadPromises.push(...batch);
+              
+              // Aguardar o batch atual antes de iniciar o próximo
+              await Promise.all(batch);
+              console.log(`✅ Batch ${Math.floor(i / parallelLimit) + 1} concluído (${batch.length} chunks)`);
             }
-            uploadPromises.push(...batch);
             
-            // Aguardar o batch atual antes de iniciar o próximo
-            await Promise.all(batch);
-            console.log(`✅ Batch ${Math.floor(i / parallelLimit) + 1} concluído (${batch.length} chunks)`);
+            console.log(`✅ TODOS os ${chunks.length} chunks enviados em paralelo - pronto para checkout`);
+          } catch (chunkError: any) {
+            console.warn('⚠️ Upload por chunks falhou, tentando upload direto como fallback...', chunkError.message);
+            
+            // Fallback: tentar upload direto mesmo para arquivos grandes
+            try {
+              const fallbackResponse = await fetch('/api/admin/criar-arte-campanha', {
+                method: 'POST',
+                headers: { 
+                  'Content-Type': 'application/json',
+                  'Accept': 'application/json'
+                },
+                body: JSON.stringify({
+                  id_order: orderId,
+                  caminho_imagem: optimizedArtData,
+                  id_user: user.id
+                })
+              });
+
+              if (fallbackResponse.ok) {
+                const fallbackData = await fallbackResponse.json();
+                arteCampanhaId = fallbackData.arte_campanha_id;
+                console.log('✅ Fallback: Upload direto bem-sucedido, ID:', arteCampanhaId);
+              } else {
+                throw new Error('Fallback também falhou');
+              }
+            } catch (fallbackError) {
+              console.error('❌ Fallback também falhou:', fallbackError);
+              throw chunkError; // Re-throw o erro original dos chunks
+            }
           }
-          
-          console.log(`✅ TODOS os ${chunks.length} chunks enviados em paralelo - pronto para checkout`);
         }
         
       } catch (error: any) {
@@ -521,8 +569,8 @@ export const PagamantosPart = () => {
         const errorMessage = error.message || error.toString();
         
         // Detectar tipos específicos de erro para mensagens mais claras
-        if (errorMessage.includes('413') || errorMessage.includes('Content Too Large')) {
-          setErro('Arquivo muito grande para upload. Tente usar uma imagem menor ou comprimir o arquivo.');
+        if (errorMessage.includes('413') || errorMessage.includes('Content Too Large') || errorMessage.includes('Body exceeded 2mb limit')) {
+          setErro('Arquivo muito grande para upload. O servidor tem limite de 2MB por requisição. Tente usar uma imagem menor ou comprimir mais o arquivo.');
         } else if (errorMessage.includes('timeout') || errorMessage.includes('aborted')) {
           setErro('Upload demorou muito e foi cancelado. Verifique sua conexão e tente novamente.');
         } else if (errorMessage.includes('chunk')) {
