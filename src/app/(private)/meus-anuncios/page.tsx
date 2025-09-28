@@ -474,27 +474,29 @@ const MeusAnuncios = () => {
           // Upload híbrido para arquivos grandes - LÓGICA SIMPLES
           console.log('📤 Upload híbrido de troca (arquivo grande) - iniciando...');
           
-          // Calcular número de chunks necessários (divisão simples)
-          const totalChunks = Math.ceil(base64String.length / serverBodyLimit);
+          // NOVA LÓGICA: Chunks de exatamente 4MB até acabar o arquivo
+          const chunks: string[] = [];
+          let currentPosition = 0;
           
-          // Calcular tamanho de cada chunk (dividir igualmente)
-          const chunkSize = Math.floor(base64String.length / totalChunks);
+          while (currentPosition < base64String.length) {
+            const remainingBytes = base64String.length - currentPosition;
+            const chunkSize = Math.min(serverBodyLimit, remainingBytes);
+            
+            const chunk = base64String.slice(currentPosition, currentPosition + chunkSize);
+            chunks.push(chunk);
+            
+            currentPosition += chunkSize;
+          }
           
-          console.log(`🧮 Cálculo simples de troca:`, {
+          console.log(`🧮 Nova lógica de chunks de troca:`, {
             arquivoOriginal: `${Math.round(base64String.length / (1024 * 1024))}MB`,
             limiteServidor: `${Math.round(serverBodyLimit / (1024 * 1024))}MB`,
-            chunksNecessarios: totalChunks,
-            tamanhoPorChunk: `${Math.round(chunkSize / (1024 * 1024))}MB`
+            chunksCriados: chunks.length,
+            tamanhosChunks: chunks.map((chunk, i) => ({
+              chunk: i + 1,
+              tamanho: `${Math.round(chunk.length / (1024 * 1024))}MB ${Math.round((chunk.length % (1024 * 1024)) / 1024)}KB`
+            }))
           });
-          
-          // Criar chunks com tamanho calculado (CORRIGIDO)
-          const chunks: string[] = [];
-          for (let i = 0; i < base64String.length; i += chunkSize) {
-            const chunk = base64String.slice(i, i + chunkSize);
-            if (chunk.length > 0) { // Só adicionar chunks não vazios
-              chunks.push(chunk);
-            }
-          }
           
           // Verificar se todos os chunks têm tamanho válido
           const invalidChunks = chunks.filter(chunk => chunk.length === 0);
@@ -505,7 +507,7 @@ const MeusAnuncios = () => {
           
           console.log(`📦 Chunks de troca criados: ${chunks.length} chunks válidos`);
           
-          console.log(`📦 Troca: Dividindo em ${chunks.length} chunks de ${Math.round(chunkSize / (1024 * 1024))}MB cada`);
+          console.log(`📦 Troca: Dividindo em ${chunks.length} chunks (até 4MB cada)`);
           
           // Criar registro vazio
           const createResponse = await fetch('/api/admin/criar-arte-troca-campanha', {

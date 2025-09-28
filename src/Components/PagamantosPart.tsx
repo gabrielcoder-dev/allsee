@@ -411,27 +411,29 @@ export const PagamantosPart = () => {
           // Limite do servidor
           const serverBodyLimit = 4 * 1024 * 1024; // 4MB limite do servidor
           
-          // Calcular número de chunks necessários (divisão simples)
-          const totalChunks = Math.ceil(optimizedArtData.length / serverBodyLimit);
+          // NOVA LÓGICA: Chunks de exatamente 4MB até acabar o arquivo
+          const chunks: string[] = [];
+          let currentPosition = 0;
           
-          // Calcular tamanho de cada chunk (dividir igualmente)
-          const chunkSize = Math.floor(optimizedArtData.length / totalChunks);
+          while (currentPosition < optimizedArtData.length) {
+            const remainingBytes = optimizedArtData.length - currentPosition;
+            const chunkSize = Math.min(serverBodyLimit, remainingBytes);
+            
+            const chunk = optimizedArtData.slice(currentPosition, currentPosition + chunkSize);
+            chunks.push(chunk);
+            
+            currentPosition += chunkSize;
+          }
           
-          console.log(`🧮 Cálculo simples:`, {
+          console.log(`🧮 Nova lógica de chunks:`, {
             arquivoOriginal: `${Math.round(optimizedArtData.length / (1024 * 1024))}MB`,
             limiteServidor: `${Math.round(serverBodyLimit / (1024 * 1024))}MB`,
-            chunksNecessarios: totalChunks,
-            tamanhoPorChunk: `${Math.round(chunkSize / (1024 * 1024))}MB`
+            chunksCriados: chunks.length,
+            tamanhosChunks: chunks.map((chunk, i) => ({
+              chunk: i + 1,
+              tamanho: `${Math.round(chunk.length / (1024 * 1024))}MB ${Math.round((chunk.length % (1024 * 1024)) / 1024)}KB`
+            }))
           });
-          
-          // Criar chunks com tamanho calculado (CORRIGIDO)
-          const chunks: string[] = [];
-          for (let i = 0; i < optimizedArtData.length; i += chunkSize) {
-            const chunk = optimizedArtData.slice(i, i + chunkSize);
-            if (chunk.length > 0) { // Só adicionar chunks não vazios
-              chunks.push(chunk);
-            }
-          }
           
           // Verificar se todos os chunks têm tamanho válido
           const invalidChunks = chunks.filter(chunk => chunk.length === 0);
@@ -442,7 +444,7 @@ export const PagamantosPart = () => {
           
           console.log(`📦 Chunks criados: ${chunks.length} chunks válidos`);
           
-          console.log(`📦 Dividindo em ${chunks.length} chunks de ${Math.round(chunkSize / (1024 * 1024))}MB cada`);
+          console.log(`📦 Dividindo em ${chunks.length} chunks (até 4MB cada)`);
           
           // Primeiro, criar o registro vazio
           const createResponse = await fetch('/api/admin/criar-arte-campanha', {

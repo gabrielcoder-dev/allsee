@@ -38,10 +38,16 @@ export default async function handler(
       });
     }
 
+    // Limpar chunks anteriores para evitar duplicatas
+    await supabase
+      .from('chunks_temp')
+      .delete()
+      .eq('arte_id', arte_campanha_id);
+
     // Salvar chunk diretamente no banco usando uma tabela temporária
     const { error: chunkError } = await supabase
       .from('chunks_temp')
-      .upsert({
+      .insert({
         arte_id: arte_campanha_id,
         chunk_index: chunk_index,
         chunk_data: chunk_data,
