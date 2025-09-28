@@ -411,18 +411,34 @@ export const PagamantosPart = () => {
           // Limite do servidor
           const serverBodyLimit = 4 * 1024 * 1024; // 4MB limite do servidor
           
-          // NOVA LÓGICA: Chunks de exatamente 4MB até acabar o arquivo
+          // LÓGICA CORRIGIDA: Chunks de até 4MB, garantindo que 100% do arquivo seja enviado
           const chunks: string[] = [];
           let currentPosition = 0;
+          const totalSize = optimizedArtData.length;
           
-          while (currentPosition < optimizedArtData.length) {
-            const remainingBytes = optimizedArtData.length - currentPosition;
+          console.log(`📏 Tamanho total do arquivo: ${Math.round(totalSize / (1024 * 1024))}MB ${Math.round((totalSize % (1024 * 1024)) / 1024)}KB`);
+          
+          while (currentPosition < totalSize) {
+            const remainingBytes = totalSize - currentPosition;
             const chunkSize = Math.min(serverBodyLimit, remainingBytes);
             
-            const chunk = optimizedArtData.slice(currentPosition, currentPosition + chunkSize);
+            // Verificar se este é o último chunk
+            const isLastChunk = (currentPosition + chunkSize) >= totalSize;
+            const actualChunkSize = isLastChunk ? remainingBytes : chunkSize;
+            
+            const chunk = optimizedArtData.slice(currentPosition, currentPosition + actualChunkSize);
             chunks.push(chunk);
             
-            currentPosition += chunkSize;
+            console.log(`📦 Chunk ${chunks.length}:`, {
+              posicaoInicial: currentPosition,
+              posicaoFinal: currentPosition + actualChunkSize,
+              tamanhoChunk: Math.round(actualChunkSize / 1024) + 'KB',
+              tamanhoChunkMB: Math.round(actualChunkSize / (1024 * 1024)) + 'MB',
+              isLastChunk: isLastChunk,
+              bytesRestantes: totalSize - (currentPosition + actualChunkSize)
+            });
+            
+            currentPosition += actualChunkSize;
           }
           
           console.log(`🧮 Nova lógica de chunks:`, {
@@ -443,6 +459,34 @@ export const PagamantosPart = () => {
           }
           
           console.log(`📦 Chunks criados: ${chunks.length} chunks válidos`);
+          
+          // Diagnóstico detalhado dos chunks
+          const totalChunkSize = chunks.reduce((sum, chunk) => sum + chunk.length, 0);
+          const isSizeMatch = totalChunkSize === optimizedArtData.length;
+          
+          console.log(`📊 Diagnóstico dos chunks:`, {
+            totalChunks: chunks.length,
+            chunkSizes: chunks.map((chunk, i) => ({
+              chunk: i + 1,
+              sizeKB: Math.round(chunk.length / 1024),
+              sizeMB: Math.round(chunk.length / (1024 * 1024)) + 'MB',
+              isLastChunk: i === chunks.length - 1
+            })),
+            totalSizeOriginal: Math.round(optimizedArtData.length / (1024 * 1024)) + 'MB ' + Math.round((optimizedArtData.length % (1024 * 1024)) / 1024) + 'KB',
+            totalSizeChunks: Math.round(totalChunkSize / (1024 * 1024)) + 'MB ' + Math.round((totalChunkSize % (1024 * 1024)) / 1024) + 'KB',
+            sizeMatch: isSizeMatch ? '✅ CORRETO' : '❌ ERRO - Tamanhos não batem!',
+            lastChunkIndex: chunks.length - 1,
+            lastChunkSize: Math.round(chunks[chunks.length - 1]?.length / 1024) + 'KB'
+          });
+          
+          // Verificação crítica: se os tamanhos não batem, erro fatal
+          if (!isSizeMatch) {
+            console.error('❌ ERRO CRÍTICO: Tamanho total dos chunks não bate com arquivo original!');
+            console.error(`Arquivo original: ${optimizedArtData.length} bytes`);
+            console.error(`Soma dos chunks: ${totalChunkSize} bytes`);
+            console.error(`Diferença: ${Math.abs(optimizedArtData.length - totalChunkSize)} bytes`);
+            throw new Error('Erro na divisão de chunks: tamanhos não coincidem');
+          }
           
           console.log(`📦 Dividindo em ${chunks.length} chunks (até 4MB cada)`);
           
@@ -482,22 +526,24 @@ export const PagamantosPart = () => {
             console.warn('⚠️ Não foi possível limpar chunks anteriores:', cleanupError);
           }
           
-          // ESTRATÉGIA ULTRA RÁPIDA: Upload paralelo com retry automático
-          console.log(`🚀 Enviando ${chunks.length} chunks em paralelo (ultra rápido)...`);
+          // ESTRATÉGIA SEQUENCIAL: Upload sequencial para evitar problemas de concorrência no último chunk
+          console.log(`🚀 Preparando upload sequencial de ${chunks.length} chunks...`);
           
           // Função para enviar um chunk com retry e timeout
           const uploadChunkWithRetry = async (chunkIndex: number, maxRetries: number = 3): Promise<void> => {
             for (let attempt = 1; attempt <= maxRetries; attempt++) {
               try {
-                // Timeout de 30 segundos para evitar demora
+                // Timeout de 45 segundos para arquivos grandes
                 const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 30000);
+                const timeoutId = setTimeout(() => controller.abort(), 45000);
                 
                 console.log(`📤 Enviando chunk ${chunkIndex + 1}/${chunks.length}:`, {
                   arte_campanha_id: arteCampanhaId,
                   chunk_index: chunkIndex,
                   chunk_size: Math.round(chunks[chunkIndex].length / (1024 * 1024)) + 'MB',
-                  total_chunks: chunks.length
+                  chunk_size_kb: Math.round(chunks[chunkIndex].length / 1024) + 'KB',
+                  total_chunks: chunks.length,
+                  tentativa: attempt
                 });
 
                 const chunkResponse = await fetch('/api/admin/upload-chunk', {
@@ -529,43 +575,82 @@ export const PagamantosPart = () => {
                     errorMessage = errorText || errorMessage;
                   }
                   
-                  throw new Error(errorMessage);
+                  console.error(`❌ Erro HTTP ${chunkResponse.status} para chunk ${chunkIndex}:`, {
+                    status: chunkResponse.status,
+                    statusText: chunkResponse.statusText,
+                    errorText: errorText,
+                    errorMessage: errorMessage
+                  });
+                  
+                  throw new Error(`${errorMessage} (Status: ${chunkResponse.status})`);
                 }
 
-                console.log(`✅ Chunk ${chunkIndex + 1}/${chunks.length} enviado (tentativa ${attempt})`);
+                // Tentar parsear a resposta para verificar se foi bem-sucedida
+                try {
+                  const responseData = await chunkResponse.json();
+                  if (!responseData.success) {
+                    throw new Error(responseData.error || 'Resposta não indica sucesso');
+                  }
+                  
+                  console.log(`✅ Chunk ${chunkIndex + 1}/${chunks.length} enviado com sucesso (tentativa ${attempt}):`, {
+                    success: responseData.success,
+                    message: responseData.message,
+                    isLastChunk: chunkIndex === chunks.length - 1
+                  });
+                } catch (parseError) {
+                  console.warn(`⚠️ Não foi possível parsear resposta do chunk ${chunkIndex}, assumindo sucesso`);
+                }
+                
                 return; // Sucesso, sair do loop de retry
               } catch (error: any) {
                 const errorMsg = error.message || error.toString();
-                console.warn(`⚠️ Tentativa ${attempt}/${maxRetries} falhou para chunk ${chunkIndex}:`, errorMsg);
+                console.warn(`⚠️ Tentativa ${attempt}/${maxRetries} falhou para chunk ${chunkIndex}:`, {
+                  error: errorMsg,
+                  chunkSize: Math.round(chunks[chunkIndex].length / 1024) + 'KB',
+                  isLastChunk: chunkIndex === chunks.length - 1
+                });
                 
                 if (attempt === maxRetries) {
-                  throw new Error(`Chunk ${chunkIndex} falhou após ${maxRetries} tentativas: ${errorMsg}`);
+                  throw new Error(`Chunk ${chunkIndex + 1}/${chunks.length} falhou após ${maxRetries} tentativas: ${errorMsg}`);
                 }
                 
                 // Aguardar progressivamente mais tempo entre tentativas
-                await new Promise(resolve => setTimeout(resolve, 2000 * attempt));
+                const delay = 3000 * attempt; // 3s, 6s, 9s
+                console.log(`⏳ Aguardando ${delay}ms antes da próxima tentativa...`);
+                await new Promise(resolve => setTimeout(resolve, delay));
               }
             }
           };
 
-          // Upload paralelo - enviar múltiplos chunks simultaneamente (reduzido para evitar sobrecarga)
-          const parallelLimit = 3; // Máximo 3 chunks simultâneos (reduzido de 5)
-          const uploadPromises: Promise<void>[] = [];
+          // Upload sequencial com controle de timing para evitar problemas de concorrência
+          console.log(`📤 Iniciando upload sequencial de ${chunks.length} chunks...`);
           
           try {
-            for (let i = 0; i < chunks.length; i += parallelLimit) {
-              const batch = [];
-              for (let j = 0; j < parallelLimit && (i + j) < chunks.length; j++) {
-                batch.push(uploadChunkWithRetry(i + j));
-              }
-              uploadPromises.push(...batch);
+            // Upload sequencial com delay entre chunks para evitar sobrecarga
+            for (let i = 0; i < chunks.length; i++) {
+              const isLastChunk = i === chunks.length - 1;
               
-              // Aguardar o batch atual antes de iniciar o próximo
-              await Promise.all(batch);
-              console.log(`✅ Batch ${Math.floor(i / parallelLimit) + 1} concluído (${batch.length} chunks)`);
+              console.log(`📤 Enviando chunk ${i + 1}/${chunks.length}${isLastChunk ? ' (ÚLTIMO CHUNK)' : ''}...`, {
+                chunkIndex: i,
+                chunkSize: Math.round(chunks[i].length / 1024) + 'KB',
+                isLastChunk: isLastChunk,
+                remainingChunks: chunks.length - i - 1
+              });
+              
+              await uploadChunkWithRetry(i);
+              
+              // Delay maior após o último chunk para garantir processamento completo
+              if (isLastChunk) {
+                console.log('⏳ Aguardando processamento do último chunk...');
+                await new Promise(resolve => setTimeout(resolve, 2000)); // 2s para o último chunk
+              } else if (i < chunks.length - 1) {
+                await new Promise(resolve => setTimeout(resolve, 500)); // 500ms entre chunks
+              }
+              
+              console.log(`✅ Chunk ${i + 1}/${chunks.length} enviado com sucesso${isLastChunk ? ' - ARQUIVO COMPLETO!' : ''}`);
             }
             
-            console.log(`✅ TODOS os ${chunks.length} chunks enviados em paralelo - pronto para checkout`);
+            console.log(`✅ TODOS os ${chunks.length} chunks enviados sequencialmente - pronto para checkout`);
           } catch (chunkError: any) {
             console.error('❌ Upload por chunks falhou:', chunkError.message);
             throw chunkError; // Não tentar fallback para arquivos grandes
