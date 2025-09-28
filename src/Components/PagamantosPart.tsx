@@ -63,9 +63,19 @@ export const PagamantosPart = () => {
   const { produtos, selectedDurationGlobal, formData, updateFormData } = useCart();
   // Duração fixa igual ao padrão do carrinho
   const duration = "2";
+  
+  // Estado para controlar se o componente está hidratado
+  const [isHydrated, setIsHydrated] = useState(false);
+
+  // Controlar hidratação
+  useEffect(() => {
+    setIsHydrated(true);
+  }, []);
 
   // Preencher automaticamente os campos quando a página carregar
   useEffect(() => {
+    if (!isHydrated) return;
+    
     // Se já temos dados de pessoa física preenchidos, seleciona automaticamente
     if (formData.cpf && formData.cep && formData.endereco) {
       setOpenAccordion("fisica");
@@ -74,7 +84,7 @@ export const PagamantosPart = () => {
     else if (formData.cnpj && formData.razaoSocial) {
       setOpenAccordion("juridica");
     }
-  }, [formData]);
+  }, [formData, isHydrated]);
 
   // Função de cálculo do preço original (sem desconto)
   const calcularPrecoOriginal = (item: any) => {
@@ -127,9 +137,9 @@ export const PagamantosPart = () => {
     return typeof preco === "number" ? preco * item.quantidade : 0;
   };
 
-  // Subtotal (original) e total (com desconto)
-  const precoOriginal = produtos.reduce((acc, item) => acc + calcularPrecoOriginal(item), 0);
-  const precoComDesconto = produtos.reduce((acc, item) => acc + calcularPrecoComDesconto(item), 0);
+  // Subtotal (original) e total (com desconto) - com verificação de segurança
+  const precoOriginal = produtos && produtos.length > 0 ? produtos.reduce((acc, item) => acc + calcularPrecoOriginal(item), 0) : 0;
+  const precoComDesconto = produtos && produtos.length > 0 ? produtos.reduce((acc, item) => acc + calcularPrecoComDesconto(item), 0) : 0;
   const total = precoComDesconto;
   const [openAccordion, setOpenAccordion] = useState<
     "fisica" | "juridica" | null
@@ -147,6 +157,9 @@ export const PagamantosPart = () => {
 
   // Função para verificar se todos os campos obrigatórios estão preenchidos (exceto complemento)
   const isFormValid = () => {
+    // Verificar se os dados estão disponíveis
+    if (!formData || !isHydrated) return false;
+    
     // Verificar se há arte selecionada (imagem ou vídeo)
     const hasArtSelected = !!formData.selectedImage || !!formData.previewUrl || !!imageUrl;
     
@@ -193,6 +206,20 @@ export const PagamantosPart = () => {
     console.log("📝 FormData:", formData);
     console.log("✅ Form válido:", isFormValid());
     console.log("💰 Total:", total);
+
+    // Verificar se a hidratação está completa
+    if (!isHydrated) {
+      setErro("Ainda carregando dados...");
+      setCarregando(false);
+      return;
+    }
+
+    // Verificar se há produtos no carrinho
+    if (!produtos || produtos.length === 0) {
+      setErro("Não há produtos no carrinho.");
+      setCarregando(false);
+      return;
+    }
 
     // Verifica se o usuário está autenticado
     if (!user?.id) {
@@ -486,6 +513,20 @@ export const PagamantosPart = () => {
   };
 
   const router = useRouter();
+
+  // Não renderizar até que a hidratação esteja completa
+  if (!isHydrated) {
+    return (
+      <div className="flex flex-col gap-8 items-center w-full min-h-screen py-8 bg-[#fcfcfc] px-2 md:px-0">
+        <div className="text-center flex items-center justify-center flex-col gap-2 px-2 md:px-0">
+          <h1 className="text-3xl font-bold">Pagamento</h1>
+          <p className="text-gray-600 text-base w-64 lg:w-full">
+            Carregando...
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col gap-8 items-center w-full min-h-screen py-8 bg-[#fcfcfc] px-2 md:px-0">
