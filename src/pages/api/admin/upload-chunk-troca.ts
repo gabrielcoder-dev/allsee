@@ -193,7 +193,7 @@ export default async function handler(
           .from('arte_troca_campanha')
           .update({ caminho_imagem: fullData })
           .eq('id', arte_troca_campanha_id)
-          .select('id, id_campanha, id_user')
+          .select('id, id_campanha')
           .single();
 
         if (updateError) {

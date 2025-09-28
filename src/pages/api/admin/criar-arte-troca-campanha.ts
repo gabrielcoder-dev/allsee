@@ -18,13 +18,13 @@ export default async function handler(
   }
 
   try {
-    const { id_campanha, caminho_imagem, id_user } = req.body;
+    const { id_campanha, caminho_imagem } = req.body;
 
     // Validação básica
-    if (!id_campanha || !id_user) {
+    if (!id_campanha) {
       return res.status(400).json({ 
         success: false, 
-        error: 'Campos obrigatórios faltando: id_campanha, id_user' 
+        error: 'Campos obrigatórios faltando: id_campanha' 
       });
     }
 
@@ -51,7 +51,6 @@ export default async function handler(
 
     console.log('📥 Criando arte de troca da campanha:', {
       id_campanha,
-      id_user,
       fileType: caminho_imagem ? (caminho_imagem.startsWith('data:image/') ? 'image' : 'video') : 'empty (chunks)',
       fileSizeMB: caminho_imagem ? Math.round(caminho_imagem.length / (1024 * 1024)) : 0,
       caminho_preview: caminho_imagem ? caminho_imagem.substring(0, 50) + '...' : 'empty'
@@ -62,10 +61,9 @@ export default async function handler(
       .from('arte_troca_campanha')
       .insert([{ 
         id_campanha: id_campanha, 
-        caminho_imagem, 
-        id_user 
+        caminho_imagem
       }])
-      .select('id, id_campanha, id_user')
+      .select('id, id_campanha')
       .single();
 
     if (error) {
@@ -78,8 +76,7 @@ export default async function handler(
 
     console.log('✅ Arte de troca da campanha criada com sucesso:', {
       id: arteTrocaCampanha.id,
-      id_campanha: arteTrocaCampanha.id_campanha,
-      id_user: arteTrocaCampanha.id_user
+      id_campanha: arteTrocaCampanha.id_campanha
     });
 
     // Headers para otimização

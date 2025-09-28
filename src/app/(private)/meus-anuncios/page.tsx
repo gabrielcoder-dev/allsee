@@ -459,8 +459,7 @@ const MeusAnuncios = () => {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               id_campanha: anuncio.id,
-              caminho_imagem: base64String,
-              id_user: user.id
+              caminho_imagem: base64String
             })
           });
 
@@ -562,8 +561,7 @@ const MeusAnuncios = () => {
             },
             body: JSON.stringify({
               id_campanha: anuncio.id,
-              caminho_imagem: '', // Vazio inicialmente
-              id_user: user.id
+              caminho_imagem: '' // Vazio inicialmente
             })
           });
 
