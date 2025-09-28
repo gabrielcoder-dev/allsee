@@ -372,7 +372,7 @@ export const PagamantosPart = () => {
       
       try {
         // Verificar se o arquivo é muito grande para upload direto (LÓGICA SIMPLES)
-        const serverBodyLimit = 5 * 1024 * 1024; // 5MB limite do servidor
+        const serverBodyLimit = 4 * 1024 * 1024; // 4MB limite do servidor
         
         if (optimizedArtData.length <= serverBodyLimit) {
           // Upload direto para arquivos pequenos (instantâneo)
@@ -409,7 +409,7 @@ export const PagamantosPart = () => {
           console.log('📤 Upload híbrido (arquivo grande) - iniciando...');
           
           // Limite do servidor
-          const serverBodyLimit = 5 * 1024 * 1024; // 5MB limite do servidor
+          const serverBodyLimit = 4 * 1024 * 1024; // 4MB limite do servidor
           
           // Calcular número de chunks necessários (divisão simples)
           const totalChunks = Math.ceil(optimizedArtData.length / serverBodyLimit);
@@ -578,7 +578,7 @@ export const PagamantosPart = () => {
         
         // Detectar tipos específicos de erro para mensagens mais claras
         if (errorMessage.includes('413') || errorMessage.includes('Content Too Large') || errorMessage.includes('Body exceeded') || errorMessage.includes('limit')) {
-          setErro('Arquivo muito grande para upload. O servidor tem limite de 5MB por requisição. Tente usar uma imagem menor ou comprimir mais o arquivo.');
+          setErro('Arquivo muito grande para upload. O servidor tem limite de 4MB por requisição. Tente usar uma imagem menor ou comprimir mais o arquivo.');
         } else if (errorMessage.includes('timeout') || errorMessage.includes('aborted')) {
           setErro('Upload demorou muito e foi cancelado. Verifique sua conexão e tente novamente.');
         } else if (errorMessage.includes('chunk')) {

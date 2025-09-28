@@ -446,7 +446,7 @@ const MeusAnuncios = () => {
         });
 
         // Upload híbrido - LÓGICA SIMPLES OTIMIZADA
-        const serverBodyLimit = 5 * 1024 * 1024; // 5MB limite do servidor
+        const serverBodyLimit = 4 * 1024 * 1024; // 4MB limite do servidor
         
         if (base64String.length <= serverBodyLimit) {
           // Upload direto para arquivos pequenos (instantâneo)

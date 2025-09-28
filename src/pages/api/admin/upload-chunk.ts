@@ -147,7 +147,7 @@ export default async function handler(
 export const config = {
   api: {
     bodyParser: {
-      sizeLimit: '6mb', // 5MB por chunk + overhead base64
+      sizeLimit: '5mb', // 4MB por chunk + overhead base64
       timeout: 30000, // 30 segundos
     },
     responseLimit: '1mb',
