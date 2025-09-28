@@ -117,29 +117,58 @@ export default async function handler(
 
       console.log(`📦 Dividindo em ${chunks.length} chunks para substituição`);
 
-      // Upload sequencial dos chunks
+      // Upload sequencial dos chunks com retry
       for (let i = 0; i < chunks.length; i++) {
         const isLastChunk = i === chunks.length - 1;
         
         console.log(`📤 Enviando chunk ${i + 1}/${chunks.length} para substituição...`);
         
-        const { error: chunkError } = await supabase
-          .from('chunks_temp')
-          .upsert({
-            arte_id: arte_campanha_id,
-            chunk_index: i,
-            chunk_data: chunks[i],
-            total_chunks: chunks.length,
-            created_at: new Date().toISOString()
-          }, {
-            onConflict: 'arte_id,chunk_index'
-          });
+        let chunkError = null;
+        let attempts = 0;
+        const maxAttempts = 3;
+        
+        while (attempts < maxAttempts) {
+          try {
+            const { error } = await supabase
+              .from('chunks_temp_troca')
+              .upsert({
+                arte_troca_id: arte_campanha_id,
+                chunk_index: i,
+                chunk_data: chunks[i],
+                total_chunks: chunks.length,
+                created_at: new Date().toISOString()
+              }, {
+                onConflict: 'arte_troca_id,chunk_index'
+              });
 
-        if (chunkError) {
-          console.error(`❌ Erro ao enviar chunk ${i}:`, chunkError);
+            if (!error) {
+              console.log(`✅ Chunk ${i + 1}/${chunks.length} enviado com sucesso`);
+              break; // Sucesso, sair do loop de retry
+            } else {
+              chunkError = error;
+              attempts++;
+              console.warn(`⚠️ Tentativa ${attempts}/${maxAttempts} falhou para chunk ${i + 1}:`, error);
+              
+              if (attempts < maxAttempts) {
+                await new Promise(resolve => setTimeout(resolve, 2000 * attempts)); // Delay progressivo
+              }
+            }
+          } catch (error) {
+            chunkError = error;
+            attempts++;
+            console.warn(`⚠️ Tentativa ${attempts}/${maxAttempts} falhou para chunk ${i + 1}:`, error);
+            
+            if (attempts < maxAttempts) {
+              await new Promise(resolve => setTimeout(resolve, 2000 * attempts)); // Delay progressivo
+            }
+          }
+        }
+
+        if (chunkError && attempts >= maxAttempts) {
+          console.error(`❌ Erro ao enviar chunk ${i + 1} após ${maxAttempts} tentativas:`, chunkError);
           return res.status(500).json({ 
             success: false, 
-            error: `Erro ao enviar chunk ${i + 1}` 
+            error: `Erro ao enviar chunk ${i + 1}: ${chunkError.message || chunkError}` 
           });
         }
 
@@ -147,80 +176,145 @@ export default async function handler(
           // Último chunk - reconstruir arquivo
           console.log('🔧 Reconstruindo arquivo na arte_campanha...');
           
-          const { data: allChunks, error: fetchChunksError } = await supabase
-            .from('chunks_temp')
-            .select('chunk_index, chunk_data')
-            .eq('arte_id', arte_campanha_id)
-            .order('chunk_index');
+          // Aguardar um pouco para garantir que o chunk foi salvo
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          
+          let allChunks = null;
+          let fetchAttempts = 0;
+          const maxFetchAttempts = 3;
+          
+          while (fetchAttempts < maxFetchAttempts) {
+            try {
+              const { data, error: fetchChunksError } = await supabase
+                .from('chunks_temp_troca')
+                .select('chunk_index, chunk_data')
+                .eq('arte_troca_id', arte_campanha_id)
+                .order('chunk_index');
 
-          if (fetchChunksError) {
-            console.error('❌ Erro ao buscar chunks:', fetchChunksError);
+              if (fetchChunksError) {
+                console.warn(`⚠️ Tentativa ${fetchAttempts + 1}/${maxFetchAttempts} falhou ao buscar chunks:`, fetchChunksError);
+                fetchAttempts++;
+                if (fetchAttempts < maxFetchAttempts) {
+                  await new Promise(resolve => setTimeout(resolve, 2000 * fetchAttempts));
+                  continue;
+                }
+              } else {
+                allChunks = data;
+                break;
+              }
+            } catch (error) {
+              console.warn(`⚠️ Tentativa ${fetchAttempts + 1}/${maxFetchAttempts} falhou ao buscar chunks:`, error);
+              fetchAttempts++;
+              if (fetchAttempts < maxFetchAttempts) {
+                await new Promise(resolve => setTimeout(resolve, 2000 * fetchAttempts));
+                continue;
+              }
+            }
+          }
+
+          if (!allChunks) {
+            console.error('❌ Erro ao buscar chunks após múltiplas tentativas');
             return res.status(500).json({ 
               success: false, 
-              error: 'Erro ao buscar chunks' 
+              error: 'Erro ao buscar chunks após múltiplas tentativas' 
             });
           }
 
           const sortedChunks = allChunks.sort((a, b) => a.chunk_index - b.chunk_index);
           const fullData = sortedChunks.map(c => c.chunk_data).join('');
 
-          // Atualizar arte_campanha com arquivo completo
-          const { data: updatedArteCampanha, error: updateError } = await supabase
-            .from('arte_campanha')
-            .update({ caminho_imagem: fullData })
-            .eq('id', arte_campanha_id)
-            .select('id, id_order, id_user')
-            .single();
+          console.log('📊 Arquivo reconstruído:', {
+            totalChunks: sortedChunks.length,
+            fileSizeMB: Math.round(fullData.length / (1024 * 1024))
+          });
 
-          if (updateError) {
-            console.error('❌ Erro ao atualizar arte da campanha:', updateError);
+          // Atualizar arte_campanha com arquivo completo
+          let updateAttempts = 0;
+          const maxUpdateAttempts = 3;
+          let updateSuccess = false;
+          
+          while (updateAttempts < maxUpdateAttempts && !updateSuccess) {
+            try {
+              const { data: updatedArteCampanha, error: updateError } = await supabase
+                .from('arte_campanha')
+                .update({ caminho_imagem: fullData })
+                .eq('id', arte_campanha_id)
+                .select('id, id_order, id_user')
+                .single();
+
+              if (updateError) {
+                console.warn(`⚠️ Tentativa ${updateAttempts + 1}/${maxUpdateAttempts} falhou ao atualizar:`, updateError);
+                updateAttempts++;
+                if (updateAttempts < maxUpdateAttempts) {
+                  await new Promise(resolve => setTimeout(resolve, 3000 * updateAttempts));
+                  continue;
+                }
+              } else {
+                console.log('✅ Arte da campanha atualizada com sucesso via chunks:', {
+                  id: updatedArteCampanha.id,
+                  id_order: updatedArteCampanha.id_order,
+                  id_user: updatedArteCampanha.id_user,
+                  fileSizeMB: Math.round(fullData.length / (1024 * 1024))
+                });
+                updateSuccess = true;
+              }
+            } catch (error) {
+              console.warn(`⚠️ Tentativa ${updateAttempts + 1}/${maxUpdateAttempts} falhou ao atualizar:`, error);
+              updateAttempts++;
+              if (updateAttempts < maxUpdateAttempts) {
+                await new Promise(resolve => setTimeout(resolve, 3000 * updateAttempts));
+                continue;
+              }
+            }
+          }
+
+          if (!updateSuccess) {
+            console.error('❌ Erro ao atualizar arte da campanha após múltiplas tentativas');
             return res.status(500).json({ 
               success: false, 
-              error: 'Erro ao atualizar arte da campanha' 
+              error: 'Erro ao atualizar arte da campanha após múltiplas tentativas' 
             });
           }
 
-          // Limpar chunks temporários
-          await supabase
-            .from('chunks_temp')
-            .delete()
-            .eq('arte_id', arte_campanha_id);
-
-          console.log('✅ Arte da campanha atualizada com sucesso via chunks:', {
-            id: updatedArteCampanha.id,
-            id_order: updatedArteCampanha.id_order,
-            id_user: updatedArteCampanha.id_user,
-            fileSizeMB: Math.round(fullData.length / (1024 * 1024))
-          });
+          // Limpar chunks temporários (não crítico se falhar)
+          try {
+            await supabase
+              .from('chunks_temp_troca')
+              .delete()
+              .eq('arte_troca_id', arte_campanha_id);
+            console.log('🧹 Chunks temporários de troca limpos');
+          } catch (cleanupError) {
+            console.warn('⚠️ Não foi possível limpar chunks temporários de troca:', cleanupError);
+          }
         } else {
           // Pequeno delay entre chunks
-          await new Promise(resolve => setTimeout(resolve, 100));
+          await new Promise(resolve => setTimeout(resolve, 500));
         }
       }
     } else {
       // Arquivo pequeno - update direto
       console.log('📤 Arquivo pequeno, fazendo update direto...');
       
-      const { data: updatedArteCampanha, error: updateError } = await supabase
-        .from('arte_campanha')
-        .update({ caminho_imagem: arteTroca.caminho_imagem })
-        .eq('id', arte_campanha_id)
-        .select('id, id_order, id_user')
-        .single();
+    const { data: updatedArteCampanha, error: updateError } = await supabase
+      .from('arte_campanha')
+      .update({ caminho_imagem: arteTroca.caminho_imagem })
+      .eq('id', arte_campanha_id)
+      .select('id, id_order, id_user')
+      .single();
 
-      if (updateError) {
-        console.error('❌ Erro ao atualizar arte da campanha:', updateError);
-        return res.status(500).json({ 
-          success: false, 
-          error: 'Erro ao atualizar arte da campanha' 
-        });
-      }
-
-      console.log('✅ Arte da campanha atualizada com sucesso:', {
-        id: updatedArteCampanha.id,
-        id_order: updatedArteCampanha.id_order,
-        id_user: updatedArteCampanha.id_user
+    if (updateError) {
+      console.error('❌ Erro ao atualizar arte da campanha:', updateError);
+      return res.status(500).json({ 
+        success: false, 
+        error: 'Erro ao atualizar arte da campanha' 
       });
+    }
+
+    console.log('✅ Arte da campanha atualizada com sucesso:', {
+      id: updatedArteCampanha.id,
+      id_order: updatedArteCampanha.id_order,
+      id_user: updatedArteCampanha.id_user
+    });
     }
 
     // Opcional: Remover a arte de troca após aceitar (ou manter para histórico)
