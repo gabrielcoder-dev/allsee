@@ -357,23 +357,26 @@ const MeusAnuncios = () => {
     }
   };
 
-  // Função para comprimir imagens e reduzir tempo de upload
-  const compressImage = async (base64: string, quality: number = 0.8): Promise<string> => {
+  // Função para comprimir imagens e reduzir tempo de upload (OTIMIZADA)
+  const compressImage = async (base64: string, quality: number = 0.6): Promise<string> => {
     return new Promise((resolve) => {
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
       const img = document.createElement('img');
 
       img.onload = () => {
-        // Redimensionar para máximo 1920x1080 se for maior
-        const maxWidth = 1920;
-        const maxHeight = 1080;
+        // Redimensionar mais agressivamente para arquivos grandes (mantém proporção)
         let { width, height } = img;
-
-        if (width > maxWidth || height > maxHeight) {
-          const ratio = Math.min(maxWidth / width, maxHeight / height);
-          width = width * ratio;
-          height = height * ratio;
+        const maxSize = 1600; // Reduzido de 1920 para 1600px para arquivos menores
+        
+        if (width > maxSize || height > maxSize) {
+          if (width > height) {
+            height = (height * maxSize) / width;
+            width = maxSize;
+          } else {
+            width = (width * maxSize) / height;
+            height = maxSize;
+          }
         }
 
         canvas.width = width;
@@ -384,7 +387,7 @@ const MeusAnuncios = () => {
           ctx.drawImage(img, 0, 0, width, height);
         }
 
-        // Converter para base64 com qualidade otimizada
+        // Converter para base64 com qualidade reduzida (mais compressão)
         const compressedBase64 = canvas.toDataURL('image/jpeg', quality);
         resolve(compressedBase64);
       };
@@ -416,11 +419,15 @@ const MeusAnuncios = () => {
       reader.onload = async () => {
         let base64String = reader.result as string;
 
-        // Otimizar imagem se for imagem
+        // Otimizar imagem se for imagem (COMPRESSÃO MAIS AGRESSIVA)
         if (base64String.startsWith('data:image/')) {
-          console.log('🖼️ Otimizando imagem...');
-          base64String = await compressImage(base64String, 0.8);
-          console.log('✅ Imagem otimizada');
+          console.log('🖼️ Otimizando imagem (compressão agressiva)...');
+          base64String = await compressImage(base64String, 0.6); // 60% qualidade (mais compressão)
+          console.log('✅ Imagem otimizada:', {
+            originalSize: Math.round((reader.result as string).length / (1024 * 1024)),
+            compressedSize: Math.round(base64String.length / (1024 * 1024)),
+            compression: Math.round((1 - base64String.length / (reader.result as string).length) * 100) + '%'
+          });
         }
 
         // Obter usuário atual
@@ -438,12 +445,15 @@ const MeusAnuncios = () => {
           fileSizeMB: Math.round(base64String.length / (1024 * 1024))
         });
 
-        // Upload híbrido - rápido + background
-        const maxChunkSize = 1 * 1024 * 1024; // 1MB por chunk
+        // Upload híbrido - LÓGICA SIMPLES OTIMIZADA
+        const serverBodyLimit = 5 * 1024 * 1024; // 5MB limite do servidor
         
-        if (base64String.length <= maxChunkSize) {
+        if (base64String.length <= serverBodyLimit) {
           // Upload direto para arquivos pequenos (instantâneo)
-          console.log('📤 Upload direto de troca (arquivo pequeno)');
+          console.log('📤 Upload direto de troca (arquivo pequeno)', {
+            tamanhoArquivo: `${Math.round(base64String.length / (1024 * 1024))}MB`,
+            limiteServidor: `${Math.round(serverBodyLimit / (1024 * 1024))}MB`
+          });
           const response = await fetch('/api/admin/criar-arte-troca-campanha', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -461,14 +471,29 @@ const MeusAnuncios = () => {
 
           console.log('✅ Upload direto de troca concluído');
         } else {
-          // Upload híbrido para arquivos grandes - RÁPIDO + BACKGROUND
+          // Upload híbrido para arquivos grandes - LÓGICA SIMPLES
           console.log('📤 Upload híbrido de troca (arquivo grande) - iniciando...');
+          
+          // Calcular número de chunks necessários (divisão simples)
+          const totalChunks = Math.ceil(base64String.length / serverBodyLimit);
+          
+          // Calcular tamanho de cada chunk (dividir igualmente)
+          const chunkSize = Math.floor(base64String.length / totalChunks);
+          
+          console.log(`🧮 Cálculo simples de troca:`, {
+            arquivoOriginal: `${Math.round(base64String.length / (1024 * 1024))}MB`,
+            limiteServidor: `${Math.round(serverBodyLimit / (1024 * 1024))}MB`,
+            chunksNecessarios: totalChunks,
+            tamanhoPorChunk: `${Math.round(chunkSize / (1024 * 1024))}MB`
+          });
+          
+          // Criar chunks com tamanho calculado
           const chunks: string[] = [];
-          for (let i = 0; i < base64String.length; i += maxChunkSize) {
-            chunks.push(base64String.slice(i, i + maxChunkSize));
+          for (let i = 0; i < base64String.length; i += chunkSize) {
+            chunks.push(base64String.slice(i, i + chunkSize));
           }
           
-          console.log(`📦 Troca: Dividindo em ${chunks.length} chunks`);
+          console.log(`📦 Troca: Dividindo em ${chunks.length} chunks de ${Math.round(chunkSize / (1024 * 1024))}MB cada`);
           
           // Criar registro vazio
           const createResponse = await fetch('/api/admin/criar-arte-troca-campanha', {
@@ -494,31 +519,116 @@ const MeusAnuncios = () => {
           
           console.log('✅ Registro de troca criado, ID:', arteTrocaCampanhaId);
           
-          // ESTRATÉGIA SUPER RÁPIDA: Enviar TODOS os chunks rapidamente (sem delay)
-          console.log(`🚀 Troca: Enviando TODOS os ${chunks.length} chunks rapidamente...`);
+          // ESTRATÉGIA ULTRA RÁPIDA: Upload paralelo com retry automático
+          console.log(`🚀 Troca: Enviando ${chunks.length} chunks em paralelo (ultra rápido)...`);
           
-          // Enviar todos os chunks rapidamente (sem delay)
-          for (let i = 0; i < chunks.length; i++) {
-            const chunkResponse = await fetch('/api/admin/upload-chunk-troca', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                arte_troca_campanha_id: arteTrocaCampanhaId,
-                chunk_index: i,
-                chunk_data: chunks[i],
-                total_chunks: chunks.length
-              })
-            });
+          // Função para enviar um chunk com retry e timeout
+          const uploadChunkWithRetry = async (chunkIndex: number, maxRetries: number = 3): Promise<void> => {
+            for (let attempt = 1; attempt <= maxRetries; attempt++) {
+              try {
+                // Timeout de 30 segundos para evitar demora
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 30000);
+                
+                console.log(`📤 Enviando chunk de troca ${chunkIndex + 1}/${chunks.length}:`, {
+                  arte_troca_campanha_id: arteTrocaCampanhaId,
+                  chunk_index: chunkIndex,
+                  chunk_size: Math.round(chunks[chunkIndex].length / (1024 * 1024)) + 'MB',
+                  total_chunks: chunks.length
+                });
 
-            if (!chunkResponse.ok) {
-              const errorData = await chunkResponse.json();
-              throw new Error(`Erro no chunk ${i} de troca: ${errorData.error}`);
+                const chunkResponse = await fetch('/api/admin/upload-chunk-troca', {
+                  method: 'POST',
+                  headers: { 
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                  },
+                  body: JSON.stringify({
+                    arte_troca_campanha_id: arteTrocaCampanhaId,
+                    chunk_index: chunkIndex,
+                    chunk_data: chunks[chunkIndex],
+                    total_chunks: chunks.length
+                  }),
+                  signal: controller.signal
+                });
+
+                clearTimeout(timeoutId);
+
+                if (!chunkResponse.ok) {
+                  const errorText = await chunkResponse.text();
+                  let errorMessage = `Erro no chunk ${chunkIndex}`;
+                  
+                  try {
+                    const errorData = JSON.parse(errorText);
+                    errorMessage = errorData.error || errorMessage;
+                  } catch {
+                    // Se não conseguir fazer parse do JSON, usar o texto da resposta
+                    errorMessage = errorText || errorMessage;
+                  }
+                  
+                  throw new Error(errorMessage);
+                }
+
+                console.log(`✅ Troca: Chunk ${chunkIndex + 1}/${chunks.length} enviado (tentativa ${attempt})`);
+                return; // Sucesso, sair do loop de retry
+              } catch (error: any) {
+                const errorMsg = error.message || error.toString();
+                console.warn(`⚠️ Troca: Tentativa ${attempt}/${maxRetries} falhou para chunk ${chunkIndex}:`, errorMsg);
+                
+                if (attempt === maxRetries) {
+                  throw new Error(`Chunk ${chunkIndex} de troca falhou após ${maxRetries} tentativas: ${errorMsg}`);
+                }
+                
+                // Aguardar progressivamente mais tempo entre tentativas
+                await new Promise(resolve => setTimeout(resolve, 2000 * attempt));
+              }
             }
+          };
 
-            console.log(`✅ Troca: Chunk ${i + 1}/${chunks.length} enviado (super rápido)`);
-          }
+          // Upload paralelo - enviar múltiplos chunks simultaneamente
+          const parallelLimit = 3; // Máximo 3 chunks simultâneos
           
-          console.log(`✅ Troca: TODOS os ${chunks.length} chunks enviados rapidamente`);
+          try {
+            for (let i = 0; i < chunks.length; i += parallelLimit) {
+              const batch = [];
+              for (let j = 0; j < parallelLimit && (i + j) < chunks.length; j++) {
+                batch.push(uploadChunkWithRetry(i + j));
+              }
+              
+              // Aguardar o batch atual antes de iniciar o próximo
+              await Promise.all(batch);
+              console.log(`✅ Troca: Batch ${Math.floor(i / parallelLimit) + 1} concluído (${batch.length} chunks)`);
+            }
+            
+            console.log(`✅ Troca: TODOS os ${chunks.length} chunks enviados em paralelo`);
+          } catch (chunkError: any) {
+            console.warn('⚠️ Upload por chunks de troca falhou, tentando upload direto como fallback...', chunkError.message);
+            
+            // Fallback: tentar upload direto mesmo para arquivos grandes
+            try {
+              const fallbackResponse = await fetch('/api/admin/criar-arte-troca-campanha', {
+                method: 'POST',
+                headers: { 
+                  'Content-Type': 'application/json',
+                  'Accept': 'application/json'
+                },
+                body: JSON.stringify({
+                  id_order: anuncio.order_id,
+                  caminho_imagem: base64String,
+                  id_user: user.id
+                })
+              });
+
+              if (fallbackResponse.ok) {
+                console.log('✅ Fallback: Upload direto de troca bem-sucedido');
+              } else {
+                throw new Error('Fallback também falhou');
+              }
+            } catch (fallbackError) {
+              console.error('❌ Fallback também falhou:', fallbackError);
+              throw chunkError; // Re-throw o erro original dos chunks
+            }
+          }
         }
 
         // Remove o status do localStorage para que a arte volte para "Em Análise"

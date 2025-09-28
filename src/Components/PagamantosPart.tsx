@@ -467,6 +467,13 @@ export const PagamantosPart = () => {
                 const controller = new AbortController();
                 const timeoutId = setTimeout(() => controller.abort(), 30000);
                 
+                console.log(`📤 Enviando chunk ${chunkIndex + 1}/${chunks.length}:`, {
+                  arte_campanha_id: arteCampanhaId,
+                  chunk_index: chunkIndex,
+                  chunk_size: Math.round(chunks[chunkIndex].length / (1024 * 1024)) + 'MB',
+                  total_chunks: chunks.length
+                });
+
                 const chunkResponse = await fetch('/api/admin/upload-chunk', {
                   method: 'POST',
                   headers: { 
