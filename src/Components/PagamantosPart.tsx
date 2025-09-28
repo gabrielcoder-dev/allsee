@@ -405,8 +405,8 @@ export const PagamantosPart = () => {
           // Upload híbrido para arquivos grandes - ULTRA RÁPIDO COM PARALELISMO
           console.log('📤 Upload híbrido (arquivo grande) - iniciando...');
           
-          // Aumentar tamanho do chunk para reduzir quantidade (5MB por chunk)
-          const optimizedChunkSize = 5 * 1024 * 1024; // 5MB por chunk
+          // Tamanho do chunk otimizado para evitar erro 413 (Content Too Large)
+          const optimizedChunkSize = 2 * 1024 * 1024; // 2MB por chunk (reduzido para evitar limite do servidor)
           const chunks: string[] = [];
           for (let i = 0; i < optimizedArtData.length; i += optimizedChunkSize) {
             chunks.push(optimizedArtData.slice(i, i + optimizedChunkSize));
@@ -441,10 +441,14 @@ export const PagamantosPart = () => {
           // ESTRATÉGIA ULTRA RÁPIDA: Upload paralelo com retry automático
           console.log(`🚀 Enviando ${chunks.length} chunks em paralelo (ultra rápido)...`);
           
-          // Função para enviar um chunk com retry
+          // Função para enviar um chunk com retry e timeout
           const uploadChunkWithRetry = async (chunkIndex: number, maxRetries: number = 3): Promise<void> => {
             for (let attempt = 1; attempt <= maxRetries; attempt++) {
               try {
+                // Timeout de 30 segundos para evitar demora
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 30000);
+                
                 const chunkResponse = await fetch('/api/admin/upload-chunk', {
                   method: 'POST',
                   headers: { 
@@ -456,29 +460,45 @@ export const PagamantosPart = () => {
                     chunk_index: chunkIndex,
                     chunk_data: chunks[chunkIndex],
                     total_chunks: chunks.length
-                  })
+                  }),
+                  signal: controller.signal
                 });
 
+                clearTimeout(timeoutId);
+
                 if (!chunkResponse.ok) {
-                  const errorData = await chunkResponse.json();
-                  throw new Error(`Erro no chunk ${chunkIndex}: ${errorData.error}`);
+                  const errorText = await chunkResponse.text();
+                  let errorMessage = `Erro no chunk ${chunkIndex}`;
+                  
+                  try {
+                    const errorData = JSON.parse(errorText);
+                    errorMessage = errorData.error || errorMessage;
+                  } catch {
+                    // Se não conseguir fazer parse do JSON, usar o texto da resposta
+                    errorMessage = errorText || errorMessage;
+                  }
+                  
+                  throw new Error(errorMessage);
                 }
 
                 console.log(`✅ Chunk ${chunkIndex + 1}/${chunks.length} enviado (tentativa ${attempt})`);
                 return; // Sucesso, sair do loop de retry
-              } catch (error) {
-                console.warn(`⚠️ Tentativa ${attempt}/${maxRetries} falhou para chunk ${chunkIndex}:`, error);
+              } catch (error: any) {
+                const errorMsg = error.message || error.toString();
+                console.warn(`⚠️ Tentativa ${attempt}/${maxRetries} falhou para chunk ${chunkIndex}:`, errorMsg);
+                
                 if (attempt === maxRetries) {
-                  throw error; // Última tentativa falhou
+                  throw new Error(`Chunk ${chunkIndex} falhou após ${maxRetries} tentativas: ${errorMsg}`);
                 }
-                // Aguardar um pouco antes da próxima tentativa
-                await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+                
+                // Aguardar progressivamente mais tempo entre tentativas
+                await new Promise(resolve => setTimeout(resolve, 2000 * attempt));
               }
             }
           };
 
-          // Upload paralelo - enviar múltiplos chunks simultaneamente
-          const parallelLimit = 5; // Máximo 5 chunks simultâneos
+          // Upload paralelo - enviar múltiplos chunks simultaneamente (reduzido para evitar sobrecarga)
+          const parallelLimit = 3; // Máximo 3 chunks simultâneos (reduzido de 5)
           const uploadPromises: Promise<void>[] = [];
           
           for (let i = 0; i < chunks.length; i += parallelLimit) {
@@ -498,7 +518,19 @@ export const PagamantosPart = () => {
         
       } catch (error: any) {
         console.error('❌ Erro no upload:', error);
-        setErro(`Erro ao fazer upload da arte: ${error.message || 'Erro de conexão'}`);
+        const errorMessage = error.message || error.toString();
+        
+        // Detectar tipos específicos de erro para mensagens mais claras
+        if (errorMessage.includes('413') || errorMessage.includes('Content Too Large')) {
+          setErro('Arquivo muito grande para upload. Tente usar uma imagem menor ou comprimir o arquivo.');
+        } else if (errorMessage.includes('timeout') || errorMessage.includes('aborted')) {
+          setErro('Upload demorou muito e foi cancelado. Verifique sua conexão e tente novamente.');
+        } else if (errorMessage.includes('chunk')) {
+          setErro(`Erro no upload do arquivo: ${errorMessage}`);
+        } else {
+          setErro(`Erro ao fazer upload da arte: ${errorMessage}`);
+        }
+        
         setCarregando(false);
         return;
       }
