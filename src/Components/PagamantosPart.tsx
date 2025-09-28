@@ -470,6 +470,18 @@ export const PagamantosPart = () => {
           
           console.log('✅ Registro criado, ID:', arteCampanhaId);
           
+          // Limpar chunks anteriores antes de começar o upload
+          try {
+            await fetch('/api/admin/limpar-chunks', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ arte_campanha_id: arteCampanhaId })
+            });
+            console.log('🧹 Chunks anteriores limpos');
+          } catch (cleanupError) {
+            console.warn('⚠️ Não foi possível limpar chunks anteriores:', cleanupError);
+          }
+          
           // ESTRATÉGIA ULTRA RÁPIDA: Upload paralelo com retry automático
           console.log(`🚀 Enviando ${chunks.length} chunks em paralelo (ultra rápido)...`);
           

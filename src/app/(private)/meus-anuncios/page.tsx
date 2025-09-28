@@ -533,6 +533,18 @@ const MeusAnuncios = () => {
           
           console.log('✅ Registro de troca criado, ID:', arteTrocaCampanhaId);
           
+          // Limpar chunks anteriores antes de começar o upload
+          try {
+            await fetch('/api/admin/limpar-chunks-troca', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ arte_troca_campanha_id: arteTrocaCampanhaId })
+            });
+            console.log('🧹 Chunks de troca anteriores limpos');
+          } catch (cleanupError) {
+            console.warn('⚠️ Não foi possível limpar chunks de troca anteriores:', cleanupError);
+          }
+          
           // ESTRATÉGIA ULTRA RÁPIDA: Upload paralelo com retry automático
           console.log(`🚀 Troca: Enviando ${chunks.length} chunks em paralelo (ultra rápido)...`);
           

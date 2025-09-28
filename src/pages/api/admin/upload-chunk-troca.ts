@@ -38,23 +38,17 @@ export default async function handler(
       });
     }
 
-    // Limpar chunks anteriores apenas no primeiro chunk para evitar duplicatas
-    if (chunk_index === 0) {
-      await supabase
-        .from('chunks_temp_troca')
-        .delete()
-        .eq('arte_troca_id', arte_troca_campanha_id);
-    }
-
-    // Salvar chunk diretamente no banco usando uma tabela temporária para troca
+    // Usar upsert para substituir chunks existentes (evita erro de chave duplicada)
     const { error: chunkError } = await supabase
       .from('chunks_temp_troca')
-      .insert({
+      .upsert({
         arte_troca_id: arte_troca_campanha_id,
         chunk_index: chunk_index,
         chunk_data: chunk_data,
         total_chunks: total_chunks,
         created_at: new Date().toISOString()
+      }, {
+        onConflict: 'arte_troca_id,chunk_index'
       });
 
     if (chunkError) {
