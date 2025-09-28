@@ -60,9 +60,9 @@ const ReplacementAdmin = () => {
     document.body.removeChild(a);
   };
 
-  const handleApprove = async (orderId: number, imagePath: string) => {
+  const handleApprove = async (arteCampanhaId: number, imagePath: string) => {
     try {
-      console.log('🔄 Aceitando troca de arte:', { orderId });
+      console.log('🔄 Aceitando troca de arte:', { arteCampanhaId });
 
       // Buscar o arte_troca_campanha_id correspondente
       const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL as string;
@@ -72,7 +72,7 @@ const ReplacementAdmin = () => {
       const { data: arteTroca, error: fetchTrocaError } = await supabase
         .from('arte_troca_campanha')
         .select('id')
-        .eq('id_campanha', orderId)
+        .eq('id_campanha', arteCampanhaId)
         .single();
 
       if (fetchTrocaError) {
@@ -80,21 +80,9 @@ const ReplacementAdmin = () => {
         return;
       }
 
-      // Buscar o arte_campanha correspondente pelo id_campanha
-      const { data: arteCampanha, error: fetchError } = await supabase
-        .from('arte_campanha')
-        .select('id')
-        .eq('id_order', orderId)
-        .single();
-
-      if (fetchError) {
-        console.error('❌ Erro ao buscar arte_campanha:', fetchError);
-        return;
-      }
-
       console.log('📥 IDs encontrados:', {
         arte_troca_campanha_id: arteTroca.id,
-        arte_campanha_id: arteCampanha.id
+        arte_campanha_id: arteCampanhaId
       });
 
       // Usar o novo endpoint para aceitar a troca
@@ -106,7 +94,7 @@ const ReplacementAdmin = () => {
         },
         body: JSON.stringify({
           arte_troca_campanha_id: arteTroca.id,
-          arte_campanha_id: arteCampanha.id
+          arte_campanha_id: arteCampanhaId
         })
       });
 
