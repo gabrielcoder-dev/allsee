@@ -26,7 +26,9 @@ export default async function handler(
 
     console.log('🔄 Aceitando troca de arte:', {
       arte_troca_campanha_id,
-      arte_campanha_id
+      arte_campanha_id,
+      arte_troca_campanha_id_type: typeof arte_troca_campanha_id,
+      arte_campanha_id_type: typeof arte_campanha_id
     });
 
     // Buscar o caminho_imagem da arte de troca

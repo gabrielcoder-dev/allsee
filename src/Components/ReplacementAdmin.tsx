@@ -60,9 +60,15 @@ const ReplacementAdmin = () => {
     document.body.removeChild(a);
   };
 
-  const handleApprove = async (arteCampanhaId: number, imagePath: string) => {
+  const handleApprove = async (arteCampanhaId: number | string, imagePath: string) => {
     try {
-      console.log('🔄 Aceitando troca de arte:', { arteCampanhaId });
+      // Garantir que arteCampanhaId seja sempre um número
+      const numericArteCampanhaId = typeof arteCampanhaId === 'string' ? parseInt(arteCampanhaId) : arteCampanhaId;
+      
+      console.log('🔄 Aceitando troca de arte:', { 
+        arteCampanhaId: numericArteCampanhaId,
+        originalType: typeof arteCampanhaId 
+      });
 
       // Buscar o arte_troca_campanha_id correspondente
       const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL as string;
@@ -72,7 +78,7 @@ const ReplacementAdmin = () => {
       const { data: arteTroca, error: fetchTrocaError } = await supabase
         .from('arte_troca_campanha')
         .select('id')
-        .eq('id_campanha', arteCampanhaId)
+        .eq('id_campanha', numericArteCampanhaId)
         .single();
 
       if (fetchTrocaError) {
@@ -82,7 +88,7 @@ const ReplacementAdmin = () => {
 
       console.log('📥 IDs encontrados:', {
         arte_troca_campanha_id: arteTroca.id,
-        arte_campanha_id: arteCampanhaId
+        arte_campanha_id: numericArteCampanhaId
       });
 
       // Usar o novo endpoint para aceitar a troca
@@ -94,7 +100,7 @@ const ReplacementAdmin = () => {
         },
         body: JSON.stringify({
           arte_troca_campanha_id: arteTroca.id,
-          arte_campanha_id: arteCampanhaId
+          arte_campanha_id: numericArteCampanhaId
         })
       });
 
@@ -108,8 +114,8 @@ const ReplacementAdmin = () => {
       console.log('✅ Troca aceita com sucesso:', data);
 
       // Atualizar o localStorage e remover o card
-      localStorage.setItem(`replacement_order_${arteCampanhaId}`, "aprovado");
-      setOrders(prev => prev.filter(order => order.id_campanha !== arteCampanhaId));
+      localStorage.setItem(`replacement_order_${numericArteCampanhaId}`, "aprovado");
+      setOrders(prev => prev.filter(order => order.id_campanha !== numericArteCampanhaId));
       window.dispatchEvent(new Event('storage'));
 
       console.log('✅ Arte aprovada e transferida com sucesso!');
