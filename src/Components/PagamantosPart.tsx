@@ -371,12 +371,15 @@ export const PagamantosPart = () => {
       let arteCampanhaId: string | null = null;
       
       try {
-        // Verificar se o arquivo é muito grande para upload direto (OTIMIZADO)
-        const maxDirectUploadSize = 10 * 1024 * 1024; // 10MB para upload direto (aumentado de 1MB)
+        // Verificar se o arquivo é muito grande para upload direto (LÓGICA SIMPLES)
+        const serverBodyLimit = 5 * 1024 * 1024; // 5MB limite do servidor
         
-        if (optimizedArtData.length <= maxDirectUploadSize) {
+        if (optimizedArtData.length <= serverBodyLimit) {
           // Upload direto para arquivos pequenos (instantâneo)
-          console.log('📤 Upload direto (arquivo pequeno)');
+          console.log('📤 Upload direto (arquivo pequeno)', {
+            tamanhoArquivo: `${Math.round(optimizedArtData.length / (1024 * 1024))}MB`,
+            limiteServidor: `${Math.round(serverBodyLimit / (1024 * 1024))}MB`
+          });
           const response = await fetch('/api/admin/criar-arte-campanha', {
             method: 'POST',
             headers: { 
@@ -402,34 +405,32 @@ export const PagamantosPart = () => {
           return;
           }
         } else {
-          // Upload híbrido para arquivos grandes - ULTRA RÁPIDO COM PARALELISMO
+          // Upload híbrido para arquivos grandes - LÓGICA SIMPLES
           console.log('📤 Upload híbrido (arquivo grande) - iniciando...');
           
-          // Tamanho do chunk otimizado considerando overhead do base64 (~33% maior)
-          const optimizedChunkSize = 1.5 * 1024 * 1024; // 1.5MB por chunk (considerando que base64 aumenta ~33% o tamanho)
+          // Limite do servidor
+          const serverBodyLimit = 5 * 1024 * 1024; // 5MB limite do servidor
+          
+          // Calcular número de chunks necessários (divisão simples)
+          const totalChunks = Math.ceil(optimizedArtData.length / serverBodyLimit);
+          
+          // Calcular tamanho de cada chunk (dividir igualmente)
+          const chunkSize = Math.floor(optimizedArtData.length / totalChunks);
+          
+          console.log(`🧮 Cálculo simples:`, {
+            arquivoOriginal: `${Math.round(optimizedArtData.length / (1024 * 1024))}MB`,
+            limiteServidor: `${Math.round(serverBodyLimit / (1024 * 1024))}MB`,
+            chunksNecessarios: totalChunks,
+            tamanhoPorChunk: `${Math.round(chunkSize / (1024 * 1024))}MB`
+          });
+          
+          // Criar chunks com tamanho calculado
           const chunks: string[] = [];
-          for (let i = 0; i < optimizedArtData.length; i += optimizedChunkSize) {
-            chunks.push(optimizedArtData.slice(i, i + optimizedChunkSize));
+          for (let i = 0; i < optimizedArtData.length; i += chunkSize) {
+            chunks.push(optimizedArtData.slice(i, i + chunkSize));
           }
           
-          console.log(`📦 Dividindo em ${chunks.length} chunks de ${Math.round(optimizedChunkSize / (1024 * 1024))}MB cada`);
-          
-          // Verificar se algum chunk excede o limite de 2MB (considerando overhead do base64)
-          const maxAllowedChunkSize = 1.8 * 1024 * 1024; // 1.8MB máximo por chunk
-          const oversizedChunks = chunks.filter(chunk => chunk.length > maxAllowedChunkSize);
-          
-          if (oversizedChunks.length > 0) {
-            console.warn(`⚠️ ${oversizedChunks.length} chunks excedem o limite de 1.8MB. Reduzindo tamanho...`);
-            // Recalcular com chunks menores
-            const safeChunkSize = 1.2 * 1024 * 1024; // 1.2MB por chunk
-            const newChunks: string[] = [];
-            for (let i = 0; i < optimizedArtData.length; i += safeChunkSize) {
-              newChunks.push(optimizedArtData.slice(i, i + safeChunkSize));
-            }
-            chunks.length = 0; // Limpar array
-            chunks.push(...newChunks); // Adicionar novos chunks
-            console.log(`📦 Recalculado: ${chunks.length} chunks de ${Math.round(safeChunkSize / (1024 * 1024))}MB cada`);
-          }
+          console.log(`📦 Dividindo em ${chunks.length} chunks de ${Math.round(chunkSize / (1024 * 1024))}MB cada`);
           
           // Primeiro, criar o registro vazio
           const createResponse = await fetch('/api/admin/criar-arte-campanha', {
@@ -569,8 +570,8 @@ export const PagamantosPart = () => {
         const errorMessage = error.message || error.toString();
         
         // Detectar tipos específicos de erro para mensagens mais claras
-        if (errorMessage.includes('413') || errorMessage.includes('Content Too Large') || errorMessage.includes('Body exceeded 2mb limit')) {
-          setErro('Arquivo muito grande para upload. O servidor tem limite de 2MB por requisição. Tente usar uma imagem menor ou comprimir mais o arquivo.');
+        if (errorMessage.includes('413') || errorMessage.includes('Content Too Large') || errorMessage.includes('Body exceeded') || errorMessage.includes('limit')) {
+          setErro('Arquivo muito grande para upload. O servidor tem limite de 5MB por requisição. Tente usar uma imagem menor ou comprimir mais o arquivo.');
         } else if (errorMessage.includes('timeout') || errorMessage.includes('aborted')) {
           setErro('Upload demorou muito e foi cancelado. Verifique sua conexão e tente novamente.');
         } else if (errorMessage.includes('chunk')) {
