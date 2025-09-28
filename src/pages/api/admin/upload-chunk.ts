@@ -23,7 +23,20 @@ export default async function handler(
       });
     }
 
-    console.log(`📦 Recebendo chunk ${chunk_index + 1}/${total_chunks} para arte ${arte_campanha_id}`);
+    console.log(`📦 Recebendo chunk ${chunk_index + 1}/${total_chunks} para arte ${arte_campanha_id}:`, {
+      chunkSize: Math.round(chunk_data.length / (1024 * 1024)) + 'MB',
+      chunkIndex: chunk_index,
+      totalChunks: total_chunks
+    });
+
+    // Validar chunk antes de salvar
+    if (!chunk_data || chunk_data.length === 0) {
+      console.error('❌ Chunk vazio recebido:', { chunk_index, total_chunks });
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Chunk vazio recebido' 
+      });
+    }
 
     // Salvar chunk diretamente no banco usando uma tabela temporária
     const { error: chunkError } = await supabase
@@ -40,7 +53,7 @@ export default async function handler(
       console.error('❌ Erro ao salvar chunk:', chunkError);
       return res.status(500).json({ 
         success: false, 
-        error: 'Erro ao salvar chunk' 
+        error: `Erro ao salvar chunk: ${chunkError.message}` 
       });
     }
 

@@ -424,11 +424,23 @@ export const PagamantosPart = () => {
             tamanhoPorChunk: `${Math.round(chunkSize / (1024 * 1024))}MB`
           });
           
-          // Criar chunks com tamanho calculado
+          // Criar chunks com tamanho calculado (CORRIGIDO)
           const chunks: string[] = [];
           for (let i = 0; i < optimizedArtData.length; i += chunkSize) {
-            chunks.push(optimizedArtData.slice(i, i + chunkSize));
+            const chunk = optimizedArtData.slice(i, i + chunkSize);
+            if (chunk.length > 0) { // Só adicionar chunks não vazios
+              chunks.push(chunk);
+            }
           }
+          
+          // Verificar se todos os chunks têm tamanho válido
+          const invalidChunks = chunks.filter(chunk => chunk.length === 0);
+          if (invalidChunks.length > 0) {
+            console.error('❌ Chunks inválidos encontrados:', invalidChunks.length);
+            throw new Error('Erro na divisão de chunks: chunks vazios detectados');
+          }
+          
+          console.log(`📦 Chunks criados: ${chunks.length} chunks válidos`);
           
           console.log(`📦 Dividindo em ${chunks.length} chunks de ${Math.round(chunkSize / (1024 * 1024))}MB cada`);
           

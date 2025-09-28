@@ -487,11 +487,23 @@ const MeusAnuncios = () => {
             tamanhoPorChunk: `${Math.round(chunkSize / (1024 * 1024))}MB`
           });
           
-          // Criar chunks com tamanho calculado
+          // Criar chunks com tamanho calculado (CORRIGIDO)
           const chunks: string[] = [];
           for (let i = 0; i < base64String.length; i += chunkSize) {
-            chunks.push(base64String.slice(i, i + chunkSize));
+            const chunk = base64String.slice(i, i + chunkSize);
+            if (chunk.length > 0) { // Só adicionar chunks não vazios
+              chunks.push(chunk);
+            }
           }
+          
+          // Verificar se todos os chunks têm tamanho válido
+          const invalidChunks = chunks.filter(chunk => chunk.length === 0);
+          if (invalidChunks.length > 0) {
+            console.error('❌ Chunks inválidos de troca encontrados:', invalidChunks.length);
+            throw new Error('Erro na divisão de chunks de troca: chunks vazios detectados');
+          }
+          
+          console.log(`📦 Chunks de troca criados: ${chunks.length} chunks válidos`);
           
           console.log(`📦 Troca: Dividindo em ${chunks.length} chunks de ${Math.round(chunkSize / (1024 * 1024))}MB cada`);
           
