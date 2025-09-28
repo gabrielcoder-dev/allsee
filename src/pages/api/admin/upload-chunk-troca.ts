@@ -38,11 +38,13 @@ export default async function handler(
       });
     }
 
-    // Limpar chunks anteriores para evitar duplicatas
-    await supabase
-      .from('chunks_temp_troca')
-      .delete()
-      .eq('arte_troca_id', arte_troca_campanha_id);
+    // Limpar chunks anteriores apenas no primeiro chunk para evitar duplicatas
+    if (chunk_index === 0) {
+      await supabase
+        .from('chunks_temp_troca')
+        .delete()
+        .eq('arte_troca_id', arte_troca_campanha_id);
+    }
 
     // Salvar chunk diretamente no banco usando uma tabela temporária para troca
     const { error: chunkError } = await supabase

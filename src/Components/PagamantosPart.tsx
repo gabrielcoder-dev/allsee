@@ -555,34 +555,8 @@ export const PagamantosPart = () => {
             
             console.log(`✅ TODOS os ${chunks.length} chunks enviados em paralelo - pronto para checkout`);
           } catch (chunkError: any) {
-            console.warn('⚠️ Upload por chunks falhou, tentando upload direto como fallback...', chunkError.message);
-            
-            // Fallback: tentar upload direto mesmo para arquivos grandes
-            try {
-              const fallbackResponse = await fetch('/api/admin/criar-arte-campanha', {
-                method: 'POST',
-                headers: { 
-                  'Content-Type': 'application/json',
-                  'Accept': 'application/json'
-                },
-                body: JSON.stringify({
-                  id_order: orderId,
-                  caminho_imagem: optimizedArtData,
-                  id_user: user.id
-                })
-              });
-
-              if (fallbackResponse.ok) {
-                const fallbackData = await fallbackResponse.json();
-                arteCampanhaId = fallbackData.arte_campanha_id;
-                console.log('✅ Fallback: Upload direto bem-sucedido, ID:', arteCampanhaId);
-              } else {
-                throw new Error('Fallback também falhou');
-              }
-            } catch (fallbackError) {
-              console.error('❌ Fallback também falhou:', fallbackError);
-              throw chunkError; // Re-throw o erro original dos chunks
-            }
+            console.error('❌ Upload por chunks falhou:', chunkError.message);
+            throw chunkError; // Não tentar fallback para arquivos grandes
           }
         }
         

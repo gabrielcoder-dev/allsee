@@ -616,32 +616,8 @@ const MeusAnuncios = () => {
             
             console.log(`✅ Troca: TODOS os ${chunks.length} chunks enviados em paralelo`);
           } catch (chunkError: any) {
-            console.warn('⚠️ Upload por chunks de troca falhou, tentando upload direto como fallback...', chunkError.message);
-            
-            // Fallback: tentar upload direto mesmo para arquivos grandes
-            try {
-              const fallbackResponse = await fetch('/api/admin/criar-arte-troca-campanha', {
-                method: 'POST',
-                headers: { 
-                  'Content-Type': 'application/json',
-                  'Accept': 'application/json'
-                },
-                body: JSON.stringify({
-                  id_order: anuncio.order_id,
-                  caminho_imagem: base64String,
-                  id_user: user.id
-                })
-              });
-
-              if (fallbackResponse.ok) {
-                console.log('✅ Fallback: Upload direto de troca bem-sucedido');
-              } else {
-                throw new Error('Fallback também falhou');
-              }
-            } catch (fallbackError) {
-              console.error('❌ Fallback também falhou:', fallbackError);
-              throw chunkError; // Re-throw o erro original dos chunks
-            }
+            console.error('❌ Upload por chunks de troca falhou:', chunkError.message);
+            throw chunkError; // Não tentar fallback para arquivos grandes
           }
         }
 
