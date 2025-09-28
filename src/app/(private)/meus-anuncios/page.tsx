@@ -153,13 +153,13 @@ const MeusAnuncios = () => {
           }
 
            // Find the corresponding arteTrocaCampanha
-           const arteTrocaCampanha = arteTrocaCampanhas?.find(atc => atc.id_campanha === orders[0].id);
+           const arteTrocaCampanha = arteTrocaCampanhas?.find(atc => atc.id_campanha === arteCampanha.id);
 
           const fim_campanha = new Date(orders[0].inicio_campanha);
           fim_campanha.setDate(fim_campanha.getDate() + orders[0].duracao_campanha);
 
            // Retrieve status from arteTrocaCampanhas or local storage
-           const arteTrocaCampanhaStatus = arteTrocaCampanhas?.find(atc => atc.id_campanha === orders[0].id) || null;
+           const arteTrocaCampanhaStatus = arteTrocaCampanhas?.find(atc => atc.id_campanha === arteCampanha.id) || null;
            const localStorageStatus = localStorage.getItem(`order_${orders[0].id}`) || null;
            const replacementStatus = localStorage.getItem(`replacement_order_${orders[0].id}`) || null;
            const status = replacementStatus || arteTrocaCampanhaStatus || localStorageStatus;
@@ -458,7 +458,7 @@ const MeusAnuncios = () => {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              id_order: anuncio.order_id,
+              id_campanha: anuncio.id,
               caminho_imagem: base64String,
               id_user: user.id
             })
@@ -561,7 +561,7 @@ const MeusAnuncios = () => {
               'Accept': 'application/json'
             },
             body: JSON.stringify({
-              id_order: anuncio.order_id,
+              id_campanha: anuncio.id,
               caminho_imagem: '', // Vazio inicialmente
               id_user: user.id
             })

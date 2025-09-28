@@ -32,7 +32,7 @@ export default async function handler(
     // Buscar o caminho_imagem da arte de troca
     const { data: arteTroca, error: fetchTrocaError } = await supabase
       .from('arte_troca_campanha')
-      .select('caminho_imagem, id_order')
+      .select('caminho_imagem, id_campanha')
       .eq('id', arte_troca_campanha_id)
       .single();
 
