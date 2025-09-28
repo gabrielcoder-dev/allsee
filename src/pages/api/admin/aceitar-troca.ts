@@ -54,9 +54,10 @@ export default async function handler(
         arte_troca_campanha_id: arte_troca_campanha_id,
         tipo_id: typeof arte_troca_campanha_id
       });
+      const errorMessage = fetchTrocaError.message || fetchTrocaError.code || String(fetchTrocaError);
       return res.status(500).json({ 
         success: false, 
-        error: `Erro ao buscar arte de troca: ${fetchTrocaError.message}` 
+        error: `Erro ao buscar arte de troca: ${errorMessage}` 
       });
     }
 
@@ -166,9 +167,10 @@ export default async function handler(
 
         if (chunkError && attempts >= maxAttempts) {
           console.error(`❌ Erro ao enviar chunk ${i + 1} após ${maxAttempts} tentativas:`, chunkError);
+          const errorMessage = (chunkError as any)?.message || (chunkError as any)?.code || String(chunkError);
           return res.status(500).json({ 
             success: false, 
-            error: `Erro ao enviar chunk ${i + 1}: ${chunkError.message || chunkError}` 
+            error: `Erro ao enviar chunk ${i + 1}: ${errorMessage}` 
           });
         }
 
