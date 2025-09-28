@@ -474,18 +474,34 @@ const MeusAnuncios = () => {
           // Upload híbrido para arquivos grandes - LÓGICA SIMPLES
           console.log('📤 Upload híbrido de troca (arquivo grande) - iniciando...');
           
-          // NOVA LÓGICA: Chunks de exatamente 4MB até acabar o arquivo
+          // LÓGICA CORRIGIDA: Chunks de até 4MB, garantindo que 100% do arquivo seja enviado
           const chunks: string[] = [];
           let currentPosition = 0;
+          const totalSize = base64String.length;
           
-          while (currentPosition < base64String.length) {
-            const remainingBytes = base64String.length - currentPosition;
+          console.log(`📏 Tamanho total do arquivo de troca: ${Math.round(totalSize / (1024 * 1024))}MB ${Math.round((totalSize % (1024 * 1024)) / 1024)}KB`);
+          
+          while (currentPosition < totalSize) {
+            const remainingBytes = totalSize - currentPosition;
             const chunkSize = Math.min(serverBodyLimit, remainingBytes);
             
-            const chunk = base64String.slice(currentPosition, currentPosition + chunkSize);
+            // Verificar se este é o último chunk
+            const isLastChunk = (currentPosition + chunkSize) >= totalSize;
+            const actualChunkSize = isLastChunk ? remainingBytes : chunkSize;
+            
+            const chunk = base64String.slice(currentPosition, currentPosition + actualChunkSize);
             chunks.push(chunk);
             
-            currentPosition += chunkSize;
+            console.log(`📦 Chunk de troca ${chunks.length}:`, {
+              posicaoInicial: currentPosition,
+              posicaoFinal: currentPosition + actualChunkSize,
+              tamanhoChunk: Math.round(actualChunkSize / 1024) + 'KB',
+              tamanhoChunkMB: Math.round(actualChunkSize / (1024 * 1024)) + 'MB',
+              isLastChunk: isLastChunk,
+              bytesRestantes: totalSize - (currentPosition + actualChunkSize)
+            });
+            
+            currentPosition += actualChunkSize;
           }
           
           console.log(`🧮 Nova lógica de chunks de troca:`, {
@@ -506,6 +522,34 @@ const MeusAnuncios = () => {
           }
           
           console.log(`📦 Chunks de troca criados: ${chunks.length} chunks válidos`);
+          
+          // Diagnóstico detalhado dos chunks de troca
+          const totalChunkSize = chunks.reduce((sum, chunk) => sum + chunk.length, 0);
+          const isSizeMatch = totalChunkSize === base64String.length;
+          
+          console.log(`📊 Diagnóstico dos chunks de troca:`, {
+            totalChunks: chunks.length,
+            chunkSizes: chunks.map((chunk, i) => ({
+              chunk: i + 1,
+              sizeKB: Math.round(chunk.length / 1024),
+              sizeMB: Math.round(chunk.length / (1024 * 1024)) + 'MB',
+              isLastChunk: i === chunks.length - 1
+            })),
+            totalSizeOriginal: Math.round(base64String.length / (1024 * 1024)) + 'MB ' + Math.round((base64String.length % (1024 * 1024)) / 1024) + 'KB',
+            totalSizeChunks: Math.round(totalChunkSize / (1024 * 1024)) + 'MB ' + Math.round((totalChunkSize % (1024 * 1024)) / 1024) + 'KB',
+            sizeMatch: isSizeMatch ? '✅ CORRETO' : '❌ ERRO - Tamanhos não batem!',
+            lastChunkIndex: chunks.length - 1,
+            lastChunkSize: Math.round(chunks[chunks.length - 1]?.length / 1024) + 'KB'
+          });
+          
+          // Verificação crítica: se os tamanhos não batem, erro fatal
+          if (!isSizeMatch) {
+            console.error('❌ ERRO CRÍTICO: Tamanho total dos chunks de troca não bate com arquivo original!');
+            console.error(`Arquivo original: ${base64String.length} bytes`);
+            console.error(`Soma dos chunks: ${totalChunkSize} bytes`);
+            console.error(`Diferença: ${Math.abs(base64String.length - totalChunkSize)} bytes`);
+            throw new Error('Erro na divisão de chunks de troca: tamanhos não coincidem');
+          }
           
           console.log(`📦 Troca: Dividindo em ${chunks.length} chunks (até 4MB cada)`);
           
@@ -545,22 +589,24 @@ const MeusAnuncios = () => {
             console.warn('⚠️ Não foi possível limpar chunks de troca anteriores:', cleanupError);
           }
           
-          // ESTRATÉGIA ULTRA RÁPIDA: Upload paralelo com retry automático
-          console.log(`🚀 Troca: Enviando ${chunks.length} chunks em paralelo (ultra rápido)...`);
+          // ESTRATÉGIA SEQUENCIAL: Upload sequencial para evitar problemas de concorrência no último chunk
+          console.log(`🚀 Preparando upload sequencial de troca de ${chunks.length} chunks...`);
           
           // Função para enviar um chunk com retry e timeout
           const uploadChunkWithRetry = async (chunkIndex: number, maxRetries: number = 3): Promise<void> => {
             for (let attempt = 1; attempt <= maxRetries; attempt++) {
               try {
-                // Timeout de 30 segundos para evitar demora
+                // Timeout de 45 segundos para arquivos grandes
                 const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 30000);
+                const timeoutId = setTimeout(() => controller.abort(), 45000);
                 
                 console.log(`📤 Enviando chunk de troca ${chunkIndex + 1}/${chunks.length}:`, {
                   arte_troca_campanha_id: arteTrocaCampanhaId,
                   chunk_index: chunkIndex,
                   chunk_size: Math.round(chunks[chunkIndex].length / (1024 * 1024)) + 'MB',
-                  total_chunks: chunks.length
+                  chunk_size_kb: Math.round(chunks[chunkIndex].length / 1024) + 'KB',
+                  total_chunks: chunks.length,
+                  tentativa: attempt
                 });
 
                 const chunkResponse = await fetch('/api/admin/upload-chunk-troca', {
@@ -582,7 +628,7 @@ const MeusAnuncios = () => {
 
                 if (!chunkResponse.ok) {
                   const errorText = await chunkResponse.text();
-                  let errorMessage = `Erro no chunk ${chunkIndex}`;
+                  let errorMessage = `Erro no chunk de troca ${chunkIndex}`;
                   
                   try {
                     const errorData = JSON.parse(errorText);
@@ -592,44 +638,85 @@ const MeusAnuncios = () => {
                     errorMessage = errorText || errorMessage;
                   }
                   
-                  throw new Error(errorMessage);
+                  console.error(`❌ Erro HTTP ${chunkResponse.status} para chunk de troca ${chunkIndex}:`, {
+                    status: chunkResponse.status,
+                    statusText: chunkResponse.statusText,
+                    errorText: errorText,
+                    errorMessage: errorMessage
+                  });
+                  
+                  throw new Error(`${errorMessage} (Status: ${chunkResponse.status})`);
                 }
 
-                console.log(`✅ Troca: Chunk ${chunkIndex + 1}/${chunks.length} enviado (tentativa ${attempt})`);
+                // Tentar parsear a resposta para verificar se foi bem-sucedida
+                try {
+                  const responseData = await chunkResponse.json();
+                  if (!responseData.success) {
+                    throw new Error(responseData.error || 'Resposta não indica sucesso');
+                  }
+                  
+                  console.log(`✅ Chunk de troca ${chunkIndex + 1}/${chunks.length} enviado com sucesso (tentativa ${attempt}):`, {
+                    success: responseData.success,
+                    message: responseData.message,
+                    isLastChunk: chunkIndex === chunks.length - 1
+                  });
+                } catch (parseError) {
+                  console.warn(`⚠️ Não foi possível parsear resposta do chunk de troca ${chunkIndex}, assumindo sucesso`);
+                }
+                
                 return; // Sucesso, sair do loop de retry
               } catch (error: any) {
                 const errorMsg = error.message || error.toString();
-                console.warn(`⚠️ Troca: Tentativa ${attempt}/${maxRetries} falhou para chunk ${chunkIndex}:`, errorMsg);
+                console.warn(`⚠️ Tentativa ${attempt}/${maxRetries} falhou para chunk de troca ${chunkIndex}:`, {
+                  error: errorMsg,
+                  chunkSize: Math.round(chunks[chunkIndex].length / 1024) + 'KB',
+                  isLastChunk: chunkIndex === chunks.length - 1
+                });
                 
                 if (attempt === maxRetries) {
-                  throw new Error(`Chunk ${chunkIndex} de troca falhou após ${maxRetries} tentativas: ${errorMsg}`);
+                  throw new Error(`Chunk de troca ${chunkIndex + 1}/${chunks.length} falhou após ${maxRetries} tentativas: ${errorMsg}`);
                 }
                 
                 // Aguardar progressivamente mais tempo entre tentativas
-                await new Promise(resolve => setTimeout(resolve, 2000 * attempt));
+                const delay = 3000 * attempt; // 3s, 6s, 9s
+                console.log(`⏳ Aguardando ${delay}ms antes da próxima tentativa...`);
+                await new Promise(resolve => setTimeout(resolve, delay));
               }
             }
           };
 
-          // Upload paralelo - enviar múltiplos chunks simultaneamente
-          const parallelLimit = 3; // Máximo 3 chunks simultâneos
+          // Upload sequencial com controle de timing para evitar problemas de concorrência
+          console.log(`📤 Iniciando upload sequencial de troca de ${chunks.length} chunks...`);
           
           try {
-            for (let i = 0; i < chunks.length; i += parallelLimit) {
-              const batch = [];
-              for (let j = 0; j < parallelLimit && (i + j) < chunks.length; j++) {
-                batch.push(uploadChunkWithRetry(i + j));
+            // Upload sequencial com delay entre chunks para evitar sobrecarga
+            for (let i = 0; i < chunks.length; i++) {
+              const isLastChunk = i === chunks.length - 1;
+              
+              console.log(`📤 Enviando chunk de troca ${i + 1}/${chunks.length}${isLastChunk ? ' (ÚLTIMO CHUNK)' : ''}...`, {
+                chunkIndex: i,
+                chunkSize: Math.round(chunks[i].length / 1024) + 'KB',
+                isLastChunk: isLastChunk,
+                remainingChunks: chunks.length - i - 1
+              });
+              
+              await uploadChunkWithRetry(i);
+              
+              // Delay maior após o último chunk para garantir processamento completo
+              if (isLastChunk) {
+                console.log('⏳ Aguardando processamento do último chunk de troca...');
+                await new Promise(resolve => setTimeout(resolve, 2000)); // 2s para o último chunk
+              } else if (i < chunks.length - 1) {
+                await new Promise(resolve => setTimeout(resolve, 500)); // 500ms entre chunks
               }
               
-              // Aguardar o batch atual antes de iniciar o próximo
-              await Promise.all(batch);
-              console.log(`✅ Troca: Batch ${Math.floor(i / parallelLimit) + 1} concluído (${batch.length} chunks)`);
+              console.log(`✅ Chunk de troca ${i + 1}/${chunks.length} enviado com sucesso${isLastChunk ? ' - ARQUIVO COMPLETO!' : ''}`);
             }
             
-            console.log(`✅ Troca: TODOS os ${chunks.length} chunks enviados em paralelo`);
+            console.log(`✅ TODOS os ${chunks.length} chunks de troca enviados sequencialmente - upload concluído`);
           } catch (chunkError: any) {
-            console.error('❌ Upload por chunks de troca falhou:', chunkError.message);
-            throw chunkError; // Não tentar fallback para arquivos grandes
+            console.error('❌ Upload de troca por chunks falhou:', chunkError.message);
+            throw chunkError;
           }
         }
 
