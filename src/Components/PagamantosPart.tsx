@@ -20,17 +20,17 @@ import { ArrowLeft } from "lucide-react";
 import { useUser } from "@supabase/auth-helpers-react";
 // Upload otimizado com compressão (sem limitações do Next.js)
 
-// Função para comprimir imagens e reduzir tempo de upload
-const compressImage = async (base64: string, quality: number = 0.8): Promise<string> => {
+// Função para comprimir imagens e reduzir tempo de upload (OTIMIZADA)
+const compressImage = async (base64: string, quality: number = 0.7): Promise<string> => {
   return new Promise((resolve) => {
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
     const img = new Image();
     
     img.onload = () => {
-      // Redimensionar se muito grande (mantém proporção)
+      // Redimensionar mais agressivamente para arquivos grandes (mantém proporção)
       let { width, height } = img;
-      const maxSize = 1920; // Máximo 1920px
+      const maxSize = 1600; // Reduzido de 1920 para 1600px para arquivos menores
       
       if (width > maxSize || height > maxSize) {
         if (width > height) {
@@ -48,7 +48,7 @@ const compressImage = async (base64: string, quality: number = 0.8): Promise<str
       // Desenhar imagem redimensionada
       ctx?.drawImage(img, 0, 0, width, height);
       
-      // Converter para base64 com qualidade reduzida
+      // Converter para base64 com qualidade reduzida (mais compressão)
       const compressedBase64 = canvas.toDataURL('image/jpeg', quality);
       resolve(compressedBase64);
     };
@@ -243,15 +243,17 @@ export const PagamantosPart = () => {
       return;
     }
 
-    // ** (3.2) Image/Video Upload: Compress images to reduce upload time **
+    // ** (3.2) Image/Video Upload: Compress images to reduce upload time (OTIMIZADO) **
     let optimizedArtData = artData;
     if (artData && artData.startsWith('data:image/')) {
       try {
-        optimizedArtData = await compressImage(artData, 0.8); // 80% qualidade
-        console.log('📦 Imagem comprimida:', {
+        // Compressão mais agressiva para upload mais rápido
+        optimizedArtData = await compressImage(artData, 0.6); // 60% qualidade (mais compressão)
+        console.log('📦 Imagem comprimida (otimizada):', {
           originalSize: Math.round(artData.length / (1024 * 1024)),
           compressedSize: Math.round(optimizedArtData.length / (1024 * 1024)),
-          compression: Math.round((1 - optimizedArtData.length / artData.length) * 100) + '%'
+          compression: Math.round((1 - optimizedArtData.length / artData.length) * 100) + '%',
+          speedImprovement: Math.round((artData.length / optimizedArtData.length) * 100) + '% mais rápido'
         });
       } catch (error) {
         console.warn('⚠️ Erro na compressão, usando original:', error);
@@ -369,10 +371,10 @@ export const PagamantosPart = () => {
       let arteCampanhaId: string | null = null;
       
       try {
-        // Verificar se o arquivo é muito grande para upload direto
-        const maxChunkSize = 1 * 1024 * 1024; // 1MB por chunk
+        // Verificar se o arquivo é muito grande para upload direto (OTIMIZADO)
+        const maxDirectUploadSize = 10 * 1024 * 1024; // 10MB para upload direto (aumentado de 1MB)
         
-        if (optimizedArtData.length <= maxChunkSize) {
+        if (optimizedArtData.length <= maxDirectUploadSize) {
           // Upload direto para arquivos pequenos (instantâneo)
           console.log('📤 Upload direto (arquivo pequeno)');
           const response = await fetch('/api/admin/criar-arte-campanha', {
@@ -400,14 +402,17 @@ export const PagamantosPart = () => {
           return;
           }
         } else {
-          // Upload híbrido para arquivos grandes - RÁPIDO + BACKGROUND
+          // Upload híbrido para arquivos grandes - ULTRA RÁPIDO COM PARALELISMO
           console.log('📤 Upload híbrido (arquivo grande) - iniciando...');
+          
+          // Aumentar tamanho do chunk para reduzir quantidade (5MB por chunk)
+          const optimizedChunkSize = 5 * 1024 * 1024; // 5MB por chunk
           const chunks: string[] = [];
-          for (let i = 0; i < optimizedArtData.length; i += maxChunkSize) {
-            chunks.push(optimizedArtData.slice(i, i + maxChunkSize));
+          for (let i = 0; i < optimizedArtData.length; i += optimizedChunkSize) {
+            chunks.push(optimizedArtData.slice(i, i + optimizedChunkSize));
           }
           
-          console.log(`📦 Dividindo em ${chunks.length} chunks de ${Math.round(maxChunkSize / (1024 * 1024))}MB cada`);
+          console.log(`📦 Dividindo em ${chunks.length} chunks de ${Math.round(optimizedChunkSize / (1024 * 1024))}MB cada`);
           
           // Primeiro, criar o registro vazio
           const createResponse = await fetch('/api/admin/criar-arte-campanha', {
@@ -433,34 +438,62 @@ export const PagamantosPart = () => {
           
           console.log('✅ Registro criado, ID:', arteCampanhaId);
           
-          // ESTRATÉGIA SUPER RÁPIDA: Enviar TODOS os chunks rapidamente (sem delay)
-          console.log(`🚀 Enviando TODOS os ${chunks.length} chunks rapidamente...`);
+          // ESTRATÉGIA ULTRA RÁPIDA: Upload paralelo com retry automático
+          console.log(`🚀 Enviando ${chunks.length} chunks em paralelo (ultra rápido)...`);
           
-          // Enviar todos os chunks rapidamente (sem delay)
-          for (let i = 0; i < chunks.length; i++) {
-            const chunkResponse = await fetch('/api/admin/upload-chunk', {
-              method: 'POST',
-              headers: { 
-                'Content-Type': 'application/json',
-                'Accept': 'application/json'
-              },
-              body: JSON.stringify({
-                arte_campanha_id: arteCampanhaId,
-                chunk_index: i,
-                chunk_data: chunks[i],
-                total_chunks: chunks.length
-              })
-            });
+          // Função para enviar um chunk com retry
+          const uploadChunkWithRetry = async (chunkIndex: number, maxRetries: number = 3): Promise<void> => {
+            for (let attempt = 1; attempt <= maxRetries; attempt++) {
+              try {
+                const chunkResponse = await fetch('/api/admin/upload-chunk', {
+                  method: 'POST',
+                  headers: { 
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                  },
+                  body: JSON.stringify({
+                    arte_campanha_id: arteCampanhaId,
+                    chunk_index: chunkIndex,
+                    chunk_data: chunks[chunkIndex],
+                    total_chunks: chunks.length
+                  })
+                });
 
-            if (!chunkResponse.ok) {
-              const errorData = await chunkResponse.json();
-              throw new Error(`Erro no chunk ${i}: ${errorData.error}`);
+                if (!chunkResponse.ok) {
+                  const errorData = await chunkResponse.json();
+                  throw new Error(`Erro no chunk ${chunkIndex}: ${errorData.error}`);
+                }
+
+                console.log(`✅ Chunk ${chunkIndex + 1}/${chunks.length} enviado (tentativa ${attempt})`);
+                return; // Sucesso, sair do loop de retry
+              } catch (error) {
+                console.warn(`⚠️ Tentativa ${attempt}/${maxRetries} falhou para chunk ${chunkIndex}:`, error);
+                if (attempt === maxRetries) {
+                  throw error; // Última tentativa falhou
+                }
+                // Aguardar um pouco antes da próxima tentativa
+                await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+              }
             }
+          };
 
-            console.log(`✅ Chunk ${i + 1}/${chunks.length} enviado (super rápido)`);
+          // Upload paralelo - enviar múltiplos chunks simultaneamente
+          const parallelLimit = 5; // Máximo 5 chunks simultâneos
+          const uploadPromises: Promise<void>[] = [];
+          
+          for (let i = 0; i < chunks.length; i += parallelLimit) {
+            const batch = [];
+            for (let j = 0; j < parallelLimit && (i + j) < chunks.length; j++) {
+              batch.push(uploadChunkWithRetry(i + j));
+            }
+            uploadPromises.push(...batch);
+            
+            // Aguardar o batch atual antes de iniciar o próximo
+            await Promise.all(batch);
+            console.log(`✅ Batch ${Math.floor(i / parallelLimit) + 1} concluído (${batch.length} chunks)`);
           }
           
-          console.log(`✅ TODOS os ${chunks.length} chunks enviados rapidamente - pronto para checkout`);
+          console.log(`✅ TODOS os ${chunks.length} chunks enviados em paralelo - pronto para checkout`);
         }
         
       } catch (error: any) {
