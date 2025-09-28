@@ -108,8 +108,8 @@ const ReplacementAdmin = () => {
       console.log('✅ Troca aceita com sucesso:', data);
 
       // Atualizar o localStorage e remover o card
-      localStorage.setItem(`replacement_order_${orderId}`, "aprovado");
-      setOrders(prev => prev.filter(order => order.id_campanha !== orderId));
+      localStorage.setItem(`replacement_order_${arteCampanhaId}`, "aprovado");
+      setOrders(prev => prev.filter(order => order.id_campanha !== arteCampanhaId));
       window.dispatchEvent(new Event('storage'));
 
       console.log('✅ Arte aprovada e transferida com sucesso!');
