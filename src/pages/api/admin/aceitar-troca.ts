@@ -32,6 +32,12 @@ export default async function handler(
     });
 
     // Buscar o caminho_imagem da arte de troca
+    console.log('🔍 Buscando arte de troca no banco:', {
+      tabela: 'arte_troca_campanha',
+      filtro: `id = ${arte_troca_campanha_id}`,
+      tipo_id: typeof arte_troca_campanha_id
+    });
+
     const { data: arteTroca, error: fetchTrocaError } = await supabase
       .from('arte_troca_campanha')
       .select('caminho_imagem, id_campanha')
@@ -39,12 +45,27 @@ export default async function handler(
       .single();
 
     if (fetchTrocaError) {
-      console.error('❌ Erro ao buscar arte de troca:', fetchTrocaError);
+      console.error('❌ Erro detalhado ao buscar arte de troca:', {
+        error: fetchTrocaError,
+        code: fetchTrocaError.code,
+        message: fetchTrocaError.message,
+        details: fetchTrocaError.details,
+        hint: fetchTrocaError.hint,
+        arte_troca_campanha_id: arte_troca_campanha_id,
+        tipo_id: typeof arte_troca_campanha_id
+      });
       return res.status(500).json({ 
         success: false, 
-        error: 'Erro ao buscar arte de troca' 
+        error: `Erro ao buscar arte de troca: ${fetchTrocaError.message}` 
       });
     }
+
+    console.log('✅ Arte de troca encontrada:', {
+      id: arte_troca_campanha_id,
+      tem_caminho_imagem: !!arteTroca.caminho_imagem,
+      tamanho_caminho_imagem: arteTroca.caminho_imagem ? arteTroca.caminho_imagem.length : 0,
+      id_campanha: arteTroca.id_campanha
+    });
 
     if (!arteTroca) {
       return res.status(404).json({ 

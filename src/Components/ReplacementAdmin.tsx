@@ -75,6 +75,12 @@ const ReplacementAdmin = () => {
       const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string;
       const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
+      console.log('🔍 Buscando arte_troca_campanha no frontend:', {
+        tabela: 'arte_troca_campanha',
+        filtro: `id_campanha = ${numericArteCampanhaId}`,
+        tipo_id: typeof numericArteCampanhaId
+      });
+
       const { data: arteTroca, error: fetchTrocaError } = await supabase
         .from('arte_troca_campanha')
         .select('id')
@@ -82,9 +88,27 @@ const ReplacementAdmin = () => {
         .single();
 
       if (fetchTrocaError) {
-        console.error('❌ Erro ao buscar arte_troca_campanha:', fetchTrocaError);
+        console.error('❌ Erro detalhado ao buscar arte_troca_campanha:', {
+          error: fetchTrocaError,
+          code: fetchTrocaError.code,
+          message: fetchTrocaError.message,
+          details: fetchTrocaError.details,
+          hint: fetchTrocaError.hint,
+          numericArteCampanhaId: numericArteCampanhaId,
+          tipo_id: typeof numericArteCampanhaId
+        });
         return;
       }
+
+      if (!arteTroca) {
+        console.error('❌ Arte de troca não encontrada no frontend');
+        return;
+      }
+
+      console.log('✅ Arte de troca encontrada no frontend:', {
+        id: arteTroca.id,
+        id_campanha: numericArteCampanhaId
+      });
 
       console.log('📥 IDs encontrados:', {
         arte_troca_campanha_id: arteTroca.id,
