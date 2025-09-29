@@ -94,7 +94,17 @@ const MeusAnuncios = () => {
       setRefresh(!refresh);
     };
     
+    const handleReplacementStatusChange = (event: any) => {
+      console.log('🎯 Evento customizado replacementStatusChanged detectado:', event.detail);
+      console.log('📊 Estado atual do localStorage após evento:', {
+        replacement_keys: Object.keys(localStorage).filter(key => key.startsWith('replacement_order_')),
+        order_keys: Object.keys(localStorage).filter(key => key.startsWith('order_'))
+      });
+      setRefresh(!refresh);
+    };
+    
     window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('replacementStatusChanged', handleReplacementStatusChange);
     
     const fetchAnuncios = async () => {
       console.log('🎬 INICIANDO fetchAnuncios...');
@@ -281,6 +291,7 @@ const MeusAnuncios = () => {
     
     return () => {
       window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('replacementStatusChanged', handleReplacementStatusChange);
     };
   }, [refresh]);
 
@@ -856,7 +867,20 @@ const MeusAnuncios = () => {
       {/* Conteúdo principal */}
       <div className="px-6 py-4 max-w-4xl mx-auto">
         {loading ? (
-        <p>Carregando anúncios...</p>
+        <div>
+          <p>Carregando anúncios...</p>
+          <button 
+            onClick={() => {
+              console.log('🧪 TESTE MANUAL - Estado atual do localStorage:');
+              console.log('Keys:', Object.keys(localStorage));
+              console.log('Replacement keys:', Object.keys(localStorage).filter(key => key.startsWith('replacement_order_')));
+              console.log('Order keys:', Object.keys(localStorage).filter(key => key.startsWith('order_')));
+            }}
+            className="mt-2 px-4 py-2 bg-blue-500 text-white rounded"
+          >
+            🧪 Testar localStorage
+          </button>
+        </div>
       ) : error ? (
         <div className="text-center">
           <p className="text-red-500">Erro: {error}</p>

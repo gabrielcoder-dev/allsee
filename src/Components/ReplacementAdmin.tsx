@@ -179,8 +179,26 @@ const ReplacementAdmin = () => {
       localStorage.setItem(`replacement_order_${orderIdForStorage}`, "aprovado");
       setOrders(prev => prev.filter(order => order.id_campanha !== numericArteCampanhaId));
       
-      console.log('📡 Disparando evento storage...');
+      console.log('📡 Disparando eventos...');
+      
+      // Evento storage (pode não funcionar entre abas)
       window.dispatchEvent(new Event('storage'));
+      
+      // Evento customizado (funciona sempre)
+      window.dispatchEvent(new CustomEvent('replacementStatusChanged', {
+        detail: {
+          orderId: orderIdForStorage,
+          status: 'aprovado',
+          chave: `replacement_order_${orderIdForStorage}`
+        }
+      }));
+      
+      console.log('📡 Eventos disparados:', {
+        storage: 'disparado',
+        customEvent: 'disparado com dados:',
+        orderId: orderIdForStorage,
+        status: 'aprovado'
+      });
 
       console.log('✅ Arte aprovada e transferida com sucesso!');
     } catch (error) {
@@ -220,8 +238,26 @@ const ReplacementAdmin = () => {
       localStorage.setItem(`replacement_order_${orderIdForStorage}`, "rejeitado");
       setOrders(prev => prev.filter(order => order.id_campanha !== orderId));
       
-      console.log('📡 Disparando evento storage (rejeição)...');
+      console.log('📡 Disparando eventos (rejeição)...');
+      
+      // Evento storage (pode não funcionar entre abas)
       window.dispatchEvent(new Event('storage'));
+      
+      // Evento customizado (funciona sempre)
+      window.dispatchEvent(new CustomEvent('replacementStatusChanged', {
+        detail: {
+          orderId: orderIdForStorage,
+          status: 'rejeitado',
+          chave: `replacement_order_${orderIdForStorage}`
+        }
+      }));
+      
+      console.log('📡 Eventos disparados (rejeição):', {
+        storage: 'disparado',
+        customEvent: 'disparado com dados:',
+        orderId: orderIdForStorage,
+        status: 'rejeitado'
+      });
 
       console.log('Arte rejeitada e excluída com sucesso!');
     } catch (error) {
