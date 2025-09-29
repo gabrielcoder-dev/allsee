@@ -14,7 +14,7 @@ export default function Footer() {
                 alt="AllSee Logo" 
                 className="h-8 w-auto mr-3"
               />
-              <span className="text-2xl font-bold">AllSee</span>
+              <span className="text-2xl font-bold">ALL SEE</span>
             </div>
             <p className="text-gray-300 mb-6 max-w-md">
               A plataforma completa de publicidade digital que conecta anunciantes 
@@ -111,7 +111,7 @@ export default function Footer() {
         <div className="border-t border-gray-700 mt-8 pt-8">
           <div className="flex flex-col md:flex-row justify-between items-center">
             <div className="text-gray-400 text-sm mb-4 md:mb-0">
-              © {new Date().getFullYear()} AllSee. Todos os direitos reservados.
+              © {new Date().getFullYear()} ALL SEE. Todos os direitos reservados.
             </div>
             <div className="text-gray-400 text-sm">
               Desenvolvido com ❤️ para revolucionar a publicidade digital
