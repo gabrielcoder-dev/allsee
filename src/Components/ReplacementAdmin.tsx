@@ -63,13 +63,24 @@ const ReplacementAdmin = () => {
         // Combinar os dados
         const adaptedOrders = trocaData.map((troca) => {
           const campanha = campanhaData?.find(c => c.id === troca.id_campanha);
-          return {
+          const result = {
             id: troca.id,
             caminho_imagem: troca.caminho_imagem,
             id_campanha: troca.id_campanha,
             order_id: campanha?.id_order,
           };
+          
+          console.log('🔗 Combinando dados:', {
+            troca_id: troca.id,
+            troca_id_campanha: troca.id_campanha,
+            campanha_encontrada: campanha,
+            order_id_resultado: result.order_id
+          });
+          
+          return result;
         });
+        
+        console.log('📋 Orders adaptadas:', adaptedOrders);
         setOrders(adaptedOrders);
       }
       setLoading(false);
@@ -164,19 +175,15 @@ const ReplacementAdmin = () => {
       const data = await response.json();
       console.log('✅ Troca aceita com sucesso:', data);
 
-      // Buscar o order_id correto para o localStorage
-      const currentOrder = orders.find(order => order.id_campanha === numericArteCampanhaId);
-      const orderIdForStorage = currentOrder?.order_id || numericArteCampanhaId;
-      
       console.log('💾 Salvando no localStorage:', {
-        chave: `replacement_order_${orderIdForStorage}`,
+        chave: `replacement_order_${numericArteCampanhaId}`,
         valor: 'aprovado',
-        orderIdForStorage,
-        numericArteCampanhaId
+        id_campanha: numericArteCampanhaId,
+        todas_orders: orders.map(o => ({ id: o.id, id_campanha: o.id_campanha, order_id: o.order_id }))
       });
       
       // Atualizar o localStorage e remover o card
-      localStorage.setItem(`replacement_order_${orderIdForStorage}`, "aprovado");
+      localStorage.setItem(`replacement_order_${numericArteCampanhaId}`, "aprovado");
       setOrders(prev => prev.filter(order => order.id_campanha !== numericArteCampanhaId));
       
       console.log('📡 Disparando eventos...');
@@ -187,16 +194,16 @@ const ReplacementAdmin = () => {
       // Evento customizado (funciona sempre)
       window.dispatchEvent(new CustomEvent('replacementStatusChanged', {
         detail: {
-          orderId: orderIdForStorage,
+          id_campanha: numericArteCampanhaId,
           status: 'aprovado',
-          chave: `replacement_order_${orderIdForStorage}`
+          chave: `replacement_order_${numericArteCampanhaId}`
         }
       }));
       
       console.log('📡 Eventos disparados:', {
         storage: 'disparado',
         customEvent: 'disparado com dados:',
-        orderId: orderIdForStorage,
+        id_campanha: numericArteCampanhaId,
         status: 'aprovado'
       });
 
@@ -223,19 +230,14 @@ const ReplacementAdmin = () => {
         return;
       }
 
-      // Buscar o order_id correto para o localStorage
-      const currentOrder = orders.find(order => order.id_campanha === orderId);
-      const orderIdForStorage = currentOrder?.order_id || orderId;
-      
       console.log('💾 Salvando no localStorage (rejeição):', {
-        chave: `replacement_order_${orderIdForStorage}`,
+        chave: `replacement_order_${orderId}`,
         valor: 'rejeitado',
-        orderIdForStorage,
-        orderId
+        id_campanha: orderId
       });
       
       // Atualizar o localStorage e remover o card
-      localStorage.setItem(`replacement_order_${orderIdForStorage}`, "rejeitado");
+      localStorage.setItem(`replacement_order_${orderId}`, "rejeitado");
       setOrders(prev => prev.filter(order => order.id_campanha !== orderId));
       
       console.log('📡 Disparando eventos (rejeição)...');
@@ -246,16 +248,16 @@ const ReplacementAdmin = () => {
       // Evento customizado (funciona sempre)
       window.dispatchEvent(new CustomEvent('replacementStatusChanged', {
         detail: {
-          orderId: orderIdForStorage,
+          id_campanha: orderId,
           status: 'rejeitado',
-          chave: `replacement_order_${orderIdForStorage}`
+          chave: `replacement_order_${orderId}`
         }
       }));
       
       console.log('📡 Eventos disparados (rejeição):', {
         storage: 'disparado',
         customEvent: 'disparado com dados:',
-        orderId: orderIdForStorage,
+        id_campanha: orderId,
         status: 'rejeitado'
       });
 
@@ -328,30 +330,28 @@ const ReplacementAdmin = () => {
               <button
                 className="bg-green-500 hover:bg-green-600 cursor-pointer text-white rounded-lg md:rounded-xl px-3 py-2 font-bold text-xs md:text-sm transition-colors min-w-[70px]"
                 onClick={() => {
-                  const orderIdForStorage = order.order_id || order.id_campanha;
-                  const currentStatus = getOrderStatus(orderIdForStorage);
+                  const currentStatus = getOrderStatus(order.id_campanha);
                   if (currentStatus === "aprovado") {
-                    localStorage.removeItem(`replacement_order_${orderIdForStorage}`);
+                    localStorage.removeItem(`replacement_order_${order.id_campanha}`);
                   } else {
                     handleApprove(order.id_campanha, order.caminho_imagem || "");
                   }
                 }}
               >
-                {getOrderStatus(order.order_id || order.id_campanha) === "aprovado" ? "Remover Aprovação" : "Aprovar"}
+                {getOrderStatus(order.id_campanha) === "aprovado" ? "Remover Aprovação" : "Aprovar"}
               </button>
               <button
                 className="bg-red-500 hover:bg-red-600 cursor-pointer text-white rounded-lg md:rounded-xl px-3 py-2 font-bold text-xs md:text-sm transition-colors min-w-[70px]"
                 onClick={() => {
-                  const orderIdForStorage = order.order_id || order.id_campanha;
-                  const currentStatus = getOrderStatus(orderIdForStorage);
+                  const currentStatus = getOrderStatus(order.id_campanha);
                   if (currentStatus === "rejeitado") {
-                    localStorage.removeItem(`replacement_order_${orderIdForStorage}`);
+                    localStorage.removeItem(`replacement_order_${order.id_campanha}`);
                   } else {
                     handleReject(order.id_campanha);
                   }
                 }}
               >
-                {getOrderStatus(order.order_id || order.id_campanha) === "rejeitado" ? "Remover Rejeição" : "Recusar"}
+                {getOrderStatus(order.id_campanha) === "rejeitado" ? "Remover Rejeição" : "Recusar"}
               </button>
             </div>
           </div>

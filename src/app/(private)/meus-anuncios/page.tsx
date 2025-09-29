@@ -236,15 +236,20 @@ const MeusAnuncios = () => {
            // Retrieve status from arteTrocaCampanhas or local storage
            const arteTrocaCampanhaStatus = arteTrocaCampanhas?.find(atc => atc.id_campanha === arteCampanha.id) || null;
            const localStorageStatus = localStorage.getItem(`order_${orders[0].id}`) || null;
-           const replacementStatus = localStorage.getItem(`replacement_order_${orders[0].id}`) || null;
+           const replacementStatus = localStorage.getItem(`replacement_order_${arteCampanha.id}`) || null;
            const status = replacementStatus || arteTrocaCampanhaStatus || localStorageStatus;
            
-           console.log(`📋 Status para order ${orders[0].id}:`, {
+           console.log(`📋 Status para order ${orders[0].id} (arte_campanha ${arteCampanha.id}):`, {
              arteTrocaCampanhaStatus,
              localStorageStatus,
              replacementStatus,
              finalStatus: status,
-             chave_replacement: `replacement_order_${orders[0].id}`
+             chave_replacement: `replacement_order_${arteCampanha.id}`,
+             todas_chaves_localStorage: Object.keys(localStorage).filter(key => key.includes('order')),
+             chaves_replacement: Object.keys(localStorage).filter(key => key.startsWith('replacement_order_')),
+             valores_replacement: Object.keys(localStorage)
+               .filter(key => key.startsWith('replacement_order_'))
+               .map(key => ({ chave: key, valor: localStorage.getItem(key) }))
            });
            
            // Debug: verificar todos os status
@@ -867,20 +872,7 @@ const MeusAnuncios = () => {
       {/* Conteúdo principal */}
       <div className="px-6 py-4 max-w-4xl mx-auto">
         {loading ? (
-        <div>
-          <p>Carregando anúncios...</p>
-          <button 
-            onClick={() => {
-              console.log('🧪 TESTE MANUAL - Estado atual do localStorage:');
-              console.log('Keys:', Object.keys(localStorage));
-              console.log('Replacement keys:', Object.keys(localStorage).filter(key => key.startsWith('replacement_order_')));
-              console.log('Order keys:', Object.keys(localStorage).filter(key => key.startsWith('order_')));
-            }}
-            className="mt-2 px-4 py-2 bg-blue-500 text-white rounded"
-          >
-            🧪 Testar localStorage
-          </button>
-        </div>
+        <p>Carregando anúncios...</p>
       ) : error ? (
         <div className="text-center">
           <p className="text-red-500">Erro: {error}</p>
