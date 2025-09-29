@@ -45,6 +45,8 @@ const MeusAnuncios = () => {
   const [anuncios, setAnuncios] = useState<Anuncio[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  
+  console.log('🎯 Componente MeusAnuncios renderizado - loading:', loading, 'anuncios:', anuncios.length);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [selectedAnuncioId, setSelectedAnuncioId] = useState<number | null>(null);
@@ -58,6 +60,7 @@ const MeusAnuncios = () => {
 
   // Atualizar dias restantes e alcance atual a cada minuto
   useEffect(() => {
+    console.log('⏰ useEffect de interval executado');
     const interval = setInterval(() => {
       if (orderDetails) {
         const dias = calcularDiasRestantes(orderDetails.inicio_campanha, orderDetails.duracao_campanha);
@@ -78,7 +81,10 @@ const MeusAnuncios = () => {
   }, [orderDetails]);
 
   useEffect(() => {
+    console.log('🚀 useEffect executado - fetchAnuncios iniciando...');
+    
     const handleStorageChange = () => {
+      console.log('🔄 Storage event detectado, recarregando...');
       setRefresh(!refresh);
     };
     
@@ -92,53 +98,79 @@ const MeusAnuncios = () => {
       setLoading(true);
       setError(null);
       try {
-        const { data: { user } } = await supabase.auth.getUser();
+        console.log('🔐 Verificando autenticação...');
+        console.log('🔗 Supabase URL:', process.env.NEXT_PUBLIC_SUPABASE_URL ? 'Configurado' : 'NÃO CONFIGURADO');
+        
+        const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+        if (authError) {
+          console.error('❌ Erro de autenticação:', authError);
+          setError(`Erro de autenticação: ${authError.message}`);
+          setLoading(false);
+          return;
+        }
 
         if (!user) {
+          console.log('❌ Usuário não logado');
           setError("User not logged in");
           setLoading(false);
           return;
         }
 
         const userId = user.id;
-        console.log("User ID:", userId);
+        console.log("✅ User ID:", userId);
 
         // Fetch arte_campanha data for the current user
+        console.log('📊 Buscando arte_campanha para userId:', userId);
         const { data: arteCampanhas, error: arteCampanhasError } = await supabase
           .from("arte_campanha")
           .select(`id, caminho_imagem, id_order`)
           .eq('id_user', userId);
 
         if (arteCampanhasError) {
+          console.error("❌ arteCampanhas error:", arteCampanhasError);
           setError(arteCampanhasError.message);
-          console.error("arteCampanhas error:", arteCampanhasError);
+          setLoading(false);
           return;
         }
+
+        console.log('📋 Resultado da query arte_campanha:', {
+          count: arteCampanhas?.length || 0,
+          data: arteCampanhas
+        });
 
         if (!arteCampanhas || arteCampanhas.length === 0) {
+          console.log("⚠️ Nenhuma arte_campanha encontrada para este usuário");
           setAnuncios([]);
           setLoading(false);
-          console.log("No arteCampanhas found for this user.");
           return;
         }
 
-        console.log("Fetched arteCampanhas:", arteCampanhas);
+        console.log("✅ ArteCampanhas encontradas:", arteCampanhas.length);
 
          // Fetch arte_troca_campanha data for the current user
+         console.log('🔄 Buscando arte_troca_campanha...');
          const { data: arteTrocaCampanhas, error: arteTrocaCampanhasError } = await supabase
          .from("arte_troca_campanha")
          .select(`id, id_campanha`);
 
        if (arteTrocaCampanhasError) {
+         console.error("❌ arteTrocaCampanhas error:", arteTrocaCampanhasError);
          setError(arteTrocaCampanhasError.message);
-         console.error("arteTrocaCampanhas error:", arteTrocaCampanhasError);
+         setLoading(false);
          return;
        }
 
-       console.log("Fetched arteTrocaCampanhas:", arteTrocaCampanhas);
+       console.log('🔄 Resultado da query arte_troca_campanha:', {
+         count: arteTrocaCampanhas?.length || 0,
+         data: arteTrocaCampanhas
+       });
 
         // Fetch orders for the current user
+        console.log('📋 Processando orders para', arteCampanhas.length, 'arteCampanhas...');
         const anunciosPromises = arteCampanhas.map(async (arteCampanha: ArteCampanha) => {
+          console.log(`🔍 Buscando order para arteCampanha ${arteCampanha.id} (id_order: ${arteCampanha.id_order})`);
+          
           // Fetch orders para pegar o nome, inicio e fim da campanha
           const { data: orders, error: ordersError } = await supabase
             .from("order")
@@ -192,11 +224,15 @@ const MeusAnuncios = () => {
         });
 
         const anunciosData = (await Promise.all(anunciosPromises)).filter(Boolean) as Anuncio[];
+        console.log('✅ Anúncios processados:', anunciosData.length);
+        console.log('📊 Dados finais dos anúncios:', anunciosData);
         setAnuncios(anunciosData);
 
       } catch (err: any) {
+        console.error('❌ Erro geral no fetchAnuncios:', err);
         setError(err.message);
       } finally {
+        console.log('🏁 Finalizando fetchAnuncios, setLoading(false)');
         setLoading(false);
       }
     }
