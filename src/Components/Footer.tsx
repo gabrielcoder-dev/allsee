@@ -3,7 +3,7 @@ import Link from 'next/link'
 
 export default function Footer() {
   return (
-    <footer className="bg-gray-900 text-white">
+    <footer className="bg-gradient-to-r from-orange-500 to-orange-600 text-white">
       <div className="max-w-7xl mx-auto px-4 py-12">
         <div className="grid md:grid-cols-4 gap-8">
           {/* Logo e Descrição */}
@@ -16,13 +16,13 @@ export default function Footer() {
               />
               <span className="text-2xl font-bold">AllSee</span>
             </div>
-            <p className="text-gray-300 mb-6 max-w-md">
+            <p className="text-orange-100 mb-6 max-w-md">
               A plataforma completa de publicidade digital que conecta anunciantes 
               a totens inteligentes em todo o Brasil.
             </p>
             <div className="flex space-x-4">
               <a 
-                href="https://wa.me/5511999999999" 
+                href="https://wa.me/5566999769524" 
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="text-green-400 hover:text-green-300 transition-colors"
@@ -34,7 +34,7 @@ export default function Footer() {
               </a>
               <a 
                 href="mailto:contato@allseeads.com.br" 
-                className="text-gray-300 hover:text-white transition-colors"
+                className="text-orange-100 hover:text-white transition-colors"
                 title="E-mail"
               >
                 <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
@@ -49,22 +49,22 @@ export default function Footer() {
             <h3 className="text-lg font-semibold mb-4">Links Rápidos</h3>
             <ul className="space-y-2">
               <li>
-                <Link href="/" className="text-gray-300 hover:text-white transition-colors">
+                <Link href="/" className="text-orange-100 hover:text-white transition-colors">
                   Início
                 </Link>
               </li>
               <li>
-                <Link href="/results" className="text-gray-300 hover:text-white transition-colors">
+                <Link href="/results" className="text-orange-100 hover:text-white transition-colors">
                   Buscar Totens
                 </Link>
               </li>
               <li>
-                <Link href="/dashboard" className="text-gray-300 hover:text-white transition-colors">
-                  Dashboard
+                <Link href="#sobre" className="text-orange-100 hover:text-white transition-colors">
+                  Sobre Nós
                 </Link>
               </li>
               <li>
-                <Link href="/meus-anuncios" className="text-gray-300 hover:text-white transition-colors">
+                <Link href="/meus-anuncios" className="text-orange-100 hover:text-white transition-colors">
                   Meus Anúncios
                 </Link>
               </li>
@@ -76,21 +76,21 @@ export default function Footer() {
             <h3 className="text-lg font-semibold mb-4">Informações Legais</h3>
             <ul className="space-y-2">
               <li>
-                <Link href="/privacidade" className="text-gray-300 hover:text-white transition-colors">
+                <Link href="/privacidade" className="text-orange-100 hover:text-white transition-colors">
                   Política de Privacidade
                 </Link>
               </li>
               <li>
-                <Link href="/termos" className="text-gray-300 hover:text-white transition-colors">
+                <Link href="/termos" className="text-orange-100 hover:text-white transition-colors">
                   Termos de Serviço
                 </Link>
               </li>
               <li>
                 <a 
-                  href="https://wa.me/5511999999999" 
+                  href="https://wa.me/5566999769524" 
                   target="_blank" 
                   rel="noopener noreferrer"
-                  className="text-gray-300 hover:text-white transition-colors"
+                  className="text-orange-100 hover:text-white transition-colors"
                 >
                   Suporte
                 </a>
@@ -98,7 +98,7 @@ export default function Footer() {
               <li>
                 <a 
                   href="mailto:contato@allseeads.com.br" 
-                  className="text-gray-300 hover:text-white transition-colors"
+                  className="text-orange-100 hover:text-white transition-colors"
                 >
                   Contato
                 </a>
@@ -108,12 +108,12 @@ export default function Footer() {
         </div>
 
         {/* Linha Divisória */}
-        <div className="border-t border-gray-700 mt-8 pt-8">
+        <div className="border-t border-orange-400 mt-8 pt-8">
           <div className="flex flex-col md:flex-row justify-between items-center">
-            <div className="text-gray-400 text-sm mb-4 md:mb-0">
+            <div className="text-orange-100 text-sm mb-4 md:mb-0">
               © {new Date().getFullYear()} AllSee. Todos os direitos reservados.
             </div>
-            <div className="text-gray-400 text-sm">
+            <div className="text-orange-100 text-sm">
               Desenvolvido com ❤️ para revolucionar a publicidade digital
             </div>
           </div>

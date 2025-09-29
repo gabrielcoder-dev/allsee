@@ -205,7 +205,7 @@ export default function PrivacidadePage() {
                     <strong>E-mail:</strong> privacidade@allseeads.com.br
                   </p>
                   <p className="text-gray-700">
-                    <strong>Telefone:</strong> (11) 99999-9999
+                    <strong>Telefone:</strong> (66) 9 9976-9524
                   </p>
                   <p className="text-gray-700">
                     <strong>Endereço:</strong> São Paulo, SP - Brasil
