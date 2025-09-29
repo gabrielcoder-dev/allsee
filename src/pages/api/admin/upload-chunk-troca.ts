@@ -1,9 +1,30 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { createClient } from '@supabase/supabase-js';
+import { inflate } from 'zlib';
+import { promisify } from 'util';
+
+const inflateAsync = promisify(inflate);
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
 const supabase = createClient(supabaseUrl, supabaseKey);
+
+// Função para descomprimir chunks comprimidos
+const decompressChunk = async (compressedData: string): Promise<string> => {
+  try {
+    // Converter base64 para Buffer
+    const compressedBuffer = Buffer.from(compressedData, 'base64');
+    
+    // Descomprimir usando gzip
+    const decompressedBuffer = await inflateAsync(compressedBuffer);
+    
+    // Converter de volta para base64
+    return decompressedBuffer.toString('base64');
+  } catch (error) {
+    console.warn('⚠️ Falha na descompressão, usando chunk original:', error);
+    return compressedData; // Fallback para chunk original
+  }
+};
 
 export default async function handler(
   req: NextApiRequest,
@@ -29,8 +50,25 @@ export default async function handler(
       totalChunks: total_chunks
     });
 
+    // Descomprimir chunk se necessário
+    let decompressedChunkData = chunk_data;
+    try {
+      decompressedChunkData = await decompressChunk(chunk_data);
+      const originalSize = chunk_data.length;
+      const decompressedSize = decompressedChunkData.length;
+      const compressionRatio = ((originalSize - decompressedSize) / originalSize * 100).toFixed(1);
+      
+      console.log(`🗜️ Chunk de troca descomprimido:`, {
+        tamanhoOriginal: Math.round(originalSize / 1024) + 'KB',
+        tamanhoDescomprimido: Math.round(decompressedSize / 1024) + 'KB',
+        reducao: compressionRatio + '%'
+      });
+    } catch (error) {
+      console.warn('⚠️ Usando chunk de troca sem descompressão:', error);
+    }
+
     // Validar chunk antes de salvar
-    if (!chunk_data || chunk_data.length === 0) {
+    if (!decompressedChunkData || decompressedChunkData.length === 0) {
       console.error('❌ Chunk de troca vazio recebido:', { chunk_index, total_chunks });
       return res.status(400).json({ 
         success: false, 
@@ -44,7 +82,7 @@ export default async function handler(
       .upsert({
         arte_troca_id: arte_troca_campanha_id,
         chunk_index: chunk_index,
-        chunk_data: chunk_data,
+        chunk_data: decompressedChunkData,
         total_chunks: total_chunks,
         created_at: new Date().toISOString()
       }, {
@@ -66,17 +104,18 @@ export default async function handler(
       // Aguardar um pouco para garantir que todos os chunks foram processados
       await new Promise(resolve => setTimeout(resolve, 1000));
       
-      // Buscar todos os chunks do banco com retry
+      // Buscar todos os chunks do banco com retry otimizado
       let chunks;
       let attempts = 0;
-      const maxAttempts = 5;
+      const maxAttempts = 3; // Reduzido de 5 para 3
       
       while (attempts < maxAttempts) {
         const { data: fetchedChunks, error: fetchError } = await supabase
           .from('chunks_temp_troca')
           .select('chunk_index, chunk_data')
           .eq('arte_troca_id', arte_troca_campanha_id)
-          .order('chunk_index');
+          .order('chunk_index')
+          .limit(1000); // Limite para evitar queries muito grandes
 
         if (fetchError) {
           console.error(`❌ Erro ao buscar chunks de troca (tentativa ${attempts + 1}):`, fetchError);
@@ -87,7 +126,7 @@ export default async function handler(
               error: 'Erro ao buscar chunks de troca após múltiplas tentativas' 
             });
           }
-          await new Promise(resolve => setTimeout(resolve, 2000));
+          await new Promise(resolve => setTimeout(resolve, 1000)); // Reduzido de 2s para 1s
           continue;
         }
 
@@ -220,17 +259,19 @@ export default async function handler(
         });
       }
 
-      // Limpar chunks temporários de troca (não crítico se falhar)
+      // Limpar chunks temporários de troca de forma otimizada (não crítico se falhar)
       try {
+        // Usar delete em lote para melhor performance
         const { error: deleteError } = await supabase
           .from('chunks_temp_troca')
           .delete()
-          .eq('arte_troca_id', arte_troca_campanha_id);
+          .eq('arte_troca_id', arte_troca_campanha_id)
+          .limit(1000); // Limite para evitar operações muito grandes
           
         if (deleteError) {
           console.warn('⚠️ Não foi possível limpar chunks temporários de troca:', deleteError);
         } else {
-          console.log('🧹 Chunks temporários de troca limpos');
+          console.log('🧹 Chunks temporários de troca limpos com sucesso');
         }
       } catch (cleanupError) {
         console.warn('⚠️ Erro na limpeza de chunks de troca:', cleanupError);
@@ -284,8 +325,8 @@ export default async function handler(
 export const config = {
   api: {
     bodyParser: {
-      sizeLimit: '5mb', // 4MB por chunk + overhead base64
-      timeout: 30000, // 30 segundos
+      sizeLimit: '10mb', // 8MB por chunk + overhead base64
+      timeout: 10000, // 10 segundos para chunks (mais que suficiente para 5s do cliente)
     },
     responseLimit: '1mb',
   },
