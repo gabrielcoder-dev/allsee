@@ -24,7 +24,7 @@ export default function HeaderPolTerm() {
     <>
       <header
         className={`fixed top-0 left-0 right-0 z-30 transition-all duration-300 ${
-          scrolled ? "bg-white shadow" : "bg-white"
+          scrolled ? "bg-white shadow" : "bg-transparent"
         }`}
       >
         <div className={`container mx-auto px-4 sm:px-6 lg:px-24 transition-all duration-300
