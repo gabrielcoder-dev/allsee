@@ -168,9 +168,18 @@ const ReplacementAdmin = () => {
       const currentOrder = orders.find(order => order.id_campanha === numericArteCampanhaId);
       const orderIdForStorage = currentOrder?.order_id || numericArteCampanhaId;
       
+      console.log('💾 Salvando no localStorage:', {
+        chave: `replacement_order_${orderIdForStorage}`,
+        valor: 'aprovado',
+        orderIdForStorage,
+        numericArteCampanhaId
+      });
+      
       // Atualizar o localStorage e remover o card
       localStorage.setItem(`replacement_order_${orderIdForStorage}`, "aprovado");
       setOrders(prev => prev.filter(order => order.id_campanha !== numericArteCampanhaId));
+      
+      console.log('📡 Disparando evento storage...');
       window.dispatchEvent(new Event('storage'));
 
       console.log('✅ Arte aprovada e transferida com sucesso!');
@@ -200,9 +209,18 @@ const ReplacementAdmin = () => {
       const currentOrder = orders.find(order => order.id_campanha === orderId);
       const orderIdForStorage = currentOrder?.order_id || orderId;
       
+      console.log('💾 Salvando no localStorage (rejeição):', {
+        chave: `replacement_order_${orderIdForStorage}`,
+        valor: 'rejeitado',
+        orderIdForStorage,
+        orderId
+      });
+      
       // Atualizar o localStorage e remover o card
       localStorage.setItem(`replacement_order_${orderIdForStorage}`, "rejeitado");
       setOrders(prev => prev.filter(order => order.id_campanha !== orderId));
+      
+      console.log('📡 Disparando evento storage (rejeição)...');
       window.dispatchEvent(new Event('storage'));
 
       console.log('Arte rejeitada e excluída com sucesso!');

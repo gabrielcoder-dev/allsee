@@ -87,6 +87,10 @@ const MeusAnuncios = () => {
     
     const handleStorageChange = () => {
       console.log('🔄 Storage event detectado, recarregando...');
+      console.log('📊 Estado atual do localStorage:', {
+        replacement_keys: Object.keys(localStorage).filter(key => key.startsWith('replacement_order_')),
+        order_keys: Object.keys(localStorage).filter(key => key.startsWith('order_'))
+      });
       setRefresh(!refresh);
     };
     
@@ -224,6 +228,14 @@ const MeusAnuncios = () => {
            const localStorageStatus = localStorage.getItem(`order_${orders[0].id}`) || null;
            const replacementStatus = localStorage.getItem(`replacement_order_${orders[0].id}`) || null;
            const status = replacementStatus || arteTrocaCampanhaStatus || localStorageStatus;
+           
+           console.log(`📋 Status para order ${orders[0].id}:`, {
+             arteTrocaCampanhaStatus,
+             localStorageStatus,
+             replacementStatus,
+             finalStatus: status,
+             chave_replacement: `replacement_order_${orders[0].id}`
+           });
            
            // Debug: verificar todos os status
            console.log(`Order ${orders[0].id}:`, {
