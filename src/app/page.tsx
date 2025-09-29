@@ -2,6 +2,7 @@
 import About from '@/Components/About'
 import Benefits from '@/Components/Benefits'
 import Cta from '@/Components/CTA'
+import Footer from '@/Components/Footer'
 import HeaderLand from '@/Components/Header'
 import Hero from '@/Components/Hero'
 import Plans from '@/Components/Plans'
@@ -19,6 +20,7 @@ const page = () => {
       <About />
       <Testimonials />
       <Cta />
+      <Footer />
     </div>
   )
 }
