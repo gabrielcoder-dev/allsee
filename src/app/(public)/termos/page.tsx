@@ -1,11 +1,11 @@
 import React from 'react'
-import HeaderLand from '@/Components/Header'
+import HeaderPolTerm from '@/Components/HeaderPolTerm'
 import Footer from '@/Components/Footer'
 
 export default function TermosPage() {
   return (
     <div className="min-h-screen bg-gray-50">
-      <HeaderLand />
+      <HeaderPolTerm />
       
       <div className="max-w-4xl mx-auto px-4 py-12">
         <div className="bg-white rounded-lg shadow-lg p-8">
