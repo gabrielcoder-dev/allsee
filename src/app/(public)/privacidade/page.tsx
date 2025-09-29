@@ -4,10 +4,10 @@ import Footer from '@/Components/Footer'
 
 export default function PrivacidadePage() {
   return (
-    <div className="min-h-screen flex flex-col justify-center bg-gray-50">
+    <div className="min-h-screen  bg-gray-50">
       <HeaderPolTerm />
       
-      <div className="max-w-4xl mx-auto px-4 py-12">
+      <div className="max-w-4xl mx-auto px-4 py-12 pt-24">
         <div className="bg-white rounded-lg shadow-lg p-8">
           {/* Header */}
           <div className="text-center mb-12">
