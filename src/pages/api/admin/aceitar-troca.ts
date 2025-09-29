@@ -82,7 +82,7 @@ export default async function handler(
     });
 
     // Verificar se o arquivo é muito grande para update direto
-    const maxDirectUpdateSize = 4 * 1024 * 1024; // 4MB
+    const maxDirectUpdateSize = 2 * 1024 * 1024; // 2MB (reduzido para evitar timeouts)
     const fileSize = arteTroca.caminho_imagem ? arteTroca.caminho_imagem.length : 0;
     
     if (fileSize > maxDirectUpdateSize) {
@@ -109,7 +109,7 @@ export default async function handler(
       
       while (currentPosition < arteTroca.caminho_imagem.length) {
         const remainingBytes = arteTroca.caminho_imagem.length - currentPosition;
-        const chunkSize = Math.min(maxDirectUpdateSize, remainingBytes);
+        const chunkSize = Math.min(1.5 * 1024 * 1024, remainingBytes); // 1.5MB por chunk
         
         const chunk = arteTroca.caminho_imagem.slice(currentPosition, currentPosition + chunkSize);
         chunks.push(chunk);
@@ -348,6 +348,15 @@ export default async function handler(
 
   } catch (error: any) {
     console.error("❌ Erro no endpoint aceitar-troca:", error);
+    
+    // Verificar se é erro de timeout específico
+    if (error.message && error.message.includes('timeout')) {
+      return res.status(408).json({ 
+        success: false, 
+        error: 'Operação demorou muito para ser concluída. Tente novamente com um arquivo menor ou aguarde e tente novamente.' 
+      });
+    }
+    
     return res.status(500).json({ 
       success: false, 
       error: 'Erro interno do servidor' 
@@ -359,7 +368,7 @@ export const config = {
   api: {
     bodyParser: {
       sizeLimit: '1mb', // Apenas IDs, não arquivos
-      timeout: 30000, // 30 segundos
+      timeout: 120000, // 2 minutos para operações de chunks
     },
     responseLimit: '1mb',
   },
