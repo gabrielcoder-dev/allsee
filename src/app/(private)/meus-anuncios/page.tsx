@@ -122,6 +122,16 @@ const MeusAnuncios = () => {
 
         // Fetch arte_campanha data for the current user
         console.log('📊 Buscando arte_campanha para userId:', userId);
+        
+        // PRIMEIRO: Vamos ver TODAS as arte_campanha para debug
+        const { data: allArteCampanhas, error: allError } = await supabase
+          .from("arte_campanha")
+          .select(`id, caminho_imagem, id_order, id_user`)
+          .order("id", { ascending: false });
+        
+        console.log('🔍 TODAS as arte_campanha no banco:', allArteCampanhas);
+        
+        // SEGUNDO: Filtrar apenas as do usuário atual
         const { data: arteCampanhas, error: arteCampanhasError } = await supabase
           .from("arte_campanha")
           .select(`id, caminho_imagem, id_order`)
@@ -134,9 +144,23 @@ const MeusAnuncios = () => {
           return;
         }
 
-        console.log('📋 Resultado da query arte_campanha:', {
+        console.log('📋 Resultado da query arte_campanha (filtrado por usuário):', {
           count: arteCampanhas?.length || 0,
           data: arteCampanhas
+        });
+        
+        // Comparar com todas as arte_campanha
+        const userArteCampanhas = allArteCampanhas?.filter(ac => ac.id_user === userId) || [];
+        console.log('🔍 Arte_campanha do usuário (filtrado manualmente):', {
+          count: userArteCampanhas.length,
+          data: userArteCampanhas
+        });
+        
+        // Verificar se há diferença entre as queries
+        console.log('⚖️ Comparação:', {
+          queryFiltered: arteCampanhas?.length || 0,
+          manualFiltered: userArteCampanhas.length,
+          totalInDB: allArteCampanhas?.length || 0
         });
 
         if (!arteCampanhas || arteCampanhas.length === 0) {
