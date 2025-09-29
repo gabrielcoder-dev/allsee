@@ -33,23 +33,43 @@ const ReplacementAdmin = () => {
       const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
       setLoading(true);
-      const { data, error } = await supabase
+      
+      // Primeiro, buscar todas as arte_troca_campanha
+      const { data: trocaData, error: trocaError } = await supabase
         .from("arte_troca_campanha")
-        .select(`
-          id, 
-          caminho_imagem, 
-          id_campanha,
-          arte_campanha!inner(id_order)
-        `)
+        .select("id, caminho_imagem, id_campanha")
         .order("id", { ascending: false });
 
-      if (!error && data) {
-        const adaptedOrders = data.map((item) => ({
-          id: item.id,
-          caminho_imagem: item.caminho_imagem,
-          id_campanha: item.id_campanha,
-          order_id: (item as any).arte_campanha?.id_order, // Buscar order_id da relação
-        }));
+      if (trocaError) {
+        console.error("Erro ao buscar arte_troca_campanha:", trocaError);
+        setLoading(false);
+        return;
+      }
+
+      if (trocaData && trocaData.length > 0) {
+        // Depois, buscar os order_id correspondentes
+        const campanhaIds = trocaData.map(item => item.id_campanha);
+        const { data: campanhaData, error: campanhaError } = await supabase
+          .from("arte_campanha")
+          .select("id, id_order")
+          .in("id", campanhaIds);
+
+        if (campanhaError) {
+          console.error("Erro ao buscar arte_campanha:", campanhaError);
+          setLoading(false);
+          return;
+        }
+
+        // Combinar os dados
+        const adaptedOrders = trocaData.map((troca) => {
+          const campanha = campanhaData?.find(c => c.id === troca.id_campanha);
+          return {
+            id: troca.id,
+            caminho_imagem: troca.caminho_imagem,
+            id_campanha: troca.id_campanha,
+            order_id: campanha?.id_order,
+          };
+        });
         setOrders(adaptedOrders);
       }
       setLoading(false);
