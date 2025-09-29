@@ -42,6 +42,8 @@ interface Anuncio {
 }
 
 const MeusAnuncios = () => {
+  console.log('🚀 COMPONENTE INICIANDO...');
+  
   const [anuncios, setAnuncios] = useState<Anuncio[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -90,11 +92,8 @@ const MeusAnuncios = () => {
     
     window.addEventListener('storage', handleStorageChange);
     
-    return () => {
-      window.removeEventListener('storage', handleStorageChange);
-    };
-
-    async function fetchAnuncios() {
+    const fetchAnuncios = async () => {
+      console.log('🎬 INICIANDO fetchAnuncios...');
       setLoading(true);
       setError(null);
       try {
@@ -261,7 +260,16 @@ const MeusAnuncios = () => {
       }
     }
 
-    fetchAnuncios();
+    // Executar fetchAnuncios com tratamento de erro
+    fetchAnuncios().catch((error) => {
+      console.error('❌ Erro ao executar fetchAnuncios:', error);
+      setError('Erro ao carregar anúncios: ' + error.message);
+      setLoading(false);
+    });
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+    };
   }, [refresh]);
 
   // Função para calcular dias restantes
@@ -836,9 +844,15 @@ const MeusAnuncios = () => {
       {/* Conteúdo principal */}
       <div className="px-6 py-4 max-w-4xl mx-auto">
         {loading ? (
-        <p>Carregando anúncios...</p>
+        <div className="text-center">
+          <p>Carregando anúncios...</p>
+          <p className="text-sm text-gray-500 mt-2">Verifique o console para logs de debug</p>
+        </div>
       ) : error ? (
-        <p className="text-red-500">Erro: {error}</p>
+        <div className="text-center">
+          <p className="text-red-500">Erro: {error}</p>
+          <p className="text-sm text-gray-500 mt-2">Verifique o console para mais detalhes</p>
+        </div>
       ) : (
         <div className="grid gap-4 md:gap-6 pb-8">
           {anuncios.map((anuncio) => {
