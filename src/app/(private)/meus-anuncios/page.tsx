@@ -844,10 +844,7 @@ const MeusAnuncios = () => {
       {/* Conteúdo principal */}
       <div className="px-6 py-4 max-w-4xl mx-auto">
         {loading ? (
-        <div className="text-center">
-          <p>Carregando anúncios...</p>
-          <p className="text-sm text-gray-500 mt-2">Verifique o console para logs de debug</p>
-        </div>
+        <p>Carregando anúncios...</p>
       ) : error ? (
         <div className="text-center">
           <p className="text-red-500">Erro: {error}</p>
