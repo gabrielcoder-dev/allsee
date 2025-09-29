@@ -12,7 +12,7 @@ import React from 'react'
 
 const page = () => {
   return (
-    <div className='mb-12'>
+    <div>
       <HeaderLand />
       <Hero />
       <Benefits />

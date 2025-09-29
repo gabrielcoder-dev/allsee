@@ -1,7 +1,7 @@
 export default function Cta() {
   return (
     <section
-      className="w-full  flex justify-center items-center mt-10 bg-white px-2 sm:px-4"
+      className="w-full mb-12 flex justify-center items-center mt-10 bg-white px-2 sm:px-4"
       id="contato"
     >
       <div className="text-center bg-orange-50 w-full max-w-2xl md:max-w-3xl lg:max-w-4xl py-10 md:py-16 px-4 sm:px-8 md:px-10 lg:px-16 rounded-lg flex flex-col items-center gap-6 shadow">
