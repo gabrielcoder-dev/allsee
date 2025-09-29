@@ -78,9 +78,15 @@ const MeusAnuncios = () => {
   }, [orderDetails]);
 
   useEffect(() => {
-    window.addEventListener('storage', () => {
+    const handleStorageChange = () => {
       setRefresh(!refresh);
-    });
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+    };
 
     async function fetchAnuncios() {
       setLoading(true);

@@ -9,6 +9,7 @@ interface Order {
   id: number;
   caminho_imagem: string | null;
   id_campanha: number;
+  order_id?: number; // Adicionar order_id para sincronização
 }
 
 const isVideo = (url: string) => {
@@ -34,7 +35,12 @@ const ReplacementAdmin = () => {
       setLoading(true);
       const { data, error } = await supabase
         .from("arte_troca_campanha")
-        .select("id, caminho_imagem, id_campanha")
+        .select(`
+          id, 
+          caminho_imagem, 
+          id_campanha,
+          arte_campanha!inner(id_order)
+        `)
         .order("id", { ascending: false });
 
       if (!error && data) {
@@ -42,6 +48,7 @@ const ReplacementAdmin = () => {
           id: item.id,
           caminho_imagem: item.caminho_imagem,
           id_campanha: item.id_campanha,
+          order_id: (item as any).arte_campanha?.id_order, // Buscar order_id da relação
         }));
         setOrders(adaptedOrders);
       }
@@ -137,8 +144,12 @@ const ReplacementAdmin = () => {
       const data = await response.json();
       console.log('✅ Troca aceita com sucesso:', data);
 
+      // Buscar o order_id correto para o localStorage
+      const currentOrder = orders.find(order => order.id_campanha === numericArteCampanhaId);
+      const orderIdForStorage = currentOrder?.order_id || numericArteCampanhaId;
+      
       // Atualizar o localStorage e remover o card
-      localStorage.setItem(`replacement_order_${numericArteCampanhaId}`, "aprovado");
+      localStorage.setItem(`replacement_order_${orderIdForStorage}`, "aprovado");
       setOrders(prev => prev.filter(order => order.id_campanha !== numericArteCampanhaId));
       window.dispatchEvent(new Event('storage'));
 
@@ -165,8 +176,12 @@ const ReplacementAdmin = () => {
         return;
       }
 
+      // Buscar o order_id correto para o localStorage
+      const currentOrder = orders.find(order => order.id_campanha === orderId);
+      const orderIdForStorage = currentOrder?.order_id || orderId;
+      
       // Atualizar o localStorage e remover o card
-      localStorage.setItem(`replacement_order_${orderId}`, "rejeitado");
+      localStorage.setItem(`replacement_order_${orderIdForStorage}`, "rejeitado");
       setOrders(prev => prev.filter(order => order.id_campanha !== orderId));
       window.dispatchEvent(new Event('storage'));
 
@@ -239,28 +254,30 @@ const ReplacementAdmin = () => {
               <button
                 className="bg-green-500 hover:bg-green-600 cursor-pointer text-white rounded-lg md:rounded-xl px-3 py-2 font-bold text-xs md:text-sm transition-colors min-w-[70px]"
                 onClick={() => {
-                  const currentStatus = getOrderStatus(order.id_campanha);
+                  const orderIdForStorage = order.order_id || order.id_campanha;
+                  const currentStatus = getOrderStatus(orderIdForStorage);
                   if (currentStatus === "aprovado") {
-                    localStorage.removeItem(`replacement_order_${order.id_campanha}`);
+                    localStorage.removeItem(`replacement_order_${orderIdForStorage}`);
                   } else {
                     handleApprove(order.id_campanha, order.caminho_imagem || "");
                   }
                 }}
               >
-                {getOrderStatus(order.id_campanha) === "aprovado" ? "Remover Aprovação" : "Aprovar"}
+                {getOrderStatus(order.order_id || order.id_campanha) === "aprovado" ? "Remover Aprovação" : "Aprovar"}
               </button>
               <button
                 className="bg-red-500 hover:bg-red-600 cursor-pointer text-white rounded-lg md:rounded-xl px-3 py-2 font-bold text-xs md:text-sm transition-colors min-w-[70px]"
                 onClick={() => {
-                  const currentStatus = getOrderStatus(order.id_campanha);
+                  const orderIdForStorage = order.order_id || order.id_campanha;
+                  const currentStatus = getOrderStatus(orderIdForStorage);
                   if (currentStatus === "rejeitado") {
-                    localStorage.removeItem(`replacement_order_${order.id_campanha}`);
+                    localStorage.removeItem(`replacement_order_${orderIdForStorage}`);
                   } else {
                     handleReject(order.id_campanha);
                   }
                 }}
               >
-                {getOrderStatus(order.id_campanha) === "rejeitado" ? "Remover Rejeição" : "Recusar"}
+                {getOrderStatus(order.order_id || order.id_campanha) === "rejeitado" ? "Remover Rejeição" : "Recusar"}
               </button>
             </div>
           </div>
