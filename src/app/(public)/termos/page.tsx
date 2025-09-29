@@ -7,7 +7,7 @@ export default function TermosPage() {
     <div className="min-h-screen  bg-gray-50">
       <HeaderPolTerm />
       
-      <div className="max-w-4xl mx-auto px-4 pb-12 pt-24">
+      <div className="max-w-4xl mx-auto px-4 pb-12 pt-32">
         <div className="bg-white rounded-lg shadow-lg p-8">
           {/* Header */}
           <div className="text-center mb-12">
