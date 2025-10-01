@@ -114,7 +114,10 @@ export default function ModalLogin({ onClose }: { onClose: () => void }) {
          Cadastre ou Entre com Google
         </h2>
         <button
-          onClick={handleGoogleRegister}
+          onClick={(e) => {
+            e.stopPropagation();
+            handleGoogleRegister();
+          }}
           disabled={loadingRegister}
           className="flex items-center justify-center gap-3 mb-2 border bg-gray-600 text-white rounded-2xl py-3 font-semibold mt-2 cursor-pointer hover:border-gray-300 hover:bg-transparent hover:text-black transition disabled:opacity-60 w-full"
         >
@@ -124,7 +127,10 @@ export default function ModalLogin({ onClose }: { onClose: () => void }) {
           {loadingRegister ? "Cadastrando..." : "Cadastrar com Google"}
         </button>
         <button
-          onClick={handleGoogleLogin}
+          onClick={(e) => {
+            e.stopPropagation();
+            handleGoogleLogin();
+          }}
           disabled={loadingLogin}
           className="flex items-center justify-center gap-3 border border-orange-600 text-black rounded-2xl py-3 font-semibold mt-2 cursor-pointer hover:bg-orange-100 transition disabled:opacity-60 w-full"
         >
