@@ -15,11 +15,16 @@ export default function ModalLogin({ onClose }: { onClose: () => void }) {
   const handleGoogleRegister = async () => {
     setError(null)
     setLoadingRegister(true)
-    console.log('🔐 Iniciando cadastro com Google...')
+    
+    console.log('🔐 === INICIANDO CADASTRO COM GOOGLE ===')
     console.log('🌐 URL atual:', window.location.origin)
     console.log('🔧 Supabase URL:', process.env.NEXT_PUBLIC_SUPABASE_URL)
+    console.log('🔧 Supabase Key:', process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? 'Configurado' : 'NÃO CONFIGURADO')
+    console.log('🔧 User Agent:', navigator.userAgent)
     
     try {
+      console.log('📡 Fazendo chamada para Supabase...')
+      
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
@@ -31,26 +36,40 @@ export default function ModalLogin({ onClose }: { onClose: () => void }) {
         }
       })
       
-      console.log('📊 Resposta completa do Supabase:', { 
-        data: data ? JSON.stringify(data, null, 2) : 'null',
-        error: error ? JSON.stringify(error, null, 2) : 'null'
-      })
+      console.log('📊 === RESPOSTA DO SUPABASE ===')
+      console.log('Data:', data)
+      console.log('Error:', error)
+      console.log('Data URL:', data?.url)
+      console.log('Data Provider:', data?.provider)
       
       if (error) {
-        console.error('❌ Erro no cadastro:', error)
+        console.error('❌ ERRO NO CADASTRO:', error)
+        console.error('❌ Código do erro:', error.status)
+        console.error('❌ Mensagem:', error.message)
         setError(`Erro: ${error.message}`)
         setLoadingRegister(false)
       } else if (data?.url) {
         console.log('✅ URL de redirecionamento encontrada:', data.url)
-        // Redirecionamento manual
-        window.location.href = data.url
+        console.log('🚀 Iniciando redirecionamento...')
+        
+        // Tentar múltiplas formas de redirecionamento
+        try {
+          window.location.href = data.url
+          console.log('✅ window.location.href executado')
+        } catch (redirectError) {
+          console.error('❌ Erro no redirecionamento:', redirectError)
+          // Fallback
+          window.open(data.url, '_self')
+        }
       } else {
         console.error('❌ URL de redirecionamento não encontrada na resposta')
+        console.log('📊 Estrutura completa da resposta:', JSON.stringify(data, null, 2))
         setError('Erro: URL de redirecionamento não encontrada. Verifique a configuração do Google OAuth.')
         setLoadingRegister(false)
       }
     } catch (err: any) {
-      console.error('❌ Erro inesperado:', err)
+      console.error('❌ ERRO INESPERADO:', err)
+      console.error('❌ Stack trace:', err.stack)
       setError(`Erro inesperado: ${err.message || "Erro ao autenticar com Google."}`)
       setLoadingRegister(false)
     }
@@ -59,11 +78,16 @@ export default function ModalLogin({ onClose }: { onClose: () => void }) {
   const handleGoogleLogin = async () => {
     setError(null)
     setLoadingLogin(true)
-    console.log('🔐 Iniciando login com Google...')
+    
+    console.log('🔐 === INICIANDO LOGIN COM GOOGLE ===')
     console.log('🌐 URL atual:', window.location.origin)
     console.log('🔧 Supabase URL:', process.env.NEXT_PUBLIC_SUPABASE_URL)
+    console.log('🔧 Supabase Key:', process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? 'Configurado' : 'NÃO CONFIGURADO')
+    console.log('🔧 User Agent:', navigator.userAgent)
     
     try {
+      console.log('📡 Fazendo chamada para Supabase...')
+      
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
@@ -75,26 +99,40 @@ export default function ModalLogin({ onClose }: { onClose: () => void }) {
         }
       })
       
-      console.log('📊 Resposta completa do Supabase:', { 
-        data: data ? JSON.stringify(data, null, 2) : 'null',
-        error: error ? JSON.stringify(error, null, 2) : 'null'
-      })
+      console.log('📊 === RESPOSTA DO SUPABASE ===')
+      console.log('Data:', data)
+      console.log('Error:', error)
+      console.log('Data URL:', data?.url)
+      console.log('Data Provider:', data?.provider)
       
       if (error) {
-        console.error('❌ Erro no login:', error)
+        console.error('❌ ERRO NO LOGIN:', error)
+        console.error('❌ Código do erro:', error.status)
+        console.error('❌ Mensagem:', error.message)
         setError(`Erro: ${error.message}`)
         setLoadingLogin(false)
       } else if (data?.url) {
         console.log('✅ URL de redirecionamento encontrada:', data.url)
-        // Redirecionamento manual
-        window.location.href = data.url
+        console.log('🚀 Iniciando redirecionamento...')
+        
+        // Tentar múltiplas formas de redirecionamento
+        try {
+          window.location.href = data.url
+          console.log('✅ window.location.href executado')
+        } catch (redirectError) {
+          console.error('❌ Erro no redirecionamento:', redirectError)
+          // Fallback
+          window.open(data.url, '_self')
+        }
       } else {
         console.error('❌ URL de redirecionamento não encontrada na resposta')
+        console.log('📊 Estrutura completa da resposta:', JSON.stringify(data, null, 2))
         setError('Erro: URL de redirecionamento não encontrada. Verifique a configuração do Google OAuth.')
         setLoadingLogin(false)
       }
     } catch (err: any) {
-      console.error('❌ Erro inesperado:', err)
+      console.error('❌ ERRO INESPERADO:', err)
+      console.error('❌ Stack trace:', err.stack)
       setError(`Erro inesperado: ${err.message || "Erro ao autenticar com Google."}`)
       setLoadingLogin(false)
     }
