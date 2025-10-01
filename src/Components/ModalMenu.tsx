@@ -17,6 +17,14 @@ export default function ModalMenu({ open, onClose }: ModalMenuProps) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
 
+  // Função para fechar o modal com proteção
+  const handleClose = () => {
+    // Só fecha se o modal de login não estiver aberto
+    if (!showLoginModal) {
+      onClose();
+    }
+  }
+
   // Verifica estado de autenticação
   useEffect(() => {
     const checkAuth = async () => {
@@ -34,16 +42,16 @@ export default function ModalMenu({ open, onClose }: ModalMenuProps) {
     return () => subscription.unsubscribe();
   }, []);
 
-  // Fecha ao clicar fora do modal
+  // Fecha ao clicar fora do modal - mas não se o modal de login estiver aberto
   useEffect(() => {
     function handleClick(e: MouseEvent) {
       if (modalRef.current && !modalRef.current.contains(e.target as Node)) {
-        onClose();
+        handleClose();
       }
     }
     if (open) document.addEventListener('mousedown', handleClick);
     return () => document.removeEventListener('mousedown', handleClick);
-  }, [open, onClose]);
+  }, [open, showLoginModal]);
 
   if (!open) return null;
 
@@ -53,7 +61,7 @@ export default function ModalMenu({ open, onClose }: ModalMenuProps) {
         {/* Overlay escuro */}
         <div
           className="fixed inset-0 bg-black/30"
-          onClick={onClose}
+          onClick={handleClose}
           aria-label="Fechar menu"
         />
         {/* Menu lateral */}
@@ -65,7 +73,12 @@ export default function ModalMenu({ open, onClose }: ModalMenuProps) {
           {/* Botão de fechar */}
           <button
             className="absolute top-4 right-4 text-gray-400 hover:text-gray-700 cursor-pointer"
-            onClick={onClose}
+            onClick={handleClose}
+            disabled={showLoginModal}
+            style={{ 
+              opacity: showLoginModal ? 0.5 : 1,
+              cursor: showLoginModal ? 'not-allowed' : 'pointer'
+            }}
             aria-label="Fechar"
           >
             <X size={24} />

@@ -15,6 +15,13 @@ export default function ModalLogin({ onClose }: { onClose: () => void }) {
   // Log quando o componente é renderizado
   console.log('🎭 ModalLogin renderizado!')
 
+  // Função para fechar o modal com proteção
+  const handleClose = () => {
+    if (!loadingRegister && !loadingLogin) {
+      onClose();
+    }
+  }
+
   const handleGoogleRegister = async () => {
     setError(null)
     setLoadingRegister(true)
@@ -164,16 +171,39 @@ export default function ModalLogin({ onClose }: { onClose: () => void }) {
   return (
     <div
       className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/40"
-      onClick={onClose}
+      onClick={handleClose}
     >
         <div
           className="bg-white rounded-md relative flex flex-col p-8 shadow-lg w-96 max-w-full mx-4"
           onClick={e => e.stopPropagation()}
         >
-        <button className="absolute top-3 right-3 cursor-pointer" onClick={onClose}><X className="w-5 text-gray-600 hover:text-black" /></button>
+        <button 
+          className="absolute top-3 right-3 cursor-pointer" 
+          onClick={handleClose}
+          disabled={loadingRegister || loadingLogin}
+          style={{ 
+            opacity: (loadingRegister || loadingLogin) ? 0.5 : 1,
+            cursor: (loadingRegister || loadingLogin) ? 'not-allowed' : 'pointer'
+          }}
+        >
+          <X className="w-5 text-gray-600 hover:text-black" />
+        </button>
         <h2 className="text-xl font-semibold mb-6 text-center">
          Cadastre ou Entre com Google
         </h2>
+        
+        {/* Mensagem de redirecionamento */}
+        {(loadingRegister || loadingLogin) && (
+          <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg text-center">
+            <div className="text-blue-700 font-medium">
+              {loadingRegister ? "Redirecionando para Google..." : "Redirecionando para Google..."}
+            </div>
+            <div className="text-blue-600 text-sm mt-1">
+              Aguarde, você será redirecionado em breve
+            </div>
+          </div>
+        )}
+        
         <button
           onClick={(e) => {
             console.log('🖱️ CLIQUE NO BOTÃO CADASTRAR!')
