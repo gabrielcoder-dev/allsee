@@ -192,18 +192,6 @@ export default function ModalLogin({ onClose }: { onClose: () => void }) {
          Cadastre ou Entre com Google
         </h2>
         
-        {/* Mensagem de redirecionamento */}
-        {(loadingRegister || loadingLogin) && (
-          <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg text-center">
-            <div className="text-blue-700 font-medium">
-              {loadingRegister ? "Redirecionando para Google..." : "Redirecionando para Google..."}
-            </div>
-            <div className="text-blue-600 text-sm mt-1">
-              Aguarde, você será redirecionado em breve
-            </div>
-          </div>
-        )}
-        
         <button
           onClick={(e) => {
             console.log('🖱️ CLIQUE NO BOTÃO CADASTRAR!')
