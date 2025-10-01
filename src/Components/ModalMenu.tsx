@@ -1,8 +1,9 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import { X, ChevronDown, ChevronUp, Star, Image as ImageIcon, Menu, List, User, LogOut, MessageCircle, GlobeLockIcon } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { useUserRole } from '@/hooks/useUserRole';
+import ModalLogin from './ModalLogin';
 
 interface ModalMenuProps {
   open: boolean;
@@ -13,6 +14,25 @@ export default function ModalMenu({ open, onClose }: ModalMenuProps) {
   const modalRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
   const { isAdmin } = useUserRole();
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [showLoginModal, setShowLoginModal] = useState(false);
+
+  // Verifica estado de autenticação
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setIsAuthenticated(!!user);
+    };
+    
+    checkAuth();
+    
+    // Escuta mudanças na autenticação
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      setIsAuthenticated(!!session?.user);
+    });
+    
+    return () => subscription.unsubscribe();
+  }, []);
 
   // Fecha ao clicar fora do modal
   useEffect(() => {
@@ -58,12 +78,18 @@ export default function ModalMenu({ open, onClose }: ModalMenuProps) {
           <button
             className="flex flex-col items-start justify-center gap-2 p-4 rounded-xl bg-gray-100 text-gray-700 font-semibold shadow hover:bg-gray-200 transition cursor-pointer"
             onClick={() => {
-              router.push('/meus-anuncios');
-              onClose();
+              if (isAuthenticated) {
+                router.push('/meus-anuncios');
+                onClose();
+              } else {
+                setShowLoginModal(true);
+              }
             }}
           >
-            <List size={24} />
-            <span className="text-sm text-left leading-tight">meus anúncios</span>
+            {isAuthenticated ? <List size={24} /> : <User size={24} />}
+            <span className="text-sm text-left leading-tight">
+              {isAuthenticated ? 'meus anúncios' : 'Entrar'}
+            </span>
           </button>
 
           {isAdmin && (
@@ -114,6 +140,11 @@ export default function ModalMenu({ open, onClose }: ModalMenuProps) {
           </button>
         </div>
       </div>
+      
+      {/* Modal de Login */}
+      {showLoginModal && (
+        <ModalLogin onClose={() => setShowLoginModal(false)} />
+      )}
     </div>
   );
 }
