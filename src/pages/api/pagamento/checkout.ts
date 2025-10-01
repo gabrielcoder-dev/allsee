@@ -63,8 +63,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       payer: payerData,
       notification_url: computedWebhookUrl,
       payment_methods: {
-        installments: 1,
-        default_installments: 1
+        installments: 12,
+        default_installments: 1,
+        excluded_payment_methods: [],
+        excluded_payment_types: [],
+        default_payment_method_id: null
       },
       expires: true,
       expiration_date_to: new Date(Date.now() + 30 * 60 * 1000).toISOString(), // 30 minutos
