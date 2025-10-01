@@ -140,42 +140,12 @@ export default function ModalLogin({ onClose }: { onClose: () => void }) {
     >
         <div
           className="bg-white rounded-md relative flex flex-col p-8 shadow-lg w-96 max-w-full mx-4"
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-          }}
+          onClick={e => e.stopPropagation()}
         >
         <button className="absolute top-3 right-3 cursor-pointer" onClick={onClose}><X className="w-5 text-gray-600 hover:text-black" /></button>
         <h2 className="text-xl font-semibold mb-6 text-center">
          Cadastre ou Entre com Google
         </h2>
-        
-        {/* Botão de teste simples */}
-        <button
-          onClick={() => {
-            console.log('🧪 TESTE SIMPLES: Verificando Supabase...')
-            console.log('Supabase URL:', process.env.NEXT_PUBLIC_SUPABASE_URL)
-            console.log('Supabase Key:', process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? 'Configurado' : 'NÃO CONFIGURADO')
-            
-            // Teste direto sem parâmetros extras
-            supabase.auth.signInWithOAuth({
-              provider: 'google'
-            }).then(({ data, error }) => {
-              console.log('🧪 RESULTADO SIMPLES:', { data, error })
-              if (data?.url) {
-                console.log('✅ URL encontrada:', data.url)
-                window.location.href = data.url
-              } else {
-                console.log('❌ URL não encontrada')
-              }
-            }).catch(err => {
-              console.error('❌ Erro no teste:', err)
-            })
-          }}
-          className="mb-4 px-4 py-2 bg-blue-500 text-white rounded text-sm hover:bg-blue-600"
-        >
-          🧪 Teste Simples
-        </button>
         <button
           onClick={(e) => {
             console.log('🖱️ CLIQUE NO BOTÃO CADASTRAR!')
