@@ -77,28 +77,40 @@ export default function ModalMenu({ open, onClose }: ModalMenuProps) {
               <Menu size={24} />
               <span className="text-sm text-left leading-tight">escolha onde anunciar</span>
             </button>
-            <button
-              className="flex flex-col items-start justify-center gap-2 p-4 rounded-xl bg-gray-100 text-gray-700 font-semibold shadow hover:bg-gray-200 transition cursor-pointer"
-            onClick={() => {
-              console.log('🖱️ CLIQUE NO BOTÃO ENTRAR DO MENU!')
-              console.log('🔐 Usuário autenticado:', isAuthenticated)
-              console.log('🔧 Estado showLoginModal:', showLoginModal)
-              if (isAuthenticated) {
-                router.push('/meus-anuncios');
-                onClose();
-              } else {
-                console.log('🚀 Abrindo modal de login...')
-                setShowLoginModal(true);
-                console.log('🔧 Estado showLoginModal após setState:', true)
-              }
-            }}
-            >
-              {isAuthenticated ? <List size={24} /> : <User size={24} />}
-              <span className="text-sm text-left leading-tight">
-                {isAuthenticated ? 'meus anúncios' : 'Entrar'}
-              </span>
-            </button>
+            
+            {/* Botão Entrar - só aparece quando NÃO autenticado */}
+            {!isAuthenticated && (
+              <button
+                className="flex flex-col items-start justify-center gap-2 p-4 rounded-xl bg-gray-100 text-gray-700 font-semibold shadow hover:bg-gray-200 transition cursor-pointer"
+                onClick={() => {
+                  console.log('🖱️ CLIQUE NO BOTÃO ENTRAR DO MENU!')
+                  console.log('🔐 Usuário autenticado:', isAuthenticated)
+                  console.log('🔧 Estado showLoginModal:', showLoginModal)
+                  console.log('🚀 Abrindo modal de login...')
+                  setShowLoginModal(true);
+                  console.log('🔧 Estado showLoginModal após setState:', true)
+                }}
+              >
+                <User size={24} />
+                <span className="text-sm text-left leading-tight">Entrar</span>
+              </button>
+            )}
 
+            {/* Botão Meus Anúncios - só aparece quando autenticado */}
+            {isAuthenticated && (
+              <button
+                className="flex flex-col items-start justify-center gap-2 p-4 rounded-xl bg-gray-100 text-gray-700 font-semibold shadow hover:bg-gray-200 transition cursor-pointer"
+                onClick={() => {
+                  router.push('/meus-anuncios');
+                  onClose();
+                }}
+              >
+                <List size={24} />
+                <span className="text-sm text-left leading-tight">meus anúncios</span>
+              </button>
+            )}
+
+            {/* Botão Dashboard Admin - só aparece quando for admin */}
             {isAdmin && (
               <button
                 className="flex flex-col items-start justify-center gap-2 p-6 rounded-xl bg-gray-100 text-gray-700 font-semibold shadow hover:bg-gray-200 transition cursor-pointer"

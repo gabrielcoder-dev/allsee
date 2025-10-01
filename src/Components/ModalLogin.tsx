@@ -25,13 +25,26 @@ export default function ModalLogin({ onClose }: { onClose: () => void }) {
     console.log('🔧 Supabase Key:', process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? 'Configurado' : 'NÃO CONFIGURADO')
     console.log('🔧 User Agent:', navigator.userAgent)
     
+    // Verificar se as variáveis de ambiente estão configuradas
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+      const errorMsg = 'Configuração do Supabase não encontrada. Verifique as variáveis de ambiente.'
+      console.error('❌', errorMsg)
+      setError(errorMsg)
+      setLoadingRegister(false)
+      return
+    }
+    
     try {
       console.log('📡 Fazendo chamada para Supabase...')
       
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/results`
+          redirectTo: `${window.location.origin}/results`,
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
+          }
         }
       })
       
@@ -84,13 +97,26 @@ export default function ModalLogin({ onClose }: { onClose: () => void }) {
     console.log('🔧 Supabase Key:', process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? 'Configurado' : 'NÃO CONFIGURADO')
     console.log('🔧 User Agent:', navigator.userAgent)
     
+    // Verificar se as variáveis de ambiente estão configuradas
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+      const errorMsg = 'Configuração do Supabase não encontrada. Verifique as variáveis de ambiente.'
+      console.error('❌', errorMsg)
+      setError(errorMsg)
+      setLoadingLogin(false)
+      return
+    }
+    
     try {
       console.log('📡 Fazendo chamada para Supabase...')
       
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/results`
+          redirectTo: `${window.location.origin}/results`,
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
+          }
         }
       })
       
