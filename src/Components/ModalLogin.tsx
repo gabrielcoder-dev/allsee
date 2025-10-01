@@ -12,6 +12,9 @@ export default function ModalLogin({ onClose }: { onClose: () => void }) {
   const [error, setError] = useState<string | null>(null)
   const router = useRouter()
 
+  // Log quando o componente é renderizado
+  console.log('🎭 ModalLogin renderizado!')
+
   const handleGoogleRegister = async () => {
     setError(null)
     setLoadingRegister(true)
@@ -143,16 +146,21 @@ export default function ModalLogin({ onClose }: { onClose: () => void }) {
       className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/40"
       onClick={onClose}
     >
-      <div
-        className="bg-white rounded-md relative flex flex-col p-8 shadow-lg w-96 max-w-full mx-4"
-        onClick={e => e.stopPropagation()}
-      >
+        <div
+          className="bg-white rounded-md relative flex flex-col p-8 shadow-lg w-96 max-w-full mx-4"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+          }}
+        >
         <button className="absolute top-3 right-3 cursor-pointer" onClick={onClose}><X className="w-5 text-gray-600 hover:text-black" /></button>
         <h2 className="text-xl font-semibold mb-6 text-center">
          Cadastre ou Entre com Google
         </h2>
         <button
           onClick={(e) => {
+            console.log('🖱️ CLIQUE NO BOTÃO CADASTRAR!')
+            e.preventDefault();
             e.stopPropagation();
             handleGoogleRegister();
           }}
@@ -166,6 +174,8 @@ export default function ModalLogin({ onClose }: { onClose: () => void }) {
         </button>
         <button
           onClick={(e) => {
+            console.log('🖱️ CLIQUE NO BOTÃO ENTRAR!')
+            e.preventDefault();
             e.stopPropagation();
             handleGoogleLogin();
           }}

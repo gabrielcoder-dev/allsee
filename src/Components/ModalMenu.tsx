@@ -79,14 +79,17 @@ export default function ModalMenu({ open, onClose }: ModalMenuProps) {
             </button>
             <button
               className="flex flex-col items-start justify-center gap-2 p-4 rounded-xl bg-gray-100 text-gray-700 font-semibold shadow hover:bg-gray-200 transition cursor-pointer"
-              onClick={() => {
-                if (isAuthenticated) {
-                  router.push('/meus-anuncios');
-                  onClose();
-                } else {
-                  setShowLoginModal(true);
-                }
-              }}
+            onClick={() => {
+              console.log('🖱️ CLIQUE NO BOTÃO ENTRAR DO MENU!')
+              console.log('🔐 Usuário autenticado:', isAuthenticated)
+              if (isAuthenticated) {
+                router.push('/meus-anuncios');
+                onClose();
+              } else {
+                console.log('🚀 Abrindo modal de login...')
+                setShowLoginModal(true);
+              }
+            }}
             >
               {isAuthenticated ? <List size={24} /> : <User size={24} />}
               <span className="text-sm text-left leading-tight">
@@ -144,7 +147,10 @@ export default function ModalMenu({ open, onClose }: ModalMenuProps) {
       
       {/* Modal de Login - Renderizado fora da estrutura do ModalMenu */}
       {showLoginModal && (
-        <ModalLogin onClose={() => setShowLoginModal(false)} />
+        <>
+          {console.log('🎭 Renderizando ModalLogin!')}
+          <ModalLogin onClose={() => setShowLoginModal(false)} />
+        </>
       )}
     </>
   );
