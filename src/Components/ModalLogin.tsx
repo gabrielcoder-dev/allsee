@@ -64,6 +64,7 @@ export default function ModalLogin({ onClose }: { onClose: () => void }) {
         console.log('✅ URL de redirecionamento encontrada:', data.url)
         console.log('🚀 Iniciando redirecionamento...')
         
+        // NÃO fechar o modal aqui - deixar o redirecionamento acontecer
         // Tentar múltiplas formas de redirecionamento
         try {
           window.location.href = data.url
@@ -136,6 +137,7 @@ export default function ModalLogin({ onClose }: { onClose: () => void }) {
         console.log('✅ URL de redirecionamento encontrada:', data.url)
         console.log('🚀 Iniciando redirecionamento...')
         
+        // NÃO fechar o modal aqui - deixar o redirecionamento acontecer
         // Tentar múltiplas formas de redirecionamento
         try {
           window.location.href = data.url
