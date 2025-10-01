@@ -16,28 +16,42 @@ export default function ModalLogin({ onClose }: { onClose: () => void }) {
     setError(null)
     setLoadingRegister(true)
     console.log('🔐 Iniciando cadastro com Google...')
+    console.log('🌐 URL atual:', window.location.origin)
+    console.log('🔧 Supabase URL:', process.env.NEXT_PUBLIC_SUPABASE_URL)
     
     try {
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/results`
+          redirectTo: `${window.location.origin}/results`,
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
+          }
         }
       })
       
-      console.log('📊 Resposta do Supabase:', { data, error })
+      console.log('📊 Resposta completa do Supabase:', { 
+        data: data ? JSON.stringify(data, null, 2) : 'null',
+        error: error ? JSON.stringify(error, null, 2) : 'null'
+      })
       
       if (error) {
         console.error('❌ Erro no cadastro:', error)
-        setError(error.message)
+        setError(`Erro: ${error.message}`)
         setLoadingRegister(false)
+      } else if (data?.url) {
+        console.log('✅ URL de redirecionamento encontrada:', data.url)
+        // Redirecionamento manual
+        window.location.href = data.url
       } else {
-        console.log('✅ Redirecionamento iniciado:', data.url)
-        // O redirecionamento será feito automaticamente pelo Supabase
+        console.error('❌ URL de redirecionamento não encontrada na resposta')
+        setError('Erro: URL de redirecionamento não encontrada. Verifique a configuração do Google OAuth.')
+        setLoadingRegister(false)
       }
     } catch (err: any) {
       console.error('❌ Erro inesperado:', err)
-      setError(err.message || "Erro ao autenticar com Google.")
+      setError(`Erro inesperado: ${err.message || "Erro ao autenticar com Google."}`)
       setLoadingRegister(false)
     }
   }
@@ -46,28 +60,42 @@ export default function ModalLogin({ onClose }: { onClose: () => void }) {
     setError(null)
     setLoadingLogin(true)
     console.log('🔐 Iniciando login com Google...')
+    console.log('🌐 URL atual:', window.location.origin)
+    console.log('🔧 Supabase URL:', process.env.NEXT_PUBLIC_SUPABASE_URL)
     
     try {
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/results`
+          redirectTo: `${window.location.origin}/results`,
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
+          }
         }
       })
       
-      console.log('📊 Resposta do Supabase:', { data, error })
+      console.log('📊 Resposta completa do Supabase:', { 
+        data: data ? JSON.stringify(data, null, 2) : 'null',
+        error: error ? JSON.stringify(error, null, 2) : 'null'
+      })
       
       if (error) {
         console.error('❌ Erro no login:', error)
-        setError(error.message)
+        setError(`Erro: ${error.message}`)
         setLoadingLogin(false)
+      } else if (data?.url) {
+        console.log('✅ URL de redirecionamento encontrada:', data.url)
+        // Redirecionamento manual
+        window.location.href = data.url
       } else {
-        console.log('✅ Redirecionamento iniciado:', data.url)
-        // O redirecionamento será feito automaticamente pelo Supabase
+        console.error('❌ URL de redirecionamento não encontrada na resposta')
+        setError('Erro: URL de redirecionamento não encontrada. Verifique a configuração do Google OAuth.')
+        setLoadingLogin(false)
       }
     } catch (err: any) {
       console.error('❌ Erro inesperado:', err)
-      setError(err.message || "Erro ao autenticar com Google.")
+      setError(`Erro inesperado: ${err.message || "Erro ao autenticar com Google."}`)
       setLoadingLogin(false)
     }
   }
