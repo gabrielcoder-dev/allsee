@@ -82,12 +82,14 @@ export default function ModalMenu({ open, onClose }: ModalMenuProps) {
             onClick={() => {
               console.log('🖱️ CLIQUE NO BOTÃO ENTRAR DO MENU!')
               console.log('🔐 Usuário autenticado:', isAuthenticated)
+              console.log('🔧 Estado showLoginModal:', showLoginModal)
               if (isAuthenticated) {
                 router.push('/meus-anuncios');
                 onClose();
               } else {
                 console.log('🚀 Abrindo modal de login...')
                 setShowLoginModal(true);
+                console.log('🔧 Estado showLoginModal após setState:', true)
               }
             }}
             >
@@ -148,7 +150,7 @@ export default function ModalMenu({ open, onClose }: ModalMenuProps) {
       {/* Modal de Login - Renderizado fora da estrutura do ModalMenu */}
       {showLoginModal && (
         <>
-          {console.log('🎭 Renderizando ModalLogin!')}
+          {console.log('🎭 Renderizando ModalLogin no ModalMenu!')}
           <ModalLogin onClose={() => setShowLoginModal(false)} />
         </>
       )}
