@@ -27,6 +27,7 @@ export default function ModalCreateAnuncios({
   const [image, setImage] = useState<File | null>(null);
   const [imageUrl, setImageUrl] = useState("");
   const [address, setAddress] = useState("");
+  const [identification, setIdentification] = useState("");
   const [screens, setScreens] = useState("");
   const [price, setPrice] = useState("");
   const [duration, setDuration] = useState<string[]>([]);
@@ -72,6 +73,7 @@ export default function ModalCreateAnuncios({
       setName(anuncio.name || "");
       setImageUrl(anuncio.image || "");
       setAddress(anuncio.address || "");
+      setIdentification(anuncio.identification || "");
       setScreens(anuncio.screens ? String(anuncio.screens) : "");
       setDisplay(anuncio.display ? String(anuncio.display) : "");
       setViews(anuncio.views ? String(anuncio.views) : "");
@@ -97,6 +99,7 @@ export default function ModalCreateAnuncios({
       setImage(null);
       setImageUrl("");
       setAddress("");
+      setIdentification("");
       setScreens("");
       setDisplay("");
       setViews("");
@@ -334,6 +337,7 @@ export default function ModalCreateAnuncios({
           name,
           image: imgUrl || imageUrl, // Usar imgUrl se disponível, senão imageUrl
           address,
+          identification,
           screens: Number(screens),
           display: type_screen === 'impresso' ? 'fixo' : Number(display),
           views: Number(views),
@@ -363,6 +367,7 @@ export default function ModalCreateAnuncios({
           name,
           image: imgUrl || imageUrl, // Usar imgUrl se disponível, senão imageUrl
           address,
+          identification,
           screens: Number(screens),
           display: type_screen === 'impresso' ? 'fixo' : Number(display),
           views: Number(views),
@@ -434,6 +439,16 @@ export default function ModalCreateAnuncios({
             onChange={(e) => setAddress(e.target.value)}
             required
           />
+          <div className="flex flex-col">
+            <label className="text-xs font-semibold text-gray-700 pl-1 mb-1">Identificação</label>
+            <input
+              type="text"
+              placeholder="Identificação do totem"
+              className="border rounded-lg px-2 sm:px-3 py-2 text-sm sm:text-base"
+              value={identification}
+              onChange={(e) => setIdentification(e.target.value)}
+            />
+          </div>
           <input
             type="number"
             placeholder="Quantidade de telas"
