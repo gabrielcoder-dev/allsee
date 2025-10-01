@@ -3,13 +3,8 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { createClient } from '@supabase/supabase-js'
+import { supabase } from '@/lib/supabase'
 import { X } from "lucide-react"
-
-// Configure seu Supabase
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL as string
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string
-const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
 export default function ModalLogin({ onClose }: { onClose: () => void }) {
   const [loadingRegister, setLoadingRegister] = useState(false)
@@ -20,19 +15,28 @@ export default function ModalLogin({ onClose }: { onClose: () => void }) {
   const handleGoogleRegister = async () => {
     setError(null)
     setLoadingRegister(true)
+    console.log('🔐 Iniciando cadastro com Google...')
+    
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
+      const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: "https://allseeads.com.br/results"
+          redirectTo: `${window.location.origin}/results`
         }
       })
+      
+      console.log('📊 Resposta do Supabase:', { data, error })
+      
       if (error) {
+        console.error('❌ Erro no cadastro:', error)
         setError(error.message)
         setLoadingRegister(false)
+      } else {
+        console.log('✅ Redirecionamento iniciado:', data.url)
+        // O redirecionamento será feito automaticamente pelo Supabase
       }
-      // O redirecionamento será feito automaticamente pelo Supabase
     } catch (err: any) {
+      console.error('❌ Erro inesperado:', err)
       setError(err.message || "Erro ao autenticar com Google.")
       setLoadingRegister(false)
     }
@@ -41,19 +45,28 @@ export default function ModalLogin({ onClose }: { onClose: () => void }) {
   const handleGoogleLogin = async () => {
     setError(null)
     setLoadingLogin(true)
+    console.log('🔐 Iniciando login com Google...')
+    
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
+      const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: "https://allseeads.com.br/results"
+          redirectTo: `${window.location.origin}/results`
         }
       })
+      
+      console.log('📊 Resposta do Supabase:', { data, error })
+      
       if (error) {
+        console.error('❌ Erro no login:', error)
         setError(error.message)
         setLoadingLogin(false)
+      } else {
+        console.log('✅ Redirecionamento iniciado:', data.url)
+        // O redirecionamento será feito automaticamente pelo Supabase
       }
-      // O redirecionamento será feito automaticamente pelo Supabase
     } catch (err: any) {
+      console.error('❌ Erro inesperado:', err)
       setError(err.message || "Erro ao autenticar com Google.")
       setLoadingLogin(false)
     }
