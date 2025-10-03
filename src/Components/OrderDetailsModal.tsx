@@ -80,7 +80,7 @@ export default function OrderDetailsModal({ isOpen, onClose, orderId }: OrderDet
 
       // Buscar totens se houver id_produto
       if (order.id_produto) {
-        const productIds = order.id_produto.split(',').map(id => id.trim())
+        const productIds = order.id_produto.split(',').map((id: string) => id.trim())
         
         const { data: totemsData, error: totemsError } = await supabase
           .from('anuncios')
