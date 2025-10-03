@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import Image from "next/image";
 import { createClient } from '@supabase/supabase-js';
 import ImageModal from "./ImageModal";
+import OrderDetailsModal from "./OrderDetailsModal";
 
 interface Order {
   id: number;
@@ -20,6 +21,8 @@ const ReplacementAdmin = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [modalFile, setModalFile] = useState<{ url: string; id: number } | null>(null);
+  const [showOrderDetails, setShowOrderDetails] = useState(false);
+  const [selectedOrderId, setSelectedOrderId] = useState<number | null>(null);
 
   const getOrderStatus = (orderId: number) => {
     return localStorage.getItem(`replacement_order_${orderId}`) || "pendente";
@@ -323,7 +326,18 @@ const ReplacementAdmin = () => {
                     Assistir
                   </button>
                 </div>
-                <span className="text-sm md:text-base font-bold text-gray-700">Pedido #{order.id_campanha}</span>
+                <button
+                  onClick={() => {
+                    if (order.order_id) {
+                      setSelectedOrderId(order.order_id);
+                      setShowOrderDetails(true);
+                    }
+                  }}
+                  className="text-orange-600 hover:text-orange-700 text-sm md:text-base font-bold transition-colors"
+                  disabled={!order.order_id}
+                >
+                  Ver Detalhes
+                </button>
               </div>
             </div>
             <div className="flex items-center gap-2 md:gap-3 flex-shrink-0">
@@ -400,6 +414,18 @@ const ReplacementAdmin = () => {
             </button>
           </div>
         </div>
+      )}
+
+      {/* Modal de detalhes do pedido */}
+      {showOrderDetails && selectedOrderId && (
+        <OrderDetailsModal
+          isOpen={showOrderDetails}
+          onClose={() => {
+            setShowOrderDetails(false);
+            setSelectedOrderId(null);
+          }}
+          orderId={selectedOrderId}
+        />
       )}
     </div>
   );
