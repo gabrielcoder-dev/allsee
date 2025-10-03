@@ -339,7 +339,7 @@ export default function OrderDetailsModal({ isOpen, onClose, orderId }: OrderDet
                                 <Zap className="w-3 h-3" />
                                 impacto
                               </span>
-                              <span className="font-bold text-sm">{formatarMilhar(totem.impacto || totem.views * 3)}</span>
+                              <span className="font-bold text-sm">{formatarMilhar(totem.views * 3)}</span>
                             </div>
                           </div>
                           
