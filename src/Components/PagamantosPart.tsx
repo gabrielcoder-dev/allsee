@@ -315,10 +315,15 @@ export const PagamantosPart = () => {
         return total;
       };
 
+      // Criar lista de IDs dos produtos e nomes dos anúncios
+      const produtosIds = produtos.map(produto => produto.id).join(',');
+      const nomesAnuncios = produtos.map(produto => produto.nome).join(', ');
+
       // Mapeamento explícito: cada campo do frontend para a coluna order
       const orderPayload = {
         id_user: user.id,
-        id_produto: produtos[0]?.id || null,
+        id_produto: produtosIds || null, // Agora contém todos os IDs separados por vírgula
+        identification: nomesAnuncios || null, // Nomes dos anúncios separados por vírgula
         nome_campanha: formData.campaignName || null,
         duracao_campanha: selectedDurationGlobal || null,
         inicio_campanha: formData.startDate ? formData.startDate.split('T')[0] : null,
@@ -340,6 +345,8 @@ export const PagamantosPart = () => {
       };
 
       console.log('Payload enviado para criar order:', orderPayload);
+      console.log('🛒 IDs dos produtos no carrinho:', produtosIds);
+      console.log('📝 Nomes dos anúncios no carrinho:', nomesAnuncios);
       console.log('🎯 Alcance da campanha calculado:', calcularAlcanceCampanha());
       console.log('📺 Exibições da campanha calculadas:', calcularExibicoesCampanha());
       const orderRes = await fetch("/api/pagamento/criar-compra", {
