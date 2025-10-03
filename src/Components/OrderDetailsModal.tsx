@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react'
 import { createClient } from '@supabase/supabase-js'
-import { X, User2, Building, MapPin, Phone, CreditCard, Monitor, Printer } from 'lucide-react'
+import { X, User2, Building, MapPin, Phone, CreditCard, Monitor, Printer, Play, User, Zap } from 'lucide-react'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -312,28 +312,46 @@ export default function OrderDetailsModal({ isOpen, onClose, orderId }: OrderDet
                             )}
                           </div>
 
-                          <h3 className="font-bold text-lg mb-1">{totem.name}</h3>
-                          <p className="text-gray-500 text-sm mb-2">{totem.address}</p>
+                          {/* Nome do totem */}
+                          <h3 className="font-bold text-base mb-1 line-clamp-2">{totem.name}</h3>
                           
-                          <div className="space-y-1 text-sm">
-                            <div className="flex justify-between">
-                              <span className="text-gray-600">Telas:</span>
-                              <span className="font-medium">{totem.screens}</span>
-                            </div>
-                            <div className="flex justify-between">
-                              <span className="text-gray-600">Exibições:</span>
-                              <span className="font-medium">{formatarMilhar(totem.display)}</span>
-                            </div>
-                            <div className="flex justify-between">
-                              <span className="text-gray-600">Alcance:</span>
-                              <span className="font-medium">{formatarMilhar(totem.views)}</span>
-                            </div>
-                            <div className="flex justify-between">
-                              <span className="text-gray-600">Preço:</span>
-                              <span className="font-medium">
-                                R$ {totem.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                          {/* Endereço */}
+                          <div className="text-gray-500 text-xs mb-2 break-words">{totem.address}</div>
+                          
+                          {/* Estatísticas */}
+                          <div className="flex gap-4 sm:gap-8 mb-2">
+                            <div className="flex flex-col items-start">
+                              <span className="text-[10px] text-gray-500 font-medium lowercase flex items-center gap-1">
+                                <Play className="w-3 h-3" />
+                                exibições
                               </span>
+                              <span className="font-bold text-sm">{formatarMilhar(totem.display)}</span>
                             </div>
+                            <div className="flex flex-col items-start">
+                              <span className="text-[10px] text-gray-500 font-medium lowercase flex items-center gap-1">
+                                <User className="w-3 h-3" />
+                                alcance
+                              </span>
+                              <span className="font-bold text-sm">{formatarMilhar(totem.views)}</span>
+                            </div>
+                            <div className="flex flex-col items-start">
+                              <span className="text-[10px] text-gray-500 font-medium lowercase flex items-center gap-1">
+                                <Zap className="w-3 h-3" />
+                                impacto
+                              </span>
+                              <span className="font-bold text-sm">{formatarMilhar(totem.impacto || totem.views * 3)}</span>
+                            </div>
+                          </div>
+                          
+                          {/* Telas */}
+                          <div className="text-xs text-gray-800 mb-2 font-bold">Telas: {totem.screens || 1}</div>
+                          
+                          {/* Preço */}
+                          <div className="text-lg font-bold mb-1 text-green-700">
+                            R$ {Number(totem.price).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                          </div>
+                          <div className="text-xs text-gray-500">
+                            / {orderData?.duracao_campanha || 2} semanas
                           </div>
                         </div>
                       ))}
