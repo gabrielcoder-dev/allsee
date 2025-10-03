@@ -29,6 +29,7 @@ type FormData = {
   previewUrl: string | null
   isArtSelected: boolean
   // Dados de pagamento - Pessoa Física
+  nome: string
   cpf: string
   telefone: string
   cep: string
@@ -81,6 +82,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     previewUrl: null,
     isArtSelected: false,
     // Dados de pagamento - Pessoa Física
+    nome: "",
     cpf: "",
     telefone: "",
     cep: "",
@@ -245,6 +247,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
       previewUrl: null,
       isArtSelected: false,
       // Dados de pagamento - Pessoa Física
+      nome: "",
       cpf: "",
       telefone: "",
       cep: "",

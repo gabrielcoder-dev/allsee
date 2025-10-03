@@ -77,7 +77,7 @@ export const PagamantosPart = () => {
     if (!isHydrated) return;
     
     // Se já temos dados de pessoa física preenchidos, seleciona automaticamente
-    if (formData.cpf && formData.cep && formData.endereco) {
+    if ((formData as any).nome && formData.cpf && formData.cep && formData.endereco) {
       setOpenAccordion("fisica");
     }
     // Se já temos dados de pessoa jurídica preenchidos, e seleciona automaticamente
@@ -166,6 +166,7 @@ export const PagamantosPart = () => {
     // Pessoa Física
     if (openAccordion === "fisica") {
       return (
+        !!(formData as any).nome &&  // Nome é obrigatório
         !!formData.cpf &&
         !!formData.telefone &&
         !!formData.cep &&
@@ -329,6 +330,7 @@ export const PagamantosPart = () => {
         inicio_campanha: formData.startDate ? formData.startDate.split('T')[0] : null,
         alcance_campanha: calcularAlcanceCampanha(),
         exibicoes_campanha: calcularExibicoesCampanha(),
+        nome: (formData as any).nome || null, // Nome da pessoa física
         cpf: formData.cpf || null,
         cnpj: formData.cnpj || null,
         razao_social: formData.razaoSocial || null,
@@ -896,6 +898,16 @@ export const PagamantosPart = () => {
           </div>
           {openAccordion === "fisica" && (
             <div className="bg-white border-b border-gray-200 px-2 md:px-6 py-6 md:py-8 flex flex-col gap-6 animate-fade-in">
+              <div className="grid grid-cols-1 gap-4">
+                <input
+                  type="text"
+                  placeholder="Nome completo"
+                  className="border rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-200"
+                  value={(formData as any).nome}
+                  onChange={(e) => updateFormData({ nome: e.target.value })}
+                  required
+                />
+              </div>
               <div className="grid grid-cols-1 gap-4">
                 <input
                   type="text"
