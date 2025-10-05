@@ -331,14 +331,42 @@ const ReplacementAdmin = () => {
                   </button>
                 </div>
                 <button
-                  onClick={() => {
-                    if (order.order_id) {
-                      setSelectedOrderId(order.order_id);
-                      setShowOrderDetails(true);
+                  onClick={async () => {
+                    console.log('🔍 Clicando em Ver Detalhes:', { id_campanha: order.id_campanha, order: order });
+                    if (order.id_campanha) {
+                      try {
+                        // Buscar o id_order através do id_campanha na tabela arte_campanha
+                        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL as string;
+                        const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string;
+                        const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
+                        const { data: arteCampanha, error } = await supabase
+                          .from('arte_campanha')
+                          .select('id_order')
+                          .eq('id', order.id_campanha)
+                          .single();
+
+                        if (error) {
+                          console.error('❌ Erro ao buscar id_order:', error);
+                          return;
+                        }
+
+                        if (arteCampanha?.id_order) {
+                          console.log('✅ Encontrado id_order:', arteCampanha.id_order);
+                          setSelectedOrderId(arteCampanha.id_order);
+                          setShowOrderDetails(true);
+                        } else {
+                          console.log('❌ id_order não encontrado para id_campanha:', order.id_campanha);
+                        }
+                      } catch (error) {
+                        console.error('❌ Erro ao buscar dados:', error);
+                      }
+                    } else {
+                      console.log('❌ id_campanha não encontrado');
                     }
                   }}
                   className="text-orange-600 hover:text-orange-700 text-xs md:text-sm font-medium bg-orange-100 hover:bg-orange-200 px-3 py-1.5 rounded-lg cursor-pointer transition-colors"
-                  disabled={!order.order_id}
+                  disabled={!order.id_campanha}
                 >
                   Ver Detalhes
                 </button>
@@ -422,14 +450,18 @@ const ReplacementAdmin = () => {
 
       {/* Modal de detalhes do pedido */}
       {showOrderDetails && selectedOrderId && (
-        <OrderDetailsModal
-          isOpen={showOrderDetails}
-          onClose={() => {
-            setShowOrderDetails(false);
-            setSelectedOrderId(null);
-          }}
-          orderId={selectedOrderId}
-        />
+        <>
+          {console.log('🎯 Renderizando OrderDetailsModal:', { showOrderDetails, selectedOrderId })}
+          <OrderDetailsModal
+            isOpen={showOrderDetails}
+            onClose={() => {
+              console.log('🚪 Fechando modal');
+              setShowOrderDetails(false);
+              setSelectedOrderId(null);
+            }}
+            orderId={selectedOrderId}
+          />
+        </>
       )}
     </div>
   );
