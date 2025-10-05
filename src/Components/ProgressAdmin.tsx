@@ -332,7 +332,7 @@ const ProgressAdmin = () => {
             return (
               <div key={campanha.arte.id} className="flex flex-col md:flex-row items-start gap-3 md:gap-6 bg-white border border-gray-200 rounded-xl md:rounded-2xl p-3 md:p-6 shadow-sm hover:shadow-md transition-shadow">
                 {/* Imagem/Vídeo + Detalhes */}
-                <div className="flex items-center gap-3 md:gap-4 flex-shrink-0 w-full md:w-auto">
+                <div className="flex items-start gap-3 md:gap-4 flex-shrink-0 w-full md:w-auto">
                   {isVideo(campanha.arte.caminho_imagem) ? (
                     <div 
                       className="w-20 h-20 md:w-32 md:h-32 rounded-xl md:rounded-2xl overflow-hidden cursor-pointer relative group"
