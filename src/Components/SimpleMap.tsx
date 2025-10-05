@@ -366,11 +366,11 @@ export default function SimpleMap({ anunciosFiltrados, onCityFound, userNicho, s
     <div
       className={`${isFullscreen ? 'w-full h-full' : 'hidden xl:flex w-[400px]'} flex-shrink-0 z-0 map-container relative`}
       style={{ 
-        height: isFullscreen ? '100vh' : `${mapHeight}px`, 
+        height: isFullscreen ? 'calc(100vh - 140px)' : `${mapHeight}px`, 
         background: '#fff',
         ...(isFullscreen && {
           position: 'fixed',
-          top: 0,
+          top: '140px', // Espaço para os headers
           left: 0,
           right: 0,
           bottom: 0,
