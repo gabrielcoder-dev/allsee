@@ -145,18 +145,18 @@ export default function NavBarAdmin({ onLogout, mobileOpen, setMobileOpen, selec
               <a 
                 href="#" 
                 onClick={() => {
-                  setSelectedMenu('anuncios')
+                  setSelectedMenu('totens')
                   if (isMobile) setMobileOpen(false)
                 }} 
                 className={`flex items-center gap-3 font-semibold px-3 md:px-4 py-2.5 md:py-3 rounded-xl transition-all duration-200 relative group ${
-                  selectedMenu === 'anuncios' 
+                  selectedMenu === 'totens' 
                     ? 'bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-lg shadow-orange-500/25' 
                     : 'text-orange-600 hover:bg-gradient-to-r hover:from-orange-50 hover:to-orange-100 hover:shadow-md'
                 }`}
               >
-                <div className={`absolute inset-0 rounded-xl ${selectedMenu === 'anuncios' ? 'bg-gradient-to-r from-orange-500 to-orange-600' : 'bg-transparent group-hover:bg-gradient-to-r group-hover:from-orange-50 group-hover:to-orange-100'} transition-all duration-200`}></div>
+                <div className={`absolute inset-0 rounded-xl ${selectedMenu === 'totens' ? 'bg-gradient-to-r from-orange-500 to-orange-600' : 'bg-transparent group-hover:bg-gradient-to-r group-hover:from-orange-50 group-hover:to-orange-100'} transition-all duration-200`}></div>
                 <FiList size={20} className="relative z-10" />
-                {isExpanded && <span className="text-sm md:text-base relative z-10">Anúncios</span>}
+                {isExpanded && <span className="text-sm md:text-base relative z-10">Totens</span>}
               </a>
             </li>
             <li>
