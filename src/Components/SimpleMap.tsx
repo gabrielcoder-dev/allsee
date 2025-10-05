@@ -366,14 +366,14 @@ export default function SimpleMap({ anunciosFiltrados, onCityFound, userNicho, s
     <div
       className={`${isFullscreen ? 'w-full h-full' : 'hidden xl:flex w-[400px]'} flex-shrink-0 z-0 map-container relative`}
       style={{ 
-        height: isFullscreen ? 'calc(100vh - 140px)' : `${mapHeight}px`, 
+        height: isFullscreen ? 'calc(100vh - 180px)' : `${mapHeight}px`, 
         background: '#fff',
         ...(isFullscreen && {
           position: 'fixed',
-          top: '140px', // Espaço para os headers
-          left: 0,
-          right: 0,
-          bottom: 0,
+          top: '120px', // Abaixo do header desktop
+          left: '0px',
+          right: '0px',
+          bottom: '80px', // Acima do header price
           zIndex: 50
         })
       }}
