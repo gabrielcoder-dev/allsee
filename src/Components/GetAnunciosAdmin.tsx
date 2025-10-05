@@ -183,10 +183,10 @@ export default function GetAnunciosAdmin({ selectedDuration = '2', onFetchAnunci
               <div
                 key={anuncio.id}
                 className="
-                  bg-white rounded-xl md:rounded-2xl shadow-lg border border-gray-100 p-3 md:p-4 flex flex-col gap-2 md:gap-3
+                  bg-white/80 backdrop-blur-sm rounded-xl md:rounded-2xl shadow-lg border border-gray-200/50 p-3 md:p-4 flex flex-col gap-2 md:gap-3
                   w-full h-auto min-h-[400px] md:min-h-[440px]
-                  transition-all duration-200
-                  hover:shadow-xl
+                  transition-all duration-300
+                  hover:shadow-xl hover:bg-white/90 group
                 "
               >
                 <div className="rounded-lg overflow-hidden h-28 md:h-32 flex items-center justify-center bg-gray-100 mb-2 relative">
@@ -209,11 +209,11 @@ export default function GetAnunciosAdmin({ selectedDuration = '2', onFetchAnunci
                 </div>
                 <div className="flex gap-2 mb-2">
                   {anuncio.type_screen?.toLowerCase() === 'impresso' ? (
-                    <span className="bg-green-600 text-white text-xs px-2 py-1 rounded font-medium flex items-center gap-1">
+                    <span className="bg-gradient-to-r from-green-500 to-green-600 text-white text-xs px-2 py-1 rounded-lg font-medium flex items-center gap-1 shadow-sm">
                       <Printer className="w-3 h-3 mr-1 inline" /> impresso
                     </span>
                   ) : (
-                    <span className="bg-purple-600 text-white text-xs px-2 py-1 rounded font-medium flex items-center gap-1">
+                    <span className="bg-gradient-to-r from-purple-500 to-purple-600 text-white text-xs px-2 py-1 rounded-lg font-medium flex items-center gap-1 shadow-sm">
                       <Monitor className="w-3 h-3 mr-1 inline" /> digital
                     </span>
                   )}
@@ -247,11 +247,13 @@ export default function GetAnunciosAdmin({ selectedDuration = '2', onFetchAnunci
                   </div>
                 </div>
                 <div className="text-xs text-gray-800 mb-1 font-bold">Telas: {anuncio.screens}</div>
-                <div className="text-base md:text-lg font-bold mb-1 text-green-700">R$ {Number(anuncio.price).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
+                <div className="text-base md:text-lg font-bold mb-1 bg-gradient-to-r from-green-600 to-green-500 bg-clip-text text-transparent">
+                  R$ {Number(anuncio.price).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                </div>
                 <div className="text-xs text-gray-500 mb-2">/ {selectedDuration} semana{selectedDuration === '24' || selectedDuration === '4' || selectedDuration === '2' ? (Number(selectedDuration) > 1 ? 's' : '') : ''}</div>
                 <div className="flex gap-2 mt-auto">
                   <button
-                    className={`flex-1 cursor-pointer flex items-center justify-center gap-2 border rounded-lg py-2 text-xs md:text-sm font-semibold transition border-red-400 text-red-600 hover:bg-red-50 ${removingId === anuncio.id ? 'opacity-50 pointer-events-none' : ''}`}
+                    className={`flex-1 cursor-pointer flex items-center justify-center gap-2 border rounded-lg py-2 text-xs md:text-sm font-semibold transition-all duration-200 bg-gradient-to-r from-red-50 to-red-100 border-red-200 text-red-600 hover:from-red-100 hover:to-red-200 hover:shadow-md hover:scale-105 ${removingId === anuncio.id ? 'opacity-50 pointer-events-none' : ''}`}
                     onClick={() => handleDeleteClick(anuncio)}
                     disabled={removingId === anuncio.id}
                   >
@@ -260,7 +262,7 @@ export default function GetAnunciosAdmin({ selectedDuration = '2', onFetchAnunci
                     <TrashIcon className="inline w-3 h-3 md:w-4 md:h-4" />
                   </button>
                   <button
-                    className="w-10 md:w-12 flex items-center justify-center border rounded-lg py-2 text-xs md:text-sm font-semibold transition border-blue-400 text-blue-600 hover:bg-blue-50"
+                    className="w-10 md:w-12 flex items-center justify-center border rounded-lg py-2 text-xs md:text-sm font-semibold transition-all duration-200 bg-gradient-to-r from-blue-50 to-blue-100 border-blue-200 text-blue-600 hover:from-blue-100 hover:to-blue-200 hover:shadow-md hover:scale-105"
                     title="Editar"
                     onClick={() => { setAnuncioEditando(anuncio); setShowEditModal(true); }}
                   >

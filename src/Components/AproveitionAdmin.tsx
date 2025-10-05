@@ -71,8 +71,13 @@ const AproveitionAdmin = () => {
   if (!orders.length) return <div className="p-4">Nenhum pedido encontrado.</div>;
 
   return (
-    <div className="w-full h-full p-3 md:p-6 overflow-auto">
-      <h2 className="text-2xl md:text-3xl font-bold text-orange-600 mb-4 md:mb-6">Aprovação de Pedidos</h2>
+    <div className="w-full h-full p-3 md:p-6 overflow-auto bg-gradient-to-br from-gray-50/50 to-white min-h-screen">
+      <div className="relative mb-6 md:mb-8">
+        <div className="absolute inset-0 bg-gradient-to-r from-orange-500/10 to-transparent rounded-2xl"></div>
+        <h2 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-orange-600 to-orange-500 bg-clip-text text-transparent relative z-10 mb-4 md:mb-6">
+          Aprovação de Pedidos
+        </h2>
+      </div>
       <div className="space-y-3 md:space-y-4">
         {orders.filter(order => {
           const status = getOrderStatus(order.order_id);
@@ -81,7 +86,7 @@ const AproveitionAdmin = () => {
           return (
           <div
             key={order.id}
-            className="flex flex-col md:flex-row md:items-center gap-3 md:gap-4 justify-between border border-gray-300 rounded-xl md:rounded-2xl p-3 md:p-4 bg-white shadow-sm"
+            className="flex flex-col md:flex-row md:items-center gap-3 md:gap-4 justify-between bg-white/80 backdrop-blur-sm border border-gray-200/50 rounded-xl md:rounded-2xl p-3 md:p-4 shadow-lg hover:shadow-xl transition-all duration-300 group"
           >
             <div className="flex items-center gap-3 md:gap-4 min-w-0 flex-1">
               {order.caminho_imagem ? (
@@ -113,15 +118,15 @@ const AproveitionAdmin = () => {
                 </div>
               )}
               <div className="flex flex-col md:flex-row items-start md:items-center gap-2 md:gap-4 min-w-0 flex-1">
-                <div className="flex items-center gap-2 md:gap-4">
+                <div className="flex items-center gap-2 md:gap-3">
                   <button
-                    className="text-gray-500 hover:text-orange-600 text-sm md:text-base font-medium transition-colors"
+                    className="text-gray-600 hover:text-orange-600 text-xs md:text-sm font-medium transition-all duration-200 bg-gray-50 hover:bg-orange-50 px-3 py-1.5 rounded-lg hover:scale-105"
                     onClick={() => order.caminho_imagem && handleDownload(order.caminho_imagem, order.order_id)}
                   >
                     Baixar
                   </button>
                   <button
-                    className="text-gray-500 hover:text-orange-600 text-sm md:text-base font-medium transition-colors"
+                    className="text-gray-600 hover:text-orange-600 text-xs md:text-sm font-medium transition-all duration-200 bg-gray-50 hover:bg-orange-50 px-3 py-1.5 rounded-lg hover:scale-105"
                     onClick={() => order.caminho_imagem && setModalFile({ url: order.caminho_imagem, id: order.order_id })}
                   >
                     Assistir
@@ -132,7 +137,7 @@ const AproveitionAdmin = () => {
                     setSelectedOrderId(order.order_id);
                     setShowOrderDetails(true);
                   }}
-                  className="text-orange-600 hover:text-orange-700 text-sm md:text-base font-bold transition-colors"
+                  className="text-orange-600 hover:text-orange-700 text-xs md:text-sm font-bold transition-all duration-200 bg-orange-50 hover:bg-orange-100 px-3 py-1.5 rounded-lg hover:scale-105"
                 >
                   Ver Detalhes
                 </button>
@@ -140,7 +145,7 @@ const AproveitionAdmin = () => {
             </div>
             <div className="flex items-center gap-2 md:gap-3 flex-shrink-0">
               <button
-                className="bg-green-500 hover:bg-green-600 cursor-pointer text-white rounded-lg md:rounded-xl px-3 py-2 font-bold text-xs md:text-sm transition-colors min-w-[70px]"
+                className="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 cursor-pointer text-white rounded-lg md:rounded-xl px-3 py-2 font-bold text-xs md:text-sm transition-all duration-200 min-w-[70px] shadow-lg hover:shadow-xl hover:scale-105"
                 onClick={() => {
                   console.log('Aprovando order:', order.order_id);
                   updateOrderStatus(order.order_id, "aprovado");
@@ -149,7 +154,7 @@ const AproveitionAdmin = () => {
                 Aprovar
               </button>
               <button
-                className="bg-red-500 hover:bg-red-600 cursor-pointer text-white rounded-lg md:rounded-xl px-3 py-2 font-bold text-xs md:text-sm transition-colors min-w-[70px]"
+                className="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 cursor-pointer text-white rounded-lg md:rounded-xl px-3 py-2 font-bold text-xs md:text-sm transition-all duration-200 min-w-[70px] shadow-lg hover:shadow-xl hover:scale-105"
                 onClick={() => {
                   console.log('Rejeitando order:', order.order_id);
                   updateOrderStatus(order.order_id, "rejeitado");
@@ -166,10 +171,10 @@ const AproveitionAdmin = () => {
       {/* Modal para assistir arquivo */}
       {modalFile && (
         <div className="fixed inset-0 z-[9999] flex items-end justify-center md:items-center md:justify-center p-4">
-          <div className="absolute inset-0 bg-black/50" onClick={() => setModalFile(null)}></div>
-          <div className="relative bg-white rounded-xl md:rounded-2xl shadow-2xl p-4 md:p-7 max-w-2xl w-full flex flex-col items-center opacity-100 z-10" onClick={e => e.stopPropagation()}>
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setModalFile(null)}></div>
+          <div className="relative bg-white/95 backdrop-blur-md rounded-xl md:rounded-2xl shadow-2xl border border-gray-200/50 p-4 md:p-7 max-w-2xl w-full flex flex-col items-center opacity-100 z-10" onClick={e => e.stopPropagation()}>
             <button
-              className="absolute top-2 right-2 cursor-pointer text-gray-400 hover:text-gray-700 text-xl font-bold p-2"
+              className="absolute top-2 right-2 cursor-pointer text-gray-400 hover:text-gray-700 text-xl font-bold p-2 bg-white/80 backdrop-blur-sm rounded-full hover:bg-white hover:scale-105 transition-all duration-200 shadow-lg"
               onClick={() => setModalFile(null)}
               aria-label="Fechar"
             >
@@ -198,7 +203,7 @@ const AproveitionAdmin = () => {
               />
             )}
             <button
-              className="bg-orange-500 hover:bg-orange-600 text-white rounded-lg md:rounded-xl px-4 py-2 font-bold text-sm md:text-base mt-2 transition-colors"
+              className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white rounded-lg md:rounded-xl px-4 py-2 font-bold text-sm md:text-base mt-2 transition-all duration-200 shadow-lg hover:shadow-xl hover:scale-105"
               onClick={() => handleDownload(modalFile.url, modalFile.id)}
             >
               Baixar arquivo
