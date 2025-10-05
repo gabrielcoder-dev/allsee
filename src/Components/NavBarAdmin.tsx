@@ -68,73 +68,79 @@ export default function NavBarAdmin({ onLogout, mobileOpen, setMobileOpen, selec
       {/* Botão de toggle para mobile */}
       {isMobile && !mobileOpen && (
         <button
-          className="fixed top-4 left-4 z-50 bg-white rounded-full shadow-lg p-2 md:hidden"
+          className="fixed top-4 left-4 z-50 bg-white/90 backdrop-blur-sm rounded-full shadow-lg hover:shadow-xl border border-gray-200/50 p-2.5 hover:bg-white hover:scale-105 transition-all duration-200 md:hidden"
           onClick={handleToggle}
           aria-label="Abrir menu"
           type="button"
         >
-          <ChevronRight size={20} />
+          <ChevronRight size={18} className="text-gray-700" />
         </button>
       )}
 
       <nav
         className={`
-          flex flex-col justify-between bg-white border-r h-screen
-          transition-all duration-300 ease-in-out z-50
+          flex flex-col justify-between bg-gradient-to-b from-gray-50 to-white border-r border-gray-200/50 h-screen
+          transition-all duration-300 ease-in-out z-50 backdrop-blur-sm
           ${isMobile
             ? mobileOpen
-              ? 'fixed top-0 left-0 w-64 transform translate-x-0'
+              ? 'fixed top-0 left-0 w-64 transform translate-x-0 shadow-2xl'
               : 'fixed top-0 left-0 w-64 transform -translate-x-full'
             : open
-              ? 'relative w-64'
-              : 'relative w-20'
+              ? 'relative w-64 shadow-xl'
+              : 'relative w-20 shadow-lg'
           }
         `}
       >
         {/* Botão de expandir/retrair (apenas desktop) */}
         {!isMobile && (
           <button
-            className={`absolute top-3 transition-all z-50 bg-white rounded-full shadow p-1
+            className={`absolute top-3 transition-all z-50 bg-white/80 backdrop-blur-sm rounded-full shadow-lg hover:shadow-xl border border-gray-200/50 p-1.5 hover:bg-white hover:scale-105
               ${open ? 'right-3' : 'left-3'}
             `}
             onClick={handleToggle}
             aria-label="Abrir/fechar menu"
             type="button"
           >
-            {open ? <ChevronLeft size={20} /> : <ChevronRight size={20} />}
+            {open ? <ChevronLeft size={18} className="text-gray-700" /> : <ChevronRight size={18} className="text-gray-700" />}
           </button>
         )}
 
         {/* Botão de fechar no mobile */}
         {isMobile && mobileOpen && (
           <button
-            className="absolute top-3 right-3 z-50 bg-white rounded-full shadow p-1 md:hidden"
+            className="absolute top-3 right-3 z-50 bg-white/80 backdrop-blur-sm rounded-full shadow-lg hover:shadow-xl border border-gray-200/50 p-1.5 hover:bg-white hover:scale-105 md:hidden"
             onClick={() => setMobileOpen(false)}
             aria-label="Fechar menu"
             type="button"
           >
-            <ChevronLeft size={20} />
+            <ChevronLeft size={18} className="text-gray-700" />
           </button>
         )}
 
         {/* Topo */}
         <div>
-          <div className="flex items-center gap-4 px-4 py-6">
+          <div className="flex items-center gap-4 px-4 py-6 relative">
+            <div className="absolute inset-0 bg-gradient-to-r from-orange-500/10 to-transparent rounded-r-2xl"></div>
             {isExpanded && (
-              <span className="text-xl md:text-2xl font-semibold text-orange-600">Dashboard</span>
+              <span className="text-xl md:text-2xl font-bold bg-gradient-to-r from-orange-600 to-orange-500 bg-clip-text text-transparent relative z-10">
+                Dashboard
+              </span>
             )}
           </div>
 
           {/* Boas-vindas */}
           {isExpanded && (
-            <div className="px-6 pb-4">
-              <span className="text-gray-600 text-sm md:text-base">Bem-vindo,</span>
-              <div className="font-semibold text-lg md:text-2xl text-orange-600 pl-5">{userName}</div>
+            <div className="px-6 pb-4 relative">
+              <div className="absolute inset-0 bg-gradient-to-r from-orange-500/5 to-transparent rounded-r-xl"></div>
+              <span className="text-gray-600 text-sm md:text-base relative z-10">Bem-vindo,</span>
+              <div className="font-bold text-lg md:text-2xl bg-gradient-to-r from-orange-600 to-orange-500 bg-clip-text text-transparent pl-5 relative z-10">
+                {userName}
+              </div>
             </div>
           )}
 
           {/* Links */}
-          <ul className="flex flex-col gap-2 md:gap-3 mt-5">
+          <ul className="flex flex-col gap-1 md:gap-2 mt-5 px-2">
             <li>
               <a 
                 href="#" 
@@ -142,10 +148,15 @@ export default function NavBarAdmin({ onLogout, mobileOpen, setMobileOpen, selec
                   setSelectedMenu('anuncios')
                   if (isMobile) setMobileOpen(false)
                 }} 
-                className={`flex items-center gap-3 font-semibold px-4 md:px-6 py-2 md:py-3 text-orange-600 hover:bg-orange-50 rounded transition ${selectedMenu === 'anuncios' ? 'bg-orange-100' : ''}`}
+                className={`flex items-center gap-3 font-semibold px-3 md:px-4 py-2.5 md:py-3 rounded-xl transition-all duration-200 relative group ${
+                  selectedMenu === 'anuncios' 
+                    ? 'bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-lg shadow-orange-500/25' 
+                    : 'text-orange-600 hover:bg-gradient-to-r hover:from-orange-50 hover:to-orange-100 hover:shadow-md'
+                }`}
               >
-                <FiList size={20} />
-                {isExpanded && <span className="text-sm md:text-base">Anúncios</span>}
+                <div className={`absolute inset-0 rounded-xl ${selectedMenu === 'anuncios' ? 'bg-gradient-to-r from-orange-500 to-orange-600' : 'bg-transparent group-hover:bg-gradient-to-r group-hover:from-orange-50 group-hover:to-orange-100'} transition-all duration-200`}></div>
+                <FiList size={20} className="relative z-10" />
+                {isExpanded && <span className="text-sm md:text-base relative z-10">Anúncios</span>}
               </a>
             </li>
             <li>
@@ -155,10 +166,15 @@ export default function NavBarAdmin({ onLogout, mobileOpen, setMobileOpen, selec
                   setSelectedMenu('mapa')
                   if (isMobile) setMobileOpen(false)
                 }} 
-                className={`flex items-center gap-3 font-semibold px-4 md:px-6 py-2 md:py-3 text-orange-600 hover:bg-orange-50 rounded transition ${selectedMenu === 'mapa' ? 'bg-orange-100' : ''}`}
+                className={`flex items-center gap-3 font-semibold px-3 md:px-4 py-2.5 md:py-3 rounded-xl transition-all duration-200 relative group ${
+                  selectedMenu === 'mapa' 
+                    ? 'bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-lg shadow-orange-500/25' 
+                    : 'text-orange-600 hover:bg-gradient-to-r hover:from-orange-50 hover:to-orange-100 hover:shadow-md'
+                }`}
               >
-                <FiMap size={20} />
-                {isExpanded && <span className="text-sm md:text-base">Mapa</span>}
+                <div className={`absolute inset-0 rounded-xl ${selectedMenu === 'mapa' ? 'bg-gradient-to-r from-orange-500 to-orange-600' : 'bg-transparent group-hover:bg-gradient-to-r group-hover:from-orange-50 group-hover:to-orange-100'} transition-all duration-200`}></div>
+                <FiMap size={20} className="relative z-10" />
+                {isExpanded && <span className="text-sm md:text-base relative z-10">Mapa</span>}
               </a>
             </li>
             <li>
@@ -168,10 +184,15 @@ export default function NavBarAdmin({ onLogout, mobileOpen, setMobileOpen, selec
                   setSelectedMenu('aprovacao')
                   if (isMobile) setMobileOpen(false)
                 }} 
-                className={`flex items-center gap-3 font-semibold px-4 md:px-6 py-2 md:py-3 text-orange-600 hover:bg-orange-50 rounded transition ${selectedMenu === 'aprovacao' ? 'bg-orange-100' : ''}`}
+                className={`flex items-center gap-3 font-semibold px-3 md:px-4 py-2.5 md:py-3 rounded-xl transition-all duration-200 relative group ${
+                  selectedMenu === 'aprovacao' 
+                    ? 'bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-lg shadow-orange-500/25' 
+                    : 'text-orange-600 hover:bg-gradient-to-r hover:from-orange-50 hover:to-orange-100 hover:shadow-md'
+                }`}
               >
-                <CheckCircle size={20} />
-                {isExpanded && <span className="text-sm md:text-base">Aprovação</span>}
+                <div className={`absolute inset-0 rounded-xl ${selectedMenu === 'aprovacao' ? 'bg-gradient-to-r from-orange-500 to-orange-600' : 'bg-transparent group-hover:bg-gradient-to-r group-hover:from-orange-50 group-hover:to-orange-100'} transition-all duration-200`}></div>
+                <CheckCircle size={20} className="relative z-10" />
+                {isExpanded && <span className="text-sm md:text-base relative z-10">Aprovação</span>}
               </a>
             </li>
             <li>
@@ -181,10 +202,15 @@ export default function NavBarAdmin({ onLogout, mobileOpen, setMobileOpen, selec
                   setSelectedMenu('andamento')
                   if (isMobile) setMobileOpen(false)
                 }} 
-                className={`flex items-center gap-3 font-semibold px-4 md:px-6 py-2 md:py-3 text-orange-600 hover:bg-orange-50 rounded transition ${selectedMenu === 'andamento' ? 'bg-orange-100' : ''}`}
+                className={`flex items-center gap-3 font-semibold px-3 md:px-4 py-2.5 md:py-3 rounded-xl transition-all duration-200 relative group ${
+                  selectedMenu === 'andamento' 
+                    ? 'bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-lg shadow-orange-500/25' 
+                    : 'text-orange-600 hover:bg-gradient-to-r hover:from-orange-50 hover:to-orange-100 hover:shadow-md'
+                }`}
               >
-                <RefreshCw size={20} />
-                {isExpanded && <span className="text-sm md:text-base">Andamento</span>}
+                <div className={`absolute inset-0 rounded-xl ${selectedMenu === 'andamento' ? 'bg-gradient-to-r from-orange-500 to-orange-600' : 'bg-transparent group-hover:bg-gradient-to-r group-hover:from-orange-50 group-hover:to-orange-100'} transition-all duration-200`}></div>
+                <RefreshCw size={20} className="relative z-10" />
+                {isExpanded && <span className="text-sm md:text-base relative z-10">Andamento</span>}
               </a>
             </li>
             <li>
@@ -194,36 +220,40 @@ export default function NavBarAdmin({ onLogout, mobileOpen, setMobileOpen, selec
                   setSelectedMenu('substituicao')
                   if (isMobile) setMobileOpen(false)
                 }} 
-                className={`flex items-center gap-3 font-semibold px-4 md:px-6 py-2 md:py-3 text-orange-600 hover:bg-orange-50 rounded transition ${selectedMenu === 'substituicao' ? 'bg-orange-100' : ''}`}
+                className={`flex items-center gap-3 font-semibold px-3 md:px-4 py-2.5 md:py-3 rounded-xl transition-all duration-200 relative group ${
+                  selectedMenu === 'substituicao' 
+                    ? 'bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-lg shadow-orange-500/25' 
+                    : 'text-orange-600 hover:bg-gradient-to-r hover:from-orange-50 hover:to-orange-100 hover:shadow-md'
+                }`}
               >
-                <Repeat size={20} />
-                {isExpanded && <span className="text-sm md:text-base">Substituição</span>}
+                <div className={`absolute inset-0 rounded-xl ${selectedMenu === 'substituicao' ? 'bg-gradient-to-r from-orange-500 to-orange-600' : 'bg-transparent group-hover:bg-gradient-to-r group-hover:from-orange-50 group-hover:to-orange-100'} transition-all duration-200`}></div>
+                <Repeat size={20} className="relative z-10" />
+                {isExpanded && <span className="text-sm md:text-base relative z-10">Substituição</span>}
               </a>
             </li>
           </ul>
         </div>
 
         {/* Inferior: Voltar aos resultados e Logout */}
-        <div className="mb-6 space-y-2">
+        <div className="mb-6 space-y-1 px-2">
           <Link
             href="/results"
-            className="flex font-semibold cursor-pointer
-            items-center gap-3 px-4 md:px-6 py-2 w-full rounded transition text-gray-600"
+            className="flex font-semibold cursor-pointer items-center gap-3 px-3 md:px-4 py-2.5 w-full rounded-xl transition-all duration-200 text-gray-600 hover:bg-gradient-to-r hover:from-gray-50 hover:to-gray-100 hover:shadow-md group relative"
           >
-            <ArrowLeft size={20} />
-            {isExpanded && <span className="text-xs md:text-base">Voltar</span>}
+            <div className="absolute inset-0 rounded-xl bg-transparent group-hover:bg-gradient-to-r group-hover:from-gray-50 group-hover:to-gray-100 transition-all duration-200"></div>
+            <ArrowLeft size={18} className="relative z-10" />
+            {isExpanded && <span className="text-xs md:text-sm relative z-10">Voltar</span>}
           </Link>
           <button
-          // {{change 3}}
-            className="flex font-semibold cursor-pointer
-            items-center gap-3 px-4 md:px-6 py-2 w-full hover:bg-orange-100 rounded transition text-red-600"
+            className="flex font-semibold cursor-pointer items-center gap-3 px-3 md:px-4 py-2.5 w-full rounded-xl transition-all duration-200 text-red-600 hover:bg-gradient-to-r hover:from-red-50 hover:to-red-100 hover:shadow-md group relative"
             onClick={async () => {
               await supabase.auth.signOut();
               router.push('/');
             }}
           >
-            <FiLogOut size={20} />
-            {isExpanded && <span className="text-sm md:text-base">Sair</span>}
+            <div className="absolute inset-0 rounded-xl bg-transparent group-hover:bg-gradient-to-r group-hover:from-red-50 group-hover:to-red-100 transition-all duration-200"></div>
+            <FiLogOut size={18} className="relative z-10" />
+            {isExpanded && <span className="text-xs md:text-sm relative z-10">Sair</span>}
           </button>
         </div>
       </nav>
