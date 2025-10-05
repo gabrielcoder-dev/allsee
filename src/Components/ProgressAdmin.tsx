@@ -368,7 +368,7 @@ const ProgressAdmin = () => {
                       </div>
                     </div>
                   )}
-                  <div className="flex-1 min-w-0">
+                  <div className="flex-1 min-w-0 flex flex-col justify-start">
                     <p className="font-bold text-gray-800 text-sm md:text-base truncate">{campanha.order.nome_campanha || "Campanha sem nome"}</p>
                     <div className="flex items-center gap-2 mt-1">
                       {(() => {
@@ -393,7 +393,7 @@ const ProgressAdmin = () => {
                         setSelectedOrderId(campanha.order.id);
                         setShowOrderDetails(true);
                       }}
-                      className="text-orange-600 hover:text-orange-700 text-xs font-medium bg-orange-50 hover:bg-orange-100 px-2 py-1 rounded cursor-pointer transition-colors mt-1"
+                      className="text-orange-600 hover:text-orange-700 text-xs font-medium bg-orange-50 hover:bg-orange-100 px-2 py-1 rounded cursor-pointer transition-colors mt-1 self-start"
                     >
                       Ver Detalhes
                     </button>
