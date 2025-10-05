@@ -108,84 +108,60 @@ const ReplacementAdmin = () => {
       
       console.log('🔄 Aceitando troca de arte:', { 
         arteCampanhaId: numericArteCampanhaId,
+        imagePath: imagePath,
         originalType: typeof arteCampanhaId 
       });
 
-      // Buscar o arte_troca_campanha_id correspondente
       const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL as string;
       const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string;
       const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
-      console.log('🔍 Buscando arte_troca_campanha no frontend:', {
-        tabela: 'arte_troca_campanha',
-        filtro: `id_campanha = ${numericArteCampanhaId}`,
-        tipo_id: typeof numericArteCampanhaId
-      });
-
+      // 1. Buscar o arte_troca_campanha para obter o caminho_imagem
       const { data: arteTroca, error: fetchTrocaError } = await supabase
         .from('arte_troca_campanha')
-        .select('id')
+        .select('id, caminho_imagem')
         .eq('id_campanha', numericArteCampanhaId)
         .single();
 
       if (fetchTrocaError) {
-        console.error('❌ Erro detalhado ao buscar arte_troca_campanha:', {
-          error: fetchTrocaError,
-          code: fetchTrocaError.code,
-          message: fetchTrocaError.message,
-          details: fetchTrocaError.details,
-          hint: fetchTrocaError.hint,
-          numericArteCampanhaId: numericArteCampanhaId,
-          tipo_id: typeof numericArteCampanhaId
-        });
+        console.error('❌ Erro ao buscar arte_troca_campanha:', fetchTrocaError);
         return;
       }
 
       if (!arteTroca) {
-        console.error('❌ Arte de troca não encontrada no frontend');
+        console.error('❌ Arte de troca não encontrada');
         return;
       }
 
-      console.log('✅ Arte de troca encontrada no frontend:', {
-        id: arteTroca.id,
-        id_campanha: numericArteCampanhaId
-      });
+      console.log('✅ Arte de troca encontrada:', arteTroca);
 
-      console.log('📥 IDs encontrados:', {
-        arte_troca_campanha_id: arteTroca.id,
-        arte_campanha_id: numericArteCampanhaId
-      });
+      // 2. Atualizar o caminho_imagem na tabela arte_campanha
+      const { error: updateError } = await supabase
+        .from('arte_campanha')
+        .update({ caminho_imagem: arteTroca.caminho_imagem })
+        .eq('id', numericArteCampanhaId);
 
-      // Usar o novo endpoint para aceitar a troca
-      const response = await fetch('/api/admin/aceitar-troca', {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        },
-        body: JSON.stringify({
-          arte_troca_campanha_id: arteTroca.id,
-          arte_campanha_id: numericArteCampanhaId
-        })
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        console.error('❌ Erro ao aceitar troca:', errorData.error);
+      if (updateError) {
+        console.error('❌ Erro ao atualizar arte_campanha:', updateError);
         return;
       }
 
-      const data = await response.json();
-      console.log('✅ Troca aceita com sucesso:', data);
+      console.log('✅ Arte transferida para arte_campanha com sucesso');
 
-      console.log('💾 Salvando no localStorage:', {
-        chave: `replacement_order_${numericArteCampanhaId}`,
-        valor: 'aprovado',
-        id_campanha: numericArteCampanhaId,
-        todas_orders: orders.map(o => ({ id: o.id, id_campanha: o.id_campanha, order_id: o.order_id }))
-      });
-      
-      // Atualizar o localStorage e remover o card
+      // 3. Excluir o registro de arte_troca_campanha
+      const { error: deleteError } = await supabase
+        .from('arte_troca_campanha')
+        .delete()
+        .eq('id_campanha', numericArteCampanhaId);
+
+      if (deleteError) {
+        console.error('❌ Erro ao excluir arte_troca_campanha:', deleteError);
+        return;
+      }
+
+      console.log('✅ Arte_troca_campanha excluída com sucesso');
+
+      // 4. Atualizar o localStorage e remover o card
       localStorage.setItem(`replacement_order_${numericArteCampanhaId}`, "aprovado");
       setOrders(prev => prev.filter(order => order.id_campanha !== numericArteCampanhaId));
       
@@ -203,14 +179,7 @@ const ReplacementAdmin = () => {
         }
       }));
       
-      console.log('📡 Eventos disparados:', {
-        storage: 'disparado',
-        customEvent: 'disparado com dados:',
-        id_campanha: numericArteCampanhaId,
-        status: 'aprovado'
-      });
-
-      console.log('✅ Arte aprovada e transferida com sucesso!');
+      console.log('✅ Troca aceita e arte transferida com sucesso!');
     } catch (error) {
       console.error('❌ Erro ao aprovar arte:', error);
     }
