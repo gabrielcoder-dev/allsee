@@ -370,7 +370,7 @@ export default function SimpleMap({ anunciosFiltrados, onCityFound, userNicho, s
         background: '#fff',
         ...(isFullscreen && {
           position: 'fixed',
-          top: '120px', // Abaixo do header desktop
+          top: '100px', // Abaixo do header desktop (reduzido para eliminar espaçinho)
           left: '0px',
           right: '0px',
           bottom: '80px', // Acima do header price
