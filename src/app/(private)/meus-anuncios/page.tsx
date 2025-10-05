@@ -965,7 +965,24 @@ const MeusAnuncios = () => {
           {anuncios.map((anuncio) => {
             let statusText = "Arte em Análise...";
             let statusColor = "yellow";
-            if (anuncio.status === "aprovado") {
+            
+            // Verificar se há troca de arte pendente
+            const hasTrocaPendente = localStorage.getItem(`replacement_order_${anuncio.id}`) !== null;
+            const trocaStatus = localStorage.getItem(`replacement_order_${anuncio.id}`);
+            
+            if (hasTrocaPendente) {
+              if (trocaStatus === "aceita") {
+                statusText = "Arte Aceita";
+                statusColor = "green";
+              } else if (trocaStatus === "não aceita") {
+                statusText = "Arte não aceita, tente novamente!";
+                statusColor = "red";
+              } else {
+                // Troca pendente (sem status específico)
+                statusText = "Arte em análise";
+                statusColor = "yellow";
+              }
+            } else if (anuncio.status === "aprovado") {
               statusText = "Arte Aceita";
               statusColor = "green";
             } else if (anuncio.status === "rejeitado") {

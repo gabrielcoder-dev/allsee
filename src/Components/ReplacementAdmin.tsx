@@ -168,6 +168,17 @@ const ReplacementAdmin = () => {
 
       // 4. Atualizar o localStorage e remover o card
       localStorage.setItem(`replacement_order_${numericArteCampanhaId}`, "aceita");
+      // Também atualizar o status principal da order para "aprovado"
+      const { data: orderData } = await supabase
+        .from('arte_campanha')
+        .select('id_order')
+        .eq('id', numericArteCampanhaId)
+        .single();
+      
+      if (orderData?.id_order) {
+        localStorage.setItem(`order_${orderData.id_order}`, "aprovado");
+      }
+      
       setOrders(prev => prev.filter(order => order.id_campanha !== numericArteCampanhaId));
       
       console.log('📡 Disparando eventos...');
@@ -220,6 +231,18 @@ const ReplacementAdmin = () => {
       
       // Atualizar o localStorage e remover o card
       localStorage.setItem(`replacement_order_${orderId}`, "não aceita");
+      
+      // Também atualizar o status principal da order para "rejeitado"
+      const { data: orderData } = await supabase
+        .from('arte_campanha')
+        .select('id_order')
+        .eq('id', orderId)
+        .single();
+      
+      if (orderData?.id_order) {
+        localStorage.setItem(`order_${orderData.id_order}`, "rejeitado");
+      }
+      
       setOrders(prev => prev.filter(order => order.id_campanha !== orderId));
       
       console.log('📡 Disparando eventos (rejeição)...');
