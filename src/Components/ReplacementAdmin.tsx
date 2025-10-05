@@ -23,9 +23,14 @@ const ReplacementAdmin = () => {
   const [modalFile, setModalFile] = useState<{ url: string; id: number } | null>(null);
   const [showOrderDetails, setShowOrderDetails] = useState(false);
   const [selectedOrderId, setSelectedOrderId] = useState<number | null>(null);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   const getOrderStatus = (orderId: number) => {
     return localStorage.getItem(`replacement_order_${orderId}`) || "pendente";
+  };
+
+  const reloadComponent = () => {
+    setRefreshKey(prev => prev + 1);
   };
 
   useEffect(() => {
@@ -89,7 +94,7 @@ const ReplacementAdmin = () => {
       setLoading(false);
     }
     fetchOrders();
-  }, []);
+  }, [refreshKey]);
 
   const handleDownload = (url: string, id: number) => {
     // Cria um link temporário para download
@@ -162,7 +167,7 @@ const ReplacementAdmin = () => {
       console.log('✅ Arte_troca_campanha excluída com sucesso');
 
       // 4. Atualizar o localStorage e remover o card
-      localStorage.setItem(`replacement_order_${numericArteCampanhaId}`, "aprovado");
+      localStorage.setItem(`replacement_order_${numericArteCampanhaId}`, "aceita");
       setOrders(prev => prev.filter(order => order.id_campanha !== numericArteCampanhaId));
       
       console.log('📡 Disparando eventos...');
@@ -174,12 +179,17 @@ const ReplacementAdmin = () => {
       window.dispatchEvent(new CustomEvent('replacementStatusChanged', {
         detail: {
           id_campanha: numericArteCampanhaId,
-          status: 'aprovado',
+          status: 'aceita',
           chave: `replacement_order_${numericArteCampanhaId}`
         }
       }));
       
       console.log('✅ Troca aceita e arte transferida com sucesso!');
+      
+      // Recarregar o componente após sucesso
+      setTimeout(() => {
+        reloadComponent();
+      }, 500);
     } catch (error) {
       console.error('❌ Erro ao aprovar arte:', error);
     }
@@ -204,12 +214,12 @@ const ReplacementAdmin = () => {
 
       console.log('💾 Salvando no localStorage (rejeição):', {
         chave: `replacement_order_${orderId}`,
-        valor: 'rejeitado',
+        valor: 'não aceita',
         id_campanha: orderId
       });
       
       // Atualizar o localStorage e remover o card
-      localStorage.setItem(`replacement_order_${orderId}`, "rejeitado");
+      localStorage.setItem(`replacement_order_${orderId}`, "não aceita");
       setOrders(prev => prev.filter(order => order.id_campanha !== orderId));
       
       console.log('📡 Disparando eventos (rejeição)...');
@@ -221,7 +231,7 @@ const ReplacementAdmin = () => {
       window.dispatchEvent(new CustomEvent('replacementStatusChanged', {
         detail: {
           id_campanha: orderId,
-          status: 'rejeitado',
+          status: 'não aceita',
           chave: `replacement_order_${orderId}`
         }
       }));
@@ -230,10 +240,15 @@ const ReplacementAdmin = () => {
         storage: 'disparado',
         customEvent: 'disparado com dados:',
         id_campanha: orderId,
-        status: 'rejeitado'
+        status: 'não aceita'
       });
 
       console.log('Arte rejeitada e excluída com sucesso!');
+      
+      // Recarregar o componente após sucesso
+      setTimeout(() => {
+        reloadComponent();
+      }, 500);
     } catch (error) {
       console.error('Erro ao rejeitar arte:', error);
     }
@@ -344,29 +359,15 @@ const ReplacementAdmin = () => {
             <div className="flex items-center gap-2 md:gap-3 flex-shrink-0">
               <button
                 className="bg-green-500 hover:bg-green-600 text-white rounded-lg md:rounded-xl px-3 py-2 font-medium text-xs md:text-sm min-w-[70px] cursor-pointer transition-colors"
-                onClick={() => {
-                  const currentStatus = getOrderStatus(order.id_campanha);
-                  if (currentStatus === "aprovado") {
-                    localStorage.removeItem(`replacement_order_${order.id_campanha}`);
-                  } else {
-                    handleApprove(order.id_campanha, order.caminho_imagem || "");
-                  }
-                }}
+                onClick={() => handleApprove(order.id_campanha, order.caminho_imagem || "")}
               >
-                {getOrderStatus(order.id_campanha) === "aprovado" ? "Remover Aprovação" : "Aprovar"}
+                Aceitar
               </button>
               <button
                 className="bg-red-500 hover:bg-red-600 text-white rounded-lg md:rounded-xl px-3 py-2 font-medium text-xs md:text-sm min-w-[70px] cursor-pointer transition-colors"
-                onClick={() => {
-                  const currentStatus = getOrderStatus(order.id_campanha);
-                  if (currentStatus === "rejeitado") {
-                    localStorage.removeItem(`replacement_order_${order.id_campanha}`);
-                  } else {
-                    handleReject(order.id_campanha);
-                  }
-                }}
+                onClick={() => handleReject(order.id_campanha)}
               >
-                {getOrderStatus(order.id_campanha) === "rejeitado" ? "Remover Rejeição" : "Recusar"}
+                Recusar
               </button>
             </div>
           </div>
