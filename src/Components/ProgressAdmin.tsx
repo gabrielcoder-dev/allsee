@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import { createClient } from '@supabase/supabase-js';
+import OrderDetailsModal from "./OrderDetailsModal";
 
 // Função para detectar se é vídeo
 const isVideo = (url: string) => {
@@ -39,6 +40,8 @@ const ProgressAdmin = () => {
   const [loading, setLoading] = useState(true);
   const [exibicoesAtuais, setExibicoesAtuais] = useState<{ [key: number]: number }>({});
   const [alcanceAtual, setAlcanceAtual] = useState<{ [key: number]: number }>({});
+  const [showOrderDetails, setShowOrderDetails] = useState(false);
+  const [selectedOrderId, setSelectedOrderId] = useState<number | null>(null);
 
   // Função para calcular dias restantes (mesma lógica do meus-anuncios)
   const calcularDiasRestantes = (inicioCampanha: string, duracaoSemanas: number) => {
@@ -331,23 +334,34 @@ const ProgressAdmin = () => {
                   )}
                   <div className="text-center md:text-left">
                     <p className="font-bold text-gray-800 text-sm md:text-base">{campanha.order.nome_campanha || "Campanha sem nome"}</p>
-                    <div className="flex items-center gap-2">
-                      {(() => {
-                        const dataInicio = new Date(campanha.order.inicio_campanha);
-                        const inicioReal = new Date(dataInicio);
-                        inicioReal.setHours(7, 0, 0, 0); // 7h da manhã do dia de início
-                        const dataAtual = new Date();
-                        const isAtiva = dataAtual >= inicioReal;
-                        
-                        return (
-                          <>
-                            <div className={`w-2 h-2 rounded-full ${isAtiva ? 'bg-green-500' : 'bg-yellow-500'}`}></div>
-                            <span className={`text-xs md:text-sm font-semibold ${isAtiva ? 'text-green-600' : 'text-yellow-600'}`}>
-                              {isAtiva ? "Campanha Ativa" : "Campanha ainda não começou"}
-                            </span>
-                          </>
-                        );
-                      })()}
+                    <div className="flex flex-col gap-2">
+                      <div className="flex items-center gap-2">
+                        {(() => {
+                          const dataInicio = new Date(campanha.order.inicio_campanha);
+                          const inicioReal = new Date(dataInicio);
+                          inicioReal.setHours(7, 0, 0, 0); // 7h da manhã do dia de início
+                          const dataAtual = new Date();
+                          const isAtiva = dataAtual >= inicioReal;
+                          
+                          return (
+                            <>
+                              <div className={`w-2 h-2 rounded-full ${isAtiva ? 'bg-green-500' : 'bg-yellow-500'}`}></div>
+                              <span className={`text-xs md:text-sm font-semibold ${isAtiva ? 'text-green-600' : 'text-yellow-600'}`}>
+                                {isAtiva ? "Campanha Ativa" : "Campanha ainda não começou"}
+                              </span>
+                            </>
+                          );
+                        })()}
+                      </div>
+                      <button
+                        onClick={() => {
+                          setSelectedOrderId(campanha.order.id);
+                          setShowOrderDetails(true);
+                        }}
+                        className="text-orange-600 hover:text-orange-700 text-xs md:text-sm font-bold transition-colors text-left"
+                      >
+                        Ver Detalhes
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -378,6 +392,18 @@ const ProgressAdmin = () => {
           })
         )}
       </div>
+
+      {/* Modal de detalhes do pedido */}
+      {showOrderDetails && selectedOrderId && (
+        <OrderDetailsModal
+          isOpen={showOrderDetails}
+          onClose={() => {
+            setShowOrderDetails(false);
+            setSelectedOrderId(null);
+          }}
+          orderId={selectedOrderId}
+        />
+      )}
     </div>
   );
 };

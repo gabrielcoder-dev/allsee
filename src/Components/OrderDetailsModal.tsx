@@ -103,11 +103,11 @@ export default function OrderDetailsModal({ isOpen, onClose, orderId }: OrderDet
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 p-4">
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-4xl max-h-[90vh] overflow-hidden">
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 p-2 md:p-4">
+      <div className="bg-white rounded-lg md:rounded-2xl shadow-xl w-full max-w-4xl max-h-[95vh] md:max-h-[90vh] overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200">
-          <h2 className="text-2xl font-bold text-gray-800">Campanha</h2>
+        <div className="flex items-center justify-between p-3 md:p-6 border-b border-gray-200">
+          <h2 className="text-lg md:text-2xl font-bold text-gray-800">Campanha</h2>
           <button
             onClick={onClose}
             className="p-2 hover:bg-gray-100 rounded-full transition-colors"
@@ -120,7 +120,7 @@ export default function OrderDetailsModal({ isOpen, onClose, orderId }: OrderDet
         <div className="flex border-b border-gray-200">
           <button
             onClick={() => setActiveTab('dados')}
-            className={`px-6 py-3 font-medium text-sm transition-colors ${
+            className={`px-3 md:px-6 py-2 md:py-3 font-medium text-xs md:text-sm transition-colors ${
               activeTab === 'dados'
                 ? 'text-orange-600 border-b-2 border-orange-600'
                 : 'text-gray-500 hover:text-gray-700'
@@ -130,7 +130,7 @@ export default function OrderDetailsModal({ isOpen, onClose, orderId }: OrderDet
           </button>
           <button
             onClick={() => setActiveTab('totens')}
-            className={`px-6 py-3 font-medium text-sm transition-colors ${
+            className={`px-3 md:px-6 py-2 md:py-3 font-medium text-xs md:text-sm transition-colors ${
               activeTab === 'totens'
                 ? 'text-orange-600 border-b-2 border-orange-600'
                 : 'text-gray-500 hover:text-gray-700'
@@ -141,7 +141,7 @@ export default function OrderDetailsModal({ isOpen, onClose, orderId }: OrderDet
         </div>
 
         {/* Content */}
-        <div className="p-6 overflow-y-auto max-h-[60vh]">
+        <div className="p-3 md:p-6 overflow-y-auto max-h-[65vh] md:max-h-[60vh]">
           {loading ? (
             <div className="flex items-center justify-center py-8">
               <div className="text-gray-500">Carregando...</div>
@@ -149,28 +149,28 @@ export default function OrderDetailsModal({ isOpen, onClose, orderId }: OrderDet
           ) : (
             <>
               {activeTab === 'dados' && (
-                <div className="space-y-6">
+                <div className="space-y-4 md:space-y-6">
                   {orderData ? (
                     <>
                       {/* Informações Pessoais */}
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                         {/* Pessoa Física */}
                         {orderData.nome && (
-                          <div className="bg-gray-50 rounded-lg p-4">
-                            <h3 className="font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                          <div className="bg-gray-50 rounded-lg p-3 md:p-4">
+                            <h3 className="font-semibold text-gray-800 mb-2 md:mb-3 flex items-center gap-2">
                               <User2 className="w-4 h-4 text-orange-600" />
                               Pessoa Física
                             </h3>
-                            <div className="space-y-2 text-sm">
-                              <div className="flex justify-between">
+                            <div className="space-y-2 text-xs md:text-sm">
+                              <div className="flex items-center gap-2">
                                 <span className="text-gray-600">Nome:</span>
                                 <span className="font-medium">{orderData.nome || '-'}</span>
                               </div>
-                              <div className="flex justify-between">
+                              <div className="flex items-center gap-2">
                                 <span className="text-gray-600">CPF:</span>
                                 <span className="font-medium">{orderData.cpf || '-'}</span>
                               </div>
-                              <div className="flex justify-between">
+                              <div className="flex items-center gap-2">
                                 <span className="text-gray-600">Telefone:</span>
                                 <span className="font-medium">{orderData.telefone || '-'}</span>
                               </div>
@@ -180,25 +180,25 @@ export default function OrderDetailsModal({ isOpen, onClose, orderId }: OrderDet
 
                         {/* Pessoa Jurídica */}
                         {orderData.cnpj && (
-                          <div className="bg-gray-50 rounded-lg p-4">
-                            <h3 className="font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                          <div className="bg-gray-50 rounded-lg p-3 md:p-4">
+                            <h3 className="font-semibold text-gray-800 mb-2 md:mb-3 flex items-center gap-2">
                               <Building className="w-4 h-4 text-orange-600" />
                               Pessoa Jurídica
                             </h3>
-                            <div className="space-y-2 text-sm">
-                              <div className="flex justify-between">
+                            <div className="space-y-2 text-xs md:text-sm">
+                              <div className="flex items-center gap-2">
                                 <span className="text-gray-600">CNPJ:</span>
                                 <span className="font-medium">{orderData.cnpj || '-'}</span>
                               </div>
-                              <div className="flex justify-between">
+                              <div className="flex items-center gap-2">
                                 <span className="text-gray-600">Razão Social:</span>
                                 <span className="font-medium">{orderData.razao_social || '-'}</span>
                               </div>
-                              <div className="flex justify-between">
+                              <div className="flex items-center gap-2">
                                 <span className="text-gray-600">Setor:</span>
                                 <span className="font-medium">{orderData.setor || '-'}</span>
                               </div>
-                              <div className="flex justify-between">
+                              <div className="flex items-center gap-2">
                                 <span className="text-gray-600">Telefone:</span>
                                 <span className="font-medium">{orderData.telefone || '-'}</span>
                               </div>
@@ -208,37 +208,37 @@ export default function OrderDetailsModal({ isOpen, onClose, orderId }: OrderDet
                       </div>
 
                       {/* Endereço */}
-                      <div className="bg-gray-50 rounded-lg p-4">
-                        <h3 className="font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                      <div className="bg-gray-50 rounded-lg p-3 md:p-4">
+                        <h3 className="font-semibold text-gray-800 mb-2 md:mb-3 flex items-center gap-2">
                           <MapPin className="w-4 h-4 text-orange-600" />
                           Endereço
                         </h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
-                          <div className="flex justify-between">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs md:text-sm">
+                          <div className="flex items-center gap-2">
                             <span className="text-gray-600">CEP:</span>
                             <span className="font-medium">{orderData.cep || '-'}</span>
                           </div>
-                          <div className="flex justify-between">
+                          <div className="flex items-center gap-2">
                             <span className="text-gray-600">Endereço:</span>
                             <span className="font-medium">{orderData.endereco || '-'}</span>
                           </div>
-                          <div className="flex justify-between">
+                          <div className="flex items-center gap-2">
                             <span className="text-gray-600">Número:</span>
                             <span className="font-medium">{orderData.numero || '-'}</span>
                           </div>
-                          <div className="flex justify-between">
+                          <div className="flex items-center gap-2">
                             <span className="text-gray-600">Bairro:</span>
                             <span className="font-medium">{orderData.bairro || '-'}</span>
                           </div>
-                          <div className="flex justify-between">
+                          <div className="flex items-center gap-2">
                             <span className="text-gray-600">Complemento:</span>
                             <span className="font-medium">{orderData.complemento || '-'}</span>
                           </div>
-                          <div className="flex justify-between">
+                          <div className="flex items-center gap-2">
                             <span className="text-gray-600">Cidade:</span>
                             <span className="font-medium">{orderData.cidade || '-'}</span>
                           </div>
-                          <div className="flex justify-between">
+                          <div className="flex items-center gap-2">
                             <span className="text-gray-600">Estado:</span>
                             <span className="font-medium">{orderData.estado || '-'}</span>
                           </div>
@@ -246,25 +246,25 @@ export default function OrderDetailsModal({ isOpen, onClose, orderId }: OrderDet
                       </div>
 
                       {/* Informações da Campanha */}
-                      <div className="bg-gray-50 rounded-lg p-4">
-                        <h3 className="font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                      <div className="bg-gray-50 rounded-lg p-3 md:p-4">
+                        <h3 className="font-semibold text-gray-800 mb-2 md:mb-3 flex items-center gap-2">
                           <CreditCard className="w-4 h-4 text-orange-600" />
                           Campanha
                         </h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
-                          <div className="flex justify-between">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs md:text-sm">
+                          <div className="flex items-center gap-2">
                             <span className="text-gray-600">Nome:</span>
                             <span className="font-medium">{orderData.nome_campanha || '-'}</span>
                           </div>
-                          <div className="flex justify-between">
+                          <div className="flex items-center gap-2">
                             <span className="text-gray-600">Duração:</span>
                             <span className="font-medium">{orderData.duracao_campanha || '-'} semana(s)</span>
                           </div>
-                          <div className="flex justify-between">
+                          <div className="flex items-center gap-2">
                             <span className="text-gray-600">Início:</span>
                             <span className="font-medium">{orderData.inicio_campanha || '-'}</span>
                           </div>
-                          <div className="flex justify-between">
+                          <div className="flex items-center gap-2">
                             <span className="text-gray-600">Preço:</span>
                             <span className="font-medium">
                               {orderData.preco ? `R$ ${orderData.preco.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : '-'}
@@ -284,11 +284,11 @@ export default function OrderDetailsModal({ isOpen, onClose, orderId }: OrderDet
               {activeTab === 'totens' && (
                 <div>
                   {totems.length > 0 ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
                       {totems.map((totem) => (
                         <div
                           key={totem.id}
-                          className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm"
+                          className="bg-white border border-gray-200 rounded-lg p-3 md:p-4 shadow-sm"
                         >
                           <div className="aspect-video bg-gray-100 rounded-lg mb-3 overflow-hidden">
                             <img
@@ -313,13 +313,13 @@ export default function OrderDetailsModal({ isOpen, onClose, orderId }: OrderDet
                           </div>
 
                           {/* Nome do totem */}
-                          <h3 className="font-bold text-base mb-1 line-clamp-2">{totem.name}</h3>
+                          <h3 className="font-bold text-sm md:text-base mb-1 line-clamp-2">{totem.name}</h3>
                           
                           {/* Endereço */}
                           <div className="text-gray-500 text-xs mb-2 break-words">{totem.address}</div>
                           
                           {/* Estatísticas */}
-                          <div className="flex gap-4 sm:gap-8 mb-2">
+                          <div className="flex gap-2 md:gap-4 lg:gap-8 mb-2">
                             <div className="flex flex-col items-start">
                               <span className="text-[10px] text-gray-500 font-medium lowercase flex items-center gap-1">
                                 <Play className="w-3 h-3" />
@@ -347,7 +347,7 @@ export default function OrderDetailsModal({ isOpen, onClose, orderId }: OrderDet
                           <div className="text-xs text-gray-800 mb-2 font-bold">Telas: {totem.screens || 1}</div>
                           
                           {/* Preço */}
-                          <div className="text-lg font-bold mb-1 text-green-700">
+                          <div className="text-base md:text-lg font-bold mb-1 text-green-700">
                             R$ {Number(totem.price).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                           </div>
                           <div className="text-xs text-gray-500">

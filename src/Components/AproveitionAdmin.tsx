@@ -22,8 +22,18 @@ const AproveitionAdmin = () => {
   const [modalFile, setModalFile] = useState<{ url: string; id: number } | null>(null);
   const [showOrderDetails, setShowOrderDetails] = useState(false);
   const [selectedOrderId, setSelectedOrderId] = useState<number | null>(null);
+  const [orderStatuses, setOrderStatuses] = useState<Record<number, string>>({});
+  
   const getOrderStatus = (orderId: number) => {
-    return localStorage.getItem(`order_${orderId}`) || "pendente";
+    return orderStatuses[orderId] || localStorage.getItem(`order_${orderId}`) || "pendente";
+  };
+
+  const updateOrderStatus = (orderId: number, status: string) => {
+    localStorage.setItem(`order_${orderId}`, status);
+    setOrderStatuses(prev => ({
+      ...prev,
+      [orderId]: status
+    }));
   };
 
   useEffect(() => {
@@ -133,9 +143,7 @@ const AproveitionAdmin = () => {
                 className="bg-green-500 hover:bg-green-600 cursor-pointer text-white rounded-lg md:rounded-xl px-3 py-2 font-bold text-xs md:text-sm transition-colors min-w-[70px]"
                 onClick={() => {
                   console.log('Aprovando order:', order.order_id);
-                  localStorage.setItem(`order_${order.order_id}`, "aprovado");
-                  // Forçar re-render para atualizar o visual
-                  window.location.reload();
+                  updateOrderStatus(order.order_id, "aprovado");
                 }}
               >
                 Aprovar
@@ -144,9 +152,7 @@ const AproveitionAdmin = () => {
                 className="bg-red-500 hover:bg-red-600 cursor-pointer text-white rounded-lg md:rounded-xl px-3 py-2 font-bold text-xs md:text-sm transition-colors min-w-[70px]"
                 onClick={() => {
                   console.log('Rejeitando order:', order.order_id);
-                  localStorage.setItem(`order_${order.order_id}`, "rejeitado");
-                  // Forçar re-render para atualizar o visual
-                  window.location.reload();
+                  updateOrderStatus(order.order_id, "rejeitado");
                 }}
               >
                 Recusar
