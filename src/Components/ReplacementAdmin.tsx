@@ -274,13 +274,17 @@ const ReplacementAdmin = () => {
   if (!orders.length) return <div className="p-4">Nenhum pedido encontrado.</div>;
 
   return (
-    <div className="w-full h-full p-3 md:p-6 overflow-auto">
-      <h2 className="text-2xl md:text-3xl font-bold text-orange-600 mb-4 md:mb-6">Aprovação de Pedidos</h2>
+    <div className="w-full h-full p-3 md:p-6 overflow-auto bg-gray-50 min-h-screen">
+      <div className="mb-6 md:mb-8">
+        <h2 className="text-2xl md:text-3xl font-bold text-orange-600 mb-4 md:mb-6">
+          Aprovação de Pedidos
+        </h2>
+      </div>
       <div className="space-y-3 md:space-y-4">
         {orders.map((order) => (
           <div
             key={order.id}
-            className="flex flex-col md:flex-row md:items-center gap-3 md:gap-4 justify-between border border-gray-300 rounded-xl md:rounded-2xl p-3 md:p-4 bg-white shadow-sm"
+            className="flex flex-col md:flex-row md:items-center gap-3 md:gap-4 justify-between bg-white border border-gray-200 rounded-xl md:rounded-2xl p-3 md:p-4 shadow-sm hover:shadow-md transition-shadow"
           >
             <div className="flex items-center gap-3 md:gap-4 min-w-0 flex-1">
               {order.caminho_imagem ? (
@@ -312,15 +316,15 @@ const ReplacementAdmin = () => {
                 </div>
               )}
               <div className="flex flex-col md:flex-row items-start md:items-center gap-2 md:gap-4 min-w-0 flex-1">
-                <div className="flex items-center gap-2 md:gap-4">
+                <div className="flex items-center gap-2 md:gap-3">
                   <button
-                    className="text-gray-500 hover:text-orange-600 text-sm md:text-base font-medium transition-colors"
+                    className="text-gray-600 hover:text-gray-700 text-xs md:text-sm font-medium bg-gray-100 hover:bg-gray-200 px-3 py-1.5 rounded-lg cursor-pointer transition-colors"
                     onClick={() => order.caminho_imagem && handleDownload(order.caminho_imagem, order.id_campanha)}
                   >
                     Baixar
                   </button>
                   <button
-                    className="text-gray-500 hover:text-orange-600 text-sm md:text-base font-medium transition-colors"
+                    className="text-gray-600 hover:text-gray-700 text-xs md:text-sm font-medium bg-gray-100 hover:bg-gray-200 px-3 py-1.5 rounded-lg cursor-pointer transition-colors"
                     onClick={() => order.caminho_imagem && setModalFile({ url: order.caminho_imagem, id: order.id_campanha })}
                   >
                     Assistir
@@ -333,7 +337,7 @@ const ReplacementAdmin = () => {
                       setShowOrderDetails(true);
                     }
                   }}
-                  className="text-orange-600 hover:text-orange-700 text-sm md:text-base font-bold transition-colors"
+                  className="text-orange-600 hover:text-orange-700 text-xs md:text-sm font-medium bg-orange-100 hover:bg-orange-200 px-3 py-1.5 rounded-lg cursor-pointer transition-colors"
                   disabled={!order.order_id}
                 >
                   Ver Detalhes
@@ -342,7 +346,7 @@ const ReplacementAdmin = () => {
             </div>
             <div className="flex items-center gap-2 md:gap-3 flex-shrink-0">
               <button
-                className="bg-green-500 hover:bg-green-600 cursor-pointer text-white rounded-lg md:rounded-xl px-3 py-2 font-bold text-xs md:text-sm transition-colors min-w-[70px]"
+                className="bg-green-500 hover:bg-green-600 text-white rounded-lg md:rounded-xl px-3 py-2 font-medium text-xs md:text-sm min-w-[70px] cursor-pointer transition-colors"
                 onClick={() => {
                   const currentStatus = getOrderStatus(order.id_campanha);
                   if (currentStatus === "aprovado") {
@@ -355,7 +359,7 @@ const ReplacementAdmin = () => {
                 {getOrderStatus(order.id_campanha) === "aprovado" ? "Remover Aprovação" : "Aprovar"}
               </button>
               <button
-                className="bg-red-500 hover:bg-red-600 cursor-pointer text-white rounded-lg md:rounded-xl px-3 py-2 font-bold text-xs md:text-sm transition-colors min-w-[70px]"
+                className="bg-red-500 hover:bg-red-600 text-white rounded-lg md:rounded-xl px-3 py-2 font-medium text-xs md:text-sm min-w-[70px] cursor-pointer transition-colors"
                 onClick={() => {
                   const currentStatus = getOrderStatus(order.id_campanha);
                   if (currentStatus === "rejeitado") {
@@ -376,9 +380,9 @@ const ReplacementAdmin = () => {
       {modalFile && (
         <div className="fixed inset-0 z-[9999] flex items-end justify-center md:items-center md:justify-center p-4">
           <div className="absolute inset-0 bg-black/50" onClick={() => setModalFile(null)}></div>
-          <div className="relative bg-white rounded-xl md:rounded-2xl shadow-2xl p-4 md:p-7 max-w-2xl w-full flex flex-col items-center opacity-100 z-10" onClick={e => e.stopPropagation()}>
+          <div className="relative bg-white rounded-xl md:rounded-2xl shadow-xl border border-gray-200 p-4 md:p-7 max-w-2xl w-full flex flex-col items-center opacity-100 z-10" onClick={e => e.stopPropagation()}>
             <button
-              className="absolute top-2 right-2 cursor-pointer text-gray-400 hover:text-gray-700 text-xl font-bold p-2"
+              className="absolute top-2 right-2 cursor-pointer text-gray-400 hover:text-gray-600 text-xl font-bold p-2 bg-gray-100 hover:bg-gray-200 rounded-full transition-colors"
               onClick={() => setModalFile(null)}
               aria-label="Fechar"
             >
@@ -407,7 +411,7 @@ const ReplacementAdmin = () => {
               />
             )}
             <button
-              className="bg-orange-500 hover:bg-orange-600 text-white rounded-lg md:rounded-xl px-4 py-2 font-bold text-sm md:text-base mt-2 transition-colors"
+              className="bg-orange-500 hover:bg-orange-600 text-white rounded-lg md:rounded-xl px-4 py-2 font-medium text-sm md:text-base mt-2 cursor-pointer transition-colors"
               onClick={() => handleDownload(modalFile.url, modalFile.id)}
             >
               Baixar arquivo

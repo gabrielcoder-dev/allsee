@@ -330,9 +330,9 @@ const ProgressAdmin = () => {
             );
             
             return (
-              <div key={campanha.arte.id} className="flex flex-col md:flex-row items-start gap-4 md:gap-6 bg-white border border-gray-200 rounded-xl md:rounded-2xl p-4 md:p-6 shadow-sm hover:shadow-md transition-shadow">
+              <div key={campanha.arte.id} className="flex flex-col md:flex-row items-start gap-3 md:gap-6 bg-white border border-gray-200 rounded-xl md:rounded-2xl p-3 md:p-6 shadow-sm hover:shadow-md transition-shadow">
                 {/* Imagem/Vídeo + Detalhes */}
-                <div className="flex flex-col md:flex-row items-center md:items-start gap-3 md:gap-4 flex-shrink-0">
+                <div className="flex items-center gap-3 md:gap-4 flex-shrink-0 w-full md:w-auto">
                   {isVideo(campanha.arte.caminho_imagem) ? (
                     <div 
                       className="w-20 h-20 md:w-32 md:h-32 rounded-xl md:rounded-2xl overflow-hidden cursor-pointer relative group"
@@ -368,58 +368,56 @@ const ProgressAdmin = () => {
                       </div>
                     </div>
                   )}
-                  <div className="text-center md:text-left">
-                    <p className="font-bold text-gray-800 text-sm md:text-base">{campanha.order.nome_campanha || "Campanha sem nome"}</p>
-                    <div className="flex flex-col gap-2">
-                      <div className="flex items-center gap-2">
-                        {(() => {
-                          const dataInicio = new Date(campanha.order.inicio_campanha);
-                          const inicioReal = new Date(dataInicio);
-                          inicioReal.setHours(7, 0, 0, 0); // 7h da manhã do dia de início
-                          const dataAtual = new Date();
-                          const isAtiva = dataAtual >= inicioReal;
-                          
-                          return (
-                            <>
-                              <div className={`w-2 h-2 rounded-full ${isAtiva ? 'bg-green-500' : 'bg-yellow-500'}`}></div>
-                              <span className={`text-xs md:text-sm font-medium ${isAtiva ? 'text-green-600' : 'text-yellow-600'}`}>
-                                {isAtiva ? "Campanha Ativa" : "Campanha ainda não começou"}
-                              </span>
-                            </>
-                          );
-                        })()}
-                      </div>
-                      <button
-                        onClick={() => {
-                          setSelectedOrderId(campanha.order.id);
-                          setShowOrderDetails(true);
-                        }}
-                        className="text-orange-600 hover:text-orange-700 text-xs md:text-sm font-medium text-left bg-orange-50 hover:bg-orange-100 px-3 py-1.5 rounded-lg cursor-pointer transition-colors"
-                      >
-                        Ver Detalhes
-                      </button>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-bold text-gray-800 text-sm md:text-base truncate">{campanha.order.nome_campanha || "Campanha sem nome"}</p>
+                    <div className="flex items-center gap-2 mt-1">
+                      {(() => {
+                        const dataInicio = new Date(campanha.order.inicio_campanha);
+                        const inicioReal = new Date(dataInicio);
+                        inicioReal.setHours(7, 0, 0, 0); // 7h da manhã do dia de início
+                        const dataAtual = new Date();
+                        const isAtiva = dataAtual >= inicioReal;
+                        
+                        return (
+                          <>
+                            <div className={`w-2 h-2 rounded-full ${isAtiva ? 'bg-green-500' : 'bg-yellow-500'}`}></div>
+                            <span className={`text-xs font-medium ${isAtiva ? 'text-green-600' : 'text-yellow-600'}`}>
+                              {isAtiva ? "Ativa" : "Aguardando"}
+                            </span>
+                          </>
+                        );
+                      })()}
                     </div>
+                    <button
+                      onClick={() => {
+                        setSelectedOrderId(campanha.order.id);
+                        setShowOrderDetails(true);
+                      }}
+                      className="text-orange-600 hover:text-orange-700 text-xs font-medium bg-orange-50 hover:bg-orange-100 px-2 py-1 rounded cursor-pointer transition-colors mt-1"
+                    >
+                      Ver Detalhes
+                    </button>
                   </div>
                 </div>
                 
                 {/* Dados */}
-                <div className="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4">
-                  <div className="flex flex-col gap-1 p-3 md:p-4 bg-blue-50 rounded-lg border border-blue-100 hover:bg-blue-100 transition-colors">
-                    <p className="text-blue-700 font-medium text-xs md:text-sm">Exibições</p>
-                    <p className="text-blue-800 text-base md:text-lg font-semibold">
+                <div className="w-full md:flex-1 grid grid-cols-3 gap-2 md:gap-4">
+                  <div className="flex flex-col gap-1 p-2 md:p-4 bg-blue-50 rounded-lg border border-blue-100 hover:bg-blue-100 transition-colors">
+                    <p className="text-blue-700 font-medium text-xs">Exibições</p>
+                    <p className="text-blue-800 text-sm md:text-lg font-semibold">
                       {formatarNumero(exibicoesAtuais[campanha.arte.id] || calcularExibicoesDinamicas(campanha.order.inicio_campanha, campanha.order.duracao_campanha))}
                     </p>
                   </div>
-                  <div className="flex flex-col gap-1 p-3 md:p-4 bg-green-50 rounded-lg border border-green-100 hover:bg-green-100 transition-colors">
-                    <p className="text-green-700 font-medium text-xs md:text-sm">Alcance</p>
-                    <p className="text-green-800 text-base md:text-lg font-semibold">
+                  <div className="flex flex-col gap-1 p-2 md:p-4 bg-green-50 rounded-lg border border-green-100 hover:bg-green-100 transition-colors">
+                    <p className="text-green-700 font-medium text-xs">Alcance</p>
+                    <p className="text-green-800 text-sm md:text-lg font-semibold">
                       {formatarNumero(alcanceAtual[campanha.arte.id] || calcularAlcanceDinamico(campanha.order.alcance_campanha || 0, campanha.order.inicio_campanha, campanha.order.duracao_campanha))}
                     </p>
                   </div>
-                  <div className="flex flex-col gap-1 p-3 md:p-4 bg-orange-50 rounded-lg border border-orange-100 hover:bg-orange-100 transition-colors">
-                    <p className="text-orange-700 font-medium text-xs md:text-sm">Tempo Restante</p>
-                    <p className="text-orange-800 text-base md:text-lg font-semibold">
-                      {diasRestantes} dias
+                  <div className="flex flex-col gap-1 p-2 md:p-4 bg-orange-50 rounded-lg border border-orange-100 hover:bg-orange-100 transition-colors">
+                    <p className="text-orange-700 font-medium text-xs">Restante</p>
+                    <p className="text-orange-800 text-sm md:text-lg font-semibold">
+                      {diasRestantes}d
                     </p>
                   </div>
                 </div>
