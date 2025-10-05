@@ -364,8 +364,19 @@ export default function SimpleMap({ anunciosFiltrados, onCityFound, userNicho, s
 
   return (
     <div
-      className={`${isFullscreen ? 'w-full' : 'hidden xl:flex w-[400px]'} flex-shrink-0 z-0 map-container relative`}
-      style={{ height: `${mapHeight}px`, background: '#fff' }}
+      className={`${isFullscreen ? 'w-full h-full' : 'hidden xl:flex w-[400px]'} flex-shrink-0 z-0 map-container relative`}
+      style={{ 
+        height: isFullscreen ? '100vh' : `${mapHeight}px`, 
+        background: '#fff',
+        ...(isFullscreen && {
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          zIndex: 50
+        })
+      }}
     >
       {/* Botão de alternância do mapa */}
       {onToggleMapView && (
@@ -390,7 +401,17 @@ export default function SimpleMap({ anunciosFiltrados, onCityFound, userNicho, s
              <MapContainer
          center={PRIMAVERA_DO_LESTE_COORDS}
          zoom={14}
-         style={{ width: '100%', height: '100%' }}
+         style={{ 
+           width: '100%', 
+           height: '100%',
+           ...(isFullscreen && {
+             position: 'absolute',
+             top: 0,
+             left: 0,
+             right: 0,
+             bottom: 0
+           })
+         }}
         whenReady={() => {
           // Forçar o mapa a invalidar seu tamanho quando estiver pronto
           setTimeout(() => {

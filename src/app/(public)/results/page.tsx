@@ -232,7 +232,7 @@ const Page = () => {
       </div>
 
       {/* Área principal com scroll controlado */}
-      <div className="flex flex-1 min-h-0 overflow-hidden xl:pl-16 justify-center xl:justify-between relative">
+      <div className={`flex flex-1 min-h-0 overflow-hidden ${isMapFullscreen ? '' : 'xl:pl-16'} justify-center xl:justify-between relative`}>
         {/* Conteúdo principal - Desktop */}
         <div className={`flex flex-1 ${isMapFullscreen ? 'hidden' : 'block'} hidden xl:block overflow-y-auto pb-20`}>
           <GetAnunciosResults 
@@ -248,7 +248,7 @@ const Page = () => {
         </div>
 
         {/* Mapa - Desktop */}
-        <div className={`${isMapFullscreen ? 'w-full' : 'hidden xl:block w-[400px]'}`}>
+        <div className={`${isMapFullscreen ? 'w-full h-full' : 'hidden xl:block w-[400px]'}`}>
           <Mapbox 
             anunciosFiltrados={anunciosFiltrados} 
             onCityFound={handleCityFound} 
