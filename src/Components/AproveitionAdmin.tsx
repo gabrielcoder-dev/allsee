@@ -68,13 +68,13 @@ const AproveitionAdmin = () => {
   };
 
   if (loading) return <div className="p-4">Carregando pedidos...</div>;
-  if (!orders.length) return <div className="p-4">Nenhum pedido encontrado.</div>;
+  if (!orders.length) return <div className="p-4">Nenhuma arte encontrada.</div>;
 
   return (
     <div className="w-full h-full p-3 md:p-6 overflow-auto bg-gray-50 min-h-screen">
       <div className="mb-6 md:mb-8">
-        <h2 className="text-2xl md:text-3xl font-bold text-gray-800 mb-4 md:mb-6">
-          Aprovação de Pedidos
+        <h2 className="text-2xl md:text-3xl font-bold text-orange-600 mb-4 md:mb-6">
+          Aprovação de Artes
         </h2>
       </div>
       <div className="space-y-3 md:space-y-4">

@@ -300,7 +300,7 @@ const ProgressAdmin = () => {
   if (loading) {
     return (
       <div className="w-full h-full p-3 md:p-6">
-        <h2 className="text-2xl md:text-3xl font-bold text-orange-600 mb-4 md:mb-6">Anúncios em Andamento</h2>
+        <h2 className="text-2xl md:text-3xl font-bold text-orange-600 mb-4 md:mb-6">Campanhas em Andamento</h2>
         <div className="flex items-center justify-center h-64">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500"></div>
         </div>
@@ -311,8 +311,8 @@ const ProgressAdmin = () => {
   return (
     <div className="w-full h-full p-3 md:p-6 bg-gray-50 min-h-screen">
       <div className="mb-6 md:mb-8">
-        <h2 className="text-2xl md:text-3xl font-bold text-gray-800 mb-4 md:mb-6">
-          Anúncios em Andamento
+        <h2 className="text-2xl md:text-3xl font-bold text-orange-600 mb-4 md:mb-6">
+          Campanhas em Andamento
         </h2>
       </div>
       <div className="space-y-4 md:space-y-6">

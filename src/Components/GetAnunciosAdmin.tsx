@@ -152,7 +152,7 @@ export default function GetAnunciosAdmin({ selectedDuration = '2', onFetchAnunci
   }
 
   if (loading) return <div>Carregando anúncios...</div>
-  if (!anuncios.length) return <div>Nenhum anúncio encontrado.</div>
+  if (!anuncios.length) return <div>Nenhum toten encontrado.</div>
 
   return (
     <>
