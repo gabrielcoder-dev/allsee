@@ -468,8 +468,8 @@ export default function SimpleMap({ anunciosFiltrados, onCityFound, userNicho, s
               position={[marker.lat, marker.lng]}
               icon={iconToUse}
             >
-              <Popup minWidth={280} maxWidth={350} maxHeight={400}>
-                <MiniAnuncioCard anuncio={marker.anuncio} size="medium" />
+              <Popup minWidth={200} maxWidth={300}>
+                <MiniAnuncioCard anuncio={marker.anuncio} />
               </Popup>
             </Marker>
           );

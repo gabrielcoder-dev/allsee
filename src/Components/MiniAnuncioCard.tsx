@@ -103,7 +103,7 @@ export default function MiniAnuncioCard({ anuncio, actionButton, hideAddButton, 
     ? "bg-white rounded-xl shadow border border-gray-100 p-2 flex flex-col gap-1.5 w-[220px] min-w-[200px] max-w-[240px] cursor-pointer"
     : size === 'large'
     ? "bg-white rounded-xl shadow border border-gray-100 p-3 flex flex-col gap-2 w-[280px] min-w-[250px] max-w-[320px] cursor-pointer"
-    : "bg-white rounded-xl shadow border border-gray-100 p-1.5 flex flex-col gap-1 w-[200px] min-w-[180px] max-w-[220px] cursor-pointer";
+    : "bg-white rounded-xl shadow border border-gray-100 p-2 flex flex-col gap-1.5 w-[240px] min-w-[220px] max-w-[260px] cursor-pointer";
 
   const imageClasses = size === 'small'
     ? "rounded-lg overflow-hidden h-8 flex items-center justify-center bg-gray-100 mb-0.5 relative"
@@ -111,7 +111,7 @@ export default function MiniAnuncioCard({ anuncio, actionButton, hideAddButton, 
     ? "rounded-lg overflow-hidden h-12 flex items-center justify-center bg-gray-100 mb-1.5 relative"
     : size === 'large'
     ? "rounded-lg overflow-hidden h-16 flex items-center justify-center bg-gray-100 mb-2 relative"
-    : "rounded-lg overflow-hidden h-10 flex items-center justify-center bg-gray-100 mb-1 relative";
+    : "rounded-lg overflow-hidden h-12 flex items-center justify-center bg-gray-100 mb-1.5 relative";
 
   const imageImgClasses = size === 'small'
     ? "object-cover w-full h-8"
@@ -119,7 +119,7 @@ export default function MiniAnuncioCard({ anuncio, actionButton, hideAddButton, 
     ? "object-cover w-full h-12"
     : size === 'large'
     ? "object-cover w-full h-16"
-    : "object-cover w-full h-10";
+    : "object-cover w-full h-12";
 
   const tagClasses = size === 'small'
     ? "bg-purple-600 text-white text-[8px] px-1 py-0.5 rounded font-medium flex items-center gap-0.5"
