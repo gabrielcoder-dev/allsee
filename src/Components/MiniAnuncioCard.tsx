@@ -1,5 +1,5 @@
 import React from 'react';
-import { ShoppingCartIcon, TrashIcon, Zap } from 'lucide-react';
+import { ShoppingCartIcon, TrashIcon, Zap, PlayIcon, User2 } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
 
 type AnuncioType = {
@@ -160,7 +160,7 @@ export default function MiniAnuncioCard({ anuncio, actionButton, hideAddButton, 
     ? "text-gray-500 text-[10px] mb-1 break-words line-clamp-2"
     : size === 'large'
     ? "text-gray-500 text-xs mb-2 break-words line-clamp-2"
-    : "text-gray-500 text-sm mb-2 break-words line-clamp-2";
+    : "text-gray-500 text-xs mb-2 break-words line-clamp-2";
 
   const statsContainerClasses = size === 'small'
     ? "flex gap-1.5 mb-0.5"
@@ -184,7 +184,7 @@ export default function MiniAnuncioCard({ anuncio, actionButton, hideAddButton, 
     ? "font-bold text-[9px]"
     : size === 'large'
     ? "font-bold text-xs"
-    : "font-bold text-xs";
+    : "font-bold text-sm";
 
   const screensClasses = size === 'small'
     ? "text-[8px] text-gray-800 mb-0.5 font-bold"
@@ -269,15 +269,21 @@ export default function MiniAnuncioCard({ anuncio, actionButton, hideAddButton, 
       <div className={addressClasses}>{anuncio.address || anuncio.adress || anuncio.endereco}</div>
       <div className={statsContainerClasses}>
         <div className="flex flex-col items-start">
-          <span className={statLabelClasses}>exibições</span>
+          <span className={`${statLabelClasses} flex items-center gap-1`}>
+            exibições <PlayIcon className='w-2.5 h-2.5' />
+          </span>
           <span className={statValueClasses}>{formatNumber(Number(anuncio.display || anuncio.screens || 1))}</span>
         </div>
         <div className="flex flex-col items-start">
-          <span className={statLabelClasses}>alcance</span>
+          <span className={`${statLabelClasses} flex items-center gap-1`}>
+            alcance <User2 className='w-2.5 h-2.5' />
+          </span>
           <span className={statValueClasses}>{anuncio.views || anuncio.alcance ? formatNumber(Number(anuncio.views || anuncio.alcance)) : '-'}</span>
         </div>
         <div className="flex flex-col items-start">
-          <span className={statLabelClasses}>impacto</span>
+          <span className={`${statLabelClasses} flex items-center gap-1`}>
+            impacto <Zap className='w-2.5 h-2.5' />
+          </span>
           <span className={statValueClasses}>{formatNumber((anuncio.views || anuncio.alcance || 0) * 3)}</span>
         </div>
       </div>
