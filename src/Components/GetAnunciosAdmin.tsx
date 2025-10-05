@@ -185,6 +185,7 @@ export default function GetAnunciosAdmin({ selectedDuration = '2', onFetchAnunci
                 className="
                   bg-white rounded-xl md:rounded-2xl shadow-sm border border-gray-200 p-3 md:p-4 flex flex-col gap-2 md:gap-3
                   w-full h-auto min-h-[400px] md:min-h-[440px]
+                  hover:shadow-md transition-shadow
                 "
               >
                 <div className="rounded-lg overflow-hidden h-28 md:h-32 flex items-center justify-center bg-gray-100 mb-2 relative">
@@ -251,7 +252,7 @@ export default function GetAnunciosAdmin({ selectedDuration = '2', onFetchAnunci
                 <div className="text-xs text-gray-500 mb-2">/ {selectedDuration} semana{selectedDuration === '24' || selectedDuration === '4' || selectedDuration === '2' ? (Number(selectedDuration) > 1 ? 's' : '') : ''}</div>
                 <div className="flex gap-2 mt-auto">
                   <button
-                    className={`flex-1 cursor-pointer flex items-center justify-center gap-2 border rounded-lg py-2 text-xs md:text-sm font-medium bg-red-50 border-red-200 text-red-600 ${removingId === anuncio.id ? 'opacity-50 pointer-events-none' : ''}`}
+                    className={`flex-1 cursor-pointer flex items-center justify-center gap-2 border rounded-lg py-2 text-xs md:text-sm font-medium bg-red-50 hover:bg-red-100 border-red-200 text-red-600 hover:text-red-700 transition-colors ${removingId === anuncio.id ? 'opacity-50 pointer-events-none' : ''}`}
                     onClick={() => handleDeleteClick(anuncio)}
                     disabled={removingId === anuncio.id}
                   >
@@ -260,7 +261,7 @@ export default function GetAnunciosAdmin({ selectedDuration = '2', onFetchAnunci
                     <TrashIcon className="inline w-3 h-3 md:w-4 md:h-4" />
                   </button>
                   <button
-                    className="w-10 md:w-12 flex items-center justify-center border rounded-lg py-2 text-xs md:text-sm font-medium bg-blue-50 border-blue-200 text-blue-600"
+                    className="w-10 md:w-12 flex items-center justify-center border rounded-lg py-2 text-xs md:text-sm font-medium bg-blue-50 hover:bg-blue-100 border-blue-200 text-blue-600 hover:text-blue-700 cursor-pointer transition-colors"
                     title="Editar"
                     onClick={() => { setAnuncioEditando(anuncio); setShowEditModal(true); }}
                   >

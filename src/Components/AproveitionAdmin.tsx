@@ -85,7 +85,7 @@ const AproveitionAdmin = () => {
           return (
           <div
             key={order.id}
-            className="flex flex-col md:flex-row md:items-center gap-3 md:gap-4 justify-between bg-white border border-gray-200 rounded-xl md:rounded-2xl p-3 md:p-4 shadow-sm"
+            className="flex flex-col md:flex-row md:items-center gap-3 md:gap-4 justify-between bg-white border border-gray-200 rounded-xl md:rounded-2xl p-3 md:p-4 shadow-sm hover:shadow-md transition-shadow"
           >
             <div className="flex items-center gap-3 md:gap-4 min-w-0 flex-1">
               {order.caminho_imagem ? (
@@ -119,13 +119,13 @@ const AproveitionAdmin = () => {
               <div className="flex flex-col md:flex-row items-start md:items-center gap-2 md:gap-4 min-w-0 flex-1">
                 <div className="flex items-center gap-2 md:gap-3">
                   <button
-                    className="text-gray-600 text-xs md:text-sm font-medium bg-gray-100 px-3 py-1.5 rounded-lg"
+                    className="text-gray-600 hover:text-gray-700 text-xs md:text-sm font-medium bg-gray-100 hover:bg-gray-200 px-3 py-1.5 rounded-lg cursor-pointer transition-colors"
                     onClick={() => order.caminho_imagem && handleDownload(order.caminho_imagem, order.order_id)}
                   >
                     Baixar
                   </button>
                   <button
-                    className="text-gray-600 text-xs md:text-sm font-medium bg-gray-100 px-3 py-1.5 rounded-lg"
+                    className="text-gray-600 hover:text-gray-700 text-xs md:text-sm font-medium bg-gray-100 hover:bg-gray-200 px-3 py-1.5 rounded-lg cursor-pointer transition-colors"
                     onClick={() => order.caminho_imagem && setModalFile({ url: order.caminho_imagem, id: order.order_id })}
                   >
                     Assistir
@@ -136,7 +136,7 @@ const AproveitionAdmin = () => {
                     setSelectedOrderId(order.order_id);
                     setShowOrderDetails(true);
                   }}
-                  className="text-orange-600 text-xs md:text-sm font-medium bg-orange-100 px-3 py-1.5 rounded-lg"
+                  className="text-orange-600 hover:text-orange-700 text-xs md:text-sm font-medium bg-orange-100 hover:bg-orange-200 px-3 py-1.5 rounded-lg cursor-pointer transition-colors"
                 >
                   Ver Detalhes
                 </button>
@@ -144,7 +144,7 @@ const AproveitionAdmin = () => {
             </div>
             <div className="flex items-center gap-2 md:gap-3 flex-shrink-0">
               <button
-                className="bg-green-500 text-white rounded-lg md:rounded-xl px-3 py-2 font-medium text-xs md:text-sm min-w-[70px]"
+                className="bg-green-500 hover:bg-green-600 text-white rounded-lg md:rounded-xl px-3 py-2 font-medium text-xs md:text-sm min-w-[70px] cursor-pointer transition-colors"
                 onClick={() => {
                   console.log('Aprovando order:', order.order_id);
                   updateOrderStatus(order.order_id, "aprovado");
@@ -153,7 +153,7 @@ const AproveitionAdmin = () => {
                 Aprovar
               </button>
               <button
-                className="bg-red-500 text-white rounded-lg md:rounded-xl px-3 py-2 font-medium text-xs md:text-sm min-w-[70px]"
+                className="bg-red-500 hover:bg-red-600 text-white rounded-lg md:rounded-xl px-3 py-2 font-medium text-xs md:text-sm min-w-[70px] cursor-pointer transition-colors"
                 onClick={() => {
                   console.log('Rejeitando order:', order.order_id);
                   updateOrderStatus(order.order_id, "rejeitado");
@@ -173,7 +173,7 @@ const AproveitionAdmin = () => {
           <div className="absolute inset-0 bg-black/50" onClick={() => setModalFile(null)}></div>
           <div className="relative bg-white rounded-xl md:rounded-2xl shadow-xl border border-gray-200 p-4 md:p-7 max-w-2xl w-full flex flex-col items-center opacity-100 z-10" onClick={e => e.stopPropagation()}>
             <button
-              className="absolute top-2 right-2 cursor-pointer text-gray-400 text-xl font-bold p-2 bg-gray-100 rounded-full"
+              className="absolute top-2 right-2 cursor-pointer text-gray-400 hover:text-gray-600 text-xl font-bold p-2 bg-gray-100 hover:bg-gray-200 rounded-full transition-colors"
               onClick={() => setModalFile(null)}
               aria-label="Fechar"
             >
@@ -202,7 +202,7 @@ const AproveitionAdmin = () => {
               />
             )}
             <button
-              className="bg-orange-500 text-white rounded-lg md:rounded-xl px-4 py-2 font-medium text-sm md:text-base mt-2"
+              className="bg-orange-500 hover:bg-orange-600 text-white rounded-lg md:rounded-xl px-4 py-2 font-medium text-sm md:text-base mt-2 cursor-pointer transition-colors"
               onClick={() => handleDownload(modalFile.url, modalFile.id)}
             >
               Baixar arquivo

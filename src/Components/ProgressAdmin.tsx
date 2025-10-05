@@ -318,7 +318,7 @@ const ProgressAdmin = () => {
             );
             
             return (
-              <div key={campanha.arte.id} className="flex flex-col md:flex-row items-start gap-4 md:gap-6 bg-white border border-gray-200 rounded-xl md:rounded-2xl p-4 md:p-6 shadow-sm">
+              <div key={campanha.arte.id} className="flex flex-col md:flex-row items-start gap-4 md:gap-6 bg-white border border-gray-200 rounded-xl md:rounded-2xl p-4 md:p-6 shadow-sm hover:shadow-md transition-shadow">
                 {/* Imagem/Vídeo + Detalhes */}
                 <div className="flex flex-col md:flex-row items-center md:items-start gap-3 md:gap-4 flex-shrink-0">
                   {isVideo(campanha.arte.caminho_imagem) ? (
@@ -364,7 +364,7 @@ const ProgressAdmin = () => {
                           setSelectedOrderId(campanha.order.id);
                           setShowOrderDetails(true);
                         }}
-                        className="text-orange-600 text-xs md:text-sm font-medium text-left bg-orange-50 px-3 py-1.5 rounded-lg"
+                        className="text-orange-600 hover:text-orange-700 text-xs md:text-sm font-medium text-left bg-orange-50 hover:bg-orange-100 px-3 py-1.5 rounded-lg cursor-pointer transition-colors"
                       >
                         Ver Detalhes
                       </button>
@@ -374,19 +374,19 @@ const ProgressAdmin = () => {
                 
                 {/* Dados */}
                 <div className="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4">
-                  <div className="flex flex-col gap-1 p-3 md:p-4 bg-blue-50 rounded-lg border border-blue-100">
+                  <div className="flex flex-col gap-1 p-3 md:p-4 bg-blue-50 rounded-lg border border-blue-100 hover:bg-blue-100 transition-colors">
                     <p className="text-blue-700 font-medium text-xs md:text-sm">Exibições</p>
                     <p className="text-blue-800 text-base md:text-lg font-semibold">
                       {formatarNumero(exibicoesAtuais[campanha.arte.id] || calcularExibicoesDinamicas(campanha.order.inicio_campanha, campanha.order.duracao_campanha))}
                     </p>
                   </div>
-                  <div className="flex flex-col gap-1 p-3 md:p-4 bg-green-50 rounded-lg border border-green-100">
+                  <div className="flex flex-col gap-1 p-3 md:p-4 bg-green-50 rounded-lg border border-green-100 hover:bg-green-100 transition-colors">
                     <p className="text-green-700 font-medium text-xs md:text-sm">Alcance</p>
                     <p className="text-green-800 text-base md:text-lg font-semibold">
                       {formatarNumero(alcanceAtual[campanha.arte.id] || calcularAlcanceDinamico(campanha.order.alcance_campanha || 0, campanha.order.inicio_campanha, campanha.order.duracao_campanha))}
                     </p>
                   </div>
-                  <div className="flex flex-col gap-1 p-3 md:p-4 bg-orange-50 rounded-lg border border-orange-100">
+                  <div className="flex flex-col gap-1 p-3 md:p-4 bg-orange-50 rounded-lg border border-orange-100 hover:bg-orange-100 transition-colors">
                     <p className="text-orange-700 font-medium text-xs md:text-sm">Tempo Restante</p>
                     <p className="text-orange-800 text-base md:text-lg font-semibold">
                       {diasRestantes} dias
