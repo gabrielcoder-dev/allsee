@@ -36,6 +36,23 @@ export default function MiniAnuncioCard({ anuncio, actionButton, hideAddButton, 
   // Duração selecionada global
   const selectedDuration = selectedDurationGlobal || '2';
 
+  // Função para formatar números grandes
+  const formatNumber = (num: number): string => {
+    if (num >= 1000) {
+      const thousands = Math.floor(num / 1000);
+      const remainder = num % 1000;
+      
+      if (remainder === 0) {
+        return `${thousands} mil`;
+      } else if (remainder < 100) {
+        return `${thousands},${Math.floor(remainder / 10)} mil`;
+      } else {
+        return `${thousands},${Math.floor(remainder / 100)} mil`;
+      }
+    }
+    return num.toString();
+  };
+
   // Lógica de desconto por semanas (igual GetAnunciosResults)
   const descontos: { [key: string]: number } = {
     '4': 20,
@@ -127,7 +144,7 @@ export default function MiniAnuncioCard({ anuncio, actionButton, hideAddButton, 
     ? "bg-purple-600 text-white text-[10px] px-1.5 py-0.5 rounded font-medium flex items-center gap-0.5"
     : size === 'large'
     ? "bg-purple-600 text-white text-xs px-2 py-1 rounded font-medium flex items-center gap-1"
-    : "bg-purple-600 text-white text-[11px] px-2 py-0.5 rounded font-medium flex items-center gap-0.5";
+    : "bg-purple-600 text-white text-xs px-2 py-1 rounded font-medium flex items-center gap-0.5";
 
   const titleClasses = size === 'small'
     ? "font-bold text-xs line-clamp-1 mb-0.5"
@@ -135,7 +152,7 @@ export default function MiniAnuncioCard({ anuncio, actionButton, hideAddButton, 
     ? "font-bold text-sm line-clamp-1 mb-1"
     : size === 'large'
     ? "font-bold text-sm line-clamp-1 mb-1"
-    : "font-bold text-base line-clamp-1 mb-1.5";
+    : "font-bold text-lg line-clamp-1 mb-2";
 
   const addressClasses = size === 'small'
     ? "text-gray-500 text-[8px] mb-0.5 break-words line-clamp-2"
@@ -143,7 +160,7 @@ export default function MiniAnuncioCard({ anuncio, actionButton, hideAddButton, 
     ? "text-gray-500 text-[10px] mb-1 break-words line-clamp-2"
     : size === 'large'
     ? "text-gray-500 text-xs mb-2 break-words line-clamp-2"
-    : "text-gray-500 text-[11px] mb-1.5 break-words line-clamp-2";
+    : "text-gray-500 text-sm mb-2 break-words line-clamp-2";
 
   const statsContainerClasses = size === 'small'
     ? "flex gap-1.5 mb-0.5"
@@ -159,7 +176,7 @@ export default function MiniAnuncioCard({ anuncio, actionButton, hideAddButton, 
     ? "text-[8px] text-gray-500 font-medium lowercase"
     : size === 'large'
     ? "text-[10px] text-gray-500 font-medium lowercase"
-    : "text-[9px] text-gray-500 font-medium lowercase";
+    : "text-[10px] text-gray-500 font-medium lowercase";
 
   const statValueClasses = size === 'small'
     ? "font-bold text-[7px]"
@@ -167,7 +184,7 @@ export default function MiniAnuncioCard({ anuncio, actionButton, hideAddButton, 
     ? "font-bold text-[9px]"
     : size === 'large'
     ? "font-bold text-xs"
-    : "font-bold text-[10px]";
+    : "font-bold text-xs";
 
   const screensClasses = size === 'small'
     ? "text-[8px] text-gray-800 mb-0.5 font-bold"
@@ -175,7 +192,7 @@ export default function MiniAnuncioCard({ anuncio, actionButton, hideAddButton, 
     ? "text-[10px] text-gray-800 mb-1 font-bold"
     : size === 'large'
     ? "text-xs text-gray-800 mb-2 font-bold"
-    : "text-[11px] text-gray-800 mb-1.5 font-bold";
+    : "text-sm text-gray-800 mb-2 font-bold";
 
   const priceContainerClasses = size === 'small'
     ? "mb-0.5 flex flex-col gap-0.5"
@@ -191,7 +208,7 @@ export default function MiniAnuncioCard({ anuncio, actionButton, hideAddButton, 
     ? "text-[10px] text-gray-400 line-through"
     : size === 'large'
     ? "text-xs text-gray-400 line-through"
-    : "text-[11px] text-gray-400 line-through";
+    : "text-sm text-gray-400 line-through";
 
   const finalPriceClasses = size === 'small'
     ? "text-xs font-bold text-green-700"
@@ -199,7 +216,7 @@ export default function MiniAnuncioCard({ anuncio, actionButton, hideAddButton, 
     ? "text-sm font-bold text-green-700"
     : size === 'large'
     ? "text-lg font-bold text-green-700"
-    : "text-base font-bold text-green-700";
+    : "text-lg font-bold text-green-700";
 
   const durationClasses = size === 'small'
     ? "text-[8px] text-gray-500 mb-0.5"
@@ -207,7 +224,7 @@ export default function MiniAnuncioCard({ anuncio, actionButton, hideAddButton, 
     ? "text-[10px] text-gray-500 mb-1"
     : size === 'large'
     ? "text-xs text-gray-500 mb-2"
-    : "text-[11px] text-gray-500 mb-1.5";
+    : "text-sm text-gray-500 mb-2";
 
   const buttonClasses = size === 'small'
     ? "w-full cursor-pointer flex items-center justify-center gap-1 border rounded py-0.5 text-[8px] font-semibold transition"
@@ -215,7 +232,7 @@ export default function MiniAnuncioCard({ anuncio, actionButton, hideAddButton, 
     ? "w-full cursor-pointer flex items-center justify-center gap-1 border rounded py-1 text-[10px] font-semibold transition"
     : size === 'large'
     ? "w-full cursor-pointer flex items-center justify-center gap-2 border rounded py-2 text-sm font-semibold transition"
-    : "w-full cursor-pointer flex items-center justify-center gap-1 border rounded py-1.5 text-[11px] font-semibold transition";
+    : "w-full cursor-pointer flex items-center justify-center gap-1 border rounded py-2 text-sm font-semibold transition";
 
   return (
     <div className={containerClasses}>
@@ -253,15 +270,15 @@ export default function MiniAnuncioCard({ anuncio, actionButton, hideAddButton, 
       <div className={statsContainerClasses}>
         <div className="flex flex-col items-start">
           <span className={statLabelClasses}>exibições</span>
-          <span className={statValueClasses}>{anuncio.display || anuncio.screens || '1'}</span>
+          <span className={statValueClasses}>{formatNumber(Number(anuncio.display || anuncio.screens || 1))}</span>
         </div>
         <div className="flex flex-col items-start">
           <span className={statLabelClasses}>alcance</span>
-          <span className={statValueClasses}>{anuncio.views || anuncio.alcance || '-'}</span>
+          <span className={statValueClasses}>{anuncio.views || anuncio.alcance ? formatNumber(Number(anuncio.views || anuncio.alcance)) : '-'}</span>
         </div>
         <div className="flex flex-col items-start">
           <span className={statLabelClasses}>impacto</span>
-          <span className={statValueClasses}>{((anuncio.views || anuncio.alcance || 0) * 3).toLocaleString('pt-BR')}</span>
+          <span className={statValueClasses}>{formatNumber((anuncio.views || anuncio.alcance || 0) * 3)}</span>
         </div>
       </div>
       <div className={screensClasses}>Telas: {anuncio.screens || 1}</div>
