@@ -41,11 +41,13 @@ type MarkerType = {
 function MapController({ 
   onCityFound, 
   markers,
-  highlightedMarkerId
+  highlightedMarkerId,
+  isFullscreen
 }: { 
   onCityFound?: (coords: { lat: number; lng: number; totemId?: number }) => void;
   markers: MarkerType[];
   highlightedMarkerId?: number | null;
+  isFullscreen?: boolean;
 }) {
   const map = useMap();
 
@@ -89,6 +91,23 @@ function MapController({
     }, 100);
     return () => clearTimeout(timer);
   }, [map]);
+
+  // Forçar invalidação do mapa quando isFullscreen mudar
+  useEffect(() => {
+    if (map) {
+      // Aguardar um pouco para o DOM se ajustar
+      const timer = setTimeout(() => {
+        map.invalidateSize();
+        
+        // Disparar novamente após um delay
+        setTimeout(() => {
+          map.invalidateSize();
+        }, 100);
+      }, 200);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [map, isFullscreen]);
 
   return null;
 }
@@ -296,6 +315,30 @@ export default function SimpleMap({ anunciosFiltrados, onCityFound, userNicho, s
     }
   }, [mounted, loading, mapHeight]);
 
+  // Forçar re-renderização quando o mapa é expandido/contraído
+  useEffect(() => {
+    if (mapReady) {
+      // Quando isFullscreen muda, forçar re-renderização do mapa
+      setMapReady(false);
+      
+      const timer = setTimeout(() => {
+        setMapReady(true);
+        
+        // Forçar o mapa a recalcular suas dimensões após expansão/contração
+        setTimeout(() => {
+          window.dispatchEvent(new Event('resize'));
+          
+          // Disparar novamente após um pequeno delay para garantir
+          setTimeout(() => {
+            window.dispatchEvent(new Event('resize'));
+          }, 150);
+        }, 100);
+      }, 300);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [isFullscreen]);
+
   // Não renderizar até estar montado
   if (!mounted) {
     return (
@@ -348,10 +391,12 @@ export default function SimpleMap({ anunciosFiltrados, onCityFound, userNicho, s
          center={PRIMAVERA_DO_LESTE_COORDS}
          zoom={14}
          style={{ width: '100%', height: '100%' }}
-        whenReady={() => {
+        whenReady={(map) => {
           // Forçar o mapa a invalidar seu tamanho quando estiver pronto
           setTimeout(() => {
             if (typeof window !== 'undefined') {
+              // Invalidar o tamanho do mapa
+              map.invalidateSize();
               window.dispatchEvent(new Event('resize'));
             }
           }, 100);
@@ -371,6 +416,7 @@ export default function SimpleMap({ anunciosFiltrados, onCityFound, userNicho, s
           onCityFound={onCityFound}
           markers={markers}
           highlightedMarkerId={highlightedMarkerId}
+          isFullscreen={isFullscreen}
         />
         
         <TileLayer
