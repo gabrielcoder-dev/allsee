@@ -13,7 +13,7 @@ const MapAdmin = dynamic(() => import('@/Components/MapAdmin'), { ssr: false });
 
 const DashboardPage = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [selectedMenu, setSelectedMenu] = useState('anuncios');
+  const [selectedMenu, setSelectedMenu] = useState('totens');
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
