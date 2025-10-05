@@ -106,6 +106,7 @@ export default function SimpleMap({ anunciosFiltrados, onCityFound, userNicho, s
   const [loading, setLoading] = useState(true)
   const [mounted, setMounted] = useState(false)
   const [highlightedMarkerId, setHighlightedMarkerId] = useState<number | null>(null)
+  const [mapReady, setMapReady] = useState(false)
   
   // Acessar contexto do carrinho
   const cartContext = useCart();
@@ -276,6 +277,25 @@ export default function SimpleMap({ anunciosFiltrados, onCityFound, userNicho, s
     }
   }, [specificTotemId, markers]);
 
+  // Forçar renderização completa do mapa
+  useEffect(() => {
+    if (mounted && !loading && mapHeight > 0) {
+      // Aguardar um pouco para garantir que o DOM esteja pronto
+      const timer = setTimeout(() => {
+        // Forçar re-render do mapa para garantir que renderize completamente
+        setMapReady(true);
+        
+        // Adicionar um pequeno delay para garantir que o mapa seja totalmente renderizado
+        setTimeout(() => {
+          // Disparar evento de resize para forçar o mapa a recalcular suas dimensões
+          window.dispatchEvent(new Event('resize'));
+        }, 100);
+      }, 200);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [mounted, loading, mapHeight]);
+
   // Não renderizar até estar montado
   if (!mounted) {
     return (
@@ -288,12 +308,12 @@ export default function SimpleMap({ anunciosFiltrados, onCityFound, userNicho, s
     );
   }
 
-  if (loading) {
+  if (loading || !mapReady) {
     return (
       <div className={`${isFullscreen ? 'w-full' : 'hidden xl:flex w-[400px]'} flex-shrink-0 z-0 items-center justify-center`} style={{ height: '100vh' }}>
         <div className="flex flex-col items-center gap-2">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500"></div>
-          <span className="text-sm text-gray-600">Carregando totens no mapa...</span>
+          <span className="text-sm text-gray-600">{loading ? 'Carregando totens no mapa...' : 'Preparando mapa...'}</span>
         </div>
       </div>
     );
@@ -328,7 +348,14 @@ export default function SimpleMap({ anunciosFiltrados, onCityFound, userNicho, s
          center={PRIMAVERA_DO_LESTE_COORDS}
          zoom={14}
          style={{ width: '100%', height: '100%' }}
-        whenReady={() => {}}
+        whenReady={() => {
+          // Forçar o mapa a invalidar seu tamanho quando estiver pronto
+          setTimeout(() => {
+            if (typeof window !== 'undefined') {
+              window.dispatchEvent(new Event('resize'));
+            }
+          }, 100);
+        }}
         zoomControl={true}
         scrollWheelZoom={true}
         doubleClickZoom={true}
