@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import { createClient } from '@supabase/supabase-js';
 import OrderDetailsModal from "./OrderDetailsModal";
+import { ZoomIn } from 'lucide-react';
 
 // Função para detectar se é vídeo
 const isVideo = (url: string) => {
@@ -42,6 +43,7 @@ const ProgressAdmin = () => {
   const [alcanceAtual, setAlcanceAtual] = useState<{ [key: number]: number }>({});
   const [showOrderDetails, setShowOrderDetails] = useState(false);
   const [selectedOrderId, setSelectedOrderId] = useState<number | null>(null);
+  const [modalImage, setModalImage] = useState<{ url: string; name: string } | null>(null);
 
   // Função para calcular dias restantes (mesma lógica do meus-anuncios)
   const calcularDiasRestantes = (inicioCampanha: string, duracaoSemanas: number) => {
@@ -208,6 +210,16 @@ const ProgressAdmin = () => {
     return numero.toLocaleString("pt-BR");
   };
 
+  // Função para download
+  const handleDownload = (url: string, name: string) => {
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `arte-${name.replace(/[^a-zA-Z0-9]/g, '-')}`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  };
+
   useEffect(() => {
     const buscarCampanhas = async () => {
       try {
@@ -322,21 +334,39 @@ const ProgressAdmin = () => {
                 {/* Imagem/Vídeo + Detalhes */}
                 <div className="flex flex-col md:flex-row items-center md:items-start gap-3 md:gap-4 flex-shrink-0">
                   {isVideo(campanha.arte.caminho_imagem) ? (
-                    <video
-                      src={campanha.arte.caminho_imagem}
-                      className="w-20 h-20 md:w-32 md:h-32 rounded-xl md:rounded-2xl object-cover"
-                      controls={false}
-                      preload="metadata"
-                      muted
-                    />
+                    <div 
+                      className="w-20 h-20 md:w-32 md:h-32 rounded-xl md:rounded-2xl overflow-hidden cursor-pointer relative group"
+                      onClick={() => setModalImage({ url: campanha.arte.caminho_imagem, name: campanha.order.nome_campanha || "Campanha" })}
+                    >
+                      <video
+                        src={campanha.arte.caminho_imagem}
+                        className="w-full h-full object-cover"
+                        controls={false}
+                        preload="metadata"
+                        muted
+                      />
+                      {/* Overlay de hover */}
+                      <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                        <ZoomIn className="text-white w-4 h-4 md:w-6 md:h-6" />
+                      </div>
+                    </div>
                   ) : (
-                    <Image
-                      src={campanha.arte.caminho_imagem}
-                      alt={campanha.order.nome_campanha || "Campanha"}
-                      width={128}
-                      height={128}
-                      className="w-20 h-20 md:w-32 md:h-32 rounded-xl md:rounded-2xl object-cover"
-                    />
+                    <div 
+                      className="w-20 h-20 md:w-32 md:h-32 rounded-xl md:rounded-2xl overflow-hidden cursor-pointer relative group"
+                      onClick={() => setModalImage({ url: campanha.arte.caminho_imagem, name: campanha.order.nome_campanha || "Campanha" })}
+                    >
+                      <Image
+                        src={campanha.arte.caminho_imagem}
+                        alt={campanha.order.nome_campanha || "Campanha"}
+                        width={128}
+                        height={128}
+                        className="w-full h-full object-cover"
+                      />
+                      {/* Overlay de hover */}
+                      <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                        <ZoomIn className="text-white w-4 h-4 md:w-6 md:h-6" />
+                      </div>
+                    </div>
                   )}
                   <div className="text-center md:text-left">
                     <p className="font-bold text-gray-800 text-sm md:text-base">{campanha.order.nome_campanha || "Campanha sem nome"}</p>
@@ -409,6 +439,42 @@ const ProgressAdmin = () => {
           }}
           orderId={selectedOrderId}
         />
+      )}
+
+      {/* Modal para visualizar imagem */}
+      {modalImage && (
+        <div className="fixed inset-0 z-[9999] flex items-end justify-center md:items-center md:justify-center p-4">
+          <div className="absolute inset-0 bg-black/50" onClick={() => setModalImage(null)}></div>
+          <div className="relative bg-white rounded-xl md:rounded-2xl shadow-xl border border-gray-200 p-4 md:p-7 max-w-2xl w-full flex flex-col items-center opacity-100 z-10" onClick={e => e.stopPropagation()}>
+            <button
+              className="absolute top-2 right-2 cursor-pointer text-gray-400 hover:text-gray-600 text-xl font-bold p-2 bg-gray-100 hover:bg-gray-200 rounded-full transition-colors"
+              onClick={() => setModalImage(null)}
+              aria-label="Fechar"
+            >
+              ×
+            </button>
+            {isVideo(modalImage.url) ? (
+              <video
+                src={modalImage.url}
+                controls
+                className="object-contain max-h-[300px] md:max-h-[400px] w-auto rounded mb-4 shadow-lg"
+                autoPlay
+              />
+            ) : (
+              <img
+                src={modalImage.url}
+                alt={modalImage.name}
+                className="object-contain max-h-[300px] md:max-h-[400px] w-auto rounded mb-4 shadow-lg"
+              />
+            )}
+            <button
+              className="bg-orange-500 hover:bg-orange-600 text-white rounded-lg md:rounded-xl px-4 py-2 font-medium text-sm md:text-base mt-2 cursor-pointer transition-colors"
+              onClick={() => handleDownload(modalImage.url, modalImage.name)}
+            >
+              Baixar arquivo
+            </button>
+          </div>
+        </div>
       )}
     </div>
   );
