@@ -120,7 +120,7 @@ export default function MiniAnuncioCard({ anuncio, actionButton, hideAddButton, 
     ? "bg-white rounded-xl shadow border border-gray-100 p-2 flex flex-col gap-1.5 w-[220px] min-w-[200px] max-w-[240px] cursor-pointer"
     : size === 'large'
     ? "bg-white rounded-xl shadow border border-gray-100 p-3 flex flex-col gap-2 w-[280px] min-w-[250px] max-w-[320px] cursor-pointer"
-    : "bg-white rounded-xl shadow border border-gray-100 p-2.5 flex flex-col gap-2 w-[260px] min-w-[240px] max-w-[280px] cursor-pointer";
+    : "bg-white rounded-xl shadow border border-gray-100 p-2 flex flex-col gap-1.5 w-[240px] min-w-[220px] max-w-[260px] cursor-pointer";
 
   const imageClasses = size === 'small'
     ? "rounded-lg overflow-hidden h-8 flex items-center justify-center bg-gray-100 mb-0.5 relative"
@@ -128,7 +128,7 @@ export default function MiniAnuncioCard({ anuncio, actionButton, hideAddButton, 
     ? "rounded-lg overflow-hidden h-12 flex items-center justify-center bg-gray-100 mb-1.5 relative"
     : size === 'large'
     ? "rounded-lg overflow-hidden h-16 flex items-center justify-center bg-gray-100 mb-2 relative"
-    : "rounded-lg overflow-hidden h-14 flex items-center justify-center bg-gray-100 mb-2 relative";
+    : "rounded-lg overflow-hidden h-12 flex items-center justify-center bg-gray-100 mb-1.5 relative";
 
   const imageImgClasses = size === 'small'
     ? "object-cover w-full h-8"
@@ -136,7 +136,7 @@ export default function MiniAnuncioCard({ anuncio, actionButton, hideAddButton, 
     ? "object-cover w-full h-12"
     : size === 'large'
     ? "object-cover w-full h-16"
-    : "object-cover w-full h-14";
+    : "object-cover w-full h-12";
 
   const tagClasses = size === 'small'
     ? "bg-purple-600 text-white text-[8px] px-1 py-0.5 rounded font-medium flex items-center gap-0.5"
@@ -152,7 +152,7 @@ export default function MiniAnuncioCard({ anuncio, actionButton, hideAddButton, 
     ? "font-bold text-sm line-clamp-1 mb-1"
     : size === 'large'
     ? "font-bold text-sm line-clamp-1 mb-1"
-    : "font-bold text-lg line-clamp-1 mb-2";
+    : "font-bold text-base line-clamp-1 mb-1.5";
 
   const addressClasses = size === 'small'
     ? "text-gray-500 text-[8px] mb-0.5 break-words line-clamp-2"
@@ -160,7 +160,7 @@ export default function MiniAnuncioCard({ anuncio, actionButton, hideAddButton, 
     ? "text-gray-500 text-[10px] mb-1 break-words line-clamp-2"
     : size === 'large'
     ? "text-gray-500 text-xs mb-2 break-words line-clamp-2"
-    : "text-gray-500 text-xs mb-2 break-words line-clamp-2";
+    : "text-gray-500 text-[11px] mb-1.5 break-words line-clamp-2";
 
   const statsContainerClasses = size === 'small'
     ? "flex gap-1.5 mb-0.5"
@@ -184,7 +184,7 @@ export default function MiniAnuncioCard({ anuncio, actionButton, hideAddButton, 
     ? "font-bold text-[9px]"
     : size === 'large'
     ? "font-bold text-xs"
-    : "font-bold text-sm";
+    : "font-bold text-xs";
 
   const screensClasses = size === 'small'
     ? "text-[8px] text-gray-800 mb-0.5 font-bold"
@@ -192,7 +192,7 @@ export default function MiniAnuncioCard({ anuncio, actionButton, hideAddButton, 
     ? "text-[10px] text-gray-800 mb-1 font-bold"
     : size === 'large'
     ? "text-xs text-gray-800 mb-2 font-bold"
-    : "text-sm text-gray-800 mb-2 font-bold";
+    : "text-xs text-gray-800 mb-1.5 font-bold";
 
   const priceContainerClasses = size === 'small'
     ? "mb-0.5 flex flex-col gap-0.5"
@@ -208,7 +208,7 @@ export default function MiniAnuncioCard({ anuncio, actionButton, hideAddButton, 
     ? "text-[10px] text-gray-400 line-through"
     : size === 'large'
     ? "text-xs text-gray-400 line-through"
-    : "text-sm text-gray-400 line-through";
+    : "text-xs text-gray-400 line-through";
 
   const finalPriceClasses = size === 'small'
     ? "text-xs font-bold text-green-700"
@@ -216,7 +216,7 @@ export default function MiniAnuncioCard({ anuncio, actionButton, hideAddButton, 
     ? "text-sm font-bold text-green-700"
     : size === 'large'
     ? "text-lg font-bold text-green-700"
-    : "text-lg font-bold text-green-700";
+    : "text-base font-bold text-green-700";
 
   const durationClasses = size === 'small'
     ? "text-[8px] text-gray-500 mb-0.5"
@@ -224,7 +224,7 @@ export default function MiniAnuncioCard({ anuncio, actionButton, hideAddButton, 
     ? "text-[10px] text-gray-500 mb-1"
     : size === 'large'
     ? "text-xs text-gray-500 mb-2"
-    : "text-sm text-gray-500 mb-2";
+    : "text-xs text-gray-500 mb-1.5";
 
   const buttonClasses = size === 'small'
     ? "w-full cursor-pointer flex items-center justify-center gap-1 border rounded py-0.5 text-[8px] font-semibold transition"
@@ -232,7 +232,7 @@ export default function MiniAnuncioCard({ anuncio, actionButton, hideAddButton, 
     ? "w-full cursor-pointer flex items-center justify-center gap-1 border rounded py-1 text-[10px] font-semibold transition"
     : size === 'large'
     ? "w-full cursor-pointer flex items-center justify-center gap-2 border rounded py-2 text-sm font-semibold transition"
-    : "w-full cursor-pointer flex items-center justify-center gap-1 border rounded py-2 text-sm font-semibold transition";
+    : "w-full cursor-pointer flex items-center justify-center gap-1 border rounded py-1.5 text-xs font-semibold transition";
 
   return (
     <div className={containerClasses}>
