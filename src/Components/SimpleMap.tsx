@@ -391,12 +391,11 @@ export default function SimpleMap({ anunciosFiltrados, onCityFound, userNicho, s
          center={PRIMAVERA_DO_LESTE_COORDS}
          zoom={14}
          style={{ width: '100%', height: '100%' }}
-        whenReady={(map) => {
+        whenReady={() => {
           // Forçar o mapa a invalidar seu tamanho quando estiver pronto
           setTimeout(() => {
             if (typeof window !== 'undefined') {
-              // Invalidar o tamanho do mapa
-              map.invalidateSize();
+              // Disparar evento de resize para forçar o mapa a recalcular suas dimensões
               window.dispatchEvent(new Event('resize'));
             }
           }, 100);
