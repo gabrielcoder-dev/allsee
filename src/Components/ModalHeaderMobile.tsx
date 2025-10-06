@@ -140,6 +140,7 @@ export default function ModalHeaderMobile({
                 // Apenas preencher o input - NÃO recarregar componentes
                 const selectedAddress = selectAddress(address);
                 console.log('Endereço selecionado:', selectedAddress.address);
+                // O recarregamento acontecerá apenas quando clicar em "buscar"
               }}
               onCloseDropdown={closeDropdown}
               placeholder="Ex.: Bairro Castelândia"

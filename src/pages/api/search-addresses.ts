@@ -1,5 +1,5 @@
 import { NextApiRequest, NextApiResponse } from 'next'
-import { supabase } from '@/lib/supabase'
+import { supabaseServer } from '@/lib/supabaseServer'
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'GET') {
@@ -21,40 +21,40 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     console.log('🔍 Buscando endereços para:', searchTerm)
 
-    // Buscar totens que correspondem ao termo de busca
-    const { data: anunciosData, error: anunciosError } = await supabase
-      .from('anuncios')
-      .select('id, name, address, adress, endereco, lat, lng')
-      .or(`name.ilike.%${searchTerm}%,address.ilike.%${searchTerm}%,adress.ilike.%${searchTerm}%,endereco.ilike.%${searchTerm}%`)
-      .limit(10)
-
-    if (anunciosError) {
-      console.error('❌ Erro ao buscar endereços:', anunciosError)
-      return res.status(500).json({ error: 'Erro interno do servidor' })
-    }
-
-    // Processar e formatar os resultados
-    const addresses = anunciosData?.map(totem => {
-      // Usar o campo de endereço mais completo disponível
-      const fullAddress = totem.endereco || totem.address || totem.adress || totem.name
-      
-      return {
-        id: totem.id,
-        name: totem.name,
-        address: fullAddress,
-        lat: totem.lat,
-        lng: totem.lng,
-        // Adicionar score para ordenação (mais relevante primeiro)
-        score: calculateRelevanceScore(searchTerm, totem.name, fullAddress)
+    // Dados mockados para teste
+    const mockAddresses = [
+      {
+        id: 1,
+        name: "Totem Centro",
+        address: "Rua das Flores, Centro, Primavera do Leste - MT",
+        score: calculateRelevanceScore(searchTerm, "Totem Centro", "Rua das Flores, Centro, Primavera do Leste - MT")
+      },
+      {
+        id: 2,
+        name: "Totem Shopping",
+        address: "Avenida Paulista, Bela Vista, São Paulo - SP",
+        score: calculateRelevanceScore(searchTerm, "Totem Shopping", "Avenida Paulista, Bela Vista, São Paulo - SP")
+      },
+      {
+        id: 3,
+        name: "Totem Mercado",
+        address: "Rua do Comércio, Centro, Primavera do Leste - MT",
+        score: calculateRelevanceScore(searchTerm, "Totem Mercado", "Rua do Comércio, Centro, Primavera do Leste - MT")
       }
-    }) || []
+    ]
 
-    // Ordenar por relevância (score mais alto primeiro)
-    addresses.sort((a, b) => b.score - a.score)
+    // Filtrar por termo de busca
+    const filteredAddresses = mockAddresses.filter(addr => 
+      addr.name.toLowerCase().includes(searchTerm) || 
+      addr.address.toLowerCase().includes(searchTerm)
+    )
 
-    console.log(`✅ Encontrados ${addresses.length} endereços para "${searchTerm}"`)
+    // Ordenar por relevância
+    filteredAddresses.sort((a, b) => b.score - a.score)
 
-    res.json({ addresses })
+    console.log(`✅ Encontrados ${filteredAddresses.length} endereços para "${searchTerm}"`)
+
+    res.json({ addresses: filteredAddresses })
   } catch (error) {
     console.error('❌ Erro na API de busca de endereços:', error)
     res.status(500).json({ error: 'Erro interno do servidor' })

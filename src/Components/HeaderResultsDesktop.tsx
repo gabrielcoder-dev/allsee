@@ -150,31 +150,32 @@ const HeaderResultsDesktop = ({ onDurationChange, selectedDuration, onTipoMidiaC
             <div className='flex items-center gap-8 bg-gray-50 rounded-lg px-3 py-2'>
               <AddressAutocomplete
                 query={query}
-                setQuery={(newQuery) => {
-                  setQuery(newQuery);
-                  if (onTipoMidiaChange) onTipoMidiaChange(null, newQuery ? [newQuery] : []);
-                }}
+                setQuery={setQuery}
                 suggestions={suggestions}
                 isLoading={isLoading}
                 isOpen={isOpen}
                 error={error}
                 onSelectAddress={(address) => {
                   const selectedAddress = selectAddress(address);
-                  // Notificar o componente pai sobre a seleção
-                  if (onCityFound && address.lat && address.lng) {
-                    onCityFound({
-                      lat: address.lat,
-                      lng: address.lng,
-                      totemId: address.id
-                    });
+                  console.log('Endereço selecionado:', selectedAddress.address);
+                  
+                  // AQUI é onde deve recarregar os componentes
+                  if (onTipoMidiaChange) {
+                    onTipoMidiaChange(null, [address.address]);
                   }
+                  
                   // Notificar sobre totem específico encontrado
                   if (onSpecificTotemFound) {
                     onSpecificTotemFound(address.id);
                   }
-                  // Atualizar filtros com o endereço selecionado
-                  if (onTipoMidiaChange) {
-                    onTipoMidiaChange(null, [address.address]);
+                  
+                  // Notificar o componente pai sobre a seleção (para o mapa)
+                  if (onCityFound) {
+                    onCityFound({
+                      lat: 0, // Não temos coordenadas na tabela anuncios
+                      lng: 0,
+                      totemId: address.id
+                    });
                   }
                 }}
                 onCloseDropdown={closeDropdown}
