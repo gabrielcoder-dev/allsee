@@ -21,52 +21,50 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     console.log('🔍 Buscando endereços para:', searchTerm)
 
-    // Dados mockados baseados em totens reais do sistema
-    const mockAddresses = [
-      {
-        id: 1,
-        name: "Totem Centro Comercial",
-        address: "Rua das Flores, Centro, Primavera do Leste - MT",
-        score: calculateRelevanceScore(searchTerm, "Totem Centro Comercial", "Rua das Flores, Centro, Primavera do Leste - MT")
-      },
-      {
-        id: 2,
-        name: "Totem Shopping Plaza",
-        address: "Avenida Paulista, Bela Vista, São Paulo - SP",
-        score: calculateRelevanceScore(searchTerm, "Totem Shopping Plaza", "Avenida Paulista, Bela Vista, São Paulo - SP")
-      },
-      {
-        id: 3,
-        name: "Totem Mercado Central",
-        address: "Rua do Comércio, Centro, Primavera do Leste - MT",
-        score: calculateRelevanceScore(searchTerm, "Totem Mercado Central", "Rua do Comércio, Centro, Primavera do Leste - MT")
-      },
-      {
-        id: 4,
-        name: "Totem Avenida Brasil",
-        address: "Avenida Brasil, Manguinhos, Rio de Janeiro - RJ",
-        score: calculateRelevanceScore(searchTerm, "Totem Avenida Brasil", "Avenida Brasil, Manguinhos, Rio de Janeiro - RJ")
-      },
-      {
-        id: 5,
-        name: "Totem Rua Principal",
-        address: "Rua Principal, Centro, Primavera do Leste - MT",
-        score: calculateRelevanceScore(searchTerm, "Totem Rua Principal", "Rua Principal, Centro, Primavera do Leste - MT")
+    // Buscar totens que correspondem ao termo de busca com coordenadas dos markers
+    const { data: anunciosData, error: anunciosError } = await supabaseServer
+      .from('anuncios')
+      .select(`
+        id, 
+        name, 
+        address,
+        markers!inner(id, lat, lng)
+      `)
+      .or(`name.ilike.%${searchTerm}%,address.ilike.%${searchTerm}%`)
+      .limit(10)
+
+    console.log('📊 Resultado da busca:', { anunciosData, anunciosError })
+
+    if (anunciosError) {
+      console.error('❌ Erro ao buscar endereços:', anunciosError)
+      return res.status(500).json({ error: 'Erro interno do servidor' })
+    }
+
+    // Processar e formatar os resultados
+    const addresses = anunciosData?.map(totem => {
+      // Usar o campo de endereço mais completo disponível
+      const fullAddress = totem.address || totem.name
+      
+      // Pegar as coordenadas do primeiro marker (se houver)
+      const marker = Array.isArray(totem.markers) ? totem.markers[0] : totem.markers
+      
+      return {
+        id: totem.id,
+        name: totem.name,
+        address: fullAddress,
+        lat: marker?.lat || 0,
+        lng: marker?.lng || 0,
+        // Adicionar score para ordenação (mais relevante primeiro)
+        score: calculateRelevanceScore(searchTerm, totem.name, fullAddress)
       }
-    ]
+    }) || []
 
-    // Filtrar por termo de busca
-    const filteredAddresses = mockAddresses.filter(addr => 
-      addr.name.toLowerCase().includes(searchTerm) || 
-      addr.address.toLowerCase().includes(searchTerm)
-    )
+    // Ordenar por relevância (score mais alto primeiro)
+    addresses.sort((a, b) => b.score - a.score)
 
-    // Ordenar por relevância
-    filteredAddresses.sort((a, b) => b.score - a.score)
+    console.log(`✅ Encontrados ${addresses.length} endereços para "${searchTerm}"`)
 
-    console.log(`✅ Encontrados ${filteredAddresses.length} endereços para "${searchTerm}"`)
-
-    res.json({ addresses: filteredAddresses })
+    res.json({ addresses })
   } catch (error) {
     console.error('❌ Erro na API de busca de endereços:', error)
     res.status(500).json({ error: 'Erro interno do servidor' })

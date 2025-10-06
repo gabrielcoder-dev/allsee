@@ -159,6 +159,8 @@ const HeaderResultsDesktop = ({ onDurationChange, selectedDuration, onTipoMidiaC
                   const selectedAddress = selectAddress(address);
                   console.log('🎯 Endereço selecionado:', selectedAddress.address);
                   console.log('🎯 ID do totem:', address.id);
+                  console.log('🎯 Nome do totem:', address.name);
+                  console.log('🎯 Coordenadas do totem:', { lat: address.lat, lng: address.lng });
                   
                   // AQUI é onde deve recarregar os componentes
                   if (onTipoMidiaChange) {
@@ -175,9 +177,10 @@ const HeaderResultsDesktop = ({ onDurationChange, selectedDuration, onTipoMidiaC
                   // Notificar o componente pai sobre a seleção (para o mapa)
                   if (onCityFound) {
                     console.log('🗺️ Chamando onCityFound para destacar no mapa');
+                    console.log('🗺️ Coordenadas:', { lat: address.lat, lng: address.lng });
                     onCityFound({
-                      lat: 0, // Não temos coordenadas na tabela anuncios
-                      lng: 0,
+                      lat: address.lat,
+                      lng: address.lng,
                       totemId: address.id
                     });
                   }

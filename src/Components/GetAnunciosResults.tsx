@@ -104,11 +104,24 @@ export default function GetAnunciosResults({ onAdicionarProduto, selectedDuratio
         }
         // Se userNicho é 'outro' ou null, mostrar todos os totens
         
-        // Filtrar por bairros (address)
+        // Filtrar por bairros (address) - mas sempre incluir o totem específico se selecionado
         if (bairros && bairros.length > 0) {
-          filteredData = filteredData.filter((anuncio: any) =>
+          const filteredByAddress = filteredData.filter((anuncio: any) =>
             bairros.some(bairro => anuncio.address?.toLowerCase().includes(bairro.toLowerCase()))
           );
+          
+          // Se há um totem específico selecionado, garantir que ele apareça mesmo se não passar no filtro
+          if (specificTotemId) {
+            const specificTotem = filteredData.find(anuncio => anuncio.id === specificTotemId);
+            if (specificTotem && !filteredByAddress.find(a => a.id === specificTotemId)) {
+              console.log('🎯 Adicionando totem específico que não passou no filtro:', specificTotem.name);
+              filteredData = [specificTotem, ...filteredByAddress];
+            } else {
+              filteredData = filteredByAddress;
+            }
+          } else {
+            filteredData = filteredByAddress;
+          }
         }
         // Aplicar ordenação
         let anunciosOrdenados = ordenarAnuncios(filteredData, orderBy || '');
