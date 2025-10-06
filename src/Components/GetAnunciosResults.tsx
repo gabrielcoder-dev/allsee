@@ -106,9 +106,40 @@ export default function GetAnunciosResults({ onAdicionarProduto, selectedDuratio
         
         // Filtrar por bairros (address) - mas sempre incluir o totem específico se selecionado
         if (bairros && bairros.length > 0) {
+          console.log('🔍 Filtrando por bairros:', bairros);
+          console.log('🔍 Total de anúncios antes do filtro:', filteredData.length);
+          
           const filteredByAddress = filteredData.filter((anuncio: any) =>
-            bairros.some(bairro => anuncio.address?.toLowerCase().includes(bairro.toLowerCase()))
+            bairros.some(bairro => {
+              // Busca mais flexível - verificar se o endereço contém o termo ou vice-versa
+              const anuncioAddress = anuncio.address?.toLowerCase() || '';
+              const searchTerm = bairro.toLowerCase();
+              
+              // Verificar se o endereço do anúncio contém o termo de busca
+              const containsTerm = anuncioAddress.includes(searchTerm);
+              
+              // Verificar se o termo de busca contém partes do endereço (para casos como "Primavera do Leste")
+              const addressParts = anuncioAddress.split(/[,\s-]+/).filter(part => part.length > 2);
+              const hasMatchingPart = addressParts.some(part => searchTerm.includes(part));
+              
+              const matches = containsTerm || hasMatchingPart;
+              
+              if (matches) {
+                console.log('✅ Match encontrado:', {
+                  anuncioId: anuncio.id,
+                  anuncioName: anuncio.name,
+                  anuncioAddress: anuncio.address,
+                  searchTerm: bairro,
+                  containsTerm,
+                  hasMatchingPart
+                });
+              }
+              
+              return matches;
+            })
           );
+          
+          console.log('🔍 Anúncios após filtro por endereço:', filteredByAddress.length);
           
           // Se há um totem específico selecionado, garantir que ele apareça mesmo se não passar no filtro
           if (specificTotemId) {
