@@ -15,6 +15,7 @@ import { useCart } from '@/context/CartContext'
 import ModalMenu from './ModalMenu'
 import { useAddressSearch } from '@/hooks/useAddressSearch'
 import AddressAutocomplete from '@/Components/AddressAutocomplete'
+import SearchAnimation from '@/Components/SearchAnimation'
 
 const durations = [
   { label: '2 semanas', value: '2' },
@@ -62,6 +63,7 @@ const HeaderResultsDesktop = ({ onDurationChange, selectedDuration, onTipoMidiaC
   const durationValue = selectedDuration || '2'
   const totalNoCarrinho = produtos.reduce((acc, p) => acc + p.quantidade, 0)
   const [showMenuModal, setShowMenuModal] = useState(false)
+  const [isSearching, setIsSearching] = useState(false)
   
   // Hook de busca de endereços com autocomplete
   const {
@@ -162,6 +164,9 @@ const HeaderResultsDesktop = ({ onDurationChange, selectedDuration, onTipoMidiaC
                   console.log('🎯 Nome do totem:', address.name);
                   console.log('🎯 Coordenadas do totem:', { lat: address.lat, lng: address.lng });
                   
+                  // Mostrar animação de pesquisa
+                  setIsSearching(true);
+                  
                   // AQUI é onde deve recarregar os componentes
                   if (onTipoMidiaChange) {
                     console.log('🔄 Chamando onTipoMidiaChange com:', [address.address]);
@@ -184,6 +189,11 @@ const HeaderResultsDesktop = ({ onDurationChange, selectedDuration, onTipoMidiaC
                       totemId: address.id
                     });
                   }
+                  
+                  // Simular tempo de carregamento e esconder animação
+                  setTimeout(() => {
+                    setIsSearching(false);
+                  }, 2000); // 2 segundos de animação
                 }}
                 onCloseDropdown={closeDropdown}
                 placeholder="Ex: Rua das Flores, Centro, Primavera do Leste"
@@ -320,6 +330,9 @@ const HeaderResultsDesktop = ({ onDurationChange, selectedDuration, onTipoMidiaC
         <ModalMenu open={showMenuModal} onClose={() => setShowMenuModal(false)} />
 
       </div>
+      
+      {/* Animação de pesquisa */}
+      <SearchAnimation isVisible={isSearching} />
     </>
   )
 }
