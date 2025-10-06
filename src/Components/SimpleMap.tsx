@@ -248,7 +248,7 @@ export default function SimpleMap({ anunciosFiltrados, onCityFound, userNicho, s
   // Função para criar ícone destacado
   const createHighlightedIcon = (markerId: number) => {
     return L.divIcon({
-      className: 'highlighted-marker',
+      className: '', // Remover classe CSS para evitar conflitos
       html: `
         <div style="
           background: #ff6b35; 
@@ -259,6 +259,7 @@ export default function SimpleMap({ anunciosFiltrados, onCityFound, userNicho, s
           box-shadow: 0 0 20px rgba(255,107,53,1), 0 0 40px rgba(255,107,53,0.6);
           position: relative;
           z-index: 1000;
+          animation: pulseHighlight 1.2s infinite, bounceHighlight 1.8s infinite;
         ">
           <div style="
             position: absolute;
@@ -271,6 +272,33 @@ export default function SimpleMap({ anunciosFiltrados, onCityFound, userNicho, s
             border-radius: 50%;
           "></div>
         </div>
+        <style>
+          @keyframes pulseHighlight {
+            0% {
+              transform: scale(1);
+              box-shadow: 0 0 20px rgba(255, 107, 53, 1), 0 0 40px rgba(255, 107, 53, 0.6);
+            }
+            50% {
+              transform: scale(1.3);
+              box-shadow: 0 0 30px rgba(255, 107, 53, 1), 0 0 60px rgba(255, 107, 53, 0.8);
+            }
+            100% {
+              transform: scale(1);
+              box-shadow: 0 0 20px rgba(255, 107, 53, 1), 0 0 40px rgba(255, 107, 53, 0.6);
+            }
+          }
+          @keyframes bounceHighlight {
+            0%, 20%, 50%, 80%, 100% {
+              transform: translateY(0);
+            }
+            40% {
+              transform: translateY(-15px);
+            }
+            60% {
+              transform: translateY(-8px);
+            }
+          }
+        </style>
       `,
       iconSize: [30, 30],
       iconAnchor: [15, 15]
@@ -481,15 +509,21 @@ export default function SimpleMap({ anunciosFiltrados, onCityFound, userNicho, s
           
           // Determinar qual ícone usar
           let iconToUse = orangePinIcon;
-          if (highlightedMarkerId === marker.id) {
+          const isHighlighted = highlightedMarkerId === marker.id;
+          
+          if (isHighlighted) {
+            console.log('⭐ Renderizando marker destacado:', {
+              markerId: marker.id,
+              anuncioId: marker.anuncio_id,
+              anuncioName: marker.anuncio?.name,
+              position: [marker.lat, marker.lng],
+              highlightedMarkerId: highlightedMarkerId
+            });
             iconToUse = createHighlightedIcon(marker.id);
           } else if (estaNoCarrinho) {
             iconToUse = greenPinIcon;
           }
           
-          if (highlightedMarkerId === marker.id) {
-            console.log('⭐ Renderizando marker destacado:', marker.id);
-          }
           return (
             <Marker
               key={marker.id}
