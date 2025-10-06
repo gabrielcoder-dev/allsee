@@ -16,7 +16,7 @@ export default function SearchAnimation({ isVisible }: SearchAnimationProps) {
       right: '0px', 
       bottom: '0px',
       marginTop: '110px',
-      marginBottom: '75px'
+      marginBottom: '70px'
     }}>
       <div className="flex flex-col items-center gap-6">
         {/* Ícone de lupa com animação */}
