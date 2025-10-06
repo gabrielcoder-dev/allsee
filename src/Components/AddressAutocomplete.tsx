@@ -97,7 +97,7 @@ export default function AddressAutocomplete({
           <button
             type="button"
             onClick={() => setQuery('')}
-            className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+            className="absolute right-2 top-2 text-gray-400 hover:text-gray-600 z-10"
           >
             <X className="w-4 h-4" />
           </button>
