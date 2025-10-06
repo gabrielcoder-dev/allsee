@@ -960,6 +960,33 @@ const MeusAnuncios = () => {
           <p className="text-red-500">Erro: {error}</p>
           <p className="text-sm text-gray-500 mt-2">Verifique o console para mais detalhes</p>
         </div>
+      ) : anuncios.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-16 px-4">
+          {/* Ícone */}
+          <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-6">
+            <svg className="w-8 h-8 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zm0 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V8zm0 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1v-2z" clipRule="evenodd" />
+            </svg>
+          </div>
+          
+          {/* Mensagem principal */}
+          <h2 className="text-xl font-semibold text-gray-700 mb-3 text-center">
+            Você ainda não tem nenhum anúncio
+          </h2>
+          
+          {/* Mensagem secundária */}
+          <p className="text-gray-500 text-center mb-8 max-w-md">
+            Comece criando sua primeira campanha para aparecer aqui.
+          </p>
+          
+          {/* Botão */}
+          <Link 
+            href="/results"
+            className="bg-orange-600 hover:bg-orange-700 text-white font-medium py-3 px-6 rounded-lg transition-colors"
+          >
+            criar primeira campanha
+          </Link>
+        </div>
       ) : (
         <div className="grid gap-4 md:gap-6 pb-8">
           {anuncios.map((anuncio) => {
