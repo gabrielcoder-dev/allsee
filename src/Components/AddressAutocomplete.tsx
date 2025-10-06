@@ -68,21 +68,12 @@ export default function AddressAutocomplete({
 
   return (
     <div className={`relative ${className}`}>
-      {/* Input Field */}
-      <div className="flex items-center gap-1">
-        <MapPinIcon className="w-4 h-5 text-orange-500" />
-        <span className="text-gray-500 mb-1 font-semibold">Endereço ou região</span>
-        {isLoading && (
-          <span className="text-xs text-blue-500 ml-2 animate-pulse">Buscando...</span>
-        )}
-      </div>
-
       <div className="relative">
         <input
           ref={inputRef}
           type="text"
           placeholder={placeholder}
-          className="bg-transparent outline-none flex-1 w-72 text-sm"
+          className="bg-transparent outline-none flex-1 w-full text-sm rounded-lg border border-gray-200 focus:border-orange-500 transition-colors pl-9 pr-8 py-2"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           onFocus={() => {
@@ -91,6 +82,9 @@ export default function AddressAutocomplete({
             }
           }}
         />
+        
+        {/* Ícone de localização */}
+        <MapPinIcon className="w-4 h-5 text-orange-500 absolute left-3 top-1/2 transform -translate-y-1/2" />
         
         {/* Botão de limpar */}
         {query && (
@@ -101,6 +95,13 @@ export default function AddressAutocomplete({
           >
             <X className="w-4 h-4" />
           </button>
+        )}
+        
+        {/* Loading indicator */}
+        {isLoading && (
+          <div className="absolute right-8 top-1/2 transform -translate-y-1/2">
+            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-orange-500"></div>
+          </div>
         )}
       </div>
 
