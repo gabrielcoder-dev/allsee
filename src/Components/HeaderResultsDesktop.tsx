@@ -168,9 +168,12 @@ const HeaderResultsDesktop = ({ onDurationChange, selectedDuration, onTipoMidiaC
                   setIsSearching(true);
                   
                   // AQUI é onde deve recarregar os componentes
+                  // NÃO buscar novamente - usar diretamente o totem selecionado
                   if (onTipoMidiaChange) {
-                    console.log('🔄 Chamando onTipoMidiaChange com:', [address.address]);
-                    onTipoMidiaChange(null, [address.address]);
+                    console.log('🔄 Chamando onTipoMidiaChange com totem específico:', address.id);
+                    // Passar null para tipoMidia e array vazio para bairros
+                    // O totem específico será tratado pelo onSpecificTotemFound
+                    onTipoMidiaChange(null, []);
                   }
                   
                   // Notificar sobre totem específico encontrado
