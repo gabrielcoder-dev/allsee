@@ -10,7 +10,14 @@ export default function SearchAnimation({ isVisible }: SearchAnimationProps) {
   if (!isVisible) return null
 
   return (
-    <div className="fixed inset-0 z-40 bg-white/95 backdrop-blur-sm flex items-center justify-center" style={{ top: '120px', bottom: '80px' }}>
+    <div className="fixed z-40 bg-white/95 backdrop-blur-sm flex items-center justify-center" style={{ 
+      top: '0px', 
+      left: '0px', 
+      right: '0px', 
+      bottom: '0px',
+      marginTop: '120px',
+      marginBottom: '80px'
+    }}>
       <div className="flex flex-col items-center gap-6">
         {/* Ícone de lupa com animação */}
         <div className="relative">
