@@ -21,25 +21,37 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     console.log('🔍 Buscando endereços para:', searchTerm)
 
-    // Dados mockados para teste
+    // Dados mockados baseados em totens reais do sistema
     const mockAddresses = [
       {
         id: 1,
-        name: "Totem Centro",
+        name: "Totem Centro Comercial",
         address: "Rua das Flores, Centro, Primavera do Leste - MT",
-        score: calculateRelevanceScore(searchTerm, "Totem Centro", "Rua das Flores, Centro, Primavera do Leste - MT")
+        score: calculateRelevanceScore(searchTerm, "Totem Centro Comercial", "Rua das Flores, Centro, Primavera do Leste - MT")
       },
       {
         id: 2,
-        name: "Totem Shopping",
+        name: "Totem Shopping Plaza",
         address: "Avenida Paulista, Bela Vista, São Paulo - SP",
-        score: calculateRelevanceScore(searchTerm, "Totem Shopping", "Avenida Paulista, Bela Vista, São Paulo - SP")
+        score: calculateRelevanceScore(searchTerm, "Totem Shopping Plaza", "Avenida Paulista, Bela Vista, São Paulo - SP")
       },
       {
         id: 3,
-        name: "Totem Mercado",
+        name: "Totem Mercado Central",
         address: "Rua do Comércio, Centro, Primavera do Leste - MT",
-        score: calculateRelevanceScore(searchTerm, "Totem Mercado", "Rua do Comércio, Centro, Primavera do Leste - MT")
+        score: calculateRelevanceScore(searchTerm, "Totem Mercado Central", "Rua do Comércio, Centro, Primavera do Leste - MT")
+      },
+      {
+        id: 4,
+        name: "Totem Avenida Brasil",
+        address: "Avenida Brasil, Manguinhos, Rio de Janeiro - RJ",
+        score: calculateRelevanceScore(searchTerm, "Totem Avenida Brasil", "Avenida Brasil, Manguinhos, Rio de Janeiro - RJ")
+      },
+      {
+        id: 5,
+        name: "Totem Rua Principal",
+        address: "Rua Principal, Centro, Primavera do Leste - MT",
+        score: calculateRelevanceScore(searchTerm, "Totem Rua Principal", "Rua Principal, Centro, Primavera do Leste - MT")
       }
     ]
 

@@ -115,7 +115,9 @@ export default function GetAnunciosResults({ onAdicionarProduto, selectedDuratio
         
         // Reordenar se há um totem específico selecionado
         if (specificTotemId) {
+          console.log('🎯 Reordenando com totem específico:', specificTotemId);
           anunciosOrdenados = reorderWithSpecificTotem(anunciosOrdenados, specificTotemId);
+          console.log('🎯 Anúncios após reordenação:', anunciosOrdenados.map(a => ({ id: a.id, name: a.name })));
         }
         
         setAnuncios(anunciosOrdenados)
