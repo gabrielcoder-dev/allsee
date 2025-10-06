@@ -2,15 +2,15 @@
 @keyframes pulse {
   0% {
     transform: scale(1);
-    box-shadow: 0 0 15px rgba(255, 107, 53, 0.9);
+    box-shadow: 0 0 20px rgba(255, 107, 53, 1), 0 0 40px rgba(255, 107, 53, 0.6);
   }
   50% {
-    transform: scale(1.2);
-    box-shadow: 0 0 25px rgba(255, 107, 53, 1);
+    transform: scale(1.3);
+    box-shadow: 0 0 30px rgba(255, 107, 53, 1), 0 0 60px rgba(255, 107, 53, 0.8);
   }
   100% {
     transform: scale(1);
-    box-shadow: 0 0 15px rgba(255, 107, 53, 0.9);
+    box-shadow: 0 0 20px rgba(255, 107, 53, 1), 0 0 40px rgba(255, 107, 53, 0.6);
   }
 }
 
@@ -19,16 +19,17 @@
     transform: translateY(0);
   }
   40% {
-    transform: translateY(-10px);
+    transform: translateY(-15px);
   }
   60% {
-    transform: translateY(-5px);
+    transform: translateY(-8px);
   }
 }
 
 /* Estilo para marker destacado */
 .highlighted-marker {
-  animation: pulse 1.5s infinite, bounce 2s infinite;
+  animation: pulse 1.2s infinite, bounce 1.8s infinite;
+  z-index: 1000 !important;
 }
 
 /* Estilo para loading de busca */

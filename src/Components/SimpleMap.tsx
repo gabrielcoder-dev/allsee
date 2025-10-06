@@ -249,9 +249,31 @@ export default function SimpleMap({ anunciosFiltrados, onCityFound, userNicho, s
   const createHighlightedIcon = (markerId: number) => {
     return L.divIcon({
       className: 'highlighted-marker',
-      html: '<div style="background: #ff6b35; border: 3px solid #fff; border-radius: 50%; width: 25px; height: 25px; box-shadow: 0 0 15px rgba(255,107,53,0.9); animation: pulse 1.5s infinite;"></div>',
-      iconSize: [25, 25],
-      iconAnchor: [12, 12]
+      html: `
+        <div style="
+          background: #ff6b35; 
+          border: 4px solid #fff; 
+          border-radius: 50%; 
+          width: 30px; 
+          height: 30px; 
+          box-shadow: 0 0 20px rgba(255,107,53,1), 0 0 40px rgba(255,107,53,0.6);
+          position: relative;
+          z-index: 1000;
+        ">
+          <div style="
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 8px;
+            height: 8px;
+            background: #fff;
+            border-radius: 50%;
+          "></div>
+        </div>
+      `,
+      iconSize: [30, 30],
+      iconAnchor: [15, 15]
     });
   };
 
@@ -277,14 +299,18 @@ export default function SimpleMap({ anunciosFiltrados, onCityFound, userNicho, s
   useEffect(() => {
     if (specificTotemId) {
       console.log('🎯 SpecificTotemId recebido:', specificTotemId);
+      console.log('🎯 Markers disponíveis:', markers.map(m => ({ id: m.id, anuncio_id: m.anuncio_id, name: m.anuncio?.name })));
+      
       // Encontrar o marker que tem o anuncio_id igual ao specificTotemId
       const markerToHighlight = markers.find(marker => marker.anuncio_id === specificTotemId);
       if (markerToHighlight) {
         console.log('🎯 Marker encontrado para destacar:', markerToHighlight);
+        console.log('🎯 Definindo highlightedMarkerId como:', markerToHighlight.id);
         setHighlightedMarkerId(markerToHighlight.id);
         
         // Navegar para o marker
         if ((window as any).navigateToCity) {
+          console.log('🗺️ Navegando para marker:', markerToHighlight.id);
           (window as any).navigateToCity(
             { lat: markerToHighlight.lat, lng: markerToHighlight.lng }, 
             markerToHighlight.id
@@ -292,6 +318,8 @@ export default function SimpleMap({ anunciosFiltrados, onCityFound, userNicho, s
         }
       } else {
         console.log('❌ Marker não encontrado para totemId:', specificTotemId);
+        console.log('❌ Procurando por anuncio_id:', specificTotemId);
+        console.log('❌ IDs disponíveis:', markers.map(m => m.anuncio_id));
       }
     }
   }, [specificTotemId, markers]);
