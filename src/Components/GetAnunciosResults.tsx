@@ -119,8 +119,8 @@ export default function GetAnunciosResults({ onAdicionarProduto, selectedDuratio
               const containsTerm = anuncioAddress.includes(searchTerm);
               
               // Verificar se o termo de busca contém partes do endereço (para casos como "Primavera do Leste")
-              const addressParts = anuncioAddress.split(/[,\s-]+/).filter(part => part.length > 2);
-              const hasMatchingPart = addressParts.some(part => searchTerm.includes(part));
+              const addressParts = anuncioAddress.split(/[,\s-]+/).filter((part: string) => part.length > 2);
+              const hasMatchingPart = addressParts.some((part: string) => searchTerm.includes(part));
               
               const matches = containsTerm || hasMatchingPart;
               

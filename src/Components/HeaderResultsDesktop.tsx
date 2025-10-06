@@ -179,8 +179,8 @@ const HeaderResultsDesktop = ({ onDurationChange, selectedDuration, onTipoMidiaC
                     console.log('🗺️ Chamando onCityFound para destacar no mapa');
                     console.log('🗺️ Coordenadas:', { lat: address.lat, lng: address.lng });
                     onCityFound({
-                      lat: address.lat,
-                      lng: address.lng,
+                      lat: address.lat || 0,
+                      lng: address.lng || 0,
                       totemId: address.id
                     });
                   }
