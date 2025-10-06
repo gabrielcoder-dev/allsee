@@ -10,7 +10,7 @@ export default function SearchAnimation({ isVisible }: SearchAnimationProps) {
   if (!isVisible) return null
 
   return (
-    <div className="fixed z-40 bg-white/95 backdrop-blur-sm flex items-center justify-center" style={{ 
+    <div className="fixed z-30 bg-white/95 backdrop-blur-sm flex items-center justify-center" style={{ 
       top: '0px', 
       left: '0px', 
       right: '0px', 
