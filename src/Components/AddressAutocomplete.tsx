@@ -109,7 +109,10 @@ export default function AddressAutocomplete({
               key={`${suggestion.id}-${index}`}
               type="button"
               className="w-full px-4 py-3 text-left hover:bg-gray-50 border-b border-gray-100 last:border-b-0 transition-colors"
-              onClick={() => onSelectAddress(suggestion)}
+              onClick={() => {
+                onSelectAddress(suggestion);
+                onCloseDropdown();
+              }}
             >
               <div className="flex items-start gap-3">
                 <MapPinIcon className="w-4 h-4 text-orange-500 mt-0.5 flex-shrink-0" />
