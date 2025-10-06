@@ -13,7 +13,8 @@ import FilterModal from '@/Components/FilterModal'
 import { useRouter } from 'next/navigation'
 import { useCart } from '@/context/CartContext'
 import ModalMenu from './ModalMenu'
-import { useSimpleCitySearch } from '@/hooks/useSimpleCitySearch'
+import { useAddressSearch } from '@/hooks/useAddressSearch'
+import AddressAutocomplete from '@/Components/AddressAutocomplete'
 
 const durations = [
   { label: '2 semanas', value: '2' },
@@ -46,9 +47,10 @@ type HeaderResultsDesktopProps = {
   orderBy?: string;
   onOrderChange?: (order: string) => void;
   onCityFound?: (coords: { lat: number; lng: number; totemId?: number }) => void;
+  onSpecificTotemFound?: (totemId: number) => void;
 }
 
-const HeaderResultsDesktop = ({ onDurationChange, selectedDuration, onTipoMidiaChange, orderBy, onOrderChange, onCityFound }: HeaderResultsDesktopProps) => {
+const HeaderResultsDesktop = ({ onDurationChange, selectedDuration, onTipoMidiaChange, orderBy, onOrderChange, onCityFound, onSpecificTotemFound }: HeaderResultsDesktopProps) => {
   const [userName, setUserName] = useState<string>('')
   const [showFilter, setShowFilter] = useState(false)
   const [open, setOpen] = useState(false)
@@ -61,8 +63,17 @@ const HeaderResultsDesktop = ({ onDurationChange, selectedDuration, onTipoMidiaC
   const totalNoCarrinho = produtos.reduce((acc, p) => acc + p.quantidade, 0)
   const [showMenuModal, setShowMenuModal] = useState(false)
   
-  // Hook de busca automática de cidade
-  const { searchTerm, setSearchTerm, isSearching, lastResult, error } = useSimpleCitySearch(0)
+  // Hook de busca de endereços com autocomplete
+  const {
+    query,
+    setQuery,
+    suggestions,
+    isLoading,
+    isOpen,
+    error,
+    selectAddress,
+    closeDropdown
+  } = useAddressSearch({ debounceMs: 300, minLength: 2 })
 
   // Garantir que está no cliente
   useEffect(() => {
@@ -110,18 +121,6 @@ const HeaderResultsDesktop = ({ onDurationChange, selectedDuration, onTipoMidiaC
     }
   }, [showMenuModal, mounted])
 
-  // Notificar quando uma cidade é encontrada
-  useEffect(() => {
-    if (mounted && lastResult && onCityFound) {
-      // NÃO navegar automaticamente para a cidade encontrada
-      // Apenas notificar o componente pai
-      onCityFound({
-        lat: lastResult.lat,
-        lng: lastResult.lng,
-        totemId: lastResult.totemId
-      })
-    }
-  }, [lastResult, onCityFound, mounted])
 
   // Fecha ao clicar fora
   useEffect(() => {
@@ -147,38 +146,42 @@ const HeaderResultsDesktop = ({ onDurationChange, selectedDuration, onTipoMidiaC
         {/* Pesquisa de localização */}
         <div className=' flex flex-col gap-4  md:flex-col lg:flex-row lg:items-center justify-center'>
 
-
           <div className='flex items-center gap-4 shadow-sm rounded-xl p-3'>
             <div className='flex items-center gap-8 bg-gray-50 rounded-lg px-3 py-2'>
-
-            
-            <div className="flex-1 flex flex-col">
-              <div className="flex items-center gap-1">
-                <MapPinIcon className="w-4 h-5 text-orange-500" />
-                <span className="text-gray-500 mb-1 font-semibold">Endereço ou região</span>
-                {isSearching && (
-                  <span className="text-xs text-blue-500 ml-2 animate-pulse">Buscando...</span>
-                )}
-              </div>
-
-              <input
-                type="text"
-                placeholder="Ex: Rua das Flores, Centro, Primavera do Leste"
-                className="bg-transparent outline-none flex-1 w-72 text-sm"
-                value={searchTerm}
-                onChange={e => {
-                  setSearchTerm(e.target.value);
-                  if (onTipoMidiaChange) onTipoMidiaChange(null, e.target.value ? [e.target.value] : []);
+              <AddressAutocomplete
+                query={query}
+                setQuery={(newQuery) => {
+                  setQuery(newQuery);
+                  if (onTipoMidiaChange) onTipoMidiaChange(null, newQuery ? [newQuery] : []);
                 }}
+                suggestions={suggestions}
+                isLoading={isLoading}
+                isOpen={isOpen}
+                error={error}
+                onSelectAddress={(address) => {
+                  const selectedAddress = selectAddress(address);
+                  // Notificar o componente pai sobre a seleção
+                  if (onCityFound && address.lat && address.lng) {
+                    onCityFound({
+                      lat: address.lat,
+                      lng: address.lng,
+                      totemId: address.id
+                    });
+                  }
+                  // Notificar sobre totem específico encontrado
+                  if (onSpecificTotemFound) {
+                    onSpecificTotemFound(address.id);
+                  }
+                  // Atualizar filtros com o endereço selecionado
+                  if (onTipoMidiaChange) {
+                    onTipoMidiaChange(null, [address.address]);
+                  }
+                }}
+                onCloseDropdown={closeDropdown}
+                placeholder="Ex: Rua das Flores, Centro, Primavera do Leste"
+                className="flex-1"
               />
-              {error && (
-                <span className="text-xs text-red-500 mt-1">{error}</span>
-              )}
-                             {lastResult?.isSpecificTotem && searchTerm.trim() && (
-                 <span className="text-xs text-green-600 mt-1 font-medium">✅ Totem encontrado!</span>
-               )}
-            </div>
-            <Search className="w-5 h-5 text-gray-500 cursor-pointer lg:hidden" />
+              <Search className="w-5 h-5 text-gray-500 cursor-pointer lg:hidden" />
             </div>
 
             {/* Duração */}

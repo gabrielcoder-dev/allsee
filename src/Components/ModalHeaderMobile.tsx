@@ -7,6 +7,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { CalendarIcon } from 'lucide-react'
 import { useCart } from '@/context/CartContext'
 import { Popover, PopoverContent, PopoverTrigger } from '@/Components/ui/popover'
+import { useAddressSearch } from '@/hooks/useAddressSearch'
+import AddressAutocomplete from '@/Components/AddressAutocomplete'
 
 const durations = [
   { label: '2 semanas', value: '2' },
@@ -30,10 +32,21 @@ export default function ModalHeaderMobile({
   onSearch,
   onTipoMidiaChange
 }: ModalHeaderMobileProps) {
-  const [location, setLocation] = useState('')
   const [duration, setDuration] = useState(selectedDuration)
   const [showCalendar, setShowCalendar] = useState(false)
   const [startDate, setStartDate] = useState<Date | undefined>(undefined)
+
+  // Hook de busca de endereços com autocomplete
+  const {
+    query,
+    setQuery,
+    suggestions,
+    isLoading,
+    isOpen,
+    error,
+    selectAddress,
+    closeDropdown
+  } = useAddressSearch({ debounceMs: 300, minLength: 2 })
 
   const { formData, updateFormData, setSelectedDurationGlobal } = useCart();
   // const startDate = formData.startDate ? new Date(formData.startDate) : undefined; // This line is removed as startDate is now a state variable
@@ -58,23 +71,26 @@ export default function ModalHeaderMobile({
 
   const handleDurationChange = (value: string) => {
     setDuration(value)
-    if (onDurationChange) {
-      onDurationChange(value)
-    }
+    // NÃO chamar onDurationChange aqui - apenas atualizar estado local
+    // O recarregamento acontecerá apenas quando clicar em "buscar"
   }
 
   const handleSearch = () => {
     if (startDate) {
       updateFormData({ startDate: startDate.toISOString().slice(0, 10) });
     }
+    
+    // Usar o query do autocomplete como location
+    const locationToSearch = query.trim();
+    
     if (onTipoMidiaChange) {
-      onTipoMidiaChange(null, location ? [location] : []);
+      onTipoMidiaChange(null, locationToSearch ? [locationToSearch] : []);
     }
     if (onDurationChange) {
       onDurationChange(duration);
     }
     if (onSearch) {
-      onSearch(location, duration, startDate)
+      onSearch(locationToSearch, duration, startDate)
     }
     onClose()
   }
@@ -111,18 +127,29 @@ export default function ModalHeaderMobile({
           Milhares já anunciaram. Sua vez de atrair clientes, comece agora.
         </p>
         <div className="flex flex-col gap-3">
-          {/* Endereço */}
-          <input
-            type="text"
-            placeholder="Ex.: Bairro Castelândia"
-            className="border border-gray-200 rounded-lg px-3 py-2 outline-none text-base"
-            value={location}
-            onChange={e => setLocation(e.target.value)}
-          />
+          {/* Endereço com Autocomplete */}
+          <div className="relative">
+            <AddressAutocomplete
+              query={query}
+              setQuery={setQuery}
+              suggestions={suggestions}
+              isLoading={isLoading}
+              isOpen={isOpen}
+              error={error}
+              onSelectAddress={(address) => {
+                // Apenas preencher o input - NÃO recarregar componentes
+                const selectedAddress = selectAddress(address);
+                console.log('Endereço selecionado:', selectedAddress.address);
+              }}
+              onCloseDropdown={closeDropdown}
+              placeholder="Ex.: Bairro Castelândia"
+              className="w-full"
+            />
+          </div>
           {/* Duração e Início */}
           <div className="flex gap-2">
             {/* Duração */}
-            <Select value={duration} onValueChange={setDuration}>
+            <Select value={duration} onValueChange={handleDurationChange}>
               <SelectTrigger className="w-1/2 bg-white border border-gray-200 rounded-lg px-3 py-2 text-base">
                 <SelectValue placeholder="duração" />
               </SelectTrigger>

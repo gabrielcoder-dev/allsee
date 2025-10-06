@@ -2,6 +2,7 @@
 @import 'mapbox-gl/dist/mapbox-gl.css';
 @import "tw-animate-css";
 @import 'leaflet/dist/leaflet.css';
+@import '../styles/map-animations.css';
 
 @custom-variant dark (&:is(.dark *));
 

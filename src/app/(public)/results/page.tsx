@@ -212,6 +212,7 @@ const Page = () => {
         orderBy={orderBy}
         onOrderChange={setOrderBy}
         onCityFound={handleCityFound}
+        onSpecificTotemFound={handleSpecificTotemFound}
       />
       
       {/* Cabeçalho Mobile - ocultar quando mapa estiver ativo */}
@@ -244,6 +245,7 @@ const Page = () => {
             onChangeAnunciosFiltrados={setAnunciosFiltrados}
             userNicho={userNicho}
             onSpecificTotemFound={handleSpecificTotemFound}
+            specificTotemId={specificTotemId}
           />
         </div>
 
@@ -272,6 +274,7 @@ const Page = () => {
               onChangeAnunciosFiltrados={setAnunciosFiltrados}
               userNicho={userNicho}
               onSpecificTotemFound={handleSpecificTotemFound}
+              specificTotemId={specificTotemId}
             />
           </div>
           

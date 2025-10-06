@@ -39,9 +39,10 @@ type GetAnunciosResultsProps = {
   onChangeAnunciosFiltrados?: (anuncios: Anuncio[]) => void;
   userNicho?: string | null;
   onSpecificTotemFound?: (totemId: number) => void;
+  specificTotemId?: number | null;
 }
 
-export default function GetAnunciosResults({ onAdicionarProduto, selectedDuration = '2', tipoMidia, bairros, orderBy, onChangeAnunciosFiltrados, userNicho, onSpecificTotemFound }: GetAnunciosResultsProps) {
+export default function GetAnunciosResults({ onAdicionarProduto, selectedDuration = '2', tipoMidia, bairros, orderBy, onChangeAnunciosFiltrados, userNicho, onSpecificTotemFound, specificTotemId }: GetAnunciosResultsProps) {
   const { adicionarProduto, removerProduto, produtos, atualizarProdutosComNovaDuracao } = useCart()
   const [anuncios, setAnuncios] = useState<Anuncio[]>([])
   const [loading, setLoading] = useState(true)
@@ -60,6 +61,18 @@ export default function GetAnunciosResults({ onAdicionarProduto, selectedDuratio
       }
       return 0;
     });
+  };
+
+  // Função para reordenar com totem específico primeiro
+  const reorderWithSpecificTotem = (anuncios: Anuncio[], specificTotemId: number) => {
+    const specificTotem = anuncios.find(anuncio => anuncio.id === specificTotemId);
+    const otherAnuncios = anuncios.filter(anuncio => anuncio.id !== specificTotemId);
+    
+    if (specificTotem) {
+      return [specificTotem, ...otherAnuncios];
+    }
+    
+    return anuncios;
   };
 
   useEffect(() => {
@@ -98,7 +111,13 @@ export default function GetAnunciosResults({ onAdicionarProduto, selectedDuratio
           );
         }
         // Aplicar ordenação
-        const anunciosOrdenados = ordenarAnuncios(filteredData, orderBy || '');
+        let anunciosOrdenados = ordenarAnuncios(filteredData, orderBy || '');
+        
+        // Reordenar se há um totem específico selecionado
+        if (specificTotemId) {
+          anunciosOrdenados = reorderWithSpecificTotem(anunciosOrdenados, specificTotemId);
+        }
+        
         setAnuncios(anunciosOrdenados)
         atualizarProdutosComNovaDuracao(anunciosOrdenados, selectedDuration);
         if (onChangeAnunciosFiltrados) onChangeAnunciosFiltrados(anunciosOrdenados);
