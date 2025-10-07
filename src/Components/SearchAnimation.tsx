@@ -21,7 +21,7 @@ export default function SearchAnimation({ isVisible }: SearchAnimationProps) {
       <div className="flex flex-col items-center gap-6">
         {/* Ícone de lupa com animação */}
         <div className="relative">
-          <div className="w-16 h-16 bg-blue-500 rounded-full flex items-center justify-center animate-pulse">
+          <div className="w-16 h-16 bg-orange-500 rounded-full flex items-center justify-center animate-pulse">
             <svg 
               className="w-8 h-8 text-white" 
               fill="none" 
@@ -37,8 +37,8 @@ export default function SearchAnimation({ isVisible }: SearchAnimationProps) {
             </svg>
           </div>
           {/* Animação de ondas */}
-          <div className="absolute inset-0 w-16 h-16 bg-blue-500 rounded-full animate-ping opacity-20"></div>
-          <div className="absolute inset-0 w-16 h-16 bg-blue-500 rounded-full animate-ping opacity-10" style={{ animationDelay: '0.5s' }}></div>
+          <div className="absolute inset-0 w-16 h-16 bg-orange-500 rounded-full animate-ping opacity-20"></div>
+          <div className="absolute inset-0 w-16 h-16 bg-orange-500 rounded-full animate-ping opacity-10" style={{ animationDelay: '0.5s' }}></div>
         </div>
 
         {/* Texto */}
@@ -50,14 +50,14 @@ export default function SearchAnimation({ isVisible }: SearchAnimationProps) {
 
         {/* Barra de progresso animada */}
         <div className="w-64 h-2 bg-gray-200 rounded-full overflow-hidden">
-          <div className="h-full bg-gradient-to-r from-blue-500 to-orange-500 rounded-full animate-pulse"></div>
+          <div className="h-full bg-gradient-to-r from-orange-400 to-orange-600 rounded-full animate-pulse"></div>
         </div>
 
         {/* Pontos de carregamento */}
         <div className="flex gap-2">
-          <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce"></div>
-          <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-          <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+          <div className="w-2 h-2 bg-orange-500 rounded-full animate-bounce"></div>
+          <div className="w-2 h-2 bg-orange-500 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+          <div className="w-2 h-2 bg-orange-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
         </div>
       </div>
     </div>

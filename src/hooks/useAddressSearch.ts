@@ -63,6 +63,7 @@ export function useAddressSearch({
         setSuggestions([])
         setIsLoading(false)
         setIsOpen(false)
+        setIsSelected(false) // Resetar estado de seleção quando input ficar vazio
       }
     }, debounceMs)
 
