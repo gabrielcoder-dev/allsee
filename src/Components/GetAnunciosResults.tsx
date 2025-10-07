@@ -164,18 +164,31 @@ export default function GetAnunciosResults({ onAdicionarProduto, selectedDuratio
             // Remover o totem específico da lista filtrada se estiver lá
             const otherFilteredTotems = filteredByAddress.filter(a => a.id !== specificTotemId);
             filteredData = [specificTotem, ...otherFilteredTotems];
-            console.log('🎯 Resultado com totem específico primeiro:', filteredData.map(a => ({ id: a.id, name: a.name })));
+            console.log('🎯 Totem específico colocado primeiro:', specificTotem.name);
+            console.log('🎯 Outros totens filtrados:', otherFilteredTotems.map(a => a.name));
+            console.log('🎯 Resultado final com totem específico primeiro:', filteredData.map(a => ({ id: a.id, name: a.name, address: a.address })));
           } else {
             filteredData = filteredByAddress;
+            console.log('⚠️ Totem específico não encontrado, usando apenas filtro por endereço');
           }
         } else if (specificTotemId) {
           // Se não há filtro por bairros mas há totem específico, mostrar todos os totens
           console.log('🎯 Totem específico selecionado sem filtro de bairros - mostrando todos os totens');
         }
-        // Aplicar ordenação
+        // Aplicar ordenação, mas preservar o totem específico na primeira posição
         let anunciosOrdenados = ordenarAnuncios(filteredData, orderBy || '');
         
-        // Não precisamos mais reordenar aqui, pois já fizemos isso na filtragem
+        // Se há um totem específico e ele não está na primeira posição após ordenação, colocá-lo lá
+        if (specificTotemId && anunciosOrdenados.length > 0) {
+          const specificTotemIndex = anunciosOrdenados.findIndex(a => a.id === specificTotemId);
+          if (specificTotemIndex > 0) {
+            console.log('🔄 Recolocando totem específico na primeira posição após ordenação');
+            const specificTotem = anunciosOrdenados[specificTotemIndex];
+            const otherAnuncios = anunciosOrdenados.filter(a => a.id !== specificTotemId);
+            anunciosOrdenados = [specificTotem, ...otherAnuncios];
+            console.log('🎯 Ordem final após correção:', anunciosOrdenados.map(a => ({ id: a.id, name: a.name })));
+          }
+        }
         
         console.log('✅ Resultado final:', {
           totalAnuncios: anunciosOrdenados.length,
