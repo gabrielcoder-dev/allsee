@@ -113,6 +113,13 @@ export default function GetAnunciosResults({ onAdicionarProduto, selectedDuratio
           console.log('🔍 Filtrando por bairros:', bairros);
           console.log('🔍 Total de anúncios antes do filtro:', filteredData.length);
           
+          // Se há um totem específico selecionado, sempre incluí-lo primeiro
+          let specificTotem = null;
+          if (specificTotemId) {
+            specificTotem = filteredData.find(anuncio => anuncio.id === specificTotemId);
+            console.log('🎯 Totem específico encontrado:', specificTotem ? specificTotem.name : 'não encontrado');
+          }
+          
           const filteredByAddress = filteredData.filter((anuncio: any) =>
             bairros.some(bairro => {
               // Busca mais flexível - verificar se o endereço contém o termo ou vice-versa
@@ -126,7 +133,13 @@ export default function GetAnunciosResults({ onAdicionarProduto, selectedDuratio
               const addressParts = anuncioAddress.split(/[,\s-]+/).filter((part: string) => part.length > 2);
               const hasMatchingPart = addressParts.some((part: string) => searchTerm.includes(part));
               
-              const matches = containsTerm || hasMatchingPart;
+              // Verificar se há palavras-chave comuns (para incluir totens próximos)
+              const commonKeywords = ['centro', 'bairro', 'rua', 'avenida', 'av', 'praça', 'shopping', 'mercado', 'feira'];
+              const hasCommonKeyword = commonKeywords.some(keyword => 
+                anuncioAddress.includes(keyword) && searchTerm.includes(keyword)
+              );
+              
+              const matches = containsTerm || hasMatchingPart || hasCommonKeyword;
               
               if (matches) {
                 console.log('✅ Match encontrado:', {
@@ -135,7 +148,8 @@ export default function GetAnunciosResults({ onAdicionarProduto, selectedDuratio
                   anuncioAddress: anuncio.address,
                   searchTerm: bairro,
                   containsTerm,
-                  hasMatchingPart
+                  hasMatchingPart,
+                  hasCommonKeyword
                 });
               }
               
@@ -145,15 +159,12 @@ export default function GetAnunciosResults({ onAdicionarProduto, selectedDuratio
           
           console.log('🔍 Anúncios após filtro por endereço:', filteredByAddress.length);
           
-          // Se há um totem específico selecionado, garantir que ele apareça mesmo se não passar no filtro
-          if (specificTotemId) {
-            const specificTotem = filteredData.find(anuncio => anuncio.id === specificTotemId);
-            if (specificTotem && !filteredByAddress.find(a => a.id === specificTotemId)) {
-              console.log('🎯 Adicionando totem específico que não passou no filtro:', specificTotem.name);
-              filteredData = [specificTotem, ...filteredByAddress];
-            } else {
-              filteredData = filteredByAddress;
-            }
+          // Se há um totem específico, colocá-lo primeiro e depois os outros filtrados
+          if (specificTotem) {
+            // Remover o totem específico da lista filtrada se estiver lá
+            const otherFilteredTotems = filteredByAddress.filter(a => a.id !== specificTotemId);
+            filteredData = [specificTotem, ...otherFilteredTotems];
+            console.log('🎯 Resultado com totem específico primeiro:', filteredData.map(a => ({ id: a.id, name: a.name })));
           } else {
             filteredData = filteredByAddress;
           }
@@ -164,12 +175,7 @@ export default function GetAnunciosResults({ onAdicionarProduto, selectedDuratio
         // Aplicar ordenação
         let anunciosOrdenados = ordenarAnuncios(filteredData, orderBy || '');
         
-        // Reordenar se há um totem específico selecionado
-        if (specificTotemId) {
-          console.log('🎯 Reordenando com totem específico:', specificTotemId);
-          anunciosOrdenados = reorderWithSpecificTotem(anunciosOrdenados, specificTotemId);
-          console.log('🎯 Anúncios após reordenação:', anunciosOrdenados.map(a => ({ id: a.id, name: a.name })));
-        }
+        // Não precisamos mais reordenar aqui, pois já fizemos isso na filtragem
         
         console.log('✅ Resultado final:', {
           totalAnuncios: anunciosOrdenados.length,
