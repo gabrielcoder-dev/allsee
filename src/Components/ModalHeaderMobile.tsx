@@ -109,6 +109,41 @@ export default function ModalHeaderMobile({
     }
   }
 
+  // Função para lidar com seleção de endereço no autocomplete (igual ao desktop)
+  const handleAddressSelect = (address: any) => {
+    const selectedAddress = selectAddress(address);
+    console.log('🎯 Endereço selecionado no mobile:', selectedAddress.address);
+    console.log('🎯 ID do totem:', address.id);
+    console.log('🎯 Nome do totem:', address.name);
+    console.log('🎯 Coordenadas do totem:', { lat: address.lat, lng: address.lng });
+    
+    // Fechar o modal primeiro
+    onClose();
+    
+    // Chamar as funções de callback igual ao desktop
+    if (onTipoMidiaChange) {
+      console.log('🔄 Chamando onTipoMidiaChange com endereço:', address.address);
+      onTipoMidiaChange(null, [address.address]);
+    }
+    
+    // Notificar sobre totem específico encontrado
+    if (onSpecificTotemFound) {
+      console.log('🎯 Chamando onSpecificTotemFound com ID:', address.id);
+      onSpecificTotemFound(address.id);
+    }
+    
+    // Notificar o componente pai sobre a seleção (para o mapa)
+    if (onCityFound) {
+      console.log('🗺️ Chamando onCityFound para destacar no mapa');
+      console.log('🗺️ Coordenadas:', { lat: address.lat, lng: address.lng });
+      onCityFound({
+        lat: address.lat || 0,
+        lng: address.lng || 0,
+        totemId: address.id
+      });
+    }
+  }
+
   // Função para criar string UTC yyyy-MM-ddT00:00:00Z
   function toUTCDateString(date: Date): string {
     const pad = (n: number) => n.toString().padStart(2, '0');
@@ -150,12 +185,7 @@ export default function ModalHeaderMobile({
               isLoading={isLoading}
               isOpen={isOpen}
               error={error}
-              onSelectAddress={(address) => {
-                // Apenas preencher o input - NÃO recarregar componentes
-                const selectedAddress = selectAddress(address);
-                console.log('Endereço selecionado:', selectedAddress.address);
-                // O recarregamento acontecerá apenas quando clicar em "buscar"
-              }}
+              onSelectAddress={handleAddressSelect}
               onCloseDropdown={closeDropdown}
               placeholder="Ex.: Bairro Castelândia"
               className="w-full"
