@@ -6,6 +6,7 @@ import MobileHeader from '@/Components/HeaderResultsMobile'
 import HeaderPrice from '@/Components/HeaderPrice'
 import dynamic from 'next/dynamic'
 import GetAnunciosResults from '@/Components/GetAnunciosResults'
+import SearchAnimation from '@/Components/SearchAnimation'
 import { ToastContainer, toast } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
 import { useCart } from '@/context/CartContext'
@@ -39,6 +40,7 @@ const Page = () => {
   const [anunciosFiltrados, setAnunciosFiltrados] = useState<any[]>([]);
   const [specificTotemId, setSpecificTotemId] = useState<number | null>(null);
   const [mounted, setMounted] = useState(false);
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
   const mapRef = useRef<any>(null);
   
   // Estados para o modal de nicho
@@ -52,8 +54,14 @@ const Page = () => {
   useEffect(() => {
     setMounted(true);
     
+    // Simular tempo de carregamento inicial para mostrar a animação
+    const timer = setTimeout(() => {
+      setIsInitialLoading(false);
+    }, 2000); // 2 segundos de animação inicial
+    
     // Cleanup function para limpar estado quando componente for desmontado
     return () => {
+      clearTimeout(timer);
       setMounted(false);
       setProdutos([]);
       setTipoMidia(null);
@@ -66,6 +74,7 @@ const Page = () => {
       setShowNichoModal(false);
       setIsFirstTimeUser(false);
       setUserNicho(null);
+      setIsInitialLoading(true);
     }
   }, []);
 
@@ -199,6 +208,50 @@ const Page = () => {
     );
   }
 
+  // Mostrar animação de carregamento inicial
+  if (isInitialLoading) {
+    return (
+      <div className='h-screen flex flex-col'>
+        {/* Cabeçalho Desktop */}
+        <HeaderResultsDesktop 
+          onDurationChange={setSelectedDurationGlobal} 
+          selectedDuration={selectedDurationGlobal}
+          onTipoMidiaChange={(tipo, bairros) => { 
+            setTipoMidia(tipo); 
+            setBairros(bairros); 
+          }}
+          orderBy={orderBy}
+          onOrderChange={setOrderBy}
+          onCityFound={handleCityFound}
+          onSpecificTotemFound={handleSpecificTotemFound}
+        />
+        
+        {/* Cabeçalho Mobile */}
+        <div className={`${isMobileMapView ? 'hidden' : 'block'}`}>
+          <MobileHeader 
+            onDurationChange={setSelectedDurationGlobal} 
+            selectedDuration={selectedDurationGlobal}
+            onSearch={handleSearch}
+            onTipoMidiaChange={(tipo, bairros) => { 
+              setTipoMidia(tipo); 
+              setBairros(bairros); 
+            }}
+            orderBy={orderBy}
+            onOrderChange={setOrderBy}
+            onToggleMapView={toggleMobileMapView}
+            isMapView={isMobileMapView}
+          />
+        </div>
+
+        {/* Animação de carregamento inicial */}
+        <SearchAnimation isVisible={true} />
+
+        {/* HeaderPrice - sempre visível e fixo */}
+        <HeaderPrice />
+      </div>
+    );
+  }
+
   return (
     <div className='h-screen flex flex-col'>
       {/* Cabeçalho Desktop */}
@@ -246,6 +299,7 @@ const Page = () => {
             userNicho={userNicho}
             onSpecificTotemFound={handleSpecificTotemFound}
             specificTotemId={specificTotemId}
+            isInitialLoading={isInitialLoading}
           />
         </div>
 
@@ -258,6 +312,7 @@ const Page = () => {
             specificTotemId={specificTotemId}
             isFullscreen={isMapFullscreen}
             onToggleMapView={toggleMapView}
+            isInitialLoading={isInitialLoading}
           />
         </div>
 
@@ -275,6 +330,7 @@ const Page = () => {
               userNicho={userNicho}
               onSpecificTotemFound={handleSpecificTotemFound}
               specificTotemId={specificTotemId}
+              isInitialLoading={isInitialLoading}
             />
           </div>
           
@@ -288,6 +344,7 @@ const Page = () => {
                 specificTotemId={specificTotemId}
                 isFullscreen={true}
                 onToggleMapView={toggleMobileMapView}
+                isInitialLoading={isInitialLoading}
               />
             </div>
           )}

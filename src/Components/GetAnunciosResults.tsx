@@ -40,9 +40,10 @@ type GetAnunciosResultsProps = {
   userNicho?: string | null;
   onSpecificTotemFound?: (totemId: number) => void;
   specificTotemId?: number | null;
+  isInitialLoading?: boolean;
 }
 
-export default function GetAnunciosResults({ onAdicionarProduto, selectedDuration = '2', tipoMidia, bairros, orderBy, onChangeAnunciosFiltrados, userNicho, onSpecificTotemFound, specificTotemId }: GetAnunciosResultsProps) {
+export default function GetAnunciosResults({ onAdicionarProduto, selectedDuration = '2', tipoMidia, bairros, orderBy, onChangeAnunciosFiltrados, userNicho, onSpecificTotemFound, specificTotemId, isInitialLoading = false }: GetAnunciosResultsProps) {
   const { adicionarProduto, removerProduto, produtos, atualizarProdutosComNovaDuracao } = useCart()
   const [anuncios, setAnuncios] = useState<Anuncio[]>([])
   const [loading, setLoading] = useState(true)
@@ -191,7 +192,7 @@ export default function GetAnunciosResults({ onAdicionarProduto, selectedDuratio
 
 
 
-  if (loading) return <div>Carregando anúncios...</div>
+  if (loading && !isInitialLoading) return <div>Carregando anúncios...</div>
   if (!anuncios.length) {
     if (userNicho && userNicho !== 'outro') {
       return (
