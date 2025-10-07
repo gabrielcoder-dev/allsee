@@ -109,39 +109,12 @@ export default function ModalHeaderMobile({
     }
   }
 
-  // Função para lidar com seleção de endereço no autocomplete (igual ao desktop)
+  // Função para lidar com seleção de endereço no autocomplete (apenas preencher input)
   const handleAddressSelect = (address: any) => {
     const selectedAddress = selectAddress(address);
-    console.log('🎯 Endereço selecionado no mobile:', selectedAddress.address);
-    console.log('🎯 ID do totem:', address.id);
-    console.log('🎯 Nome do totem:', address.name);
-    console.log('🎯 Coordenadas do totem:', { lat: address.lat, lng: address.lng });
-    
-    // Fechar o modal primeiro
-    onClose();
-    
-    // Chamar as funções de callback igual ao desktop
-    if (onTipoMidiaChange) {
-      console.log('🔄 Chamando onTipoMidiaChange com endereço:', address.address);
-      onTipoMidiaChange(null, [address.address]);
-    }
-    
-    // Notificar sobre totem específico encontrado
-    if (onSpecificTotemFound) {
-      console.log('🎯 Chamando onSpecificTotemFound com ID:', address.id);
-      onSpecificTotemFound(address.id);
-    }
-    
-    // Notificar o componente pai sobre a seleção (para o mapa)
-    if (onCityFound) {
-      console.log('🗺️ Chamando onCityFound para destacar no mapa');
-      console.log('🗺️ Coordenadas:', { lat: address.lat, lng: address.lng });
-      onCityFound({
-        lat: address.lat || 0,
-        lng: address.lng || 0,
-        totemId: address.id
-      });
-    }
+    console.log('📝 Endereço selecionado no mobile (apenas preenchido):', selectedAddress.address);
+    // NÃO chamar as funções de callback aqui - apenas preencher o input
+    // A busca acontecerá apenas quando clicar em "buscar"
   }
 
   // Função para criar string UTC yyyy-MM-ddT00:00:00Z
