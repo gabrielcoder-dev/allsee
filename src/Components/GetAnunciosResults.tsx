@@ -153,6 +153,9 @@ export default function GetAnunciosResults({ onAdicionarProduto, selectedDuratio
           } else {
             filteredData = filteredByAddress;
           }
+        } else if (specificTotemId) {
+          // Se não há filtro por bairros mas há totem específico, mostrar todos os totens
+          console.log('🎯 Totem específico selecionado sem filtro de bairros - mostrando todos os totens');
         }
         // Aplicar ordenação
         let anunciosOrdenados = ordenarAnuncios(filteredData, orderBy || '');
