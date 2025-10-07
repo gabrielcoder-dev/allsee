@@ -22,10 +22,11 @@ export function useAddressSearch({
   const [isLoading, setIsLoading] = useState(false)
   const [isOpen, setIsOpen] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [isSelected, setIsSelected] = useState(false)
 
   // Função para buscar endereços
   const searchAddresses = useCallback(async (searchTerm: string) => {
-    if (searchTerm.length < minLength) {
+    if (searchTerm.length < minLength || isSelected) {
       setSuggestions([])
       setIsLoading(false)
       return
@@ -51,7 +52,7 @@ export function useAddressSearch({
     } finally {
       setIsLoading(false)
     }
-  }, [minLength])
+  }, [minLength, isSelected])
 
   // Debounce da busca
   useEffect(() => {
@@ -74,6 +75,7 @@ export function useAddressSearch({
     setSuggestions([])
     setIsOpen(false)
     setIsLoading(false)
+    setIsSelected(true) // Marcar como selecionado para parar buscas futuras
     return address
   }, [])
 
@@ -84,6 +86,7 @@ export function useAddressSearch({
     setIsOpen(false)
     setIsLoading(false)
     setError(null)
+    setIsSelected(false) // Resetar estado de seleção
   }, [])
 
   // Função para fechar dropdown
