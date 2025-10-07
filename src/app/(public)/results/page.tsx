@@ -41,6 +41,7 @@ const Page = () => {
   const [specificTotemId, setSpecificTotemId] = useState<number | null>(null);
   const [mounted, setMounted] = useState(false);
   const [isInitialLoading, setIsInitialLoading] = useState(true);
+  const [isMobileSearching, setIsMobileSearching] = useState(false);
   const mapRef = useRef<any>(null);
   
   // Estados para o modal de nicho
@@ -100,10 +101,17 @@ const Page = () => {
     }
   };
 
-  // Função para busca
+  // Função para busca mobile
   const handleSearch = (location: string, duration: string, startDate: Date | undefined) => {
-    // Implementar lógica de busca se necessário
-    console.log('Busca:', { location, duration, startDate });
+    console.log('🔍 Busca mobile:', { location, duration, startDate });
+    
+    // Mostrar animação de pesquisa mobile
+    setIsMobileSearching(true);
+    
+    // Simular tempo de carregamento e esconder animação
+    setTimeout(() => {
+      setIsMobileSearching(false);
+    }, 2000); // 2 segundos de animação
   };
 
   // Função para lidar com totem específico encontrado
@@ -240,7 +248,75 @@ const Page = () => {
             onOrderChange={setOrderBy}
             onToggleMapView={toggleMobileMapView}
             isMapView={isMobileMapView}
+            onCityFound={handleCityFound}
+            onSpecificTotemFound={handleSpecificTotemFound}
           />
+        </div>
+
+        {/* Área principal com scroll controlado - CARREGANDO EM BACKGROUND */}
+        <div className={`flex flex-1 min-h-0 overflow-hidden ${isMapFullscreen ? '' : 'xl:pl-16'} justify-center xl:justify-between relative`}>
+          {/* Conteúdo principal - Desktop */}
+          <div className={`flex flex-1 ${isMapFullscreen ? 'hidden' : 'block'} hidden xl:block overflow-y-auto pb-20`}>
+            <GetAnunciosResults 
+              onAdicionarProduto={handleAdicionarProduto} 
+              selectedDuration={selectedDurationGlobal} 
+              tipoMidia={tipoMidia} 
+              bairros={bairros}
+              orderBy={orderBy}
+              onChangeAnunciosFiltrados={setAnunciosFiltrados}
+              userNicho={userNicho}
+              onSpecificTotemFound={handleSpecificTotemFound}
+              specificTotemId={specificTotemId}
+              isInitialLoading={isInitialLoading}
+            />
+          </div>
+
+          {/* Mapa - Desktop */}
+          <div className={`${isMapFullscreen ? 'w-full h-full' : 'hidden xl:block w-[400px]'}`}>
+            <Mapbox 
+              anunciosFiltrados={anunciosFiltrados} 
+              onCityFound={handleCityFound} 
+              userNicho={userNicho} 
+              specificTotemId={specificTotemId}
+              isFullscreen={isMapFullscreen}
+              onToggleMapView={toggleMapView}
+              isInitialLoading={isInitialLoading}
+            />
+          </div>
+
+          {/* Mobile - Lista ou Mapa */}
+          <div className="xl:hidden w-full h-full relative">
+            {/* GetAnunciosResults sempre presente */}
+            <div className={`w-full h-full overflow-y-auto pb-20 ${isMobileMapView ? 'hidden' : 'block'}`}>
+              <GetAnunciosResults 
+                onAdicionarProduto={handleAdicionarProduto} 
+                selectedDuration={selectedDurationGlobal} 
+                tipoMidia={tipoMidia} 
+                bairros={bairros}
+                orderBy={orderBy}
+                onChangeAnunciosFiltrados={setAnunciosFiltrados}
+                userNicho={userNicho}
+                onSpecificTotemFound={handleSpecificTotemFound}
+                specificTotemId={specificTotemId}
+                isInitialLoading={isInitialLoading}
+              />
+            </div>
+            
+            {/* Mapa sobreposto quando ativo */}
+            {isMobileMapView && (
+              <div className="absolute inset-0 z-50">
+                <Mapbox 
+                  anunciosFiltrados={anunciosFiltrados} 
+                  onCityFound={handleCityFound} 
+                  userNicho={userNicho} 
+                  specificTotemId={specificTotemId}
+                  isFullscreen={true}
+                  onToggleMapView={toggleMobileMapView}
+                  isInitialLoading={isInitialLoading}
+                />
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Animação de carregamento inicial */}
@@ -282,6 +358,8 @@ const Page = () => {
           onOrderChange={setOrderBy}
           onToggleMapView={toggleMobileMapView}
           isMapView={isMobileMapView}
+          onCityFound={handleCityFound}
+          onSpecificTotemFound={handleSpecificTotemFound}
         />
       </div>
 
@@ -353,6 +431,9 @@ const Page = () => {
 
       {/* HeaderPrice - sempre visível e fixo */}
       <HeaderPrice />
+
+      {/* Animação de pesquisa mobile */}
+      <SearchAnimation isVisible={isMobileSearching} />
 
       {/* Modal de Nicho da Empresa */}
       <ModalNichoEmpresa

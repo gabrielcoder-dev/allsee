@@ -23,6 +23,8 @@ type ModalHeaderMobileProps = {
   selectedDuration?: string;
   onSearch?: (location: string, duration: string, startDate: Date | undefined) => void;
   onTipoMidiaChange?: (tipo: string | null, bairros: string[]) => void;
+  onCityFound?: (coords: { lat: number; lng: number; totemId?: number }) => void;
+  onSpecificTotemFound?: (totemId: number) => void;
 }
 
 export default function ModalHeaderMobile({ 
@@ -30,7 +32,9 @@ export default function ModalHeaderMobile({
   onDurationChange, 
   selectedDuration = '2',
   onSearch,
-  onTipoMidiaChange
+  onTipoMidiaChange,
+  onCityFound,
+  onSpecificTotemFound
 }: ModalHeaderMobileProps) {
   const [duration, setDuration] = useState(selectedDuration)
   const [showCalendar, setShowCalendar] = useState(false)
@@ -83,16 +87,26 @@ export default function ModalHeaderMobile({
     // Usar o query do autocomplete como location
     const locationToSearch = query.trim();
     
+    console.log('🔍 Busca mobile iniciada:', { locationToSearch, duration, startDate });
+    
+    // Fechar o modal primeiro
+    onClose();
+    
+    // Chamar as funções de callback igual ao desktop
     if (onTipoMidiaChange) {
+      console.log('🔄 Chamando onTipoMidiaChange com endereço:', locationToSearch);
       onTipoMidiaChange(null, locationToSearch ? [locationToSearch] : []);
     }
+    
     if (onDurationChange) {
+      console.log('⏱️ Chamando onDurationChange com duração:', duration);
       onDurationChange(duration);
     }
+    
     if (onSearch) {
-      onSearch(locationToSearch, duration, startDate)
+      console.log('🔍 Chamando onSearch');
+      onSearch(locationToSearch, duration, startDate);
     }
-    onClose()
   }
 
   // Função para criar string UTC yyyy-MM-ddT00:00:00Z

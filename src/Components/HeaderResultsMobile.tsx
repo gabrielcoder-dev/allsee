@@ -26,6 +26,8 @@ type MobileHeaderProps = {
   onOrderChange?: (order: string) => void;
   onToggleMapView?: () => void;
   isMapView?: boolean;
+  onCityFound?: (coords: { lat: number; lng: number; totemId?: number }) => void;
+  onSpecificTotemFound?: (totemId: number) => void;
 }
 
 export default function MobileHeader({ 
@@ -36,7 +38,9 @@ export default function MobileHeader({
   orderBy,
   onOrderChange,
   onToggleMapView,
-  isMapView = false
+  isMapView = false,
+  onCityFound,
+  onSpecificTotemFound
 }: MobileHeaderProps) {
   const [userName, setUserName] = useState<string>('')
 
@@ -223,6 +227,8 @@ export default function MobileHeader({
           selectedDuration={selectedDurationGlobal}
           onSearch={onSearch}
           onTipoMidiaChange={onTipoMidiaChange}
+          onCityFound={onCityFound}
+          onSpecificTotemFound={onSpecificTotemFound}
         />
       )}
 
