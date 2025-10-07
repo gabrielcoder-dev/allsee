@@ -78,6 +78,9 @@ export default function GetAnunciosResults({ onAdicionarProduto, selectedDuratio
 
   useEffect(() => {
     async function fetchAnuncios() {
+      console.log('🔄 GetAnunciosResults - useEffect executado');
+      console.log('📊 Parâmetros:', { selectedDuration, tipoMidia, bairros, specificTotemId, userNicho });
+      
       setLoading(true)
       let durationColumn = 'duration_2';
       if (selectedDuration === '4') durationColumn = 'duration_4';
@@ -168,6 +171,11 @@ export default function GetAnunciosResults({ onAdicionarProduto, selectedDuratio
           console.log('🎯 Anúncios após reordenação:', anunciosOrdenados.map(a => ({ id: a.id, name: a.name })));
         }
         
+        console.log('✅ Resultado final:', {
+          totalAnuncios: anunciosOrdenados.length,
+          anuncios: anunciosOrdenados.map(a => ({ id: a.id, name: a.name, address: a.address }))
+        });
+        
         setAnuncios(anunciosOrdenados)
         atualizarProdutosComNovaDuracao(anunciosOrdenados, selectedDuration);
         if (onChangeAnunciosFiltrados) onChangeAnunciosFiltrados(anunciosOrdenados);
@@ -188,7 +196,7 @@ export default function GetAnunciosResults({ onAdicionarProduto, selectedDuratio
       setLoading(false)
     }
     fetchAnuncios()
-  }, [selectedDuration, tipoMidia, JSON.stringify(bairros), orderBy, userNicho])
+  }, [selectedDuration, tipoMidia, JSON.stringify(bairros), orderBy, userNicho, specificTotemId])
 
 
 
