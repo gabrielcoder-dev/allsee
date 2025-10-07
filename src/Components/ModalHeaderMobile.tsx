@@ -79,7 +79,7 @@ export default function ModalHeaderMobile({
     // O recarregamento acontecerá apenas quando clicar em "buscar"
   }
 
-  const handleSearch = () => {
+  const handleSearch = async () => {
     if (startDate) {
       updateFormData({ startDate: startDate.toISOString().slice(0, 10) });
     }
@@ -92,10 +92,51 @@ export default function ModalHeaderMobile({
     // Fechar o modal primeiro
     onClose();
     
-    // Chamar as funções de callback igual ao desktop
-    if (onTipoMidiaChange) {
-      console.log('🔄 Chamando onTipoMidiaChange com endereço:', locationToSearch);
-      onTipoMidiaChange(null, locationToSearch ? [locationToSearch] : []);
+    // Se há um endereço no input, buscar o totem específico primeiro
+    if (locationToSearch) {
+      try {
+        // Buscar o totem específico que corresponde ao endereço
+        const response = await fetch(`/api/search-addresses?q=${encodeURIComponent(locationToSearch)}`);
+        const data = await response.json();
+        
+        if (data.addresses && data.addresses.length > 0) {
+          // Pegar o primeiro resultado (mais relevante)
+          const specificTotem = data.addresses[0];
+          console.log('🎯 Totem específico encontrado para busca mobile:', specificTotem);
+          
+          // Chamar as funções de callback com o totem específico
+          if (onTipoMidiaChange) {
+            console.log('🔄 Chamando onTipoMidiaChange com endereço:', specificTotem.address);
+            onTipoMidiaChange(null, [specificTotem.address]);
+          }
+          
+          if (onSpecificTotemFound) {
+            console.log('🎯 Chamando onSpecificTotemFound com ID:', specificTotem.id);
+            onSpecificTotemFound(specificTotem.id);
+          }
+          
+          if (onCityFound) {
+            console.log('🗺️ Chamando onCityFound para destacar no mapa');
+            onCityFound({
+              lat: specificTotem.lat || 0,
+              lng: specificTotem.lng || 0,
+              totemId: specificTotem.id
+            });
+          }
+        } else {
+          // Se não encontrou totem específico, usar busca normal
+          console.log('⚠️ Totem específico não encontrado, usando busca normal');
+          if (onTipoMidiaChange) {
+            onTipoMidiaChange(null, [locationToSearch]);
+          }
+        }
+      } catch (error) {
+        console.error('❌ Erro ao buscar totem específico:', error);
+        // Fallback para busca normal
+        if (onTipoMidiaChange) {
+          onTipoMidiaChange(null, [locationToSearch]);
+        }
+      }
     }
     
     if (onDurationChange) {
