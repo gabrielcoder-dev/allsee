@@ -11,11 +11,13 @@ interface WebhookBody {
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  console.log("🚀 Webhook iniciado - Método:", req.method)
+  // Sempre retornar 200 para o Mercado Pago para evitar reenvios
+  const sendResponse = (status: number, data: any) => {
+    res.status(status).json(data)
+  }
 
   if (req.method !== "POST") {
-    console.log("❌ Método não permitido:", req.method)
-    return res.status(405).json({ error: "Método não permitido" })
+    return sendResponse(405, { error: "Método não permitido" })
   }
 
   try {
@@ -43,8 +45,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       (req.query?.topic as string)
 
     if (topic !== "payment" || !paymentId) {
-      console.error("❌ Payload inválido:", parsedBody)
-      return res.status(200).json({
+      return sendResponse(200, {
         received: true,
         message: "Webhook recebido mas payload inválido",
       })
@@ -53,8 +54,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     console.log("💳 Processando pagamento ID:", paymentId)
 
     if (!process.env.MERCADO_PAGO_ACCESS_TOKEN) {
-      console.error("❌ MERCADO_PAGO_ACCESS_TOKEN não configurado")
-      return res.status(500).json({ received: true, error: "Token não configurado" }) // Changed to 500
+      return sendResponse(200, { received: true, error: "Token não configurado" })
+    }
+
+    if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
+      return sendResponse(200, { received: true, error: "Supabase não configurado" })
     }
 
     // Inicializa client Mercado Pago
@@ -74,22 +78,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         payment_method: payment.payment_method?.type,
       })
     } catch (err: any) {
-      console.error("❌ Erro ao buscar pagamento:", err)
-      return res.status(500).json({ // Changed to 500
+      return sendResponse(200, {
         received: true,
         message: "Erro ao buscar pagamento",
         error: err.message || "Erro desconhecido",
       })
     }
 
-    const externalReference = payment.external_reference
+    const externalReference = payment.external_reference?.toString().trim()
     const status = payment.status
 
-    if (!externalReference) {
-      console.log("⚠️ Pagamento sem referência externa")
-      return res.status(200).json({
+    if (!externalReference || externalReference === 'null' || externalReference === 'undefined') {
+      return sendResponse(200, {
         received: true,
-        message: "Pagamento sem referência externa",
+        message: "Pagamento sem referência externa válida",
       })
     }
 
@@ -105,6 +107,31 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       statusOriginal: status,
     })
 
+    // Primeiro verificar se a order existe
+    console.log("📊 Verificando se order existe...")
+    const { data: existingOrder, error: findError } = await supabaseServer
+      .from("order")
+      .select("id, status")
+      .eq("id", externalReference)
+      .single()
+
+    if (findError) {
+      return sendResponse(200, {
+        received: true,
+        message: "Order não encontrada",
+        error: findError.message,
+      })
+    }
+
+    if (!existingOrder) {
+      return sendResponse(200, {
+        received: true,
+        message: "Order não encontrada no banco",
+        externalReference,
+      })
+    }
+
+    console.log("📊 Order encontrada, atualizando status...")
     const { error: updateError } = await supabaseServer
       .from("order")
       .update({
@@ -114,8 +141,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       .eq("id", externalReference)
 
     if (updateError) {
-      console.error("❌ Erro ao atualizar order:", updateError)
-      return res.status(500).json({ // Changed to 500
+      return sendResponse(200, {
         received: true,
         message: "Erro ao atualizar order",
         error: updateError.message,
@@ -124,7 +150,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     console.log("✅ Order atualizada com sucesso:", externalReference)
 
-    return res.status(200).json({
+    return sendResponse(200, {
       received: true,
       message: "Status atualizado com sucesso",
       orderId: externalReference,
@@ -132,11 +158,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       originalStatus: status,
     })
   } catch (error: any) {
-    console.error("❌ Erro no webhook:", error)
-    return res.status(500).json({ // Changed to 500
+    return sendResponse(200, {
       received: true,
       message: "Erro interno ao processar webhook",
       error: error.message || "Erro desconhecido",
+      timestamp: new Date().toISOString()
     })
   }
 }
