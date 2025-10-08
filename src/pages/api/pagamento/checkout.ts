@@ -25,7 +25,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     console.log('🛒 Iniciando checkout:', {
       orderId,
-      orderIdType: typeof orderId,
       total,
       arteCampanhaId, // Mostrando que recebemos o ID da arte
       hasPayerData: !!payerData
@@ -33,17 +32,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const preference = new Preference(mercadoPagoClient);
 
-    // Resolver URL do webhook (sempre absoluta)
-    const envWebhookUrl = process.env.MERCADO_PAGO_WEBHOOK_URL;
-    const forwardedProto = (req.headers["x-forwarded-proto"] as string) || (req.headers["x-forwarded-protocol"] as string);
-    const proto = envWebhookUrl ? undefined : (forwardedProto || (req.headers.origin?.toString().startsWith("http") ? new URL(req.headers.origin as string).protocol.replace(":", "") : undefined) || (process.env.NODE_ENV === "development" ? "http" : "https"));
-    const host = envWebhookUrl ? undefined : ((req.headers["x-forwarded-host"] as string) || req.headers.host);
-    const computedWebhookUrl = envWebhookUrl || (proto && host ? `${proto}://${host}/api/pagamento/webhook` : `${req.headers.origin}/api/pagamento/webhook`);
+    // URL do webhook - usar variável de ambiente ou construir baseada no origin
+    const webhookUrl = process.env.MERCADO_PAGO_WEBHOOK_URL || `${req.headers.origin}/api/pagamento/webhook`;
 
-    console.log("🔔 notification_url do Mercado Pago:", {
-      envWebhookUrl: !!envWebhookUrl,
-      computedWebhookUrl
-    });
+    console.log("🔔 notification_url do Mercado Pago:", webhookUrl);
 
     // Configuração da preferência
     const preferenceBody: any = {
@@ -62,7 +54,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       auto_return: 'approved',
       external_reference: orderId,
       payer: payerData,
-      notification_url: computedWebhookUrl,
+      notification_url: webhookUrl,
       payment_methods: {
         installments: 12,
         default_installments: 1,
@@ -107,9 +99,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     console.log('✅ Preferência criada com sucesso:', {
       preferenceId: result.id,
-      initPoint: result.init_point,
-      externalReference: orderId,
-      externalReferenceType: typeof orderId
+      initPoint: result.init_point
     });
 
     return res.status(200).json({ 
