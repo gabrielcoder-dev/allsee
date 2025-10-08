@@ -25,6 +25,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     console.log('🛒 Iniciando checkout:', {
       orderId,
+      orderIdType: typeof orderId,
       total,
       arteCampanhaId, // Mostrando que recebemos o ID da arte
       hasPayerData: !!payerData
@@ -106,7 +107,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     console.log('✅ Preferência criada com sucesso:', {
       preferenceId: result.id,
-      initPoint: result.init_point
+      initPoint: result.init_point,
+      externalReference: orderId,
+      externalReferenceType: typeof orderId
     });
 
     return res.status(200).json({ 

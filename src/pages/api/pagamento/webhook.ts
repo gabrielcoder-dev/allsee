@@ -82,7 +82,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       })
     }
 
-    const externalReference = payment.external_reference
+    // Garantir que external_reference é uma string
+    const externalReference = payment.external_reference?.toString().trim()
     const status = payment.status
 
     if (!externalReference) {
@@ -93,6 +94,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       })
     }
 
+    console.log("🔍 External Reference extraída:", {
+      externalReference,
+      tipo: typeof externalReference,
+      comprimento: externalReference.length,
+    })
+
     // Mapeamento simples de status
     let internalStatus = "pendente"
     if (status === "approved") {
@@ -101,17 +108,54 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     console.log("🔄 Atualizando status no banco:", {
       orderId: externalReference,
+      orderIdType: typeof externalReference,
       statusInterno: internalStatus,
       statusOriginal: status,
     })
 
-    const { error: updateError } = await supabaseServer
+    // Primeiro, verificar se a order existe
+    const { data: existingOrder, error: findError } = await supabaseServer
+      .from("order")
+      .select("id, status, user_id")
+      .eq("id", externalReference)
+      .single()
+
+    if (findError) {
+      console.error("❌ Erro ao buscar order:", findError)
+      console.error("❌ External Reference usado:", externalReference)
+      return res.status(500).json({
+        received: true,
+        message: "Order não encontrada",
+        error: findError.message,
+        externalReference,
+      })
+    }
+
+    if (!existingOrder) {
+      console.error("❌ Order não existe:", externalReference)
+      return res.status(404).json({
+        received: true,
+        message: "Order não encontrada no banco",
+        externalReference,
+      })
+    }
+
+    console.log("📋 Order encontrada:", {
+      id: existingOrder.id,
+      statusAtual: existingOrder.status,
+      novoStatus: internalStatus,
+    })
+
+    // Atualizar a order
+    const { data: updatedOrder, error: updateError } = await supabaseServer
       .from("order")
       .update({
         status: internalStatus,
         updated_at: new Date().toISOString(),
       })
       .eq("id", externalReference)
+      .select("id, status, updated_at")
+      .single()
 
     if (updateError) {
       console.error("❌ Erro ao atualizar order:", updateError)
@@ -122,7 +166,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       })
     }
 
-    console.log("✅ Order atualizada com sucesso:", externalReference)
+    console.log("✅ Order atualizada com sucesso:", {
+      orderId: updatedOrder.id,
+      statusAnterior: existingOrder.status,
+      statusNovo: updatedOrder.status,
+      updatedAt: updatedOrder.updated_at,
+    })
 
     return res.status(200).json({
       received: true,

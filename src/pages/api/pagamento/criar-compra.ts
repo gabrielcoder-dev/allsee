@@ -55,12 +55,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     console.log('✅ Order criado com sucesso:', {
       id: data.id,
+      idType: typeof data.id,
       status: data.status
     });
 
+    // Garantir que o orderId é retornado como string
+    const orderId = data.id.toString()
+
     return res.status(200).json({ 
       success: true,
-      orderId: data.id,
+      orderId: orderId,
       status: data.status
     });
 
