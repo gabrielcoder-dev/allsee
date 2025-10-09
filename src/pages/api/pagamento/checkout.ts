@@ -25,9 +25,29 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     console.log('🛒 Iniciando checkout:', {
       orderId,
+      orderIdType: typeof orderId,
       total,
       arteCampanhaId, // Mostrando que recebemos o ID da arte
       hasPayerData: !!payerData
+    });
+
+    // Validar que orderId não é null/undefined
+    if (!orderId || orderId === 'null' || orderId === 'undefined') {
+      console.error('❌ OrderId inválido:', orderId);
+      return res.status(400).json({ 
+        success: false, 
+        error: 'OrderId inválido',
+        receivedOrderId: orderId 
+      });
+    }
+
+    // Converter orderId para string se não for
+    const orderIdString = String(orderId).trim();
+    
+    console.log('✅ OrderId validado:', {
+      original: orderId,
+      converted: orderIdString,
+      length: orderIdString.length
     });
 
     const preference = new Preference(mercadoPagoClient);
@@ -47,12 +67,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         },
       ],
       back_urls: {
-        success: `${req.headers.origin}/meus-anuncios?orderId=${orderId}&status=success`,
-        failure: `${req.headers.origin}/meus-anuncios?orderId=${orderId}&status=failed`,
-        pending: `${req.headers.origin}/meus-anuncios?orderId=${orderId}&status=pending`,
+        success: `${req.headers.origin}/meus-anuncios?orderId=${orderIdString}&status=success`,
+        failure: `${req.headers.origin}/meus-anuncios?orderId=${orderIdString}&status=failed`,
+        pending: `${req.headers.origin}/meus-anuncios?orderId=${orderIdString}&status=pending`,
       },
       auto_return: 'approved',
-      external_reference: orderId,
+      external_reference: orderIdString, // CRÍTICO: Este é o ID que vincula ao pedido
       payer: payerData,
       notification_url: webhookUrl,
       payment_methods: {
@@ -66,6 +86,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       expiration_date_to: new Date(Date.now() + 30 * 60 * 1000).toISOString(), // 30 minutos
       statement_descriptor: 'ALLSEE'
     };
+    
+    console.log('📋 external_reference que será enviado ao Mercado Pago:', orderIdString);
 
     // Adicionar dados do pagador se disponíveis
     if (payerData) {

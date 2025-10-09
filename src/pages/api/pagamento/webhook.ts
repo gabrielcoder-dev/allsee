@@ -2,7 +2,6 @@ import type { NextApiRequest, NextApiResponse } from "next"
 import { Payment, MercadoPagoConfig } from "mercadopago"
 import { supabaseServer } from "@/lib/supabaseServer" // usa a service role key
 
-// Define a type for the expected body, replace with your actual body structure
 interface WebhookBody {
   type?: string;
   data?: {
@@ -45,6 +44,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       (req.query?.topic as string)
 
     if (topic !== "payment" || !paymentId) {
+      console.log("⚠️ Webhook ignorado - topic:", topic, "paymentId:", paymentId)
       return sendResponse(200, {
         received: true,
         message: "Webhook recebido mas payload inválido",
@@ -78,6 +78,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         payment_method: payment.payment_method?.type,
       })
     } catch (err: any) {
+      console.error("❌ Erro ao buscar pagamento:", err.message)
       return sendResponse(200, {
         received: true,
         message: "Erro ao buscar pagamento",
@@ -89,9 +90,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const status = payment.status
 
     if (!externalReference || externalReference === 'null' || externalReference === 'undefined') {
+      console.error("❌ Referência externa inválida:", externalReference)
       return sendResponse(200, {
         received: true,
         message: "Pagamento sem referência externa válida",
+        externalReference: externalReference
       })
     }
 
@@ -107,48 +110,46 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       statusOriginal: status,
     })
 
-    // Primeiro verificar se a order existe
-    console.log("📊 Verificando se order existe...")
-    const { data: existingOrder, error: findError } = await supabaseServer
-      .from("order")
-      .select("id, status")
-      .eq("id", externalReference)
-      .single()
-
-    if (findError) {
-      return sendResponse(200, {
-        received: true,
-        message: "Order não encontrada",
-        error: findError.message,
-      })
-    }
-
-    if (!existingOrder) {
-      return sendResponse(200, {
-        received: true,
-        message: "Order não encontrada no banco",
-        externalReference,
-      })
-    }
-
-    console.log("📊 Order encontrada, atualizando status...")
-    const { error: updateError } = await supabaseServer
+    // Atualizar diretamente - usar upsert para garantir que funcione
+    const { error: updateError, data: updateData } = await supabaseServer
       .from("order")
       .update({
         status: internalStatus,
         updated_at: new Date().toISOString(),
       })
       .eq("id", externalReference)
+      .select()
 
     if (updateError) {
+      console.error("❌ Erro ao atualizar order:", {
+        orderId: externalReference,
+        error: updateError.message,
+        code: updateError.code
+      })
+      
       return sendResponse(200, {
         received: true,
         message: "Erro ao atualizar order",
         error: updateError.message,
+        orderId: externalReference
       })
     }
 
-    console.log("✅ Order atualizada com sucesso:", externalReference)
+    if (!updateData || updateData.length === 0) {
+      console.error("❌ Order não encontrada para atualizar:", externalReference)
+      
+      return sendResponse(200, {
+        received: true,
+        message: "Order não encontrada no banco",
+        orderId: externalReference,
+      })
+    }
+
+    console.log("✅ Order atualizada com sucesso:", {
+      orderId: externalReference,
+      statusAnterior: updateData[0]?.status,
+      statusNovo: internalStatus
+    })
 
     return sendResponse(200, {
       received: true,
@@ -158,6 +159,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       originalStatus: status,
     })
   } catch (error: any) {
+    console.error("❌ Erro geral no webhook:", {
+      message: error.message,
+      stack: error.stack
+    })
+    
     return sendResponse(200, {
       received: true,
       message: "Erro interno ao processar webhook",
