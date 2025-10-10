@@ -16,7 +16,7 @@ const isVideo = (url: string) => {
 interface ArteCampanha {
   id: number;
   caminho_imagem: string;
-  id_order: string; // Alterado para id_order
+  id_order: number; // Alterado para number
 }
 
 interface Order {

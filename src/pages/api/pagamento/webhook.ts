@@ -82,7 +82,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       })
     }
 
-    const externalReference = payment.external_reference?.toString().trim()
+    const externalReference = payment.external_reference
     const status = payment.status
 
     // Mapeamento de status mais abrangente
@@ -95,7 +95,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       internalStatus = "cancelado"
     }
 
-    if (!externalReference || externalReference === 'null' || externalReference === 'undefined' || externalReference === '') {
+    if (!externalReference || externalReference === null || externalReference === undefined) {
       // Se não tem external_reference, tenta buscar por outros campos
       const { data: orderByPaymentId, error: errorByPaymentId } = await supabaseServer
         .from("order")

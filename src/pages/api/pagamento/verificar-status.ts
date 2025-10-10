@@ -15,7 +15,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (!orderId) {
       return res.status(400).json({ 
         error: 'orderId é obrigatório',
-        example: { orderId: 'uuid-da-order' }
+        example: { orderId: 123 }
+      });
+    }
+
+    // Converter para número
+    const orderIdNumber = Number(orderId);
+    if (isNaN(orderIdNumber)) {
+      return res.status(400).json({ 
+        error: 'orderId deve ser um número válido',
+        received: orderId
       });
     }
 
@@ -23,7 +32,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const { data: order, error: orderError } = await supabaseServer
       .from('order')
       .select('*')
-      .eq('id', orderId)
+      .eq('id', orderIdNumber)
       .single();
 
     if (orderError || !order) {

@@ -41,13 +41,22 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       });
     }
 
-    // Converter orderId para string se não for
-    const orderIdString = String(orderId).trim();
+    // Converter orderId para número
+    const orderIdNumber = Number(orderId);
+    
+    if (isNaN(orderIdNumber)) {
+      console.error('❌ OrderId não é um número válido:', orderId);
+      return res.status(400).json({ 
+        success: false, 
+        error: 'OrderId deve ser um número válido',
+        receivedOrderId: orderId 
+      });
+    }
     
     console.log('✅ OrderId validado:', {
       original: orderId,
-      converted: orderIdString,
-      length: orderIdString.length
+      converted: orderIdNumber,
+      type: typeof orderIdNumber
     });
 
     const preference = new Preference(mercadoPagoClient);
@@ -67,12 +76,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         },
       ],
       back_urls: {
-        success: `${req.headers.origin}/meus-anuncios?orderId=${orderIdString}&status=success`,
-        failure: `${req.headers.origin}/meus-anuncios?orderId=${orderIdString}&status=failed`,
-        pending: `${req.headers.origin}/meus-anuncios?orderId=${orderIdString}&status=pending`,
+        success: `${req.headers.origin}/meus-anuncios?orderId=${orderIdNumber}&status=success`,
+        failure: `${req.headers.origin}/meus-anuncios?orderId=${orderIdNumber}&status=failed`,
+        pending: `${req.headers.origin}/meus-anuncios?orderId=${orderIdNumber}&status=pending`,
       },
       auto_return: 'approved',
-      external_reference: orderIdString, // CRÍTICO: Este é o ID que vincula ao pedido
+      external_reference: orderIdNumber, // CRÍTICO: Este é o ID que vincula ao pedido
       payer: payerData,
       notification_url: webhookUrl,
       payment_methods: {
@@ -87,7 +96,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       statement_descriptor: 'ALLSEE'
     };
     
-    console.log('📋 external_reference que será enviado ao Mercado Pago:', orderIdString);
+    console.log('📋 external_reference que será enviado ao Mercado Pago:', orderIdNumber);
 
     // Adicionar dados do pagador se disponíveis
     if (payerData) {

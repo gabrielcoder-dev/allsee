@@ -47,9 +47,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       amount: payment.transaction_amount
     });
 
-    const externalReference = payment.external_reference?.toString().trim();
+    const externalReference = payment.external_reference;
 
-    if (!externalReference || externalReference === 'null' || externalReference === 'undefined') {
+    if (!externalReference || externalReference === null || externalReference === undefined) {
       return res.status(400).json({
         error: 'Pagamento sem external_reference válido',
         payment: {

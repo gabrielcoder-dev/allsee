@@ -9,7 +9,7 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 // Função para atualizar status da compra no banco
-export async function atualizarStatusCompra(orderId: string, status: "pendente" | "pago") {
+export async function atualizarStatusCompra(orderId: number, status: "pendente" | "pago") {
   console.log(`🔄 Atualizando status do order ${orderId} para: ${status}`);
   
   if (!orderId || !status) {
