@@ -17,7 +17,7 @@ const Hero = () => {
           Anuncie onde os seus clientes <span className="text-orange-600"> moram, trabalham e passam </span> todos os dias.
         </h2>
 
-        <p className='text-gray-400 w-96'>
+        <p className='text-gray-400 w-full max-w-sm md:max-w-md lg:max-w-lg'>
           Produzindo maior engajamento com seu público e sendo lembrado por onde passar!
         </p>
 
@@ -30,7 +30,7 @@ const Hero = () => {
      <Image 
      src={heroImg}
       alt="Imagem Hero"
-      className="lg:w-xl lg:mt-16 w-96"
+      className="lg:w-xl lg:mt-16 w-full max-w-sm md:max-w-md lg:max-w-xl mt-8 md:mt-0"
      />
     </div>
   );

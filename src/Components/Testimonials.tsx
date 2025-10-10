@@ -40,12 +40,12 @@ const Testimonials = () => {
         .carousel-wrapper {
           display: flex;
           width: 200%; /* Double the width */
-          animation: slide 30s linear infinite; /* Increased animation duration */
+          animation: slide 30s linear infinite; /* Desktop animation */
         }
 
         .carousel-slide {
           display: flex;
-          width: auto; /* Each slide takes 50% */
+          width: auto;
           gap: 100px; 
         }
 
@@ -60,6 +60,36 @@ const Testimonials = () => {
           }
           100% {
             transform: translateX(-50%); /* Move by 50% */
+          }
+        }
+
+        /* Faster animation for mobile */
+        @media (max-width: 768px) {
+          .carousel-wrapper {
+            animation: slide 15s linear infinite; /* Faster for mobile */
+          }
+          
+          .carousel-slide {
+            gap: 50px; /* Smaller gap on mobile */
+          }
+          
+          .carousel-image {
+            margin: 0 40px; /* Smaller margins on mobile */
+          }
+        }
+
+        /* Even faster for very small screens */
+        @media (max-width: 480px) {
+          .carousel-wrapper {
+            animation: slide 12s linear infinite; /* Even faster for small mobile */
+          }
+          
+          .carousel-slide {
+            gap: 30px; /* Even smaller gap */
+          }
+          
+          .carousel-image {
+            margin: 0 20px; /* Even smaller margins */
           }
         }
       `}</style>
