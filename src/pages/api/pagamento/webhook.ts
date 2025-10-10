@@ -51,6 +51,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       })
     }
 
+    // Aceitar tanto payment.created quanto payment.updated
+    console.log("✅ Webhook de pagamento aceito:", { topic, paymentId })
+
     console.log("💳 Processando pagamento ID:", paymentId)
 
     if (!process.env.MERCADO_PAGO_ACCESS_TOKEN) {
@@ -70,13 +73,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     let payment
     try {
       payment = await paymentClient.get({ id: paymentId })
-      console.log("📊 Dados do pagamento:", {
-        id: payment.id,
-        status: payment.status,
-        external_reference: payment.external_reference,
-        amount: payment.transaction_amount,
-        payment_method: payment.payment_method?.type,
-      })
     } catch (err: any) {
       console.error("❌ Erro ao buscar pagamento:", err.message)
       return sendResponse(200, {
@@ -89,200 +85,79 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const externalReference = payment.external_reference?.toString().trim()
     const status = payment.status
 
-    console.log("🔍 Análise do external_reference:", {
-      original: payment.external_reference,
-      originalType: typeof payment.external_reference,
-      converted: externalReference,
-      convertedType: typeof externalReference,
-      length: externalReference?.length
-    })
-
-    if (!externalReference || externalReference === 'null' || externalReference === 'undefined' || externalReference === '') {
-      console.error("❌ Referência externa inválida:", {
-        externalReference,
-        paymentId: payment.id,
-        paymentStatus: payment.status
-      })
-      return sendResponse(200, {
-        received: true,
-        message: "Pagamento sem referência externa válida",
-        externalReference: externalReference,
-        paymentId: payment.id
-      })
-    }
-
-    console.log("✅ External reference (orderId) validado:", {
-      orderId: externalReference,
-      type: typeof externalReference,
-      isNumeric: !isNaN(Number(externalReference))
-    })
-
     // Mapeamento de status mais abrangente
     let internalStatus = "pendente"
     if (status === "approved") {
       internalStatus = "pago"
-      console.log("🎉 PAGAMENTO APROVADO! Atualizando para 'pago'", {
-        paymentId: payment.id,
-        orderId: externalReference,
-        amount: payment.transaction_amount
-      })
     } else if (status === "pending") {
       internalStatus = "pendente"
     } else if (status === "rejected" || status === "cancelled") {
       internalStatus = "cancelado"
     }
 
-    console.log("📋 Mapeamento de status:", {
-      statusOriginal: status,
-      statusInterno: internalStatus,
-      paymentId: payment.id,
-      willUpdateToPaid: status === "approved"
-    })
-
-    console.log("🔄 Atualizando status no banco:", {
-      orderId: externalReference,
-      orderIdType: typeof externalReference,
-      statusInterno: internalStatus,
-      statusOriginal: status,
-    })
-
-    // Tentar buscar a order tanto como string quanto como número
-    let existingOrder, checkError
-    
-    // Primeiro tenta como string (orderId pode ser string)
-    const { data: orderAsString, error: errorAsString } = await supabaseServer
-      .from("order")
-      .select("id, status, created_at")
-      .eq("id", externalReference)
-      .single()
-    
-    // Se não encontrou, tenta como número (caso o orderId seja numérico)
-    if (errorAsString || !orderAsString) {
-      const numericId = parseInt(externalReference)
-      if (!isNaN(numericId)) {
-        console.log("🔄 Tentando buscar como número:", numericId)
-        const { data: orderAsNumber, error: errorAsNumber } = await supabaseServer
+    if (!externalReference || externalReference === 'null' || externalReference === 'undefined' || externalReference === '') {
+      // Se não tem external_reference, tenta buscar por outros campos
+      const { data: orderByPaymentId, error: errorByPaymentId } = await supabaseServer
+        .from("order")
+        .select("id, status")
+        .eq("payment_id", payment.id)
+        .single()
+      
+      if (orderByPaymentId) {
+        // Atualiza usando o ID encontrado
+        const { error: updateError } = await supabaseServer
           .from("order")
-          .select("id, status, created_at")
-          .eq("id", numericId)
-          .single()
+          .update({
+            status: internalStatus,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", orderByPaymentId.id)
         
-        existingOrder = orderAsNumber
-        checkError = errorAsNumber
-        console.log("📊 Resultado da busca numérica:", { found: !!orderAsNumber, error: errorAsNumber?.message })
-      } else {
-        existingOrder = orderAsString
-        checkError = errorAsString
-        console.log("📊 Não é um número válido, usando resultado da busca como string")
+        return sendResponse(200, {
+          received: true,
+          message: "Status atualizado via payment_id",
+          orderId: orderByPaymentId.id,
+          status: internalStatus
+        })
       }
-    } else {
-      existingOrder = orderAsString
-      checkError = errorAsString
-      console.log("📊 Encontrado como string na primeira tentativa")
-    }
-
-    console.log("🔍 Verificação da order existente:", {
-      found: !!existingOrder,
-      error: checkError?.message,
-      orderData: existingOrder
-    })
-
-    if (checkError || !existingOrder) {
-      console.error("❌ Order não encontrada:", {
-        orderId: externalReference,
-        error: checkError?.message
-      })
+      
       return sendResponse(200, {
         received: true,
-        message: "Order não encontrada no banco",
-        orderId: externalReference,
-        error: checkError?.message
+        message: "Pagamento sem referência válida e sem payment_id correspondente"
       })
     }
 
-    // Usar o ID correto que foi encontrado (pode ser string ou número)
-    const orderIdToUpdate = existingOrder.id
-    
-    console.log("🔄 Atualizando com ID:", {
-      orderIdFromWebhook: externalReference,
-      foundOrderId: orderIdToUpdate,
-      idType: typeof orderIdToUpdate
-    })
 
-    // Atualizar diretamente
+    // Buscar a order e atualizar diretamente
     const { error: updateError, data: updateData } = await supabaseServer
       .from("order")
       .update({
         status: internalStatus,
         updated_at: new Date().toISOString(),
       })
-      .eq("id", orderIdToUpdate)
+      .eq("id", externalReference)
       .select()
 
     if (updateError) {
-      console.error("❌ Erro ao atualizar order:", {
-        orderId: externalReference,
-        error: updateError.message,
-        code: updateError.code
-      })
-      
       return sendResponse(200, {
         received: true,
         message: "Erro ao atualizar order",
-        error: updateError.message,
-        orderId: externalReference
+        error: updateError.message
       })
     }
 
     if (!updateData || updateData.length === 0) {
-      console.error("❌ Nenhuma linha foi atualizada:", {
-        externalReference,
-        orderIdToUpdate,
-        updateData
-      })
-      
       return sendResponse(200, {
         received: true,
-        message: "Nenhuma linha foi atualizada no banco",
-        orderId: externalReference,
-        attemptedUpdate: orderIdToUpdate
+        message: "Order não encontrada para atualizar"
       })
     }
-
-    // Verificar se a atualização realmente mudou o status
-    const updatedOrder = updateData[0]
-    if (updatedOrder.status !== internalStatus) {
-      console.error("❌ Status não foi atualizado corretamente:", {
-        expected: internalStatus,
-        actual: updatedOrder.status,
-        orderId: orderIdToUpdate
-      })
-      
-      return sendResponse(200, {
-        received: true,
-        message: "Status não foi atualizado corretamente",
-        expected: internalStatus,
-        actual: updatedOrder.status,
-        orderId: orderIdToUpdate
-      })
-    }
-
-    console.log("✅ Order atualizada com sucesso:", {
-      orderIdFromWebhook: externalReference,
-      actualOrderId: orderIdToUpdate,
-      statusAnterior: existingOrder.status,
-      statusNovo: internalStatus,
-      updatedRecord: updateData[0]
-    })
 
     return sendResponse(200, {
       received: true,
       message: "Status atualizado com sucesso",
-      orderId: orderIdToUpdate,
-      orderIdFromWebhook: externalReference,
-      status: internalStatus,
-      originalStatus: status,
-      paymentId: payment.id
+      orderId: externalReference,
+      status: internalStatus
     })
   } catch (error: any) {
     console.error("❌ Erro geral no webhook:", {
