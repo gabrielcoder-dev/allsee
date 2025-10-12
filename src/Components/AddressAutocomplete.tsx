@@ -135,7 +135,7 @@ export default function AddressAutocomplete({
       {isOpen && !isLoading && suggestions.length === 0 && query.length >= 2 && (
         <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50 p-4">
           <div className="text-center text-gray-500 text-sm">
-            Nenhum totem encontrado para "{query}"
+            Nenhuma cidade encontrada para "{query}"
           </div>
         </div>
       )}

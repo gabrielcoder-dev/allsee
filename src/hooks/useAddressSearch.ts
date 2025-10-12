@@ -59,6 +59,8 @@ export function useAddressSearch({
   useEffect(() => {
     const timeoutId = setTimeout(() => {
       if (query.trim()) {
+        // Resetar estado de seleção quando usuário digita novamente
+        setIsSelected(false)
         searchAddresses(query.trim())
       } else {
         setSuggestions([])

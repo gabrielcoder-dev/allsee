@@ -54,28 +54,39 @@ async function fetchBrazilianCities(): Promise<any[]> {
   }
 }
 
-// Função para obter coordenadas usando Nominatim (OpenStreetMap)
-async function getCoordinates(cityName: string, state: string): Promise<{lat: number, lng: number} | null> {
-  try {
-    const query = `${cityName}, ${state}, Brasil`
-    const response = await fetch(
-      `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1&countrycodes=br`
-    )
-    
-    if (!response.ok) return null
-    
-    const data = await response.json()
-    if (data.length > 0) {
-      return {
-        lat: parseFloat(data[0].lat),
-        lng: parseFloat(data[0].lon)
-      }
-    }
-    return null
-  } catch (error) {
-    console.error(`❌ Erro ao buscar coordenadas para ${cityName}:`, error)
-    return null
+// Função para obter coordenadas aproximadas por estado (mais rápida)
+function getStateCoordinates(state: string): {lat: number, lng: number} {
+  const stateCoords: {[key: string]: {lat: number, lng: number}} = {
+    'AC': { lat: -9.9756, lng: -67.8242 }, // Rio Branco
+    'AL': { lat: -9.6658, lng: -35.7353 }, // Maceió
+    'AP': { lat: 0.0389, lng: -51.0664 },  // Macapá
+    'AM': { lat: -3.1190, lng: -60.0217 }, // Manaus
+    'BA': { lat: -12.9714, lng: -38.5014 }, // Salvador
+    'CE': { lat: -3.7172, lng: -38.5434 }, // Fortaleza
+    'DF': { lat: -15.7801, lng: -47.9292 }, // Brasília
+    'ES': { lat: -20.3155, lng: -40.3128 }, // Vitória
+    'GO': { lat: -16.6864, lng: -49.2643 }, // Goiânia
+    'MA': { lat: -2.5289, lng: -44.3041 },  // São Luís
+    'MT': { lat: -15.6014, lng: -56.0979 }, // Cuiabá
+    'MS': { lat: -20.4697, lng: -54.6201 }, // Campo Grande
+    'MG': { lat: -19.9167, lng: -43.9345 }, // Belo Horizonte
+    'PA': { lat: -1.4558, lng: -48.5044 },  // Belém
+    'PB': { lat: -7.1195, lng: -34.8450 },  // João Pessoa
+    'PR': { lat: -25.4244, lng: -49.2654 }, // Curitiba
+    'PE': { lat: -8.0476, lng: -34.8770 },  // Recife
+    'PI': { lat: -5.0892, lng: -42.8019 },  // Teresina
+    'RJ': { lat: -22.9068, lng: -43.1729 }, // Rio de Janeiro
+    'RN': { lat: -5.7945, lng: -35.2110 },  // Natal
+    'RS': { lat: -30.0346, lng: -51.2177 }, // Porto Alegre
+    'RO': { lat: -8.7612, lng: -63.9020 },  // Porto Velho
+    'RR': { lat: 2.8195, lng: -60.6719 },   // Boa Vista
+    'SC': { lat: -27.5954, lng: -48.5480 }, // Florianópolis
+    'SP': { lat: -23.5505, lng: -46.6333 }, // São Paulo
+    'SE': { lat: -10.9472, lng: -37.0731 }, // Aracaju
+    'TO': { lat: -10.1839, lng: -48.3336 }  // Palmas
   }
+  
+  return stateCoords[state] || { lat: -15.7801, lng: -47.9292 } // Default: Brasília
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -111,18 +122,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         city.name.toLowerCase().includes(searchTerm) ||
         city.state.toLowerCase().includes(searchTerm)
       )
-      .slice(0, 20) // Limitar a 20 resultados para performance
-      .map(async (city) => {
-        // Se não tem coordenadas, tentar buscar
+      .slice(0, 50) // Aumentar para 50 resultados
+      .map((city) => {
+        // Usar coordenadas existentes ou valores padrão
         let lat = city.lat
         let lng = city.lng
         
+        // Se não tem coordenadas, usar coordenadas aproximadas baseadas no estado
         if (!lat || !lng) {
-          const coords = await getCoordinates(city.name, city.state)
-          if (coords) {
-            lat = coords.lat
-            lng = coords.lng
-          }
+          const stateCoords = getStateCoordinates(city.state)
+          lat = stateCoords.lat
+          lng = stateCoords.lng
         }
 
         return {
@@ -137,13 +147,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                  city.name.toLowerCase().includes(searchTerm) ? 50 : 10
         }
       })
-
-    // Aguardar todas as coordenadas serem resolvidas
-    const resolvedCities = await Promise.all(matchingCities)
     
-    // Filtrar cidades com coordenadas válidas e ordenar
-    const finalCities = resolvedCities
-      .filter(city => city.lat && city.lng)
+    // Ordenar e limitar resultados
+    const finalCities = matchingCities
       .sort((a, b) => b.score - a.score)
       .slice(0, 10) // Limitar a 10 cidades
 
