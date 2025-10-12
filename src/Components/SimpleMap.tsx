@@ -53,30 +53,32 @@ function MapController({
 
   // Função para navegar para uma cidade
   const navigateToCity = (coords: { lat: number; lng: number }, totemId?: number) => {
-    console.log('Navegando para:', coords, 'totemId:', totemId);
+    console.log('🗺️ SimpleMap - Navegando para:', coords, 'totemId:', totemId);
     
     // Se for um totem específico, navegar para ele com zoom mais próximo
     if (totemId) {
       const totemMarker = markers.find(marker => marker.id === totemId);
       if (totemMarker) {
-        console.log('Encontrou marker para totem:', totemMarker);
+        console.log('🎯 Encontrou marker para totem:', totemMarker);
         // Navegar para as coordenadas exatas do marker com zoom bem próximo
         map.setView([totemMarker.lat, totemMarker.lng], 15, {
           animate: true,
           duration: 1.5
         });
+        console.log('✅ Navegação para totem concluída');
         return;
       } else {
-        console.log('Não encontrou marker para totemId:', totemId);
+        console.log('❌ Não encontrou marker para totemId:', totemId);
       }
     }
 
     // Se não encontrou o marker ou não é totem específico, navegar para as coordenadas fornecidas
-    console.log('Navegando para coordenadas:', coords);
+    console.log('🌍 Navegando para coordenadas da cidade:', coords);
     map.setView([coords.lat, coords.lng], 14, {
       animate: true,
       duration: 1.5
     });
+    console.log('✅ Navegação para cidade concluída');
   };
 
   // Expor a função globalmente
@@ -92,6 +94,8 @@ function MapController({
       if (!(window as any).navigateToCity) {
         map.setView(PRIMAVERA_DO_LESTE_COORDS, 14);
         console.log('🗺️ Mapa inicializado em Primavera do Leste');
+      } else {
+        console.log('🗺️ Navegação pendente detectada, pulando inicialização');
       }
     }, 100);
     return () => clearTimeout(timer);

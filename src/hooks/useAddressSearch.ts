@@ -24,6 +24,7 @@ export function useAddressSearch({
   const [isOpen, setIsOpen] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [isSelected, setIsSelected] = useState(false)
+  const [selectedText, setSelectedText] = useState('')
 
   // Função para buscar endereços
   const searchAddresses = useCallback(async (searchTerm: string) => {
@@ -59,19 +60,37 @@ export function useAddressSearch({
   useEffect(() => {
     const timeoutId = setTimeout(() => {
       if (query.trim()) {
-        // Resetar estado de seleção quando usuário digita novamente
-        setIsSelected(false)
-        searchAddresses(query.trim())
+        // Se está selecionado, só permitir busca se apagou pelo menos 2 caracteres
+        if (isSelected && selectedText) {
+          const currentLength = query.length
+          const originalLength = selectedText.length
+          
+          // Se o usuário apagou pelo menos 2 caracteres, permitir nova busca
+          if (currentLength <= originalLength - 2) {
+            console.log('🔄 Usuário apagou pelo menos 2 caracteres, permitindo nova busca')
+            setIsSelected(false)
+            setSelectedText('')
+            searchAddresses(query.trim())
+          } else {
+            console.log('🚫 Busca bloqueada - endereço selecionado')
+            setSuggestions([])
+            setIsOpen(false)
+          }
+        } else {
+          // Se não está selecionado, fazer busca normal
+          searchAddresses(query.trim())
+        }
       } else {
         setSuggestions([])
         setIsLoading(false)
         setIsOpen(false)
         setIsSelected(false) // Resetar estado de seleção quando input ficar vazio
+        setSelectedText('')
       }
     }, debounceMs)
 
     return () => clearTimeout(timeoutId)
-  }, [query, searchAddresses, debounceMs])
+  }, [query, searchAddresses, debounceMs, isSelected, selectedText])
 
   // Função para selecionar um endereço
   const selectAddress = useCallback((address: AddressSuggestion) => {
@@ -80,6 +99,8 @@ export function useAddressSearch({
     setIsOpen(false)
     setIsLoading(false)
     setIsSelected(true) // Marcar como selecionado para parar buscas futuras
+    setSelectedText(address.address) // Armazenar o texto selecionado
+    console.log('🎯 Endereço selecionado, isSelected = true, texto:', address.address)
     return address
   }, [])
 
@@ -91,6 +112,7 @@ export function useAddressSearch({
     setIsLoading(false)
     setError(null)
     setIsSelected(false) // Resetar estado de seleção
+    setSelectedText('') // Limpar texto selecionado
   }, [])
 
   // Função para fechar dropdown

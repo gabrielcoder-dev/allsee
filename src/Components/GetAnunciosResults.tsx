@@ -144,6 +144,8 @@ export default function GetAnunciosResults({ onAdicionarProduto, selectedDuratio
           
         } catch (error) {
           console.error('❌ Erro ao buscar totens da cidade:', error);
+          setAnuncios([]);
+          setNoResults(true);
           setLoading(false);
           return;
         }

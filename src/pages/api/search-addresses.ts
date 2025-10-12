@@ -5,6 +5,33 @@ let brazilianCitiesCache: any[] = []
 let cacheTimestamp = 0
 const CACHE_DURATION = 24 * 60 * 60 * 1000 // 24 horas
 
+// Função para buscar coordenadas específicas de uma cidade
+async function fetchCityCoordinates(cityName: string, state: string): Promise<{lat: number, lng: number} | null> {
+  try {
+    // Usar Nominatim (OpenStreetMap) para geocoding
+    const query = encodeURIComponent(`${cityName}, ${state}, Brasil`)
+    const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${query}&limit=1&countrycodes=br`)
+    
+    if (!response.ok) {
+      throw new Error(`Erro no Nominatim: ${response.status}`)
+    }
+    
+    const data = await response.json()
+    
+    if (data && data.length > 0) {
+      return {
+        lat: parseFloat(data[0].lat),
+        lng: parseFloat(data[0].lon)
+      }
+    }
+    
+    return null
+  } catch (error) {
+    console.error(`❌ Erro ao buscar coordenadas para ${cityName}, ${state}:`, error)
+    return null
+  }
+}
+
 // Função para buscar cidades brasileiras da API do IBGE
 async function fetchBrazilianCities(): Promise<any[]> {
   try {
@@ -24,7 +51,7 @@ async function fetchBrazilianCities(): Promise<any[]> {
       name: city.nome,
       state: city.microrregiao?.mesorregiao?.UF?.sigla || city.microrregiao?.UF?.sigla || 'BR',
       country: "Brasil",
-      lat: null, // IBGE não fornece coordenadas diretamente
+      lat: null, // Será preenchido dinamicamente
       lng: null
     })).filter((city: any) => city.state !== 'BR') // Filtrar cidades com estado inválido
     
@@ -122,17 +149,30 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         city.name.toLowerCase().includes(searchTerm) ||
         city.state.toLowerCase().includes(searchTerm)
       )
-      .slice(0, 50) // Aumentar para 50 resultados
-      .map((city) => {
-        // Usar coordenadas existentes ou valores padrão
+      .slice(0, 10) // Limitar a 10 para não sobrecarregar a API
+
+    // Buscar coordenadas específicas para cada cidade encontrada
+    const citiesWithCoordinates = await Promise.all(
+      matchingCities.map(async (city) => {
         let lat = city.lat
         let lng = city.lng
         
-        // Se não tem coordenadas, usar coordenadas aproximadas baseadas no estado
+        // Se não tem coordenadas, buscar coordenadas específicas
         if (!lat || !lng) {
-          const stateCoords = getStateCoordinates(city.state)
-          lat = stateCoords.lat
-          lng = stateCoords.lng
+          console.log(`🔍 Buscando coordenadas para ${city.name}, ${city.state}`)
+          const coords = await fetchCityCoordinates(city.name, city.state)
+          
+          if (coords) {
+            lat = coords.lat
+            lng = coords.lng
+            console.log(`✅ Coordenadas encontradas: ${lat}, ${lng}`)
+          } else {
+            // Fallback para coordenadas do estado
+            const stateCoords = getStateCoordinates(city.state)
+            lat = stateCoords.lat
+            lng = stateCoords.lng
+            console.log(`⚠️ Usando coordenadas do estado: ${lat}, ${lng}`)
+          }
         }
 
         return {
@@ -147,9 +187,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                  city.name.toLowerCase().includes(searchTerm) ? 50 : 10
         }
       })
+    )
     
     // Ordenar e limitar resultados
-    const finalCities = matchingCities
+    const finalCities = citiesWithCoordinates
       .sort((a, b) => b.score - a.score)
       .slice(0, 10) // Limitar a 10 cidades
 
