@@ -1,5 +1,5 @@
 import React, { useRef, useEffect } from 'react'
-import { MapPinIcon, X, Building2 } from 'lucide-react'
+import { MapPinIcon, X } from 'lucide-react'
 
 interface AddressSuggestion {
   id: number | string
@@ -72,7 +72,7 @@ export default function AddressAutocomplete({
       {/* Input Field */}
       <div className="flex items-center gap-1">
         <MapPinIcon className="w-4 h-5 text-orange-500" />
-        <span className="text-gray-500 mb-1 font-semibold">Endereço ou região</span>
+        <span className="text-gray-500 mb-1 font-semibold">endereço ou região</span>
         {isLoading && (
           <span className="text-xs text-blue-500 ml-2 animate-pulse">Buscando...</span>
         )}
@@ -103,37 +103,20 @@ export default function AddressAutocomplete({
       {isOpen && suggestions.length > 0 && (
         <div
           ref={dropdownRef}
-          className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-60 overflow-y-auto"
+          className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-md shadow-lg z-50 max-h-60 overflow-y-auto"
         >
           {suggestions.map((suggestion, index) => (
             <button
               key={`${suggestion.id}-${index}`}
               type="button"
-              className="w-full px-4 py-3 text-left hover:bg-gray-50 border-b border-gray-100 last:border-b-0 transition-colors"
+              className="w-full px-4 py-3 text-left hover:bg-gray-50 border-b border-gray-100 last:border-b-0 transition-colors first:rounded-t-md last:rounded-b-md"
               onClick={() => {
                 onSelectAddress(suggestion);
                 onCloseDropdown();
               }}
             >
-              <div className="flex items-start gap-3">
-                {suggestion.type === 'city' ? (
-                  <Building2 className="w-4 h-4 text-blue-500 mt-0.5 flex-shrink-0" />
-                ) : (
-                  <MapPinIcon className="w-4 h-4 text-orange-500 mt-0.5 flex-shrink-0" />
-                )}
-                <div className="flex-1 min-w-0">
-                  <div className="font-medium text-gray-900 text-sm truncate">
-                    {suggestion.name}
-                  </div>
-                  <div className="text-gray-500 text-xs mt-1 line-clamp-2">
-                    {suggestion.address}
-                  </div>
-                  {suggestion.type === 'city' && (
-                    <div className="text-blue-600 text-xs mt-1 font-medium">
-                      Cidade
-                    </div>
-                  )}
-                </div>
+              <div className="text-sm text-gray-900">
+                {suggestion.address}
               </div>
             </button>
           ))}

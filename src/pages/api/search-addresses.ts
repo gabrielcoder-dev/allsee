@@ -253,7 +253,12 @@ const brazilianCities = [
   { name: "Montes Claros", state: "MG", country: "Brasil", lat: -16.7319, lng: -43.8636 },
   { name: "Salinas", state: "MG", country: "Brasil", lat: -16.1753, lng: -42.2903 },
   { name: "Araxá", state: "MG", country: "Brasil", lat: -19.5936, lng: -46.9406 },
-  { name: "Patrocínio", state: "MG", country: "Brasil", lat: -18.9444, lng: -46.9931 }
+  { name: "Patrocínio", state: "MG", country: "Brasil", lat: -18.9444, lng: -46.9931 },
+  { name: "Primavera do Leste", state: "MT", country: "Brasil", lat: -15.5619, lng: -54.3067 },
+  { name: "Praia Grande", state: "SP", country: "Brasil", lat: -24.0089, lng: -46.4128 },
+  { name: "Presidente Prudente", state: "SP", country: "Brasil", lat: -22.1267, lng: -51.3892 },
+  { name: "Praia do Rosa", state: "SC", country: "Brasil", lat: -28.0167, lng: -48.6167 },
+  { name: "Praia do Forte", state: "BA", country: "Brasil", lat: -12.5833, lng: -38.0833 }
 ]
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
