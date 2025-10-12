@@ -47,7 +47,7 @@ type HeaderResultsDesktopProps = {
   onTipoMidiaChange?: (tipo: string | null, bairros: string[]) => void;
   orderBy?: string;
   onOrderChange?: (order: string) => void;
-  onCityFound?: (coords: { lat: number; lng: number; totemId?: number }) => void;
+  onCityFound?: (coords: { lat: number; lng: number; totemId?: number; cityName?: string }) => void;
   onSpecificTotemFound?: (totemId: number) => void;
 }
 
@@ -160,36 +160,58 @@ const HeaderResultsDesktop = ({ onDurationChange, selectedDuration, onTipoMidiaC
                 onSelectAddress={(address) => {
                   const selectedAddress = selectAddress(address);
                   console.log('🎯 Endereço selecionado:', selectedAddress.address);
-                  console.log('🎯 ID do totem:', address.id);
-                  console.log('🎯 Nome do totem:', address.name);
-                  console.log('🎯 Coordenadas do totem:', { lat: address.lat, lng: address.lng });
+                  console.log('🎯 Tipo:', address.type);
+                  console.log('🎯 ID:', address.id);
+                  console.log('🎯 Nome:', address.name);
+                  console.log('🎯 Coordenadas:', { lat: address.lat, lng: address.lng });
                   
                   // Mostrar animação de pesquisa
                   setIsSearching(true);
                   
-                  // AQUI é onde deve recarregar os componentes
-                  // Passar o endereço selecionado para mostrar totens relacionados
-                  if (onTipoMidiaChange) {
-                    console.log('🔄 Chamando onTipoMidiaChange com endereço:', address.address);
-                    // Passar o endereço selecionado para filtrar totens relacionados
-                    onTipoMidiaChange(null, [address.address]);
-                  }
-                  
-                  // Notificar sobre totem específico encontrado
-                  if (onSpecificTotemFound) {
-                    console.log('🎯 Chamando onSpecificTotemFound com ID:', address.id);
-                    onSpecificTotemFound(address.id);
-                  }
-                  
-                  // Notificar o componente pai sobre a seleção (para o mapa)
-                  if (onCityFound) {
-                    console.log('🗺️ Chamando onCityFound para destacar no mapa');
-                    console.log('🗺️ Coordenadas:', { lat: address.lat, lng: address.lng });
-                    onCityFound({
-                      lat: address.lat || 0,
-                      lng: address.lng || 0,
-                      totemId: address.id
-                    });
+                  if (address.type === 'city') {
+                    // Se for uma cidade, navegar para ela
+                    console.log('🏙️ Cidade selecionada:', address.name);
+                    
+                    if (onCityFound) {
+                      console.log('🗺️ Chamando onCityFound para navegar para cidade');
+                      onCityFound({
+                        lat: address.lat || 0,
+                        lng: address.lng || 0,
+                        totemId: undefined, // Cidades não têm totem específico
+                        cityName: address.name // Passar nome da cidade
+                      });
+                    }
+                    
+                    // Para cidades, não filtrar por endereço específico
+                    if (onTipoMidiaChange) {
+                      console.log('🔄 Chamando onTipoMidiaChange sem filtro (cidade)');
+                      onTipoMidiaChange(null, []); // Limpar filtros para mostrar todos os totens da cidade
+                    }
+                  } else {
+                    // Se for um totem específico
+                    console.log('🎯 Totem específico selecionado:', address.name);
+                    
+                    // Passar o endereço selecionado para mostrar totens relacionados
+                    if (onTipoMidiaChange) {
+                      console.log('🔄 Chamando onTipoMidiaChange com endereço:', address.address);
+                      onTipoMidiaChange(null, [address.address]);
+                    }
+                    
+                    // Notificar sobre totem específico encontrado
+                    if (onSpecificTotemFound) {
+                      console.log('🎯 Chamando onSpecificTotemFound com ID:', address.id);
+                      onSpecificTotemFound(address.id);
+                    }
+                    
+                    // Notificar o componente pai sobre a seleção (para o mapa)
+                    if (onCityFound) {
+                      console.log('🗺️ Chamando onCityFound para destacar no mapa');
+                      onCityFound({
+                        lat: address.lat || 0,
+                        lng: address.lng || 0,
+                        totemId: address.id
+                      });
+                    }
                   }
                   
                   // Simular tempo de carregamento e esconder animação

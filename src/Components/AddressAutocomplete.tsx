@@ -1,12 +1,13 @@
 import React, { useRef, useEffect } from 'react'
-import { MapPinIcon, X } from 'lucide-react'
+import { MapPinIcon, X, Building2 } from 'lucide-react'
 
 interface AddressSuggestion {
-  id: number
+  id: number | string
   name: string
   address: string
   lat?: number
   lng?: number
+  type?: 'city' | 'totem'
 }
 
 interface AddressAutocompleteProps {
@@ -115,7 +116,11 @@ export default function AddressAutocomplete({
               }}
             >
               <div className="flex items-start gap-3">
-                <MapPinIcon className="w-4 h-4 text-orange-500 mt-0.5 flex-shrink-0" />
+                {suggestion.type === 'city' ? (
+                  <Building2 className="w-4 h-4 text-blue-500 mt-0.5 flex-shrink-0" />
+                ) : (
+                  <MapPinIcon className="w-4 h-4 text-orange-500 mt-0.5 flex-shrink-0" />
+                )}
                 <div className="flex-1 min-w-0">
                   <div className="font-medium text-gray-900 text-sm truncate">
                     {suggestion.name}
@@ -123,6 +128,11 @@ export default function AddressAutocomplete({
                   <div className="text-gray-500 text-xs mt-1 line-clamp-2">
                     {suggestion.address}
                   </div>
+                  {suggestion.type === 'city' && (
+                    <div className="text-blue-600 text-xs mt-1 font-medium">
+                      Cidade
+                    </div>
+                  )}
                 </div>
               </div>
             </button>

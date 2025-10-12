@@ -1,5 +1,4 @@
 import { NextApiRequest, NextApiResponse } from 'next'
-import { supabaseServer } from '@/lib/supabaseServer'
 
 // Lista de cidades brasileiras principais (baseada no IBGE)
 const brazilianCities = [
@@ -271,12 +270,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const searchTerm = q.toLowerCase().trim()
     
     if (searchTerm.length < 2) {
-      return res.json({ addresses: [] })
+      return res.json({ cities: [] })
     }
 
-    console.log('🔍 Buscando cidades para:', searchTerm)
+    console.log('🏙️ Buscando cidades para:', searchTerm)
 
-    // Buscar apenas cidades brasileiras
+    // Filtrar cidades que correspondem ao termo de busca
     const matchingCities = brazilianCities
       .filter(city => 
         city.name.toLowerCase().includes(searchTerm) ||
@@ -294,49 +293,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                city.name.toLowerCase().includes(searchTerm) ? 50 : 10
       }))
       .sort((a, b) => b.score - a.score)
-      .slice(0, 10) // Limitar a 10 cidades
+      .slice(0, 10) // Limitar a 10 resultados
 
-    console.log(`✅ Encontradas ${matchingCities.length} cidades para "${searchTerm}"`)
+    console.log('🏙️ Cidades encontradas:', matchingCities.length)
 
-    res.json({ addresses: matchingCities })
+    res.json({ cities: matchingCities })
   } catch (error) {
-    console.error('❌ Erro na API de busca de endereços:', error)
+    console.error('❌ Erro ao buscar cidades:', error)
     res.status(500).json({ error: 'Erro interno do servidor' })
   }
-}
-
-// Função para calcular relevância do resultado
-function calculateRelevanceScore(searchTerm: string, name: string, address: string): number {
-  let score = 0
-  const searchLower = searchTerm.toLowerCase()
-  const nameLower = name.toLowerCase()
-  const addressLower = address.toLowerCase()
-
-  // Match exato no nome = score mais alto
-  if (nameLower === searchLower) {
-    score += 100
-  } else if (nameLower.startsWith(searchLower)) {
-    score += 80
-  } else if (nameLower.includes(searchLower)) {
-    score += 60
-  }
-
-  // Match exato no endereço
-  if (addressLower === searchLower) {
-    score += 90
-  } else if (addressLower.startsWith(searchLower)) {
-    score += 70
-  } else if (addressLower.includes(searchLower)) {
-    score += 50
-  }
-
-  // Bonus para correspondências no início das palavras
-  const words = addressLower.split(' ')
-  words.forEach(word => {
-    if (word.startsWith(searchLower)) {
-      score += 10
-    }
-  })
-
-  return score
 }

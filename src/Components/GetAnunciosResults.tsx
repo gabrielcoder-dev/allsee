@@ -41,14 +41,16 @@ type GetAnunciosResultsProps = {
   onSpecificTotemFound?: (totemId: number) => void;
   specificTotemId?: number | null;
   isInitialLoading?: boolean;
+  selectedCity?: { lat: number; lng: number; name: string } | null;
 }
 
-export default function GetAnunciosResults({ onAdicionarProduto, selectedDuration = '2', tipoMidia, bairros, orderBy, onChangeAnunciosFiltrados, userNicho, onSpecificTotemFound, specificTotemId, isInitialLoading = false }: GetAnunciosResultsProps) {
+export default function GetAnunciosResults({ onAdicionarProduto, selectedDuration = '2', tipoMidia, bairros, orderBy, onChangeAnunciosFiltrados, userNicho, onSpecificTotemFound, specificTotemId, isInitialLoading = false, selectedCity }: GetAnunciosResultsProps) {
   const { adicionarProduto, removerProduto, produtos, atualizarProdutosComNovaDuracao } = useCart()
   const [anuncios, setAnuncios] = useState<Anuncio[]>([])
   const [loading, setLoading] = useState(true)
   const [showLoginModal, setShowLoginModal] = useState(false)
   const [modalImage, setModalImage] = useState<{ image: string, name: string, address: string } | null>(null)
+  const [noResults, setNoResults] = useState(false)
 
   // Função para ordenar anúncios
   const ordenarAnuncios = (anuncios: Anuncio[], orderBy: string) => {
@@ -79,9 +81,75 @@ export default function GetAnunciosResults({ onAdicionarProduto, selectedDuratio
   useEffect(() => {
     async function fetchAnuncios() {
       console.log('🔄 GetAnunciosResults - useEffect executado');
-      console.log('📊 Parâmetros:', { selectedDuration, tipoMidia, bairros, specificTotemId, userNicho });
+      console.log('📊 Parâmetros:', { selectedDuration, tipoMidia, bairros, specificTotemId, userNicho, selectedCity });
       
       setLoading(true)
+      setNoResults(false)
+      
+      // Se há uma cidade selecionada, buscar totens da cidade
+      if (selectedCity) {
+        console.log('🏙️ Buscando totens para cidade:', selectedCity.name);
+        
+        try {
+          const response = await fetch(`/api/anuncios-por-cidade?cityLat=${selectedCity.lat}&cityLng=${selectedCity.lng}&radius=50`);
+          const cityData = await response.json();
+          
+          console.log('📊 Totens encontrados na cidade:', cityData.totens.length);
+          
+          if (cityData.totens.length === 0) {
+            setAnuncios([]);
+            setNoResults(true);
+            setLoading(false);
+            return;
+          }
+          
+          // Filtrar por duração
+          let durationColumn = 'duration_2';
+          if (selectedDuration === '4') durationColumn = 'duration_4';
+          if (selectedDuration === '12') durationColumn = 'duration_12';
+          if (selectedDuration === '24') durationColumn = 'duration_24';
+          
+          let filteredTotens = cityData.totens.filter((totem: any) => totem[durationColumn]);
+          
+          // Filtrar por tipo de mídia se especificado
+          if (tipoMidia) {
+            filteredTotens = filteredTotens.filter((totem: any) => totem.type_screen === tipoMidia);
+          }
+          
+          // Filtrar por nicho do usuário
+          if (userNicho && userNicho !== 'outro') {
+            filteredTotens = filteredTotens.filter((totem: any) => totem.nicho !== userNicho);
+          }
+          
+          console.log('✅ Totens filtrados para cidade:', filteredTotens.length);
+          
+          if (filteredTotens.length === 0) {
+            setAnuncios([]);
+            setNoResults(true);
+            setLoading(false);
+            return;
+          }
+          
+          // Aplicar ordenação
+          const anunciosOrdenados = ordenarAnuncios(filteredTotens, orderBy || '');
+          
+          setAnuncios(anunciosOrdenados);
+          atualizarProdutosComNovaDuracao(anunciosOrdenados, selectedDuration);
+          if (onChangeAnunciosFiltrados) {
+            onChangeAnunciosFiltrados(anunciosOrdenados);
+          }
+          
+          setLoading(false);
+          return;
+          
+        } catch (error) {
+          console.error('❌ Erro ao buscar totens da cidade:', error);
+          setLoading(false);
+          return;
+        }
+      }
+      
+      // Lógica original para busca normal (sem cidade selecionada)
       let durationColumn = 'duration_2';
       if (selectedDuration === '4') durationColumn = 'duration_4';
       if (selectedDuration === '12') durationColumn = 'duration_12';
@@ -242,6 +310,30 @@ export default function GetAnunciosResults({ onAdicionarProduto, selectedDuratio
       );
     }
     return <div>Nenhum anúncio encontrado.</div>
+  }
+
+  // Se não há resultados para a cidade selecionada
+  if (noResults) {
+    return (
+      <div className="flex-1 min-h-0 overflow-y-auto pr-2">
+        <div className="flex flex-col items-center justify-center h-full min-h-[400px] p-8">
+          <div className="text-center">
+            <div className="mb-6">
+              <svg className="w-24 h-24 mx-auto text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-1.447-.894L15 4m0 13V4m-6 3l6-3" />
+              </svg>
+            </div>
+            <h3 className="text-xl font-semibold text-gray-700 mb-2">Sem resultados</h3>
+            <p className="text-gray-500 mb-4">
+              Não encontramos totens disponíveis na cidade selecionada.
+            </p>
+            <p className="text-sm text-gray-400">
+              Tente selecionar outra cidade ou verificar se há totens próximos.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (

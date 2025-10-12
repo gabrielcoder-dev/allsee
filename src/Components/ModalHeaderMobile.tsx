@@ -101,27 +101,51 @@ export default function ModalHeaderMobile({
         
         if (data.addresses && data.addresses.length > 0) {
           // Pegar o primeiro resultado (mais relevante)
-          const specificTotem = data.addresses[0];
-          console.log('🎯 Totem específico encontrado para busca mobile:', specificTotem);
+          const selectedResult = data.addresses[0];
+          console.log('🎯 Resultado encontrado para busca mobile:', selectedResult);
           
-          // Chamar as funções de callback com o totem específico
-          if (onTipoMidiaChange) {
-            console.log('🔄 Chamando onTipoMidiaChange com endereço:', specificTotem.address);
-            onTipoMidiaChange(null, [specificTotem.address]);
-          }
-          
-          if (onSpecificTotemFound) {
-            console.log('🎯 Chamando onSpecificTotemFound com ID:', specificTotem.id);
-            onSpecificTotemFound(specificTotem.id);
-          }
-          
-          if (onCityFound) {
-            console.log('🗺️ Chamando onCityFound para destacar no mapa');
-            onCityFound({
-              lat: specificTotem.lat || 0,
-              lng: specificTotem.lng || 0,
-              totemId: specificTotem.id
-            });
+          if (selectedResult.type === 'city') {
+            // Se for uma cidade
+            console.log('🏙️ Cidade selecionada no mobile:', selectedResult.name);
+            
+            if (onCityFound) {
+              console.log('🗺️ Chamando onCityFound para navegar para cidade');
+              onCityFound({
+                lat: selectedResult.lat || 0,
+                lng: selectedResult.lng || 0,
+                totemId: undefined, // Cidades não têm totem específico
+                cityName: selectedResult.name // Passar nome da cidade
+              });
+            }
+            
+            // Para cidades, não filtrar por endereço específico
+            if (onTipoMidiaChange) {
+              console.log('🔄 Chamando onTipoMidiaChange sem filtro (cidade)');
+              onTipoMidiaChange(null, []); // Limpar filtros para mostrar todos os totens da cidade
+            }
+          } else {
+            // Se for um totem específico
+            console.log('🎯 Totem específico encontrado para busca mobile:', selectedResult);
+            
+            // Chamar as funções de callback com o totem específico
+            if (onTipoMidiaChange) {
+              console.log('🔄 Chamando onTipoMidiaChange com endereço:', selectedResult.address);
+              onTipoMidiaChange(null, [selectedResult.address]);
+            }
+            
+            if (onSpecificTotemFound) {
+              console.log('🎯 Chamando onSpecificTotemFound com ID:', selectedResult.id);
+              onSpecificTotemFound(selectedResult.id);
+            }
+            
+            if (onCityFound) {
+              console.log('🗺️ Chamando onCityFound para destacar no mapa');
+              onCityFound({
+                lat: selectedResult.lat || 0,
+                lng: selectedResult.lng || 0,
+                totemId: selectedResult.id
+              });
+            }
           }
         } else {
           // Se não encontrou totem específico, usar busca normal

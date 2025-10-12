@@ -1,11 +1,12 @@
 import { useState, useEffect, useCallback } from 'react'
 
 interface AddressSuggestion {
-  id: number
+  id: number | string
   name: string
   address: string
   lat?: number
   lng?: number
+  type?: 'city' | 'totem'
 }
 
 interface UseAddressSearchOptions {

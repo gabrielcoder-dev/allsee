@@ -39,6 +39,7 @@ const Page = () => {
   const [orderBy, setOrderBy] = useState<string>('');
   const [anunciosFiltrados, setAnunciosFiltrados] = useState<any[]>([]);
   const [specificTotemId, setSpecificTotemId] = useState<number | null>(null);
+  const [selectedCity, setSelectedCity] = useState<{ lat: number; lng: number; name: string } | null>(null);
   const [mounted, setMounted] = useState(false);
   const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [isMobileSearching, setIsMobileSearching] = useState(false);
@@ -95,9 +96,29 @@ const Page = () => {
   }
 
   // Função para buscar coordenadas da cidade
-  const handleCityFound = (coords: { lat: number; lng: number; totemId?: number }) => {
+  const handleCityFound = (coords: { lat: number; lng: number; totemId?: number; cityName?: string }) => {
+    console.log('🗺️ handleCityFound chamado com:', coords);
+    
     if (mapRef.current) {
-      mapRef.current.setView([coords.lat, coords.lng], 15);
+      if (coords.totemId) {
+        // Se é um totem específico, navegar para ele com zoom próximo
+        mapRef.current.setView([coords.lat, coords.lng], 15);
+      } else {
+        // Se é uma cidade, navegar para ela com zoom médio
+        mapRef.current.setView([coords.lat, coords.lng], 14);
+      }
+    }
+    
+    // Se não há totemId, é uma cidade - definir cidade selecionada
+    if (!coords.totemId) {
+      setSelectedCity({
+        lat: coords.lat,
+        lng: coords.lng,
+        name: coords.cityName || 'Cidade Selecionada'
+      });
+    } else {
+      // Se é um totem específico, limpar cidade selecionada
+      setSelectedCity(null);
     }
   };
 
@@ -268,6 +289,7 @@ const Page = () => {
               onSpecificTotemFound={handleSpecificTotemFound}
               specificTotemId={specificTotemId}
               isInitialLoading={isInitialLoading}
+              selectedCity={selectedCity}
             />
           </div>
 
@@ -378,6 +400,7 @@ const Page = () => {
             onSpecificTotemFound={handleSpecificTotemFound}
             specificTotemId={specificTotemId}
             isInitialLoading={isInitialLoading}
+            selectedCity={selectedCity}
           />
         </div>
 
@@ -409,6 +432,7 @@ const Page = () => {
               onSpecificTotemFound={handleSpecificTotemFound}
               specificTotemId={specificTotemId}
               isInitialLoading={isInitialLoading}
+              selectedCity={selectedCity}
             />
           </div>
           
