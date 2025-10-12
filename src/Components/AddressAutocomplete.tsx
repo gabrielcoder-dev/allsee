@@ -87,9 +87,7 @@ export default function AddressAutocomplete({
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           onFocus={() => {
-            if (suggestions.length > 0) {
-              onCloseDropdown()
-            }
+            // Não fechar dropdown no focus, deixar aberto para mostrar sugestões
           }}
         />
       </div>

@@ -158,6 +158,7 @@ const HeaderResultsDesktop = ({ onDurationChange, selectedDuration, onTipoMidiaC
                 isOpen={isOpen}
                 error={error}
                 onSelectAddress={(address) => {
+                  console.log('🚀 INÍCIO: onSelectAddress chamado com:', address);
                   const selectedAddress = selectAddress(address);
                   console.log('🎯 Endereço selecionado:', selectedAddress.address);
                   console.log('🎯 Tipo:', address.type);
@@ -167,6 +168,7 @@ const HeaderResultsDesktop = ({ onDurationChange, selectedDuration, onTipoMidiaC
                   
                   // Mostrar animação de pesquisa
                   setIsSearching(true);
+                  console.log('⏳ Animação de pesquisa iniciada');
                   
                   if (address.type === 'city') {
                     // Se for uma cidade, navegar para ela
@@ -174,18 +176,26 @@ const HeaderResultsDesktop = ({ onDurationChange, selectedDuration, onTipoMidiaC
                     
                     if (onCityFound) {
                       console.log('🗺️ Chamando onCityFound para navegar para cidade');
-                      onCityFound({
+                      const cityData = {
                         lat: address.lat || 0,
                         lng: address.lng || 0,
                         totemId: undefined, // Cidades não têm totem específico
                         cityName: address.name // Passar nome da cidade
-                      });
+                      };
+                      console.log('📍 Dados da cidade sendo enviados:', cityData);
+                      onCityFound(cityData);
+                      console.log('✅ onCityFound chamado com sucesso');
+                    } else {
+                      console.log('❌ onCityFound não está definido');
                     }
                     
                     // Para cidades, não filtrar por endereço específico
                     if (onTipoMidiaChange) {
                       console.log('🔄 Chamando onTipoMidiaChange sem filtro (cidade)');
                       onTipoMidiaChange(null, []); // Limpar filtros para mostrar todos os totens da cidade
+                      console.log('✅ onTipoMidiaChange chamado com sucesso');
+                    } else {
+                      console.log('❌ onTipoMidiaChange não está definido');
                     }
                   } else {
                     // Se for um totem específico
