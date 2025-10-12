@@ -5,9 +5,10 @@ import { MapContainer, TileLayer, useMapEvents, Marker, Popup } from 'react-leaf
 import 'leaflet/dist/leaflet.css';
 import { supabase } from '../lib/supabase';
 import { orangePinIcon } from './CustomMarkerIcon';
-import { X } from 'lucide-react';
+import { X, Pencil } from 'lucide-react';
 import MiniAnuncioCard from './MiniAnuncioCard';
 import L, { Map as MapType, LeafletEvent } from 'leaflet';
+import MarkerAddressModal from './MarkerAddressModal';
 
 // Componente para capturar clique no mapa
 function MapClickHandler({ onMapClick }: { onMapClick: (lat: number, lng: number) => void }) {
@@ -38,6 +39,11 @@ const MapAdmin = () => {
   const [markers, setMarkers] = useState<any[]>([]);
   const [selectedMarker, setSelectedMarker] = useState<any | null>(null);
   const mapRef = useRef<MapType | null>(null);
+  const [addressModalOpen, setAddressModalOpen] = useState(false);
+  const [addressModalMode, setAddressModalMode] = useState<'add' | 'edit'>('add');
+  const [tempMarkerData, setTempMarkerData] = useState<{ anuncioId: number; lat: number; lng: number } | null>(null);
+  const [editingMarkerId, setEditingMarkerId] = useState<number | null>(null);
+  const [currentAddress, setCurrentAddress] = useState('');
 
   // Buscar anúncios do Supabase
   useEffect(() => {
@@ -55,7 +61,7 @@ const MapAdmin = () => {
     async function fetchMarkers() {
       const { data, error } = await supabase
         .from('markers')
-        .select('id, anuncio_id, lat, lng, anuncio:anuncio_id(*)')
+        .select('id, anuncio_id, lat, lng, address, anuncio:anuncio_id(*)')
       if (!error && data) setMarkers(data);
     }
     fetchMarkers();
@@ -73,25 +79,76 @@ const MapAdmin = () => {
     setClickCoords(null);
   };
 
-  // Handler para adicionar marker
+  // Handler para adicionar marker (abre modal de endereço)
   const handleAddMarker = async (anuncioId: number) => {
     if (!clickCoords) return;
-    // Salva no Supabase
-    const { error } = await supabase.from('markers').insert({
-      anuncio_id: anuncioId,
+    // Armazena os dados temporariamente e abre o modal de endereço
+    setTempMarkerData({
+      anuncioId,
       lat: clickCoords.lat,
-      lng: clickCoords.lng,
+      lng: clickCoords.lng
     });
+    setModalOpen(false);
+    setAddressModalMode('add');
+    setCurrentAddress('');
+    setAddressModalOpen(true);
+  };
+
+  // Handler para salvar o endereço ao adicionar marker
+  const handleSaveAddress = async (address: string) => {
+    if (!tempMarkerData) return;
+    
+    // Salva no Supabase com o endereço
+    const { error } = await supabase.from('markers').insert({
+      anuncio_id: tempMarkerData.anuncioId,
+      lat: tempMarkerData.lat,
+      lng: tempMarkerData.lng,
+      address: address,
+    });
+    
     if (error) {
       alert('Erro ao adicionar marker: ' + error.message);
       return;
     }
-    setModalOpen(false);
+    
+    setTempMarkerData(null);
     setClickCoords(null);
+    
     // Atualiza markers após adicionar
     const { data, error: fetchError } = await supabase
       .from('markers')
-      .select('id, anuncio_id, lat, lng, anuncio:anuncio_id(*)')
+      .select('id, anuncio_id, lat, lng, address, anuncio:anuncio_id(*)')
+    if (!fetchError && data) setMarkers(data);
+  };
+
+  // Handler para editar endereço de um marker existente
+  const handleEditAddress = (marker: any) => {
+    setEditingMarkerId(marker.id);
+    setCurrentAddress(marker.address || '');
+    setAddressModalMode('edit');
+    setAddressModalOpen(true);
+  };
+
+  // Handler para atualizar o endereço
+  const handleUpdateAddress = async (address: string) => {
+    if (!editingMarkerId) return;
+    
+    const { error } = await supabase
+      .from('markers')
+      .update({ address })
+      .eq('id', editingMarkerId);
+    
+    if (error) {
+      alert('Erro ao atualizar endereço: ' + error.message);
+      return;
+    }
+    
+    setEditingMarkerId(null);
+    
+    // Atualiza markers após editar
+    const { data, error: fetchError } = await supabase
+      .from('markers')
+      .select('id, anuncio_id, lat, lng, address, anuncio:anuncio_id(*)')
     if (!fetchError && data) setMarkers(data);
   };
 
@@ -101,7 +158,7 @@ const MapAdmin = () => {
     // Atualiza markers após remover
     const { data, error } = await supabase
       .from('markers')
-      .select('id, anuncio_id, lat, lng, anuncio:anuncio_id(*)')
+      .select('id, anuncio_id, lat, lng, address, anuncio:anuncio_id(*)')
     if (!error && data) setMarkers(data);
   };
 
@@ -178,12 +235,21 @@ const MapAdmin = () => {
                     hideAddButton={true}
                     size="medium"
                     actionButton={
-                      <button
-                        onClick={() => { handleRemoveMarker(selectedMarker.id); setSelectedMarker(null); }}
-                        className="w-full text-xs text-red-600 border border-red-300 rounded px-2 py-1 hover:bg-red-50"
-                      >
-                        Remover marker
-                      </button>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => handleEditAddress(selectedMarker)}
+                          className="flex-1 text-xs text-orange-600 border border-orange-300 rounded px-2 py-1 hover:bg-orange-50 flex items-center justify-center gap-1"
+                        >
+                          <Pencil className="w-3 h-3" />
+                          Editar
+                        </button>
+                        <button
+                          onClick={() => { handleRemoveMarker(selectedMarker.id); setSelectedMarker(null); }}
+                          className="flex-1 text-xs text-red-600 border border-red-300 rounded px-2 py-1 hover:bg-red-50"
+                        >
+                          Remover
+                        </button>
+                      </div>
                     }
                   />
                 </Popup>
@@ -270,6 +336,20 @@ const MapAdmin = () => {
           </div>
         </div>
       )}
+      
+      {/* Modal de Endereço */}
+      <MarkerAddressModal
+        isOpen={addressModalOpen}
+        onClose={() => {
+          setAddressModalOpen(false);
+          setTempMarkerData(null);
+          setEditingMarkerId(null);
+          setCurrentAddress('');
+        }}
+        onSave={addressModalMode === 'add' ? handleSaveAddress : handleUpdateAddress}
+        initialAddress={currentAddress}
+        mode={addressModalMode}
+      />
     </div>
   );
 };
