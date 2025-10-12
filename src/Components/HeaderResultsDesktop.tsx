@@ -198,7 +198,7 @@ const HeaderResultsDesktop = ({ onDurationChange, selectedDuration, onTipoMidiaC
                     }
                     
                     // Notificar sobre totem específico encontrado
-                    if (onSpecificTotemFound) {
+                    if (onSpecificTotemFound && typeof address.id === 'number') {
                       console.log('🎯 Chamando onSpecificTotemFound com ID:', address.id);
                       onSpecificTotemFound(address.id);
                     }
@@ -209,7 +209,7 @@ const HeaderResultsDesktop = ({ onDurationChange, selectedDuration, onTipoMidiaC
                       onCityFound({
                         lat: address.lat || 0,
                         lng: address.lng || 0,
-                        totemId: address.id
+                        totemId: typeof address.id === 'number' ? address.id : undefined
                       });
                     }
                   }

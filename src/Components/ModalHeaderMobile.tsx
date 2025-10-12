@@ -133,7 +133,7 @@ export default function ModalHeaderMobile({
               onTipoMidiaChange(null, [selectedResult.address]);
             }
             
-            if (onSpecificTotemFound) {
+            if (onSpecificTotemFound && typeof selectedResult.id === 'number') {
               console.log('🎯 Chamando onSpecificTotemFound com ID:', selectedResult.id);
               onSpecificTotemFound(selectedResult.id);
             }
@@ -143,7 +143,7 @@ export default function ModalHeaderMobile({
               onCityFound({
                 lat: selectedResult.lat || 0,
                 lng: selectedResult.lng || 0,
-                totemId: selectedResult.id
+                totemId: typeof selectedResult.id === 'number' ? selectedResult.id : undefined
               });
             }
           }
