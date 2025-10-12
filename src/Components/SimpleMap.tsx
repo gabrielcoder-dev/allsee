@@ -82,12 +82,17 @@ function MapController({
   // Expor a função globalmente
   useEffect(() => {
     (window as any).navigateToCity = navigateToCity;
+    console.log('🗺️ Função navigateToCity exposta globalmente');
   }, [navigateToCity]);
 
-  // Garantir que o mapa sempre inicie em Primavera do Leste
+  // Garantir que o mapa sempre inicie em Primavera do Leste apenas na primeira vez
   useEffect(() => {
     const timer = setTimeout(() => {
-      map.setView(PRIMAVERA_DO_LESTE_COORDS, 14);
+      // Só definir posição inicial se não houver navegação pendente
+      if (!(window as any).navigateToCity) {
+        map.setView(PRIMAVERA_DO_LESTE_COORDS, 14);
+        console.log('🗺️ Mapa inicializado em Primavera do Leste');
+      }
     }, 100);
     return () => clearTimeout(timer);
   }, [map]);

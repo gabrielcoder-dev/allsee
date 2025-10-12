@@ -99,7 +99,12 @@ const Page = () => {
   const handleCityFound = (coords: { lat: number; lng: number; totemId?: number; cityName?: string }) => {
     console.log('🗺️ handleCityFound chamado com:', coords);
     
-    if (mapRef.current) {
+    // Usar a função global do mapa para navegar
+    if (typeof window !== 'undefined' && (window as any).navigateToCity) {
+      console.log('🚀 Navegando usando função global do mapa');
+      (window as any).navigateToCity(coords, coords.totemId);
+    } else if (mapRef.current) {
+      console.log('🚀 Navegando usando mapRef');
       if (coords.totemId) {
         // Se é um totem específico, navegar para ele com zoom próximo
         mapRef.current.setView([coords.lat, coords.lng], 15);
@@ -107,6 +112,8 @@ const Page = () => {
         // Se é uma cidade, navegar para ela com zoom médio
         mapRef.current.setView([coords.lat, coords.lng], 14);
       }
+    } else {
+      console.log('❌ Nem função global nem mapRef disponíveis');
     }
     
     // Se não há totemId, é uma cidade - definir cidade selecionada
