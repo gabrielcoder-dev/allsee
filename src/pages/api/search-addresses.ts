@@ -9,22 +9,36 @@ const CACHE_DURATION = 24 * 60 * 60 * 1000 // 24 horas
 async function fetchCityCoordinates(cityName: string, state: string): Promise<{lat: number, lng: number} | null> {
   try {
     // Usar Nominatim (OpenStreetMap) para geocoding
+    // Adicionar delay pequeno para evitar rate limit do Nominatim
+    await new Promise(resolve => setTimeout(resolve, 200))
+    
     const query = encodeURIComponent(`${cityName}, ${state}, Brasil`)
-    const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${query}&limit=1&countrycodes=br`)
+    const response = await fetch(
+      `https://nominatim.openstreetmap.org/search?format=json&q=${query}&limit=1&countrycodes=br`,
+      {
+        headers: {
+          'User-Agent': 'AllSee-App/1.0' // Nominatim requer User-Agent
+        }
+      }
+    )
     
     if (!response.ok) {
-      throw new Error(`Erro no Nominatim: ${response.status}`)
+      console.error(`❌ Erro no Nominatim (${response.status}) para ${cityName}, ${state}`)
+      return null
     }
     
     const data = await response.json()
     
     if (data && data.length > 0) {
-      return {
+      const coords = {
         lat: parseFloat(data[0].lat),
         lng: parseFloat(data[0].lon)
       }
+      console.log(`✅ Coordenadas encontradas para ${cityName}: ${coords.lat}, ${coords.lng}`)
+      return coords
     }
     
+    console.log(`⚠️ Nenhuma coordenada encontrada para ${cityName}, ${state}`)
     return null
   } catch (error) {
     console.error(`❌ Erro ao buscar coordenadas para ${cityName}, ${state}:`, error)
@@ -149,10 +163,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         city.name.toLowerCase().includes(searchTerm) ||
         city.state.toLowerCase().includes(searchTerm)
       )
-      .slice(0, 10) // Limitar a 10 para não sobrecarregar a API
+      .slice(0, 5) // Limitar a 5 para não sobrecarregar a API do Nominatim
 
     // Buscar coordenadas específicas para cada cidade encontrada
-    const citiesWithCoordinates = await Promise.all(
+    const citiesWithCoordinates = (await Promise.all(
       matchingCities.map(async (city) => {
         let lat = city.lat
         let lng = city.lng
@@ -165,13 +179,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           if (coords) {
             lat = coords.lat
             lng = coords.lng
-            console.log(`✅ Coordenadas encontradas: ${lat}, ${lng}`)
+            console.log(`✅ Coordenadas específicas encontradas: ${lat}, ${lng}`)
           } else {
-            // Fallback para coordenadas do estado
-            const stateCoords = getStateCoordinates(city.state)
-            lat = stateCoords.lat
-            lng = stateCoords.lng
-            console.log(`⚠️ Usando coordenadas do estado: ${lat}, ${lng}`)
+            // Se não encontrou coordenadas, não retornar esta cidade
+            console.log(`❌ Não foi possível encontrar coordenadas para ${city.name}, ${city.state}`)
+            return null
           }
         }
 
@@ -190,7 +202,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                  city.name.toLowerCase().includes(searchTerm) ? 50 : 10
         }
       })
-    )
+    )).filter(city => city !== null) as any[]
     
     // Ordenar e limitar resultados
     const finalCities = citiesWithCoordinates
