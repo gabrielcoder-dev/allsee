@@ -5,22 +5,26 @@ let brazilianCitiesCache: any[] = []
 let cacheTimestamp = 0
 const CACHE_DURATION = 24 * 60 * 60 * 1000 // 24 horas
 
-// Função para buscar coordenadas específicas de uma cidade
+// Função para buscar coordenadas específicas de uma cidade (com timeout)
 async function fetchCityCoordinates(cityName: string, state: string): Promise<{lat: number, lng: number} | null> {
   try {
-    // Usar Nominatim (OpenStreetMap) para geocoding
-    // Adicionar delay pequeno para evitar rate limit do Nominatim
-    await new Promise(resolve => setTimeout(resolve, 200))
-    
     const query = encodeURIComponent(`${cityName}, ${state}, Brasil`)
+    
+    // Adicionar timeout de 2 segundos para não demorar muito
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 2000)
+    
     const response = await fetch(
       `https://nominatim.openstreetmap.org/search?format=json&q=${query}&limit=1&countrycodes=br`,
       {
         headers: {
-          'User-Agent': 'AllSee-App/1.0' // Nominatim requer User-Agent
-        }
+          'User-Agent': 'AllSee-App/1.0'
+        },
+        signal: controller.signal
       }
     )
+    
+    clearTimeout(timeoutId)
     
     if (!response.ok) {
       console.error(`❌ Erro no Nominatim (${response.status}) para ${cityName}, ${state}`)
@@ -40,8 +44,12 @@ async function fetchCityCoordinates(cityName: string, state: string): Promise<{l
     
     console.log(`⚠️ Nenhuma coordenada encontrada para ${cityName}, ${state}`)
     return null
-  } catch (error) {
-    console.error(`❌ Erro ao buscar coordenadas para ${cityName}, ${state}:`, error)
+  } catch (error: any) {
+    if (error.name === 'AbortError') {
+      console.error(`⏱️ Timeout ao buscar coordenadas para ${cityName}, ${state}`)
+    } else {
+      console.error(`❌ Erro ao buscar coordenadas para ${cityName}, ${state}:`, error)
+    }
     return null
   }
 }
@@ -163,7 +171,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         city.name.toLowerCase().includes(searchTerm) ||
         city.state.toLowerCase().includes(searchTerm)
       )
-      .slice(0, 5) // Limitar a 5 para não sobrecarregar a API do Nominatim
+      .slice(0, 3) // Limitar a 3 para resposta mais rápida
 
     // Buscar coordenadas específicas para cada cidade encontrada
     const citiesWithCoordinates = (await Promise.all(
@@ -207,7 +215,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // Ordenar e limitar resultados
     const finalCities = citiesWithCoordinates
       .sort((a, b) => b.score - a.score)
-      .slice(0, 10) // Limitar a 10 cidades
+      .slice(0, 5) // Limitar a 5 cidades para resposta rápida
 
     console.log(`✅ Encontradas ${finalCities.length} cidades para "${searchTerm}"`)
 

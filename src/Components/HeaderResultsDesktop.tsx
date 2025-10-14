@@ -75,7 +75,7 @@ const HeaderResultsDesktop = ({ onDurationChange, selectedDuration, onTipoMidiaC
     error,
     selectAddress,
     closeDropdown
-  } = useAddressSearch({ debounceMs: 300, minLength: 2 })
+  } = useAddressSearch({ debounceMs: 200, minLength: 2 })
 
   // Garantir que está no cliente
   useEffect(() => {

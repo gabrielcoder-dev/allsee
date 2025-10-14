@@ -50,7 +50,7 @@ export default function ModalHeaderMobile({
     error,
     selectAddress,
     closeDropdown
-  } = useAddressSearch({ debounceMs: 300, minLength: 2 })
+  } = useAddressSearch({ debounceMs: 200, minLength: 2 })
 
   const { formData, updateFormData, setSelectedDurationGlobal } = useCart();
   // const startDate = formData.startDate ? new Date(formData.startDate) : undefined; // This line is removed as startDate is now a state variable
