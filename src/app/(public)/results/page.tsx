@@ -98,6 +98,18 @@ const Page = () => {
   // Função para buscar coordenadas da cidade
   const handleCityFound = (coords: { lat: number; lng: number; totemId?: number; cityName?: string }) => {
     console.log('🗺️ handleCityFound chamado com:', coords);
+    console.log('📱 Mobile map view ativo?', isMobileMapView);
+    console.log('🔍 Verificando coordenadas:', { 
+      lat: coords.lat, 
+      lng: coords.lng, 
+      isValid: coords.lat !== 0 && coords.lng !== 0 
+    });
+    
+    // Validar coordenadas
+    if (!coords.lat || !coords.lng || coords.lat === 0 || coords.lng === 0) {
+      console.error('❌ Coordenadas inválidas recebidas:', coords);
+      return;
+    }
     
     // Usar a função global do mapa para navegar
     if (typeof window !== 'undefined' && (window as any).navigateToCity) {
@@ -114,10 +126,21 @@ const Page = () => {
       }
     } else {
       console.log('❌ Nem função global nem mapRef disponíveis');
+      console.log('⚠️ Tentando novamente em 500ms...');
+      // Tentar novamente após um pequeno delay (caso o mapa ainda não tenha carregado)
+      setTimeout(() => {
+        if (typeof window !== 'undefined' && (window as any).navigateToCity) {
+          console.log('🔄 Tentativa 2: Navegando usando função global do mapa');
+          (window as any).navigateToCity(coords, coords.totemId);
+        } else {
+          console.error('❌ Ainda não foi possível navegar no mapa');
+        }
+      }, 500);
     }
     
     // Se não há totemId, é uma cidade - definir cidade selecionada
     if (!coords.totemId) {
+      console.log('🏙️ Definindo cidade selecionada:', coords.cityName);
       setSelectedCity({
         lat: coords.lat,
         lng: coords.lng,
@@ -125,6 +148,7 @@ const Page = () => {
       });
     } else {
       // Se é um totem específico, limpar cidade selecionada
+      console.log('🎯 Totem específico - limpando cidade selecionada');
       setSelectedCity(null);
     }
   };

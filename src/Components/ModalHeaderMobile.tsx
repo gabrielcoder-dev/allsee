@@ -107,15 +107,29 @@ export default function ModalHeaderMobile({
           if (selectedResult.type === 'city') {
             // Se for uma cidade
             console.log('🏙️ Cidade selecionada no mobile:', selectedResult.name);
+            console.log('📍 Coordenadas da cidade:', { lat: selectedResult.lat, lng: selectedResult.lng });
+            console.log('📝 Nome da cidade para filtro:', selectedResult.cityName || selectedResult.name);
             
-            if (onCityFound) {
-              console.log('🗺️ Chamando onCityFound para navegar para cidade');
-              onCityFound({
-                lat: selectedResult.lat || 0,
-                lng: selectedResult.lng || 0,
-                totemId: undefined, // Cidades não têm totem específico
-                cityName: selectedResult.name // Passar nome da cidade
-              });
+            // Garantir que tem coordenadas válidas antes de chamar onCityFound
+            const cityCoords = {
+              lat: selectedResult.lat || 0,
+              lng: selectedResult.lng || 0,
+              totemId: undefined,
+              cityName: selectedResult.cityName || selectedResult.name
+            };
+            
+            console.log('🔍 Validando coordenadas antes de navegar:', cityCoords);
+            
+            if (cityCoords.lat === 0 || cityCoords.lng === 0) {
+              console.error('❌ Coordenadas inválidas para cidade:', selectedResult);
+            } else if (onCityFound) {
+              console.log('🗺️ Chamando onCityFound para navegar para cidade com coordenadas válidas');
+              onCityFound(cityCoords);
+              
+              // Pequeno delay para garantir que o mapa processou a navegação
+              setTimeout(() => {
+                console.log('✅ Navegação para cidade concluída');
+              }, 100);
             }
             
             // Para cidades, não filtrar por endereço específico
