@@ -21,7 +21,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    const { cityLat, cityLng, radius = 50 } = req.query
+    const { cityLat, cityLng, cityName, radius = 50 } = req.query
 
     if (!cityLat || !cityLng) {
       return res.status(400).json({ error: 'cityLat and cityLng are required' })
@@ -30,8 +30,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const cityLatitude = parseFloat(cityLat as string)
     const cityLongitude = parseFloat(cityLng as string)
     const searchRadius = parseFloat(radius as string) || 50
+    const cityNameStr = cityName as string
 
-    console.log('🏙️ Buscando totens para cidade:', { cityLatitude, cityLongitude, searchRadius })
+    console.log('🏙️ Buscando totens para cidade:', { cityLatitude, cityLongitude, cityName: cityNameStr, searchRadius })
 
     // Buscar todos os totens com markers
     const { data: anunciosData, error: anunciosError } = await supabaseServer
@@ -49,6 +50,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         duration_4,
         duration_12,
         duration_24,
+        nicho,
+        image,
         markers!inner(id, lat, lng)
       `)
 
@@ -57,7 +60,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(500).json({ error: 'Erro interno do servidor' })
     }
 
-    // Filtrar totens que estão dentro do raio da cidade
+    // Filtrar totens pela cidade
     const totensNaCidade = anunciosData?.filter(totem => {
       // Pegar as coordenadas do primeiro marker
       const marker = Array.isArray(totem.markers) ? totem.markers[0] : totem.markers
@@ -66,7 +69,31 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         return false
       }
 
-      // Calcular distância da cidade
+      // FILTRO PRINCIPAL: Verificar se o nome da cidade está no endereço do totem
+      if (cityNameStr) {
+        const totemAddress = (totem.address || '').toLowerCase()
+        const searchCityName = cityNameStr.toLowerCase()
+        
+        console.log('🔍 Verificando totem:', {
+          totemId: totem.id,
+          totemName: totem.name,
+          totemAddress: totem.address,
+          cityName: cityNameStr
+        })
+        
+        // Verificar se o nome da cidade está no endereço
+        const hasCityInAddress = totemAddress.includes(searchCityName)
+        
+        if (!hasCityInAddress) {
+          console.log('❌ Cidade não encontrada no endereço do totem')
+          return false
+        }
+        
+        console.log('✅ Cidade encontrada no endereço do totem!')
+        return true
+      }
+
+      // FILTRO SECUNDÁRIO (fallback): Filtrar por raio se não tiver nome da cidade
       const distance = calculateDistance(
         cityLatitude, 
         cityLongitude, 
@@ -77,7 +104,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return distance <= searchRadius
     }) || []
 
-    console.log(`✅ Encontrados ${totensNaCidade.length} totens na cidade`)
+    console.log(`✅ Encontrados ${totensNaCidade.length} totens na cidade ${cityNameStr || 'desconhecida'}`)
 
     res.json({ 
       totens: totensNaCidade,
@@ -85,6 +112,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       city: {
         lat: cityLatitude,
         lng: cityLongitude,
+        name: cityNameStr,
         radius: searchRadius
       }
     })

@@ -91,7 +91,7 @@ export default function GetAnunciosResults({ onAdicionarProduto, selectedDuratio
         console.log('🏙️ Buscando totens para cidade:', selectedCity.name);
         
         try {
-          const response = await fetch(`/api/anuncios-por-cidade?cityLat=${selectedCity.lat}&cityLng=${selectedCity.lng}&radius=50`);
+          const response = await fetch(`/api/anuncios-por-cidade?cityLat=${selectedCity.lat}&cityLng=${selectedCity.lng}&cityName=${encodeURIComponent(selectedCity.name)}&radius=50`);
           const cityData = await response.json();
           
           console.log('📊 Totens encontrados na cidade:', cityData.totens.length);
@@ -285,7 +285,7 @@ export default function GetAnunciosResults({ onAdicionarProduto, selectedDuratio
       setLoading(false)
     }
     fetchAnuncios()
-  }, [selectedDuration, tipoMidia, JSON.stringify(bairros), orderBy, userNicho, specificTotemId])
+  }, [selectedDuration, tipoMidia, JSON.stringify(bairros), orderBy, userNicho, specificTotemId, selectedCity])
 
 
 

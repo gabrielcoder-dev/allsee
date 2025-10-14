@@ -177,8 +177,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
         return {
           id: `city_${city.name}_${city.state}`,
-          name: city.name,
+          name: city.name, // Nome limpo da cidade (sem estado/país)
           address: `${city.name}, ${city.state}, ${city.country}`,
+          cityName: city.name, // Nome da cidade para filtrar totens
+          state: city.state,
+          country: city.country,
           lat: lat,
           lng: lng,
           type: 'city' as const,
