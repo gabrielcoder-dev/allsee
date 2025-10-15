@@ -196,7 +196,7 @@ export default function NavBarAdmin({ onLogout, mobileOpen, setMobileOpen, selec
                 <div className="relative z-10 flex items-center">
                   <CheckCircle size={20} />
                   {counts.approvals > 0 && (
-                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full px-1 min-w-[18px] h-[18px] flex items-center justify-center">
+                    <span className="absolute -top-1 right-0 bg-red-500 text-white text-xs rounded-full px-1 min-w-[18px] h-[18px] flex items-center justify-center">
                       {counts.approvals > 99 ? '99+' : counts.approvals}
                     </span>
                   )}
@@ -239,7 +239,7 @@ export default function NavBarAdmin({ onLogout, mobileOpen, setMobileOpen, selec
                 <div className="relative z-10 flex items-center">
                   <Repeat size={20} />
                   {counts.replacements > 0 && (
-                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full px-1 min-w-[18px] h-[18px] flex items-center justify-center">
+                    <span className="absolute -top-1 right-0 bg-red-500 text-white text-xs rounded-full px-1 min-w-[18px] h-[18px] flex items-center justify-center">
                       {counts.replacements > 99 ? '99+' : counts.replacements}
                     </span>
                   )}

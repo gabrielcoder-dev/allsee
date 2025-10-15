@@ -9,7 +9,6 @@ import ProgressAdmin from '@/Components/ProgressAdmin';
 import ReplacementAdmin from '@/Components/ReplacementAdmin';
 import AproveitionAdmin from '@/Components/AproveitionAdmin';
 import { NotificationProvider } from '@/context/NotificationContext';
-import { NotificationDebugPanel } from '@/Components/NotificationDebugPanel';
 
 const MapAdmin = dynamic(() => import('@/Components/MapAdmin'), { ssr: false });
 
@@ -59,9 +58,6 @@ const DashboardPage = () => {
         }`}>
           {ContentComponent}
         </main>
-        
-        {/* Painel de debug - remover em produção */}
-        <NotificationDebugPanel />
       </div>
     </NotificationProvider>
   )
