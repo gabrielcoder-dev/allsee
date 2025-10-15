@@ -58,7 +58,7 @@ export default function HeaderPrice() {
   return (
     <div
       id="header-price"
-      className="fixed bottom-0 left-0 right-0 z-40 flex items-center justify-between w-full border-t border-solid border-neutral-high-light bg-white py-4 px-4 lg:px-[80px]"
+      className="fixed bottom-0 left-0 right-0 z-10 flex items-center justify-between w-full border-t border-solid border-neutral-high-light bg-white py-4 px-4 lg:px-[80px]"
     >
       <div className="hidden md:block text-base md:text-lg">
         <span className="font-bold">{quantidade} produto{quantidade > 1 ? 's' : ''}</span>
