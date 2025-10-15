@@ -8,6 +8,8 @@ import dynamic from 'next/dynamic';
 import ProgressAdmin from '@/Components/ProgressAdmin';
 import ReplacementAdmin from '@/Components/ReplacementAdmin';
 import AproveitionAdmin from '@/Components/AproveitionAdmin';
+import { NotificationProvider } from '@/context/NotificationContext';
+import { NotificationDebugPanel } from '@/Components/NotificationDebugPanel';
 
 const MapAdmin = dynamic(() => import('@/Components/MapAdmin'), { ssr: false });
 
@@ -44,19 +46,24 @@ const DashboardPage = () => {
   }
 
   return (
-    <div className='h-screen flex overflow-hidden'>
-      <NavBarAdmin 
-        mobileOpen={mobileOpen} 
-        setMobileOpen={setMobileOpen} 
-        selectedMenu={selectedMenu}
-        setSelectedMenu={setSelectedMenu}
-      />
-      <main className={`flex-1 overflow-y-auto transition-all duration-300 ${
-        isMobile ? 'w-full' : 'ml-0'
-      }`}>
-        {ContentComponent}
-      </main>
-    </div>
+    <NotificationProvider>
+      <div className='h-screen flex overflow-hidden'>
+        <NavBarAdmin 
+          mobileOpen={mobileOpen} 
+          setMobileOpen={setMobileOpen} 
+          selectedMenu={selectedMenu}
+          setSelectedMenu={setSelectedMenu}
+        />
+        <main className={`flex-1 overflow-y-auto transition-all duration-300 ${
+          isMobile ? 'w-full' : 'ml-0'
+        }`}>
+          {ContentComponent}
+        </main>
+        
+        {/* Painel de debug - remover em produção */}
+        <NotificationDebugPanel />
+      </div>
+    </NotificationProvider>
   )
 }
 

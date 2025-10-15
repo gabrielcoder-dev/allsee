@@ -6,6 +6,7 @@ import { ChevronLeft, ChevronRight, CheckCircle, RefreshCw, Repeat, ArrowLeft } 
 import { supabase } from '@/lib/supabase'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { useNotifications } from '@/context/NotificationContext'
 
 
 
@@ -23,6 +24,7 @@ export default function NavBarAdmin({ onLogout, mobileOpen, setMobileOpen, selec
   const [userName, setUserName] = useState<string>('Usuário Admin')
   const [isMobile, setIsMobile] = useState(false)
   const router = useRouter()
+  const { counts } = useNotifications()
 
   useEffect(() => {
     const checkMobile = () => {
@@ -191,7 +193,14 @@ export default function NavBarAdmin({ onLogout, mobileOpen, setMobileOpen, selec
                 }`}
               >
                 <div className={`absolute inset-0 rounded-xl ${selectedMenu === 'aprovacao' ? 'bg-gradient-to-r from-orange-500 to-orange-600' : 'bg-transparent group-hover:bg-gradient-to-r group-hover:from-orange-50 group-hover:to-orange-100'} transition-all duration-200`}></div>
-                <CheckCircle size={20} className="relative z-10" />
+                <div className="relative z-10 flex items-center">
+                  <CheckCircle size={20} />
+                  {counts.approvals > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full px-1 min-w-[18px] h-[18px] flex items-center justify-center">
+                      {counts.approvals > 99 ? '99+' : counts.approvals}
+                    </span>
+                  )}
+                </div>
                 {isExpanded && <span className="text-sm md:text-base relative z-10">Aprovação</span>}
               </a>
             </li>
@@ -227,7 +236,14 @@ export default function NavBarAdmin({ onLogout, mobileOpen, setMobileOpen, selec
                 }`}
               >
                 <div className={`absolute inset-0 rounded-xl ${selectedMenu === 'substituicao' ? 'bg-gradient-to-r from-orange-500 to-orange-600' : 'bg-transparent group-hover:bg-gradient-to-r group-hover:from-orange-50 group-hover:to-orange-100'} transition-all duration-200`}></div>
-                <Repeat size={20} className="relative z-10" />
+                <div className="relative z-10 flex items-center">
+                  <Repeat size={20} />
+                  {counts.replacements > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full px-1 min-w-[18px] h-[18px] flex items-center justify-center">
+                      {counts.replacements > 99 ? '99+' : counts.replacements}
+                    </span>
+                  )}
+                </div>
                 {isExpanded && <span className="text-sm md:text-base relative z-10">Substituição</span>}
               </a>
             </li>

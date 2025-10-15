@@ -34,6 +34,20 @@ const AproveitionAdmin = () => {
       ...prev,
       [orderId]: status
     }));
+
+    // Disparar evento customizado para atualizar notificações
+    window.dispatchEvent(new CustomEvent('approvalStatusChanged', {
+      detail: {
+        orderId: orderId,
+        status: status,
+        chave: `order_${orderId}`
+      }
+    }));
+
+    console.log('📡 Evento de aprovação disparado:', {
+      orderId: orderId,
+      status: status
+    });
   };
 
   useEffect(() => {
