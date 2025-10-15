@@ -200,7 +200,7 @@ export default function NavBarAdmin({ onLogout, mobileOpen, setMobileOpen, selec
                   <span className="text-sm md:text-base relative z-10">
                     Aprovação
                     {counts.approvals > 0 && (
-                      <span className="absolute -top-1 right-[-12px] bg-red-500 text-white text-xs rounded-full px-1 min-w-[18px] h-[18px] flex items-center justify-center">
+                      <span className="absolute -top-1 right-[-16px] bg-red-500 text-white text-xs rounded-full px-1 min-w-[18px] h-[18px] flex items-center justify-center">
                         {counts.approvals > 99 ? '99+' : counts.approvals}
                       </span>
                     )}
@@ -247,7 +247,7 @@ export default function NavBarAdmin({ onLogout, mobileOpen, setMobileOpen, selec
                   <span className="text-sm md:text-base relative z-10">
                     Substituição
                     {counts.replacements > 0 && (
-                      <span className="absolute -top-1 right-[-12px] bg-red-500 text-white text-xs rounded-full px-1 min-w-[18px] h-[18px] flex items-center justify-center">
+                      <span className="absolute -top-1 right-[-16px] bg-red-500 text-white text-xs rounded-full px-1 min-w-[18px] h-[18px] flex items-center justify-center">
                         {counts.replacements > 99 ? '99+' : counts.replacements}
                       </span>
                     )}
