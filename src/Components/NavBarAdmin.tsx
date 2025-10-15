@@ -196,14 +196,10 @@ export default function NavBarAdmin({ onLogout, mobileOpen, setMobileOpen, selec
                 <div className="relative z-10 flex items-center">
                   <CheckCircle size={20} />
                 </div>
-                {isExpanded && (
-                  <span className="text-sm md:text-base relative z-10">
-                    Aprovação
-                    {counts.approvals > 0 && (
-                      <span className="absolute -top-1 right-[-8px] bg-red-500 text-white text-xs rounded-full px-1 min-w-[18px] h-[18px] flex items-center justify-center">
-                        {counts.approvals > 99 ? '99+' : counts.approvals}
-                      </span>
-                    )}
+                {isExpanded && <span className="text-sm md:text-base relative z-10">Aprovação</span>}
+                {counts.approvals > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full px-1 min-w-[18px] h-[18px] flex items-center justify-center z-20">
+                    {counts.approvals > 99 ? '99+' : counts.approvals}
                   </span>
                 )}
               </a>
@@ -243,14 +239,10 @@ export default function NavBarAdmin({ onLogout, mobileOpen, setMobileOpen, selec
                 <div className="relative z-10 flex items-center">
                   <Repeat size={20} />
                 </div>
-                {isExpanded && (
-                  <span className="text-sm md:text-base relative z-10">
-                    Substituição
-                    {counts.replacements > 0 && (
-                      <span className="absolute -top-1 right-[-8px] bg-red-500 text-white text-xs rounded-full px-1 min-w-[18px] h-[18px] flex items-center justify-center">
-                        {counts.replacements > 99 ? '99+' : counts.replacements}
-                      </span>
-                    )}
+                {isExpanded && <span className="text-sm md:text-base relative z-10">Substituição</span>}
+                {counts.replacements > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full px-1 min-w-[18px] h-[18px] flex items-center justify-center z-20">
+                    {counts.replacements > 99 ? '99+' : counts.replacements}
                   </span>
                 )}
               </a>
