@@ -57,10 +57,10 @@ export default function ModalMenu({ open, onClose }: ModalMenuProps) {
 
   return (
     <>
-      <div className="fixed inset-0 z-50 flex items-end justify-end md:items-start md:justify-end">
+      <div className="fixed inset-0 z-[60] flex items-end justify-end md:items-start md:justify-end">
         {/* Overlay escuro */}
         <div
-          className="fixed inset-0 bg-black/30"
+          className="fixed inset-0 bg-black/30 z-[61]"
           onClick={handleClose}
           aria-label="Fechar menu"
         />
