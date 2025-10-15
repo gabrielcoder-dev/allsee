@@ -33,7 +33,7 @@ export default function Footer() {
                 </svg>
               </a>
               <a 
-                href="mailto:contato@allseeads.com.br" 
+                href="mailto:allseecontato@gmail.com" 
                 className="text-gray-300 hover:text-white transition-colors"
                 title="E-mail"
               >
@@ -97,7 +97,7 @@ export default function Footer() {
               </li>
               <li>
                 <a 
-                  href="mailto:contato@allseeads.com.br" 
+                  href="mailto:allseecontato@gmail.com" 
                   className="text-gray-300 hover:text-white transition-colors"
                 >
                   Contato
