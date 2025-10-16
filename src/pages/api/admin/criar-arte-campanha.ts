@@ -30,21 +30,39 @@ export default async function handler(
 
     // Se caminho_imagem está vazio (upload em chunks), permitir
     if (caminho_imagem && caminho_imagem !== '') {
-      // Validar tipo de arquivo (base64)
-      if (!caminho_imagem.startsWith('data:image/') && !caminho_imagem.startsWith('data:video/')) {
+      // NOVO SISTEMA: Aceitar URLs públicas do Supabase Storage
+      const isStorageURL = caminho_imagem.startsWith('http');
+      const isBase64 = caminho_imagem.startsWith('data:');
+      
+      if (isStorageURL) {
+        // URL pública do storage - aceitar diretamente
+        console.log('🔗 URL pública do storage detectada:', {
+          url: caminho_imagem.substring(0, 100) + '...',
+          isStorageURL: true
+        });
+      } else if (isBase64) {
+        // Base64 (sistema legado) - validar formato
+        if (!caminho_imagem.startsWith('data:image/') && !caminho_imagem.startsWith('data:video/')) {
+          return res.status(400).json({ 
+            success: false, 
+            error: 'Formato não suportado. Use apenas imagens (JPG, PNG, GIF) ou vídeos (MP4, MOV, AVI)' 
+          });
+        }
+
+        // Validar tamanho do arquivo (base64 otimizado)
+        if (caminho_imagem.length > MAX_BASE64_SIZE) {
+          const currentSizeMB = Math.round(caminho_imagem.length / (1024 * 1024));
+          const maxSizeMB = Math.round(MAX_FILE_SIZE / (1024 * 1024));
+          return res.status(413).json({ 
+            success: false, 
+            error: `Arquivo muito grande. Máximo permitido: ${maxSizeMB}MB. Arquivo atual: ~${currentSizeMB}MB` 
+          });
+        }
+      } else {
+        // Formato não reconhecido
         return res.status(400).json({ 
           success: false, 
           error: 'Formato não suportado. Use apenas imagens (JPG, PNG, GIF) ou vídeos (MP4, MOV, AVI)' 
-        });
-      }
-
-      // Validar tamanho do arquivo (base64 otimizado)
-      if (caminho_imagem.length > MAX_BASE64_SIZE) {
-        const currentSizeMB = Math.round(caminho_imagem.length / (1024 * 1024));
-        const maxSizeMB = Math.round(MAX_FILE_SIZE / (1024 * 1024));
-        return res.status(413).json({ 
-          success: false, 
-          error: `Arquivo muito grande. Máximo permitido: ${maxSizeMB}MB. Arquivo atual: ~${currentSizeMB}MB` 
         });
       }
     }
@@ -52,7 +70,11 @@ export default async function handler(
     console.log('📥 Criando arte da campanha:', {
       id_order,
       id_user,
-      fileType: caminho_imagem ? (caminho_imagem.startsWith('data:image/') ? 'image' : 'video') : 'empty (chunks)',
+      fileType: caminho_imagem ? (
+        caminho_imagem.startsWith('http') ? 'storage_url' : 
+        caminho_imagem.startsWith('data:image/') ? 'image_base64' : 
+        caminho_imagem.startsWith('data:video/') ? 'video_base64' : 'unknown'
+      ) : 'empty (chunks)',
       fileSizeMB: caminho_imagem ? Math.round(caminho_imagem.length / (1024 * 1024)) : 0,
       caminho_preview: caminho_imagem ? caminho_imagem.substring(0, 50) + '...' : 'empty'
     });
