@@ -7,6 +7,7 @@ import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { useDirectStorageUpload } from '@/hooks/useDirectStorageUpload';
 
 // Função para detectar se é vídeo
 const isVideo = (url: string) => {
@@ -59,6 +60,15 @@ const MeusAnuncios = () => {
   const [refresh, setRefresh] = useState(false);
   const [diasRestantes, setDiasRestantes] = useState<number | null>(null);
   const [alcanceAtual, setAlcanceAtual] = useState<number>(0);
+
+  // Hook para upload direto para storage
+  const { uploadFile, progress: uploadProgress, isUploading, error: uploadError } = useDirectStorageUpload({
+    chunkSizeMB: 4, // 4MB por chunk (limite Vercel 5MB, Storage 50MB)
+    parallelUploads: 3,
+    onProgress: (progress) => {
+      console.log(`📊 Progresso do upload de troca: ${progress.percentage}% (${progress.chunksUploaded}/${progress.totalChunks} chunks)`);
+    }
+  });
 
   // Atualizar dias restantes e alcance atual a cada minuto
   useEffect(() => {
@@ -515,425 +525,76 @@ const MeusAnuncios = () => {
       
       console.log(`Trocando arte para anuncio.id: ${selectedAnuncioId}, order_id: ${anuncio.order_id}`);
 
-      // Converter o arquivo para base64
-      const reader = new FileReader();
-      reader.readAsDataURL(selectedFile);
-      reader.onload = async () => {
-        let base64String = reader.result as string;
+      console.log('📤 Preparando upload direto para storage (troca):', {
+        order_id: anuncio.order_id,
+        fileName: selectedFile.name,
+        fileSize: Math.round(selectedFile.size / (1024 * 1024)) + 'MB',
+        fileType: selectedFile.type
+      });
 
-        // Otimizar imagem se for imagem (COMPRESSÃO MAIS AGRESSIVA)
-        if (base64String.startsWith('data:image/')) {
-          console.log('🖼️ Otimizando imagem (compressão agressiva)...');
-          base64String = await compressImage(base64String, 0.6); // 60% qualidade (mais compressão)
-          console.log('✅ Imagem otimizada:', {
-            originalSize: Math.round((reader.result as string).length / (1024 * 1024)),
-            compressedSize: Math.round(base64String.length / (1024 * 1024)),
-            compression: Math.round((1 - base64String.length / (reader.result as string).length) * 100) + '%'
-          });
-        }
+      // Upload direto para Storage
+      console.log('🚀 Iniciando upload direto para storage (troca)...');
+      const uploadResult = await uploadFile(selectedFile, 'arte-campanhas');
 
-        // Obter usuário atual
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) {
-          console.error("Usuário não logado");
-          setError("Usuário não logado");
-          return;
-        }
+      if (!uploadResult) {
+        throw new Error(uploadError || 'Erro ao fazer upload do arquivo de troca');
+      }
 
-        console.log('📤 Preparando upload híbrido de troca:', {
-          order_id: anuncio.order_id,
-          id_user: user.id,
-          fileType: base64String.startsWith('data:image/') ? 'image' : 'video',
-          fileSizeMB: Math.round(base64String.length / (1024 * 1024))
-        });
+      const publicUrl = uploadResult.public_url;
+      console.log('✅ Arquivo de troca enviado para storage:', {
+        public_url: publicUrl,
+        file_path: uploadResult.file_path,
+        file_size_mb: uploadResult.file_size_mb
+      });
 
-        // Upload híbrido - LÓGICA SIMPLES OTIMIZADA
-        const serverBodyLimit = 8 * 1024 * 1024; // 8MB limite do servidor (aumentado de 4MB)
-        
-        // Função para comprimir chunks usando compressão nativa do browser
-        const compressChunk = async (chunk: string): Promise<string> => {
-          try {
-            // Converter base64 para Uint8Array
-            const binaryString = atob(chunk);
-            const bytes = new Uint8Array(binaryString.length);
-            for (let i = 0; i < binaryString.length; i++) {
-              bytes[i] = binaryString.charCodeAt(i);
-            }
-            
-            // Comprimir usando CompressionStream
-            const stream = new CompressionStream('gzip');
-            const writer = stream.writable.getWriter();
-            const reader = stream.readable.getReader();
-            
-            writer.write(bytes);
-            writer.close();
-            
-            const compressedChunks: Uint8Array[] = [];
-            let done = false;
-            
-            while (!done) {
-              const { value, done: readerDone } = await reader.read();
-              done = readerDone;
-              if (value) {
-                compressedChunks.push(value);
-              }
-            }
-            
-            // Combinar chunks comprimidos
-            const totalLength = compressedChunks.reduce((sum, chunk) => sum + chunk.length, 0);
-            const compressedBytes = new Uint8Array(totalLength);
-            let offset = 0;
-            for (const chunk of compressedChunks) {
-              compressedBytes.set(chunk, offset);
-              offset += chunk.length;
-            }
-            
-            // Converter de volta para base64
-            let compressedBase64 = '';
-            for (let i = 0; i < compressedBytes.length; i++) {
-              compressedBase64 += String.fromCharCode(compressedBytes[i]);
-            }
-            
-            return btoa(compressedBase64);
-          } catch (error) {
-            console.warn('⚠️ Falha na compressão, usando chunk original:', error);
-            return chunk; // Fallback para chunk original
-          }
-        };
-        
-        if (base64String.length <= serverBodyLimit) {
-          // Upload direto para arquivos pequenos (instantâneo)
-          console.log('📤 Upload direto de troca (arquivo pequeno)', {
-            tamanhoArquivo: `${Math.round(base64String.length / (1024 * 1024))}MB`,
-            limiteServidor: `${Math.round(serverBodyLimit / (1024 * 1024))}MB`
-          });
-          const response = await fetch('/api/admin/criar-arte-troca-campanha', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              id_campanha: anuncio.id,
-              caminho_imagem: base64String
-            })
-          });
+      // Criar registro de troca no banco com URL pública
+      const createResponse = await fetch('/api/admin/criar-arte-troca-campanha', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify({
+          id_campanha: anuncio.id,
+          caminho_imagem: publicUrl // URL pública do storage
+        })
+      });
 
-          if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.error || 'Erro no upload direto de troca');
-          }
+      if (!createResponse.ok) {
+        const errorData = await createResponse.json();
+        throw new Error(errorData.error || 'Erro ao criar registro de troca');
+      }
 
-          console.log('✅ Upload direto de troca concluído');
-        } else {
-          // Upload híbrido para arquivos grandes - LÓGICA SIMPLES
-          console.log('📤 Upload híbrido de troca (arquivo grande) - iniciando...');
-          
-          // LÓGICA CORRIGIDA: Chunks de até 8MB, garantindo que 100% do arquivo seja enviado
-          const chunks: string[] = [];
-          let currentPosition = 0;
-          const totalSize = base64String.length;
-          
-          console.log(`📏 Tamanho total do arquivo de troca: ${Math.round(totalSize / (1024 * 1024))}MB ${Math.round((totalSize % (1024 * 1024)) / 1024)}KB`);
-          
-          while (currentPosition < totalSize) {
-            const remainingBytes = totalSize - currentPosition;
-            const chunkSize = Math.min(serverBodyLimit, remainingBytes);
-            
-            // Verificar se este é o último chunk
-            const isLastChunk = (currentPosition + chunkSize) >= totalSize;
-            const actualChunkSize = isLastChunk ? remainingBytes : chunkSize;
-            
-            const chunk = base64String.slice(currentPosition, currentPosition + actualChunkSize);
-            chunks.push(chunk);
-            
-            console.log(`📦 Chunk de troca ${chunks.length}:`, {
-              posicaoInicial: currentPosition,
-              posicaoFinal: currentPosition + actualChunkSize,
-              tamanhoChunk: Math.round(actualChunkSize / 1024) + 'KB',
-              tamanhoChunkMB: Math.round(actualChunkSize / (1024 * 1024)) + 'MB',
-              isLastChunk: isLastChunk,
-              bytesRestantes: totalSize - (currentPosition + actualChunkSize)
-            });
-            
-            currentPosition += actualChunkSize;
-          }
-          
-          console.log(`🧮 Nova lógica de chunks de troca:`, {
-            arquivoOriginal: `${Math.round(base64String.length / (1024 * 1024))}MB`,
-            limiteServidor: `${Math.round(serverBodyLimit / (1024 * 1024))}MB`,
-            chunksCriados: chunks.length,
-            tamanhosChunks: chunks.map((chunk, i) => ({
-              chunk: i + 1,
-              tamanho: `${Math.round(chunk.length / (1024 * 1024))}MB ${Math.round((chunk.length % (1024 * 1024)) / 1024)}KB`
-            }))
-          });
-          
-          // Verificar se todos os chunks têm tamanho válido
-          const invalidChunks = chunks.filter(chunk => chunk.length === 0);
-          if (invalidChunks.length > 0) {
-            console.error('❌ Chunks inválidos de troca encontrados:', invalidChunks.length);
-            throw new Error('Erro na divisão de chunks de troca: chunks vazios detectados');
-          }
-          
-          console.log(`📦 Chunks de troca criados: ${chunks.length} chunks válidos`);
-          
-          // Comprimir chunks para reduzir tamanho de transferência
-          console.log('🗜️ Comprimindo chunks de troca para otimizar transferência...');
-          const compressedChunks: string[] = [];
-          
-          for (let i = 0; i < chunks.length; i++) {
-            const originalSize = chunks[i].length;
-            const compressedChunk = await compressChunk(chunks[i]);
-            const compressedSize = compressedChunk.length;
-            const compressionRatio = ((originalSize - compressedSize) / originalSize * 100).toFixed(1);
-            
-            compressedChunks.push(compressedChunk);
-            
-            console.log(`🗜️ Chunk de troca ${i + 1}/${chunks.length} comprimido:`, {
-              tamanhoOriginal: Math.round(originalSize / 1024) + 'KB',
-              tamanhoComprimido: Math.round(compressedSize / 1024) + 'KB',
-              reducao: compressionRatio + '%',
-              economia: Math.round((originalSize - compressedSize) / 1024) + 'KB'
-            });
-          }
-          
-          console.log(`✅ Compressão de troca concluída - usando chunks comprimidos para upload`);
-          
-          // Diagnóstico detalhado dos chunks de troca
-          const totalChunkSize = chunks.reduce((sum, chunk) => sum + chunk.length, 0);
-          const isSizeMatch = totalChunkSize === base64String.length;
-          
-          console.log(`📊 Diagnóstico dos chunks de troca:`, {
-            totalChunks: chunks.length,
-            chunkSizes: chunks.map((chunk, i) => ({
-              chunk: i + 1,
-              sizeKB: Math.round(chunk.length / 1024),
-              sizeMB: Math.round(chunk.length / (1024 * 1024)) + 'MB',
-              isLastChunk: i === chunks.length - 1
-            })),
-            totalSizeOriginal: Math.round(base64String.length / (1024 * 1024)) + 'MB ' + Math.round((base64String.length % (1024 * 1024)) / 1024) + 'KB',
-            totalSizeChunks: Math.round(totalChunkSize / (1024 * 1024)) + 'MB ' + Math.round((totalChunkSize % (1024 * 1024)) / 1024) + 'KB',
-            sizeMatch: isSizeMatch ? '✅ CORRETO' : '❌ ERRO - Tamanhos não batem!',
-            lastChunkIndex: chunks.length - 1,
-            lastChunkSize: Math.round(chunks[chunks.length - 1]?.length / 1024) + 'KB'
-          });
-          
-          // Verificação crítica: se os tamanhos não batem, erro fatal
-          if (!isSizeMatch) {
-            console.error('❌ ERRO CRÍTICO: Tamanho total dos chunks de troca não bate com arquivo original!');
-            console.error(`Arquivo original: ${base64String.length} bytes`);
-            console.error(`Soma dos chunks: ${totalChunkSize} bytes`);
-            console.error(`Diferença: ${Math.abs(base64String.length - totalChunkSize)} bytes`);
-            throw new Error('Erro na divisão de chunks de troca: tamanhos não coincidem');
-          }
-          
-          console.log(`📦 Troca: Dividindo em ${chunks.length} chunks (até 4MB cada)`);
-          
-          // Criar registro vazio
-          const createResponse = await fetch('/api/admin/criar-arte-troca-campanha', {
-            method: 'POST',
-            headers: { 
-              'Content-Type': 'application/json',
-              'Accept': 'application/json'
-            },
-            body: JSON.stringify({
-              id_campanha: anuncio.id,
-              caminho_imagem: '' // Vazio inicialmente
-            })
-          });
+      console.log('✅ Registro de troca criado com sucesso');
 
-          if (!createResponse.ok) {
-            const errorData = await createResponse.json();
-            throw new Error(errorData.error || 'Erro ao criar registro inicial de troca');
-          }
+      // Remove o status do localStorage para que a arte volte para "Em Análise"
+      localStorage.removeItem(`order_${anuncio.order_id}`);
+      localStorage.removeItem(`replacement_order_${anuncio.order_id}`);
+      
+      console.log(`Removendo status do localStorage para order ${anuncio.order_id}`);
 
-          const createData = await createResponse.json();
-          const arteTrocaCampanhaId = createData.arte_troca_campanha_id;
-          
-          console.log('✅ Registro de troca criado, ID:', arteTrocaCampanhaId);
-          
-          // Limpar chunks anteriores antes de começar o upload
-          try {
-            await fetch('/api/admin/limpar-chunks-troca', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ arte_troca_campanha_id: arteTrocaCampanhaId })
-            });
-            console.log('🧹 Chunks de troca anteriores limpos');
-          } catch (cleanupError) {
-            console.warn('⚠️ Não foi possível limpar chunks de troca anteriores:', cleanupError);
-          }
-          
-          // ESTRATÉGIA PARALELA: Upload paralelo com limite de concorrência para melhor performance
-          console.log(`🚀 Preparando upload paralelo de troca de ${compressedChunks.length} chunks comprimidos...`);
-          
-          // Função para enviar um chunk com retry e timeout
-          const uploadChunkWithRetry = async (chunkIndex: number, maxRetries: number = 3): Promise<void> => {
-            for (let attempt = 1; attempt <= maxRetries; attempt++) {
-              try {
-                // Timeout otimizado para upload rápido
-                const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 5000); // 5s por chunk para upload rápido
-                
-                console.log(`📤 Enviando chunk de troca comprimido ${chunkIndex + 1}/${compressedChunks.length}:`, {
-                  arte_troca_campanha_id: arteTrocaCampanhaId,
-                  chunk_index: chunkIndex,
-                  chunk_size: Math.round(compressedChunks[chunkIndex].length / (1024 * 1024)) + 'MB',
-                  chunk_size_kb: Math.round(compressedChunks[chunkIndex].length / 1024) + 'KB',
-                  total_chunks: compressedChunks.length,
-                  tentativa: attempt
-                });
-
-                const chunkResponse = await fetch('/api/admin/upload-chunk-troca', {
-                  method: 'POST',
-                  headers: { 
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json'
-                  },
-                  body: JSON.stringify({
-                    arte_troca_campanha_id: arteTrocaCampanhaId,
-                    chunk_index: chunkIndex,
-                    chunk_data: compressedChunks[chunkIndex],
-                    total_chunks: compressedChunks.length
-                  }),
-                  signal: controller.signal
-                });
-
-                clearTimeout(timeoutId);
-
-                if (!chunkResponse.ok) {
-                  const errorText = await chunkResponse.text();
-                  let errorMessage = `Erro no chunk de troca ${chunkIndex}`;
-                  
-                  try {
-                    const errorData = JSON.parse(errorText);
-                    errorMessage = errorData.error || errorMessage;
-                  } catch {
-                    // Se não conseguir fazer parse do JSON, usar o texto da resposta
-                    errorMessage = errorText || errorMessage;
-                  }
-                  
-                  console.error(`❌ Erro HTTP ${chunkResponse.status} para chunk de troca ${chunkIndex}:`, {
-                    status: chunkResponse.status,
-                    statusText: chunkResponse.statusText,
-                    errorText: errorText,
-                    errorMessage: errorMessage
-                  });
-                  
-                  throw new Error(`${errorMessage} (Status: ${chunkResponse.status})`);
-                }
-
-                // Tentar parsear a resposta para verificar se foi bem-sucedida
-                try {
-                  const responseData = await chunkResponse.json();
-                  if (!responseData.success) {
-                    throw new Error(responseData.error || 'Resposta não indica sucesso');
-                  }
-                  
-                  console.log(`✅ Chunk de troca comprimido ${chunkIndex + 1}/${compressedChunks.length} enviado com sucesso (tentativa ${attempt}):`, {
-                    success: responseData.success,
-                    message: responseData.message,
-                    isLastChunk: chunkIndex === compressedChunks.length - 1
-                  });
-                } catch (parseError) {
-                  console.warn(`⚠️ Não foi possível parsear resposta do chunk de troca ${chunkIndex}, assumindo sucesso`);
-                }
-                
-                return; // Sucesso, sair do loop de retry
-              } catch (error: any) {
-                const errorMsg = error.message || error.toString();
-                console.warn(`⚠️ Tentativa ${attempt}/${maxRetries} falhou para chunk de troca comprimido ${chunkIndex}:`, {
-                  error: errorMsg,
-                  chunkSize: Math.round(compressedChunks[chunkIndex].length / 1024) + 'KB',
-                  isLastChunk: chunkIndex === compressedChunks.length - 1
-                });
-                
-                if (attempt === maxRetries) {
-                  throw new Error(`Chunk de troca comprimido ${chunkIndex + 1}/${compressedChunks.length} falhou após ${maxRetries} tentativas: ${errorMsg}`);
-                }
-                
-                // Aguardar menos tempo entre tentativas para upload mais rápido
-                const delay = 500 * attempt; // 500ms, 1s, 1.5s (reduzido ainda mais)
-                console.log(`⏳ Aguardando ${delay}ms antes da próxima tentativa...`);
-                await new Promise(resolve => setTimeout(resolve, delay));
-              }
-            }
-          };
-
-          // Upload paralelo com limite de concorrência para melhor performance
-          console.log(`📤 Iniciando upload paralelo de troca de ${compressedChunks.length} chunks comprimidos...`);
-          
-          try {
-            // Função para processar chunks em lotes paralelos
-            const processChunksInBatches = async (chunks: string[], batchSize: number = 3) => {
-              const results: Promise<void>[] = [];
-              
-              for (let i = 0; i < chunks.length; i += batchSize) {
-                const batch = chunks.slice(i, i + batchSize);
-                const batchPromises = batch.map((_, index) => {
-                  const chunkIndex = i + index;
-                  const isLastChunk = chunkIndex === chunks.length - 1;
-                  
-                  console.log(`📤 Enviando chunk de troca comprimido ${chunkIndex + 1}/${chunks.length}${isLastChunk ? ' (ÚLTIMO CHUNK)' : ''}...`, {
-                    chunkIndex: chunkIndex,
-                    chunkSize: Math.round(chunks[chunkIndex].length / 1024) + 'KB',
-                    isLastChunk: isLastChunk,
-                    batchNumber: Math.floor(i / batchSize) + 1
-                  });
-                  
-                  return uploadChunkWithRetry(chunkIndex);
-                });
-                
-                // Aguardar o lote atual antes de prosseguir
-                await Promise.all(batchPromises);
-                
-                // Delay mínimo entre lotes para upload mais rápido
-                if (i + batchSize < chunks.length) {
-                  await new Promise(resolve => setTimeout(resolve, 100)); // 100ms entre lotes (reduzido de 200ms)
-                }
-              }
-            };
-            
-            // Processar chunks comprimidos em lotes de 3 (pode ser ajustado conforme necessário)
-            await processChunksInBatches(compressedChunks, 3);
-            
-            console.log(`✅ TODOS os ${compressedChunks.length} chunks de troca comprimidos enviados em paralelo - upload concluído`);
-          } catch (chunkError: any) {
-            console.error('❌ Upload de troca por chunks falhou:', chunkError.message);
-            throw chunkError;
-          }
-        }
-
-        // Remove o status do localStorage para que a arte volte para "Em Análise"
-        localStorage.removeItem(`order_${anuncio.order_id}`);
-        localStorage.removeItem(`replacement_order_${anuncio.order_id}`);
-        
-        console.log(`Removendo status do localStorage para order ${anuncio.order_id}`);
-
-        console.log("Arquivo de troca enviado e registro criado com sucesso!");
-        setIsModalOpen(false);
-        toast.success('Arte de troca enviada com sucesso!', {
-          position: "top-right",
-          autoClose: 5000,
-          hideProgressBar: false,
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          progress: undefined,
-        });
-        
-        // Atualizar a página para mostrar o novo status
-        setRefresh(!refresh);
-      };
-
-      reader.onerror = (error) => {
-        console.error("Erro ao ler o arquivo:", error);
-        setError("Erro ao ler o arquivo.");
-      };
+      console.log("Arquivo de troca enviado e registro criado com sucesso!");
+      setIsModalOpen(false);
+      toast.success('Arte de troca enviada com sucesso!', {
+        position: "top-right",
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+      });
+      
+      // Atualizar a página para mostrar o novo status
+      setRefresh(!refresh);
 
     } catch (err: any) {
       console.error("Erro ao trocar a arte:", err);
       setError(err.message);
     }
   };
+
+
 
 
   return (

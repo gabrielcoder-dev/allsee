@@ -77,12 +77,49 @@ export default async function handler(
 
     console.log('📥 Arte de troca encontrada:', {
       id: arte_troca_campanha_id,
-      fileSizeMB: arteTroca.caminho_imagem ? Math.round(arteTroca.caminho_imagem.length / (1024 * 1024)) : 0,
-      fileType: arteTroca.caminho_imagem ? (arteTroca.caminho_imagem.startsWith('data:image/') ? 'image' : 'video') : 'empty'
+      caminho_imagem_preview: arteTroca.caminho_imagem ? arteTroca.caminho_imagem.substring(0, 100) + '...' : 'empty',
+      isURL: arteTroca.caminho_imagem?.startsWith('http'),
+      isBase64: arteTroca.caminho_imagem?.startsWith('data:')
     });
 
-    // Verificar se o arquivo é muito grande para update direto
-    const maxDirectUpdateSize = 2 * 1024 * 1024; // 2MB (reduzido para evitar timeouts)
+    // NOVO SISTEMA: Se é URL do storage, apenas copia a URL (super rápido!)
+    const isStorageURL = arteTroca.caminho_imagem?.startsWith('http');
+    
+    if (isStorageURL) {
+      console.log('🔗 Arte de troca está no storage (URL), fazendo cópia rápida...');
+      
+      // Apenas copiar a URL - super simples e rápido!
+      const { data: updatedArteCampanha, error: updateError } = await supabase
+        .from('arte_campanha')
+        .update({ caminho_imagem: arteTroca.caminho_imagem })
+        .eq('id', arte_campanha_id)
+        .select('id, id_order, id_user')
+        .single();
+
+      if (updateError) {
+        console.error('❌ Erro ao atualizar arte da campanha:', updateError);
+        return res.status(500).json({ 
+          success: false, 
+          error: 'Erro ao atualizar arte da campanha' 
+        });
+      }
+
+      console.log('✅ Arte da campanha substituída com sucesso (URL copiada):', {
+        id: updatedArteCampanha.id,
+        nova_url: arteTroca.caminho_imagem
+      });
+
+      return res.status(200).json({ 
+        success: true, 
+        message: 'Troca de arte aceita com sucesso',
+        arte_campanha_id: arte_campanha_id,
+        arte_troca_campanha_id: arte_troca_campanha_id
+      });
+    }
+    
+    // SISTEMA LEGADO: Para base64 antigos (compatibilidade)
+    console.log('⚠️ Arte de troca em base64 (sistema legado), processando...');
+    const maxDirectUpdateSize = 2 * 1024 * 1024;
     const fileSize = arteTroca.caminho_imagem ? arteTroca.caminho_imagem.length : 0;
     
     if (fileSize > maxDirectUpdateSize) {

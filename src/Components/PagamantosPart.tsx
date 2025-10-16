@@ -18,6 +18,8 @@ import { PiBarcodeBold } from "react-icons/pi";
 import { useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { useUser } from "@supabase/auth-helpers-react";
+import { useDirectStorageUpload } from '@/hooks/useDirectStorageUpload';
+import { toast } from 'sonner';
 // Upload otimizado com compressão (sem limitações do Next.js)
 
 // Função para comprimir imagens e reduzir tempo de upload (OTIMIZADA)
@@ -63,6 +65,15 @@ export const PagamantosPart = () => {
   const { produtos, selectedDurationGlobal, formData, updateFormData } = useCart();
   // Duração fixa igual ao padrão do carrinho
   const duration = "2";
+  
+  // Hook para upload direto para storage
+  const { uploadFile, progress: uploadProgress, isUploading, error: uploadError } = useDirectStorageUpload({
+    chunkSizeMB: 4, // 4MB por chunk (limite Vercel 5MB, Storage 50MB)
+    parallelUploads: 3,
+    onProgress: (progress) => {
+      console.log(`📊 Progresso do upload: ${progress.percentage}% (${progress.chunksUploaded}/${progress.totalChunks} chunks)`);
+    }
+  });
   
   // Estado para controlar se o componente está hidratado
   const [isHydrated, setIsHydrated] = useState(false);
@@ -367,8 +378,8 @@ export const PagamantosPart = () => {
 
       const orderId = orderData.orderId;
 
-      // ** (4) Image/Video Upload: Upload híbrido - rápido + background **
-      console.log('📤 Preparando upload híbrido:', {
+      // ** (4) Image/Video Upload: Upload DIRETO para Supabase Storage **
+      console.log('📤 Preparando upload direto para storage:', {
         id_order: orderId,
         id_user: user.id,
         originalSizeMB: artData ? Math.round(artData.length / (1024 * 1024)) : 0,
@@ -378,199 +389,41 @@ export const PagamantosPart = () => {
       });
 
       let arteCampanhaId: string | null = null;
+      let publicUrl: string | null = null;
       
       try {
-        // Verificar se o arquivo é muito grande para upload direto (LÓGICA SIMPLES)
-        const serverBodyLimit = 4 * 1024 * 1024; // 4MB limite do servidor
-        
-        if (optimizedArtData.length <= serverBodyLimit) {
-          // Upload direto para arquivos pequenos (instantâneo)
-          console.log('📤 Upload direto (arquivo pequeno)', {
-            tamanhoArquivo: `${Math.round(optimizedArtData.length / (1024 * 1024))}MB`,
-            limiteServidor: `${Math.round(serverBodyLimit / (1024 * 1024))}MB`
-          });
-          const response = await fetch('/api/admin/criar-arte-campanha', {
-            method: 'POST',
-            headers: { 
-              'Content-Type': 'application/json',
-              'Accept': 'application/json'
-            },
-            body: JSON.stringify({
-              id_order: orderId,
-              caminho_imagem: optimizedArtData,
-              id_user: user.id
-            })
-          });
+        // Converter base64 para File object
+        const base64Response = await fetch(optimizedArtData);
+        const blob = await base64Response.blob();
+        const fileExt = optimizedArtData.startsWith('data:image/') 
+          ? optimizedArtData.split(';')[0].split('/')[1]
+          : 'mp4';
+        const file = new File([blob], `arte-${orderId}.${fileExt}`, { 
+          type: blob.type 
+        });
 
-          if (response.ok) {
-            const data = await response.json();
-            arteCampanhaId = data.arte_campanha_id;
-          console.log('✅ Arte da campanha criada com sucesso, ID:', arteCampanhaId);
-        } else {
-            const errorData = await response.json();
-            console.error('❌ Erro ao criar registro da arte:', errorData.error);
-            setErro(`Erro ao salvar dados da arte: ${errorData.error}`);
-          setCarregando(false);
-          return;
-          }
-        } else {
-          // Upload híbrido para arquivos grandes - LÓGICA SIMPLES
-          console.log('📤 Upload híbrido (arquivo grande) - iniciando...');
-          
-          // Função para comprimir chunks usando compressão nativa do browser
-          const compressChunk = async (chunk: string): Promise<string> => {
-            try {
-              // Converter base64 para Uint8Array
-              const binaryString = atob(chunk);
-              const bytes = new Uint8Array(binaryString.length);
-              for (let i = 0; i < binaryString.length; i++) {
-                bytes[i] = binaryString.charCodeAt(i);
-              }
-              
-              // Comprimir usando CompressionStream
-              const stream = new CompressionStream('gzip');
-              const writer = stream.writable.getWriter();
-              const reader = stream.readable.getReader();
-              
-              writer.write(bytes);
-              writer.close();
-              
-              const compressedChunks: Uint8Array[] = [];
-              let done = false;
-              
-              while (!done) {
-                const { value, done: readerDone } = await reader.read();
-                done = readerDone;
-                if (value) {
-                  compressedChunks.push(value);
-                }
-              }
-              
-              // Combinar chunks comprimidos
-              const totalLength = compressedChunks.reduce((sum, chunk) => sum + chunk.length, 0);
-              const compressedBytes = new Uint8Array(totalLength);
-              let offset = 0;
-              for (const chunk of compressedChunks) {
-                compressedBytes.set(chunk, offset);
-                offset += chunk.length;
-              }
-              
-              // Converter de volta para base64
-              let compressedBase64 = '';
-              for (let i = 0; i < compressedBytes.length; i++) {
-                compressedBase64 += String.fromCharCode(compressedBytes[i]);
-              }
-              
-              return btoa(compressedBase64);
-            } catch (error) {
-              console.warn('⚠️ Falha na compressão, usando chunk original:', error);
-              return chunk; // Fallback para chunk original
-            }
-          };
-          
-          // Limite do servidor aumentado para melhor performance
-          const serverBodyLimit = 8 * 1024 * 1024; // 8MB limite do servidor (aumentado de 4MB)
-          const chunks: string[] = [];
-          let currentPosition = 0;
-          const totalSize = optimizedArtData.length;
-          
-          console.log(`📏 Tamanho total do arquivo: ${Math.round(totalSize / (1024 * 1024))}MB ${Math.round((totalSize % (1024 * 1024)) / 1024)}KB`);
-          
-          while (currentPosition < totalSize) {
-            const remainingBytes = totalSize - currentPosition;
-            const chunkSize = Math.min(serverBodyLimit, remainingBytes);
-            
-            // Verificar se este é o último chunk
-            const isLastChunk = (currentPosition + chunkSize) >= totalSize;
-            const actualChunkSize = isLastChunk ? remainingBytes : chunkSize;
-            
-            const chunk = optimizedArtData.slice(currentPosition, currentPosition + actualChunkSize);
-            chunks.push(chunk);
-            
-            console.log(`📦 Chunk ${chunks.length}:`, {
-              posicaoInicial: currentPosition,
-              posicaoFinal: currentPosition + actualChunkSize,
-              tamanhoChunk: Math.round(actualChunkSize / 1024) + 'KB',
-              tamanhoChunkMB: Math.round(actualChunkSize / (1024 * 1024)) + 'MB',
-              isLastChunk: isLastChunk,
-              bytesRestantes: totalSize - (currentPosition + actualChunkSize)
-            });
-            
-            currentPosition += actualChunkSize;
-          }
-          
-          console.log(`🧮 Nova lógica de chunks:`, {
-            arquivoOriginal: `${Math.round(optimizedArtData.length / (1024 * 1024))}MB`,
-            limiteServidor: `${Math.round(serverBodyLimit / (1024 * 1024))}MB`,
-            chunksCriados: chunks.length,
-            tamanhosChunks: chunks.map((chunk, i) => ({
-              chunk: i + 1,
-              tamanho: `${Math.round(chunk.length / (1024 * 1024))}MB ${Math.round((chunk.length % (1024 * 1024)) / 1024)}KB`
-            }))
-          });
-          
-          // Verificar se todos os chunks têm tamanho válido
-          const invalidChunks = chunks.filter(chunk => chunk.length === 0);
-          if (invalidChunks.length > 0) {
-            console.error('❌ Chunks inválidos encontrados:', invalidChunks.length);
-            throw new Error('Erro na divisão de chunks: chunks vazios detectados');
-          }
-          
-          console.log(`📦 Chunks criados: ${chunks.length} chunks válidos`);
-          
-          // Diagnóstico detalhado dos chunks
-          const totalChunkSize = chunks.reduce((sum, chunk) => sum + chunk.length, 0);
-          const isSizeMatch = totalChunkSize === optimizedArtData.length;
-          
-          console.log(`📊 Diagnóstico dos chunks:`, {
-            totalChunks: chunks.length,
-            chunkSizes: chunks.map((chunk, i) => ({
-              chunk: i + 1,
-              sizeKB: Math.round(chunk.length / 1024),
-              sizeMB: Math.round(chunk.length / (1024 * 1024)) + 'MB',
-              isLastChunk: i === chunks.length - 1
-            })),
-            totalSizeOriginal: Math.round(optimizedArtData.length / (1024 * 1024)) + 'MB ' + Math.round((optimizedArtData.length % (1024 * 1024)) / 1024) + 'KB',
-            totalSizeChunks: Math.round(totalChunkSize / (1024 * 1024)) + 'MB ' + Math.round((totalChunkSize % (1024 * 1024)) / 1024) + 'KB',
-            sizeMatch: isSizeMatch ? '✅ CORRETO' : '❌ ERRO - Tamanhos não batem!',
-            lastChunkIndex: chunks.length - 1,
-            lastChunkSize: Math.round(chunks[chunks.length - 1]?.length / 1024) + 'KB'
-          });
-          
-          // Verificação crítica: se os tamanhos não batem, erro fatal
-          if (!isSizeMatch) {
-            console.error('❌ ERRO CRÍTICO: Tamanho total dos chunks não bate com arquivo original!');
-            console.error(`Arquivo original: ${optimizedArtData.length} bytes`);
-            console.error(`Soma dos chunks: ${totalChunkSize} bytes`);
-            console.error(`Diferença: ${Math.abs(optimizedArtData.length - totalChunkSize)} bytes`);
-            throw new Error('Erro na divisão de chunks: tamanhos não coincidem');
-          }
-          
-          console.log(`📦 Dividindo em ${chunks.length} chunks (até 8MB cada)`);
-          
-          // Comprimir chunks para reduzir tamanho de transferência
-          console.log('🗜️ Comprimindo chunks para otimizar transferência...');
-          const compressedChunks: string[] = [];
-          
-          for (let i = 0; i < chunks.length; i++) {
-            const originalSize = chunks[i].length;
-            const compressedChunk = await compressChunk(chunks[i]);
-            const compressedSize = compressedChunk.length;
-            const compressionRatio = ((originalSize - compressedSize) / originalSize * 100).toFixed(1);
-            
-            compressedChunks.push(compressedChunk);
-            
-            console.log(`🗜️ Chunk ${i + 1}/${chunks.length} comprimido:`, {
-              tamanhoOriginal: Math.round(originalSize / 1024) + 'KB',
-              tamanhoComprimido: Math.round(compressedSize / 1024) + 'KB',
-              reducao: compressionRatio + '%',
-              economia: Math.round((originalSize - compressedSize) / 1024) + 'KB'
-            });
-          }
-          
-          console.log(`✅ Compressão concluída - usando chunks comprimidos para upload`);
-          
-          // Primeiro, criar o registro vazio
+        console.log('📦 Arquivo preparado:', {
+          name: file.name,
+          size: Math.round(file.size / (1024 * 1024)) + 'MB',
+          type: file.type
+        });
+
+        // Upload direto para Storage
+        console.log('🚀 Iniciando upload direto para storage...');
+        const uploadResult = await uploadFile(file, 'arte-campanhas');
+
+        if (!uploadResult) {
+          throw new Error(uploadError || 'Erro ao fazer upload do arquivo');
+        }
+
+        publicUrl = uploadResult.public_url;
+        console.log('✅ Arquivo enviado para storage:', {
+          public_url: publicUrl,
+          file_path: uploadResult.file_path,
+          file_size_mb: uploadResult.file_size_mb
+        });
+
+        // Criar registro no banco com URL pública
           const createResponse = await fetch('/api/admin/criar-arte-campanha', {
             method: 'POST',
             headers: { 
@@ -579,188 +432,29 @@ export const PagamantosPart = () => {
             },
             body: JSON.stringify({
               id_order: orderId,
-              caminho_imagem: '', // Vazio inicialmente
+            caminho_imagem: publicUrl, // URL pública do storage
               id_user: user.id
             })
           });
 
           if (!createResponse.ok) {
             const errorData = await createResponse.json();
-            throw new Error(errorData.error || 'Erro ao criar registro inicial');
+          throw new Error(errorData.error || 'Erro ao criar registro da arte');
           }
 
           const createData = await createResponse.json();
           arteCampanhaId = createData.arte_campanha_id;
           
-          console.log('✅ Registro criado, ID:', arteCampanhaId);
-          
-          // Limpar chunks anteriores antes de começar o upload
-          try {
-            await fetch('/api/admin/limpar-chunks', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ arte_campanha_id: arteCampanhaId })
-            });
-            console.log('🧹 Chunks anteriores limpos');
-          } catch (cleanupError) {
-            console.warn('⚠️ Não foi possível limpar chunks anteriores:', cleanupError);
-          }
-          
-          // ESTRATÉGIA PARALELA: Upload paralelo com limite de concorrência para melhor performance
-          console.log(`🚀 Preparando upload paralelo de ${compressedChunks.length} chunks comprimidos...`);
-          
-          // Função para enviar um chunk com retry e timeout
-          const uploadChunkWithRetry = async (chunkIndex: number, maxRetries: number = 3): Promise<void> => {
-            for (let attempt = 1; attempt <= maxRetries; attempt++) {
-              try {
-                // Timeout otimizado para upload rápido
-                const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 5000); // 5s por chunk para upload rápido
-                
-                console.log(`📤 Enviando chunk comprimido ${chunkIndex + 1}/${compressedChunks.length}:`, {
-                  arte_campanha_id: arteCampanhaId,
-                  chunk_index: chunkIndex,
-                  chunk_size: Math.round(compressedChunks[chunkIndex].length / (1024 * 1024)) + 'MB',
-                  chunk_size_kb: Math.round(compressedChunks[chunkIndex].length / 1024) + 'KB',
-                  total_chunks: compressedChunks.length,
-                  tentativa: attempt
-                });
-
-                const chunkResponse = await fetch('/api/admin/upload-chunk', {
-                  method: 'POST',
-                  headers: { 
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json'
-                  },
-                  body: JSON.stringify({
-                    arte_campanha_id: arteCampanhaId,
-                    chunk_index: chunkIndex,
-                    chunk_data: compressedChunks[chunkIndex],
-                    total_chunks: compressedChunks.length
-                  }),
-                  signal: controller.signal
-                });
-
-                clearTimeout(timeoutId);
-
-                if (!chunkResponse.ok) {
-                  const errorText = await chunkResponse.text();
-                  let errorMessage = `Erro no chunk ${chunkIndex}`;
-                  
-                  try {
-                    const errorData = JSON.parse(errorText);
-                    errorMessage = errorData.error || errorMessage;
-                  } catch {
-                    // Se não conseguir fazer parse do JSON, usar o texto da resposta
-                    errorMessage = errorText || errorMessage;
-                  }
-                  
-                  console.error(`❌ Erro HTTP ${chunkResponse.status} para chunk ${chunkIndex}:`, {
-                    status: chunkResponse.status,
-                    statusText: chunkResponse.statusText,
-                    errorText: errorText,
-                    errorMessage: errorMessage
-                  });
-                  
-                  throw new Error(`${errorMessage} (Status: ${chunkResponse.status})`);
-                }
-
-                // Tentar parsear a resposta para verificar se foi bem-sucedida
-                try {
-                  const responseData = await chunkResponse.json();
-                  if (!responseData.success) {
-                    throw new Error(responseData.error || 'Resposta não indica sucesso');
-                  }
-                  
-                  console.log(`✅ Chunk comprimido ${chunkIndex + 1}/${compressedChunks.length} enviado com sucesso (tentativa ${attempt}):`, {
-                    success: responseData.success,
-                    message: responseData.message,
-                    isLastChunk: chunkIndex === compressedChunks.length - 1
-                  });
-                } catch (parseError) {
-                  console.warn(`⚠️ Não foi possível parsear resposta do chunk ${chunkIndex}, assumindo sucesso`);
-                }
-                
-                return; // Sucesso, sair do loop de retry
-              } catch (error: any) {
-                const errorMsg = error.message || error.toString();
-                console.warn(`⚠️ Tentativa ${attempt}/${maxRetries} falhou para chunk comprimido ${chunkIndex}:`, {
-                  error: errorMsg,
-                  chunkSize: Math.round(compressedChunks[chunkIndex].length / 1024) + 'KB',
-                  isLastChunk: chunkIndex === compressedChunks.length - 1
-                });
-                
-                if (attempt === maxRetries) {
-                  throw new Error(`Chunk comprimido ${chunkIndex + 1}/${compressedChunks.length} falhou após ${maxRetries} tentativas: ${errorMsg}`);
-                }
-                
-                // Aguardar menos tempo entre tentativas para upload mais rápido
-                const delay = 500 * attempt; // 500ms, 1s, 1.5s (reduzido ainda mais)
-                console.log(`⏳ Aguardando ${delay}ms antes da próxima tentativa...`);
-                await new Promise(resolve => setTimeout(resolve, delay));
-              }
-            }
-          };
-
-          // Upload paralelo com limite de concorrência para melhor performance
-          console.log(`📤 Iniciando upload paralelo de ${compressedChunks.length} chunks comprimidos...`);
-          
-          try {
-            // Função para processar chunks em lotes paralelos
-            const processChunksInBatches = async (chunks: string[], batchSize: number = 3) => {
-              const results: Promise<void>[] = [];
-              
-              for (let i = 0; i < chunks.length; i += batchSize) {
-                const batch = chunks.slice(i, i + batchSize);
-                const batchPromises = batch.map((_, index) => {
-                  const chunkIndex = i + index;
-                  const isLastChunk = chunkIndex === chunks.length - 1;
-                  
-                  console.log(`📤 Enviando chunk comprimido ${chunkIndex + 1}/${chunks.length}${isLastChunk ? ' (ÚLTIMO CHUNK)' : ''}...`, {
-                    chunkIndex: chunkIndex,
-                    chunkSize: Math.round(chunks[chunkIndex].length / 1024) + 'KB',
-                    isLastChunk: isLastChunk,
-                    batchNumber: Math.floor(i / batchSize) + 1
-                  });
-                  
-                  return uploadChunkWithRetry(chunkIndex);
-                });
-                
-                // Aguardar o lote atual antes de prosseguir
-                await Promise.all(batchPromises);
-                
-                // Delay mínimo entre lotes para upload mais rápido
-                if (i + batchSize < chunks.length) {
-                  await new Promise(resolve => setTimeout(resolve, 100)); // 100ms entre lotes (reduzido de 200ms)
-                }
-              }
-            };
-            
-            // Processar chunks comprimidos em lotes de 3 (pode ser ajustado conforme necessário)
-            await processChunksInBatches(compressedChunks, 3);
-            
-            console.log(`✅ TODOS os ${compressedChunks.length} chunks comprimidos enviados em paralelo - pronto para checkout`);
-          } catch (chunkError: any) {
-            console.error('❌ Upload por chunks falhou:', chunkError.message);
-            throw chunkError; // Não tentar fallback para arquivos grandes
-          }
-        }
+        console.log('✅ Arte da campanha criada:', {
+          id: arteCampanhaId,
+          url: publicUrl
+        });
         
       } catch (error: any) {
         console.error('❌ Erro no upload:', error);
         const errorMessage = error.message || error.toString();
         
-        // Detectar tipos específicos de erro para mensagens mais claras
-        if (errorMessage.includes('413') || errorMessage.includes('Content Too Large') || errorMessage.includes('Body exceeded') || errorMessage.includes('limit')) {
-          setErro('Arquivo muito grande para upload. O servidor tem limite de 4MB por requisição. Tente usar uma imagem menor ou comprimir mais o arquivo.');
-        } else if (errorMessage.includes('timeout') || errorMessage.includes('aborted')) {
-          setErro('Upload demorou muito e foi cancelado. Verifique sua conexão e tente novamente.');
-        } else if (errorMessage.includes('chunk')) {
-          setErro(`Erro no upload do arquivo: ${errorMessage}`);
-        } else {
           setErro(`Erro ao fazer upload da arte: ${errorMessage}`);
-        }
-        
         setCarregando(false);
         return;
       }
