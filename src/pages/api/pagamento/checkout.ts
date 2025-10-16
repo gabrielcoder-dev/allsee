@@ -41,22 +41,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       });
     }
 
-    // Converter orderId para número
-    const orderIdNumber = Number(orderId);
-    
-    if (isNaN(orderIdNumber)) {
-      console.error('❌ OrderId não é um número válido:', orderId);
-      return res.status(400).json({ 
-        success: false, 
-        error: 'OrderId deve ser um número válido',
-        receivedOrderId: orderId 
-      });
-    }
-    
+    // NOVO: Aceitar UUIDs como orderId (não converter para número)
     console.log('✅ OrderId validado:', {
       original: orderId,
-      converted: orderIdNumber,
-      type: typeof orderIdNumber
+      type: typeof orderId,
+      isUUID: typeof orderId === 'string' && orderId.includes('-')
     });
 
     const preference = new Preference(mercadoPagoClient);
@@ -76,12 +65,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         },
       ],
       back_urls: {
-        success: `${req.headers.origin}/meus-anuncios?orderId=${orderIdNumber}&status=success`,
-        failure: `${req.headers.origin}/meus-anuncios?orderId=${orderIdNumber}&status=failed`,
-        pending: `${req.headers.origin}/meus-anuncios?orderId=${orderIdNumber}&status=pending`,
+        success: `${req.headers.origin}/meus-anuncios?orderId=${orderId}&status=success`,
+        failure: `${req.headers.origin}/meus-anuncios?orderId=${orderId}&status=failed`,
+        pending: `${req.headers.origin}/meus-anuncios?orderId=${orderId}&status=pending`,
       },
       auto_return: 'approved',
-      external_reference: orderIdNumber, // CRÍTICO: Este é o ID que vincula ao pedido
+      external_reference: orderId, // Usar UUID diretamente
       payer: payerData,
       notification_url: webhookUrl,
       payment_methods: {
@@ -96,7 +85,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       statement_descriptor: 'ALLSEE'
     };
     
-    console.log('📋 external_reference que será enviado ao Mercado Pago:', orderIdNumber);
+    console.log('📋 external_reference que será enviado ao Mercado Pago:', orderId);
 
     // Adicionar dados do pagador se disponíveis
     if (payerData) {
