@@ -56,9 +56,9 @@ interface UseDirectStorageUploadOptions {
 
 export const useDirectStorageUpload = (options: UseDirectStorageUploadOptions = {}) => {
   const {
-    chunkSizeMB = 4, // 4MB por chunk (limite Vercel 5MB, Storage 50MB)
-    parallelUploads = 3,
-    chunkTimeout = 10000,
+    chunkSizeMB = 2, // 2MB por chunk (considerando expansão Base64 + metadados)
+    parallelUploads = 2, // Reduzido para evitar sobrecarga
+    chunkTimeout = 15000, // Aumentado para chunks maiores
     maxRetries = 3,
     onProgress
   } = options;
@@ -90,7 +90,8 @@ export const useDirectStorageUpload = (options: UseDirectStorageUploadOptions = 
       reader.onload = () => {
         try {
           const base64 = (reader.result as string).split(',')[1]; // Remover "data:image/...;base64,"
-          const chunkSize = chunkSizeMB * 1024 * 1024 * (4/3); // Compensar expansão base64
+          // Chunk size em bytes Base64 (considerando expansão ~1.37x + margem de segurança)
+          const chunkSize = Math.floor(chunkSizeMB * 1024 * 1024 * 1.2); // Margem de segurança
           const chunks: string[] = [];
           
           for (let i = 0; i < base64.length; i += chunkSize) {

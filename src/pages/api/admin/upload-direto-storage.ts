@@ -113,9 +113,19 @@ export default async function handler(
       const chunkBuffer = Buffer.from(chunk_data, 'base64');
       const chunkPath = `${uploadInfo.file_path}.chunk.${chunk_index}`;
 
+      // Validar tamanho do chunk (limite Vercel: 5MB)
+      const chunkSizeMB = chunkBuffer.length / (1024 * 1024);
+      if (chunkSizeMB > 5) {
+        console.error(`❌ Chunk muito grande: ${chunkSizeMB.toFixed(2)}MB (limite: 5MB)`);
+        return res.status(413).json({ 
+          success: false, 
+          error: `Chunk muito grande: ${chunkSizeMB.toFixed(2)}MB. Limite: 5MB` 
+        });
+      }
+
       console.log(`📦 Recebendo chunk ${chunk_index + 1}/${uploadInfo.total_chunks}:`, {
         upload_id,
-        chunk_size_kb: Math.round(chunkBuffer.length / 1024),
+        chunk_size_mb: chunkSizeMB.toFixed(2),
         chunk_path: chunkPath
       });
 
@@ -344,7 +354,7 @@ export default async function handler(
 export const config = {
   api: {
     bodyParser: {
-      sizeLimit: '10mb', // Chunks de até 10MB
+      sizeLimit: '5mb', // Limite da Vercel (5MB máximo)
     },
     responseLimit: '1mb',
   },
