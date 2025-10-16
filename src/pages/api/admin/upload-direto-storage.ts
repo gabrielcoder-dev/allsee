@@ -3,6 +3,12 @@ import { createClient } from '@supabase/supabase-js';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+
+console.log('🔧 Configuração Supabase:', {
+  url: supabaseUrl ? '✅ Configurado' : '❌ Não configurado',
+  serviceKey: supabaseServiceKey ? '✅ Configurado' : '❌ Não configurado'
+});
+
 const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
 /**
@@ -113,17 +119,23 @@ export default async function handler(
         chunk_path: chunkPath
       });
 
-      // Upload do chunk para o storage
+      // Upload do chunk para o storage (usando MIME type permitido)
       const { error: uploadError } = await supabase.storage
         .from(uploadInfo.bucket)
         .upload(chunkPath, chunkBuffer, {
-          contentType: 'application/octet-stream',
+          contentType: 'image/jpeg', // MIME type permitido pelo bucket
           upsert: true,
           cacheControl: '0' // Não cachear chunks temporários
         });
 
       if (uploadError) {
-        console.error('❌ Erro ao fazer upload do chunk:', uploadError);
+        console.error('❌ Erro detalhado ao fazer upload do chunk:', {
+          error: uploadError,
+          bucket: uploadInfo.bucket,
+          chunkPath: chunkPath,
+          chunkSize: chunkBuffer.length,
+          uploadId: upload_id
+        });
         return res.status(500).json({ 
           success: false, 
           error: `Erro ao fazer upload do chunk: ${uploadError.message}` 
