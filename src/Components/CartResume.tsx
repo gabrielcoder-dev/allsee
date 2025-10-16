@@ -225,9 +225,9 @@ export default function CartResume({ onCartArtSelected, onCampaignNameChange, ar
   const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      // Limite de tamanho (1GB para imagem e vídeo)
+      // Limite de tamanho (50MB - mesmo limite do Supabase Storage)
       const isVideo = file.type.startsWith("video/");
-      const maxSize = 1 * 1024 * 1024 * 1024; // 1GB para ambos
+      const maxSize = 50 * 1024 * 1024; // 50MB para ambos
 
       console.log('🔍 Debug upload de arquivo:', {
         fileName: file.name,
@@ -239,7 +239,7 @@ export default function CartResume({ onCartArtSelected, onCampaignNameChange, ar
       });
 
       if (file.size > maxSize) {
-        alert(`O arquivo é muito grande. O limite é de 1GB para imagens e vídeos. Arquivo atual: ${Math.round(file.size / (1024 * 1024))}MB`);
+        alert(`O arquivo é muito grande. O limite é de 50MB para imagens e vídeos. Arquivo atual: ${Math.round(file.size / (1024 * 1024))}MB`);
         return;
       }
 
@@ -623,7 +623,7 @@ export default function CartResume({ onCartArtSelected, onCampaignNameChange, ar
                   <>
                     <input
                       type="file"
-                      accept="image/*,video/*"
+                      accept="image/jpeg,image/png,image/gif,image/webp,video/mp4,video/mov"
                       id="upload-art"
                       className="hidden"
                       onChange={handleImageChange}
@@ -665,7 +665,7 @@ export default function CartResume({ onCartArtSelected, onCampaignNameChange, ar
                   </div>
                 )}
               </div>
-              <p className="text-xs text-gray-500 mt-3">Foto/Vídeo Máximo 40 Segundos, Proporção 1080x1920 px.</p>
+              <p className="text-xs text-gray-500 mt-3">Foto/Vídeo Máximo 50MB, Proporção 1080x1920 px.</p>
             </div>
 
             {/* Valor */}
