@@ -25,7 +25,7 @@ type Produto = {
 type FormData = {
   campaignName: string
   startDate: string | null   //ISO string format
-  selectedImage: string | null // Base64 string
+  selectedImage: string | File | null // Base64 string ou File object
   previewUrl: string | null
   isArtSelected: boolean
   // Dados de pagamento - Pessoa Física

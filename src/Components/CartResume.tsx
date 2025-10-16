@@ -249,41 +249,31 @@ export default function CartResume({ onCartArtSelected, onCampaignNameChange, ar
 
       if (!isVideo) {
         setVideoThumbnail(null);
-        // Salva imagem em base64 apenas no contexto
-        try {
-          const base64 = await fileToBase64(file);
-          updateFormData({
-            selectedImage: base64,
-            previewUrl: url,
-            isArtSelected: true
-          });
-        } catch (error) {
-          console.error('Erro ao converter arquivo para Base64:', error);
-        }
+        // Salva File object diretamente (muito mais eficiente!)
+        console.log('📁 Salvando File object diretamente:', {
+          fileName: file.name,
+          fileSize: Math.round(file.size / (1024 * 1024)) + 'MB',
+          fileType: file.type
+        });
+
+        updateFormData({
+          selectedImage: file, // File object ao invés de Base64
+          previewUrl: url,
+          isArtSelected: true
+        });
       } else {
-        // Para vídeo, converte para base64 e salva apenas no contexto
-        try {
-          const base64 = await fileToBase64(file);
-          console.log('🔍 Debug conversão para base64:', {
-            originalSizeMB: Math.round(file.size / (1024 * 1024)),
-            base64Length: base64.length,
-            base64LengthMB: Math.round(base64.length / (1024 * 1024)),
-            compressionRatio: Math.round((base64.length / file.size) * 100) + '%'
-          });
-          updateFormData({
-            selectedImage: base64,
-            previewUrl: url,
-            isArtSelected: true
-          });
-        } catch (error) {
-          console.error('Erro ao converter vídeo para Base64:', error);
-          // Fallback: salva apenas previewUrl se a conversão falhar
-          updateFormData({
-            selectedImage: null,
-            previewUrl: url,
-            isArtSelected: true
-          });
-        }
+        // Para vídeo, também salva File object diretamente
+        console.log('🎥 Salvando vídeo File object diretamente:', {
+          fileName: file.name,
+          fileSize: Math.round(file.size / (1024 * 1024)) + 'MB',
+          fileType: file.type
+        });
+
+        updateFormData({
+          selectedImage: file, // File object ao invés de Base64
+          previewUrl: url,
+          isArtSelected: true
+        });
         // Gerar thumbnail do vídeo
         try {
           const thumbnail = await generateVideoThumbnail(file);

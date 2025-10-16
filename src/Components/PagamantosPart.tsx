@@ -158,13 +158,21 @@ export const PagamantosPart = () => {
   const [carregando, setCarregando] = useState(false);
   const [erro, setErro] = useState("");
 
-  // ** (1) Image/Video Upload: State for the selected file URL (base64) **
-  const [imageUrl, setImageUrl] = useState<string | null>(formData.selectedImage || null);
+  // ** (1) Image/Video Upload: State for the selected file URL **
+  const [imageUrl, setImageUrl] = useState<string | null>(
+    formData.selectedImage instanceof File ? formData.previewUrl : (formData.selectedImage || null)
+  );
 
   // ** (2) Image/Video Upload: Handle the selected file from form data (if applicable)**
   useEffect(() => {
+    if (formData.selectedImage instanceof File) {
+      // Para File objects, usar previewUrl
+      setImageUrl(formData.previewUrl || null);
+    } else {
+      // Para Base64 strings (compatibilidade)
       setImageUrl(formData.selectedImage || null);
-  }, [formData.selectedImage]);
+    }
+  }, [formData.selectedImage, formData.previewUrl]);
 
   // Função para verificar se todos os campos obrigatórios estão preenchidos (exceto complemento)
   const isFormValid = () => {
@@ -249,34 +257,71 @@ export const PagamantosPart = () => {
     }
 
     // ** (3.1) Image/Video Upload: Validation - Check file type first **
-    if (artData && !artData.startsWith('data:image/') && !artData.startsWith('data:video/')) {
+    if (artData instanceof File) {
+      // Para File objects, validar MIME type
+      const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'video/mp4', 'video/mov'];
+      if (!allowedTypes.includes(artData.type)) {
+        setErro(`Formato não suportado: ${artData.type}. Use apenas imagens (JPG, PNG, GIF, WEBP) ou vídeos (MP4, MOV)`);
+        setCarregando(false);
+        return;
+      }
+    } else if (artData && !artData.startsWith('data:image/') && !artData.startsWith('data:video/')) {
+      // Para Base64 strings (compatibilidade)
       setErro('Formato de arquivo não suportado. Por favor, use uma imagem (JPG, PNG, GIF) ou vídeo (MP4, MOV, AVI).');
       setCarregando(false);
       return;
     }
 
-    // ** (3.2) Image/Video Upload: Compress images to reduce upload time (OTIMIZADO) **
-    let optimizedArtData = artData;
-    if (artData && artData.startsWith('data:image/')) {
+    // ** (3.2) Image/Video Upload: Process File object directly **
+    let fileToUpload: File;
+    
+    if (artData instanceof File) {
+      // Se já é um File object, usar diretamente
+      console.log('📁 Usando File object diretamente:', {
+        fileName: artData.name,
+        fileSize: Math.round(artData.size / (1024 * 1024)) + 'MB',
+        fileType: artData.type
+      });
+      fileToUpload = artData;
+    } else {
+      // Se ainda é Base64 (compatibilidade), converter para File
+      console.log('🔄 Convertendo Base64 para File object...');
+      
       try {
-        // Compressão mais agressiva para upload mais rápido
-        optimizedArtData = await compressImage(artData, 0.6); // 60% qualidade (mais compressão)
-        console.log('📦 Imagem comprimida (otimizada):', {
-          originalSize: Math.round(artData.length / (1024 * 1024)),
-          compressedSize: Math.round(optimizedArtData.length / (1024 * 1024)),
-          compression: Math.round((1 - optimizedArtData.length / artData.length) * 100) + '%',
-          speedImprovement: Math.round((artData.length / optimizedArtData.length) * 100) + '% mais rápido'
+        const base64Response = await fetch(artData);
+        const blob = await base64Response.blob();
+        const fileExt = artData.startsWith('data:image/') 
+          ? artData.split(';')[0].split('/')[1]
+          : 'mp4';
+        fileToUpload = new File([blob], `arte-${Date.now()}.${fileExt}`, { 
+          type: blob.type 
+        });
+        
+        console.log('✅ Base64 convertido para File:', {
+          fileName: fileToUpload.name,
+          fileSize: Math.round(fileToUpload.size / (1024 * 1024)) + 'MB',
+          fileType: fileToUpload.type
         });
       } catch (error) {
-        console.warn('⚠️ Erro na compressão, usando original:', error);
-        optimizedArtData = artData;
+        console.error('❌ Erro ao converter Base64 para File:', error);
+        setErro('Erro ao processar arquivo. Tente selecionar novamente.');
+        setCarregando(false);
+        return;
       }
     }
 
-    // ** (3.3) Image/Video Upload: Validation - Check if optimized file is too large **
-    if (optimizedArtData && optimizedArtData.length > 1.3 * 1024 * 1024 * 1024) { // ~1.3GB em base64 = ~1GB original
-      const originalSizeMB = Math.round((optimizedArtData.length * 3) / 4 / (1024 * 1024));
-      setErro(`O arquivo é muito grande. Por favor, use um arquivo menor (máximo 1GB). Arquivo atual: ~${originalSizeMB}MB`);
+    // ** (3.3) Image/Video Upload: Validation - Check if file is too large **
+    if (fileToUpload.size > 50 * 1024 * 1024) { // 50MB limite do Supabase
+      const fileSizeMB = Math.round(fileToUpload.size / (1024 * 1024));
+      setErro(`O arquivo é muito grande. Máximo permitido: 50MB. Arquivo atual: ${fileSizeMB}MB`);
+      setCarregando(false);
+      return;
+    }
+
+    // Validar formato do arquivo
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'video/mp4', 'video/mov'];
+    if (!allowedTypes.includes(fileToUpload.type)) {
+      setErro(`Formato não suportado: ${fileToUpload.type}. Use apenas imagens (JPG, PNG, GIF, WEBP) ou vídeos (MP4, MOV)`);
       setCarregando(false);
       return;
     }
@@ -382,35 +427,17 @@ export const PagamantosPart = () => {
       console.log('📤 Preparando upload direto para storage:', {
         id_order: orderId,
         id_user: user.id,
-        originalSizeMB: artData ? Math.round(artData.length / (1024 * 1024)) : 0,
-        optimizedSizeMB: optimizedArtData ? Math.round(optimizedArtData.length / (1024 * 1024)) : 0,
-        fileType: optimizedArtData ? (optimizedArtData.startsWith('data:image/') ? 'image' : 'video') : 'unknown',
-        optimization: artData && optimizedArtData ? Math.round((1 - optimizedArtData.length / artData.length) * 100) + '%' : '0%'
+        fileSize: Math.round(fileToUpload.size / (1024 * 1024)) + 'MB',
+        fileType: fileToUpload.type,
+        fileName: fileToUpload.name
       });
 
       let arteCampanhaId: string | null = null;
       let publicUrl: string | null = null;
       
       try {
-        // Converter base64 para File object
-        const base64Response = await fetch(optimizedArtData);
-        const blob = await base64Response.blob();
-        const fileExt = optimizedArtData.startsWith('data:image/') 
-          ? optimizedArtData.split(';')[0].split('/')[1]
-          : 'mp4';
-        const file = new File([blob], `arte-${orderId}.${fileExt}`, { 
-          type: blob.type 
-        });
-
-        console.log('📦 Arquivo preparado:', {
-          name: file.name,
-          size: Math.round(file.size / (1024 * 1024)) + 'MB',
-          type: file.type
-        });
-
-        // Upload direto para Storage
         console.log('🚀 Iniciando upload direto para storage...');
-        const uploadResult = await uploadFile(file, 'arte-campanhas');
+        const uploadResult = await uploadFile(fileToUpload, 'arte-campanhas');
 
         if (!uploadResult) {
           throw new Error(uploadError || 'Erro ao fazer upload do arquivo');
