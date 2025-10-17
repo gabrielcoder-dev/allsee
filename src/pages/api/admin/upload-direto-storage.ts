@@ -1,5 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { createClient } from '@supabase/supabase-js';
+import formidable, { File as FormidableFile } from 'formidable';
+import { promises as fs } from 'fs';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
@@ -12,11 +14,11 @@ console.log('🔧 Configuração Supabase:', {
 const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
 /**
- * API para upload direto de chunks para Supabase Storage
+ * API para upload direto de chunks BINÁRIOS para Supabase Storage
  * 
  * Fluxo:
  * 1. Cliente inicia upload (action: 'init') -> retorna upload_id e file_path
- * 2. Cliente envia chunks (action: 'chunk') -> chunks são armazenados temporariamente
+ * 2. Cliente envia chunks BINÁRIOS via FormData (action: 'chunk')
  * 3. Cliente finaliza (action: 'finalize') -> monta arquivo final e retorna URL pública
  * 4. Cliente pode abortar (action: 'abort') -> limpa uploads parciais
  */
@@ -34,6 +36,50 @@ const uploadsInProgress = new Map<string, {
   bucket: string;
 }>();
 
+// Helper para fazer parse de FormData
+const parseFormData = (req: NextApiRequest): Promise<{ fields: any; files: any }> => {
+  return new Promise((resolve, reject) => {
+    const form = formidable({
+      maxFileSize: 4 * 1024 * 1024, // 4MB por chunk (limite Vercel: 4.5MB com margem)
+      keepExtensions: true,
+      multiples: false
+    });
+
+    form.parse(req, (err, fields, files) => {
+      if (err) {
+        reject(err);
+        return;
+      }
+      
+      // Converter arrays de campos para valores únicos
+      const cleanFields: any = {};
+      for (const key in fields) {
+        cleanFields[key] = Array.isArray(fields[key]) ? fields[key][0] : fields[key];
+      }
+      
+      resolve({ fields: cleanFields, files });
+    });
+  });
+};
+
+// Helper para fazer parse de JSON
+const parseJSON = (req: NextApiRequest): Promise<any> => {
+  return new Promise((resolve, reject) => {
+    let body = '';
+    req.on('data', chunk => {
+      body += chunk.toString();
+    });
+    req.on('end', () => {
+      try {
+        resolve(JSON.parse(body));
+      } catch (err) {
+        reject(new Error('JSON inválido'));
+      }
+    });
+    req.on('error', reject);
+  });
+};
+
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
@@ -43,7 +89,36 @@ export default async function handler(
   }
 
   try {
-    const { action, upload_id, chunk_index, chunk_data, total_chunks, file_type, bucket = 'arte-campanhas' } = req.body;
+    // Detectar se é FormData (chunk binário) ou JSON (init/finalize/abort)
+    const contentType = req.headers['content-type'] || '';
+    const isFormData = contentType.includes('multipart/form-data');
+    
+    let action: string;
+    let upload_id: string | undefined;
+    let chunk_index: number | undefined;
+    let total_chunks: number | undefined;
+    let file_type: string | undefined;
+    let bucket: string = 'arte-campanhas';
+    let chunkFile: FormidableFile | undefined;
+
+    if (isFormData) {
+      // Parse FormData (upload binário de chunk)
+      const { fields, files } = await parseFormData(req);
+      action = fields.action;
+      upload_id = fields.upload_id;
+      chunk_index = fields.chunk_index ? parseInt(fields.chunk_index) : undefined;
+      total_chunks = fields.total_chunks ? parseInt(fields.total_chunks) : undefined;
+      chunkFile = Array.isArray(files.chunk_file) ? files.chunk_file[0] : files.chunk_file;
+    } else {
+      // Parse JSON (init, finalize, abort)
+      const body = await parseJSON(req);
+      action = body.action;
+      upload_id = body.upload_id;
+      chunk_index = body.chunk_index;
+      total_chunks = body.total_chunks;
+      file_type = body.file_type;
+      bucket = body.bucket || 'arte-campanhas';
+    }
 
     if (!action) {
       return res.status(400).json({ 
@@ -92,12 +167,12 @@ export default async function handler(
       });
     }
 
-    // AÇÃO: ENVIAR CHUNK
+    // AÇÃO: ENVIAR CHUNK BINÁRIO
     if (action === 'chunk') {
-      if (!upload_id || chunk_index === undefined || !chunk_data) {
+      if (!upload_id || chunk_index === undefined || !chunkFile) {
         return res.status(400).json({ 
           success: false, 
-          error: 'upload_id, chunk_index e chunk_data são obrigatórios para chunk' 
+          error: 'upload_id, chunk_index e chunk_file são obrigatórios para chunk' 
         });
       }
 
@@ -109,23 +184,26 @@ export default async function handler(
         });
       }
 
-      // Converter chunk base64 para Buffer
-      const chunkBuffer = Buffer.from(chunk_data, 'base64');
+      // Ler o arquivo binário (já está no disco temporário)
+      const chunkBuffer = await fs.readFile(chunkFile.filepath);
       const chunkPath = `${uploadInfo.file_path}.chunk.${chunk_index}`;
 
-      // Validar tamanho do chunk (limite Vercel: 5MB)
+      // Validar tamanho do chunk (limite Vercel: 4.5MB total, 4MB de arquivo + overhead)
       const chunkSizeMB = chunkBuffer.length / (1024 * 1024);
-      if (chunkSizeMB > 5) {
-        console.error(`❌ Chunk muito grande: ${chunkSizeMB.toFixed(2)}MB (limite: 5MB)`);
+      if (chunkSizeMB > 4) {
+        console.error(`❌ Chunk muito grande: ${chunkSizeMB.toFixed(2)}MB (limite Vercel: 4MB arquivo)`);
+        // Limpar arquivo temporário
+        try { await fs.unlink(chunkFile.filepath); } catch {}
         return res.status(413).json({ 
           success: false, 
-          error: `Chunk muito grande: ${chunkSizeMB.toFixed(2)}MB. Limite: 5MB` 
+          error: `Chunk muito grande: ${chunkSizeMB.toFixed(2)}MB. Limite Vercel: 4MB` 
         });
       }
 
-      console.log(`📦 Recebendo chunk ${chunk_index + 1}/${uploadInfo.total_chunks}:`, {
+      console.log(`📦 Recebendo chunk BINÁRIO ${chunk_index + 1}/${uploadInfo.total_chunks}:`, {
         upload_id,
         chunk_size_mb: chunkSizeMB.toFixed(2),
+        chunk_size_kb: Math.round(chunkBuffer.length / 1024),
         chunk_path: chunkPath
       });
 
@@ -133,10 +211,17 @@ export default async function handler(
       const { error: uploadError } = await supabase.storage
         .from(uploadInfo.bucket)
         .upload(chunkPath, chunkBuffer, {
-          contentType: 'image/jpeg', // MIME type permitido pelo bucket
+          contentType: 'application/octet-stream', // Binário genérico
           upsert: true,
           cacheControl: '0' // Não cachear chunks temporários
         });
+
+      // Limpar arquivo temporário
+      try {
+        await fs.unlink(chunkFile.filepath);
+      } catch (unlinkError) {
+        console.warn('⚠️ Não foi possível limpar arquivo temporário:', unlinkError);
+      }
 
       if (uploadError) {
         console.error('❌ Erro detalhado ao fazer upload do chunk:', {
@@ -155,7 +240,7 @@ export default async function handler(
       // Marcar chunk como recebido
       uploadInfo.chunks_received.add(chunk_index);
 
-      console.log(`✅ Chunk ${chunk_index + 1}/${uploadInfo.total_chunks} salvo no storage`);
+      console.log(`✅ Chunk BINÁRIO ${chunk_index + 1}/${uploadInfo.total_chunks} salvo no storage`);
 
       return res.status(200).json({ 
         success: true, 
@@ -353,9 +438,7 @@ export default async function handler(
 
 export const config = {
   api: {
-    bodyParser: {
-      sizeLimit: '5mb', // Limite da Vercel (5MB máximo)
-    },
+    bodyParser: false, // Desabilitar - usamos formidable para parse de FormData binário
     responseLimit: '1mb',
   },
 };

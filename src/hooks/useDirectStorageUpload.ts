@@ -56,9 +56,9 @@ interface UseDirectStorageUploadOptions {
 
 export const useDirectStorageUpload = (options: UseDirectStorageUploadOptions = {}) => {
   const {
-    chunkSizeMB = 2, // 2MB por chunk (considerando expansão Base64 + metadados)
-    parallelUploads = 2, // Reduzido para evitar sobrecarga
-    chunkTimeout = 15000, // Aumentado para chunks maiores
+    chunkSizeMB = 2.5, // 2.5MB por chunk (com margem para overhead do FormData ~3MB total)
+    parallelUploads = 6, // 6 uploads paralelos para velocidade máxima (era 4)
+    chunkTimeout = 20000, // 20s para chunks maiores
     maxRetries = 3,
     onProgress
   } = options;
@@ -82,38 +82,24 @@ export const useDirectStorageUpload = (options: UseDirectStorageUploadOptions = 
     onProgress?.(newProgress);
   }, [progress, onProgress]);
 
-  // Converter arquivo para chunks base64
-  const fileToChunks = useCallback(async (file: File): Promise<string[]> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      
-      reader.onload = () => {
-        try {
-          const base64 = (reader.result as string).split(',')[1]; // Remover "data:image/...;base64,"
-          // Chunk size em bytes Base64 (considerando expansão ~1.37x + margem de segurança)
-          const chunkSize = Math.floor(chunkSizeMB * 1024 * 1024 * 1.2); // Margem de segurança
-          const chunks: string[] = [];
-          
-          for (let i = 0; i < base64.length; i += chunkSize) {
-            chunks.push(base64.slice(i, i + chunkSize));
-          }
-          
-          resolve(chunks);
-        } catch (err) {
-          reject(err);
-        }
-      };
-      
-      reader.onerror = () => reject(reader.error);
-      reader.readAsDataURL(file);
-    });
+  // Dividir arquivo em chunks binários (SEM base64 - muito mais eficiente!)
+  const fileToChunks = useCallback((file: File): Blob[] => {
+    const chunkSize = chunkSizeMB * 1024 * 1024; // Tamanho em bytes
+    const chunks: Blob[] = [];
+    
+    for (let offset = 0; offset < file.size; offset += chunkSize) {
+      const chunk = file.slice(offset, offset + chunkSize);
+      chunks.push(chunk);
+    }
+    
+    return chunks;
   }, [chunkSizeMB]);
 
-  // Enviar um chunk com retry
+  // Enviar um chunk BINÁRIO com retry (sem base64!)
   const uploadChunkWithRetry = useCallback(async (
     uploadId: string,
     chunkIndex: number,
-    chunkData: string,
+    chunkBlob: Blob,
     totalChunks: number
   ): Promise<void> => {
     let lastError: Error | null = null;
@@ -123,16 +109,17 @@ export const useDirectStorageUpload = (options: UseDirectStorageUploadOptions = 
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), chunkTimeout);
 
+        // Usar FormData para enviar binário (muito mais eficiente que base64!)
+        const formData = new FormData();
+        formData.append('action', 'chunk');
+        formData.append('upload_id', uploadId);
+        formData.append('chunk_index', chunkIndex.toString());
+        formData.append('total_chunks', totalChunks.toString());
+        formData.append('chunk_file', chunkBlob, `chunk_${chunkIndex}`);
+
         const response = await fetch('/api/admin/upload-direto-storage', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            action: 'chunk',
-            upload_id: uploadId,
-            chunk_index: chunkIndex,
-            chunk_data: chunkData,
-            total_chunks: totalChunks
-          }),
+          body: formData, // FormData - sem Content-Type (browser define automaticamente)
           signal: controller.signal
         });
 
@@ -194,16 +181,17 @@ export const useDirectStorageUpload = (options: UseDirectStorageUploadOptions = 
         fileSizeMB
       });
 
-      console.log('🚀 Iniciando upload direto:', {
+      console.log('🚀 Iniciando upload BINÁRIO direto (sem base64):', {
         fileName: file.name,
         fileSize: fileSizeMB + 'MB',
         fileType: file.type,
-        bucket
+        bucket,
+        chunkSizeMB
       });
 
-      // Converter arquivo para chunks
-      const chunks = await fileToChunks(file);
-      console.log(`📦 Arquivo dividido em ${chunks.length} chunks`);
+      // Dividir arquivo em chunks binários (instantâneo, sem conversão!)
+      const chunks = fileToChunks(file);
+      console.log(`📦 Arquivo dividido em ${chunks.length} chunks de ${chunkSizeMB}MB cada`);
 
       updateProgress({
         totalChunks: chunks.length,
