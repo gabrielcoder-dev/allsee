@@ -18,7 +18,8 @@ import { PiBarcodeBold } from "react-icons/pi";
 import { useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { useUser } from "@supabase/auth-helpers-react";
-import { useDirectStorageUpload } from '@/hooks/useDirectStorageUpload';
+import { useSmartUpload } from '@/hooks/useSmartUpload';
+import { UploadProgress } from './UploadProgress';
 import { toast } from 'sonner';
 // Upload otimizado com compressão (sem limitações do Next.js)
 
@@ -66,12 +67,13 @@ export const PagamantosPart = () => {
   // Duração fixa igual ao padrão do carrinho
   const duration = "2";
   
-  // Hook para upload direto para storage
-  const { uploadFile, progress: uploadProgress, isUploading, error: uploadError } = useDirectStorageUpload({
-    chunkSizeMB: 4, // 4MB por chunk (limite Vercel 5MB, Storage 50MB)
-    parallelUploads: 3,
+  // Hook para upload inteligente (escolhe automaticamente a melhor estratégia)
+  const { uploadFile, progress: uploadProgress, isUploading, error: uploadError, currentStrategy } = useSmartUpload({
     onProgress: (progress) => {
-      console.log(`📊 Progresso do upload: ${progress.percentage}% (${progress.chunksUploaded}/${progress.totalChunks} chunks)`);
+      console.log(`📊 Progresso do upload (${progress.strategy}): ${progress.percentage}%`);
+      if (progress.strategy === 'chunked' && progress.totalChunks) {
+        console.log(`📦 Chunks: ${progress.chunksUploaded}/${progress.totalChunks}`);
+      }
     }
   });
   
@@ -832,8 +834,16 @@ export const PagamantosPart = () => {
           )}
         </div>
 
-        {/* Mensagem de erro */}
-        {erro && (
+        {/* Progresso do upload */}
+        <UploadProgress
+          progress={uploadProgress}
+          isUploading={isUploading}
+          error={uploadError || (isUploading ? null : erro)}
+          fileName={formData.selectedImage instanceof File ? formData.selectedImage.name : undefined}
+        />
+
+        {/* Mensagem de erro (apenas quando não está fazendo upload) */}
+        {!isUploading && erro && !uploadError && (
           <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700 text-sm">
             ❌ {erro}
           </div>

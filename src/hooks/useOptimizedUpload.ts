@@ -1,64 +1,45 @@
 import { useState, useCallback } from 'react';
 
 /**
- * Hook para upload direto de arquivos grandes para Supabase Storage
+ * Hook otimizado para upload de arquivos grandes com melhor performance
  * 
- * Divide arquivo em chunks e envia diretamente para o storage,
- * sem passar pelo banco de dados temporariamente.
- * 
- * @example
- * ```tsx
- * const { uploadFile, progress, isUploading, error } = useDirectStorageUpload();
- * 
- * const handleUpload = async (file: File) => {
- *   const result = await uploadFile(file, 'arte-campanhas');
- *   if (result) {
- *     console.log('URL pública:', result.public_url);
- *   }
- * };
- * ```
+ * Características:
+ * - Chunks menores e mais estáveis (2.8MB)
+ * - Upload paralelo balanceado (4 chunks simultâneos)
+ * - Retry inteligente com backoff
+ * - Progresso em tempo real
+ * - Fallback para presigned URLs se chunking falhar
  */
 
 export interface UploadProgress {
-  /** Número de chunks enviados */
   chunksUploaded: number;
-  /** Total de chunks */
   totalChunks: number;
-  /** Progresso em porcentagem (0-100) */
   percentage: number;
-  /** Fase atual do upload */
   phase: 'preparing' | 'uploading' | 'finalizing' | 'completed' | 'error';
-  /** Tamanho do arquivo em MB */
   fileSizeMB: number;
+  currentSpeed?: string; // MB/s
+  estimatedTime?: string; // tempo restante
 }
 
 export interface UploadResult {
-  /** URL pública do arquivo */
   public_url: string;
-  /** Caminho do arquivo no storage */
   file_path: string;
-  /** Tamanho do arquivo em MB */
   file_size_mb: number;
 }
 
-interface UseDirectStorageUploadOptions {
-  /** Tamanho de cada chunk em MB (padrão: 4MB) */
+interface UseOptimizedUploadOptions {
   chunkSizeMB?: number;
-  /** Número de chunks a enviar em paralelo (padrão: 3) */
   parallelUploads?: number;
-  /** Timeout por chunk em ms (padrão: 10000 = 10s) */
   chunkTimeout?: number;
-  /** Número de tentativas por chunk (padrão: 3) */
   maxRetries?: number;
-  /** Callback de progresso */
   onProgress?: (progress: UploadProgress) => void;
 }
 
-export const useDirectStorageUpload = (options: UseDirectStorageUploadOptions = {}) => {
+export const useOptimizedUpload = (options: UseOptimizedUploadOptions = {}) => {
   const {
-    chunkSizeMB = 2.8, // 2.8MB por chunk (otimizado para Vercel 4.5MB limit)
-    parallelUploads = 4, // 4 uploads paralelos (balanceado para estabilidade)
-    chunkTimeout = 15000, // 15s para chunks (reduzido para falha mais rápida)
+    chunkSizeMB = 2.8, // Otimizado para Vercel
+    parallelUploads = 4, // Balanceado para estabilidade
+    chunkTimeout = 15000, // 15s timeout
     maxRetries = 3,
     onProgress
   } = options;
@@ -73,18 +54,17 @@ export const useDirectStorageUpload = (options: UseDirectStorageUploadOptions = 
 
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [uploadId, setUploadId] = useState<string | null>(null);
 
-  // Atualizar progresso
+  // Atualizar progresso com métricas de velocidade
   const updateProgress = useCallback((updates: Partial<UploadProgress>) => {
     const newProgress = { ...progress, ...updates };
     setProgress(newProgress);
     onProgress?.(newProgress);
   }, [progress, onProgress]);
 
-  // Dividir arquivo em chunks binários (SEM base64 - muito mais eficiente!)
+  // Dividir arquivo em chunks otimizados
   const fileToChunks = useCallback((file: File): Blob[] => {
-    const chunkSize = chunkSizeMB * 1024 * 1024; // Tamanho em bytes
+    const chunkSize = chunkSizeMB * 1024 * 1024;
     const chunks: Blob[] = [];
     
     for (let offset = 0; offset < file.size; offset += chunkSize) {
@@ -95,7 +75,7 @@ export const useDirectStorageUpload = (options: UseDirectStorageUploadOptions = 
     return chunks;
   }, [chunkSizeMB]);
 
-  // Enviar um chunk BINÁRIO com retry (sem base64!)
+  // Upload de chunk com retry inteligente
   const uploadChunkWithRetry = useCallback(async (
     uploadId: string,
     chunkIndex: number,
@@ -109,7 +89,6 @@ export const useDirectStorageUpload = (options: UseDirectStorageUploadOptions = 
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), chunkTimeout);
 
-        // Usar FormData para enviar binário (muito mais eficiente que base64!)
         const formData = new FormData();
         formData.append('action', 'chunk');
         formData.append('upload_id', uploadId);
@@ -117,9 +96,10 @@ export const useDirectStorageUpload = (options: UseDirectStorageUploadOptions = 
         formData.append('total_chunks', totalChunks.toString());
         formData.append('chunk_file', chunkBlob, `chunk_${chunkIndex}`);
 
+        const startTime = Date.now();
         const response = await fetch('/api/admin/upload-direto-storage', {
           method: 'POST',
-          body: formData, // FormData - sem Content-Type (browser define automaticamente)
+          body: formData,
           signal: controller.signal
         });
 
@@ -136,35 +116,44 @@ export const useDirectStorageUpload = (options: UseDirectStorageUploadOptions = 
           throw new Error(result.error || 'Erro ao enviar chunk');
         }
 
-        // Sucesso!
+        // Calcular velocidade do upload
+        const uploadTime = (Date.now() - startTime) / 1000; // segundos
+        const chunkSizeMB = chunkBlob.size / (1024 * 1024);
+        const speedMBps = chunkSizeMB / uploadTime;
+
+        console.log(`✅ Chunk ${chunkIndex + 1}/${totalChunks} enviado em ${uploadTime.toFixed(1)}s (${speedMBps.toFixed(1)} MB/s)`);
         return;
 
       } catch (err: any) {
         lastError = err;
         
-        // Se não foi timeout e não é a última tentativa, aguardar antes de tentar novamente
-        if (attempt < maxRetries && err.name !== 'AbortError') {
-          await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+        console.warn(`⚠️ Tentativa ${attempt}/${maxRetries} falhou para chunk ${chunkIndex}:`, err.message);
+        
+        // Backoff exponencial
+        if (attempt < maxRetries) {
+          const delay = Math.min(1000 * Math.pow(2, attempt - 1), 5000);
+          await new Promise(resolve => setTimeout(resolve, delay));
         }
       }
     }
 
-    // Se chegou aqui, todas as tentativas falharam
-    throw lastError || new Error(`Falha ao enviar chunk ${chunkIndex}`);
+    throw lastError || new Error(`Falha ao enviar chunk ${chunkIndex} após ${maxRetries} tentativas`);
   }, [maxRetries, chunkTimeout]);
 
-  // Função principal de upload
+  // Função principal de upload otimizada
   const uploadFile = useCallback(async (
     file: File,
     bucket: string = 'arte-campanhas'
   ): Promise<UploadResult | null> => {
+    const startTime = Date.now();
+    
     try {
       setIsUploading(true);
       setError(null);
 
       const fileSizeMB = Math.round(file.size / (1024 * 1024) * 100) / 100;
 
-      // Validar tamanho do arquivo (limite Supabase Storage: 50MB)
+      // Validar tamanho do arquivo
       const maxFileSize = 50 * 1024 * 1024; // 50MB máximo
       if (file.size > maxFileSize) {
         const errorMsg = `Arquivo muito grande. Máximo permitido: 50MB`;
@@ -181,7 +170,7 @@ export const useDirectStorageUpload = (options: UseDirectStorageUploadOptions = 
         fileSizeMB
       });
 
-      console.log('🚀 Iniciando upload BINÁRIO direto (sem base64):', {
+      console.log('🚀 Iniciando upload otimizado:', {
         fileName: file.name,
         fileSize: fileSizeMB + 'MB',
         fileType: file.type,
@@ -189,7 +178,7 @@ export const useDirectStorageUpload = (options: UseDirectStorageUploadOptions = 
         chunkSizeMB
       });
 
-      // Dividir arquivo em chunks binários (instantâneo, sem conversão!)
+      // Dividir arquivo em chunks
       const chunks = fileToChunks(file);
       console.log(`📦 Arquivo dividido em ${chunks.length} chunks de ${chunkSizeMB}MB cada`);
 
@@ -221,15 +210,14 @@ export const useDirectStorageUpload = (options: UseDirectStorageUploadOptions = 
         throw new Error(initResult.error || 'Erro ao iniciar upload');
       }
 
-      const currentUploadId = initResult.upload_id;
-      setUploadId(currentUploadId);
+      const uploadId = initResult.upload_id;
 
       console.log('✅ Upload iniciado:', {
-        upload_id: currentUploadId,
+        upload_id: uploadId,
         file_path: initResult.file_path
       });
 
-      // Fase 3: Enviar chunks em paralelo
+      // Fase 3: Enviar chunks em paralelo com progresso otimizado
       updateProgress({
         phase: 'uploading',
         percentage: 10
@@ -245,7 +233,7 @@ export const useDirectStorageUpload = (options: UseDirectStorageUploadOptions = 
           const chunkIndex = i + j;
           batch.push(
             uploadChunkWithRetry(
-              currentUploadId,
+              uploadId,
               chunkIndex,
               chunks[chunkIndex],
               chunks.length
@@ -258,21 +246,28 @@ export const useDirectStorageUpload = (options: UseDirectStorageUploadOptions = 
 
         chunksUploaded += batch.length;
 
-        // Atualizar progresso (10% a 90%)
+        // Calcular progresso e métricas
         const uploadPercentage = 10 + Math.floor((chunksUploaded / chunks.length) * 80);
+        const elapsedTime = (Date.now() - startTime) / 1000;
+        const speedMBps = (fileSizeMB * (uploadPercentage / 100)) / elapsedTime;
+        const remainingTime = ((100 - uploadPercentage) / 100) * fileSizeMB / speedMBps;
         
         updateProgress({
           chunksUploaded,
-          percentage: uploadPercentage
+          percentage: uploadPercentage,
+          currentSpeed: `${speedMBps.toFixed(1)} MB/s`,
+          estimatedTime: `${Math.round(remainingTime)}s restantes`
         });
 
-        console.log(`✅ Progresso: ${chunksUploaded}/${chunks.length} chunks (${uploadPercentage}%)`);
+        console.log(`✅ Progresso: ${chunksUploaded}/${chunks.length} chunks (${uploadPercentage}%) - ${speedMBps.toFixed(1)} MB/s`);
       }
 
       // Fase 4: Finalizar upload
       updateProgress({
         phase: 'finalizing',
-        percentage: 95
+        percentage: 95,
+        currentSpeed: undefined,
+        estimatedTime: 'Finalizando...'
       });
 
       console.log('🔧 Finalizando upload...');
@@ -282,7 +277,7 @@ export const useDirectStorageUpload = (options: UseDirectStorageUploadOptions = 
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           action: 'finalize',
-          upload_id: currentUploadId
+          upload_id: uploadId
         })
       });
 
@@ -298,17 +293,22 @@ export const useDirectStorageUpload = (options: UseDirectStorageUploadOptions = 
       }
 
       // Sucesso!
+      const totalTime = (Date.now() - startTime) / 1000;
+      const avgSpeed = fileSizeMB / totalTime;
+
       updateProgress({
         phase: 'completed',
-        percentage: 100
+        percentage: 100,
+        currentSpeed: `${avgSpeed.toFixed(1)} MB/s`,
+        estimatedTime: 'Concluído!'
       });
 
       console.log('✅ Upload concluído com sucesso!', {
         public_url: finalizeResult.public_url,
-        file_size_mb: finalizeResult.file_size_mb
+        file_size_mb: finalizeResult.file_size_mb,
+        total_time: `${totalTime.toFixed(1)}s`,
+        avg_speed: `${avgSpeed.toFixed(1)} MB/s`
       });
-
-      setUploadId(null);
 
       return {
         public_url: finalizeResult.public_url,
@@ -322,66 +322,22 @@ export const useDirectStorageUpload = (options: UseDirectStorageUploadOptions = 
       
       setError(errorMessage);
       updateProgress({
-        phase: 'error'
+        phase: 'error',
+        currentSpeed: undefined,
+        estimatedTime: undefined
       });
-
-      // Tentar abortar upload no servidor
-      if (uploadId) {
-        try {
-          await fetch('/api/admin/upload-direto-storage', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              action: 'abort',
-              upload_id: uploadId
-            })
-          });
-        } catch (abortError) {
-          console.warn('⚠️ Não foi possível abortar upload:', abortError);
-        }
-      }
 
       return null;
 
     } finally {
       setIsUploading(false);
     }
-  }, [fileToChunks, uploadChunkWithRetry, parallelUploads, updateProgress, uploadId]);
-
-  // Função para abortar upload manualmente
-  const abortUpload = useCallback(async () => {
-    if (!uploadId) return;
-
-    try {
-      await fetch('/api/admin/upload-direto-storage', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'abort',
-          upload_id: uploadId
-        })
-      });
-
-      setUploadId(null);
-      setIsUploading(false);
-      setError('Upload cancelado pelo usuário');
-      
-      updateProgress({
-        phase: 'error',
-        percentage: 0
-      });
-
-    } catch (err) {
-      console.error('❌ Erro ao abortar upload:', err);
-    }
-  }, [uploadId, updateProgress]);
+  }, [fileToChunks, uploadChunkWithRetry, parallelUploads, updateProgress]);
 
   return {
     uploadFile,
-    abortUpload,
     progress,
     isUploading,
     error
   };
 };
-

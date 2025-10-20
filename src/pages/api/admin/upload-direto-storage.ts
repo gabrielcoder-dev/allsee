@@ -40,7 +40,7 @@ const uploadsInProgress = new Map<string, {
 const parseFormData = (req: NextApiRequest): Promise<{ fields: any; files: any }> => {
   return new Promise((resolve, reject) => {
     const form = formidable({
-      maxFileSize: 4 * 1024 * 1024, // 4MB por chunk (limite Vercel: 4.5MB com margem)
+      maxFileSize: 3 * 1024 * 1024, // 3MB por chunk (limite Vercel: 4.5MB com margem segura)
       keepExtensions: true,
       multiples: false
     });
@@ -188,15 +188,15 @@ export default async function handler(
       const chunkBuffer = await fs.readFile(chunkFile.filepath);
       const chunkPath = `${uploadInfo.file_path}.chunk.${chunk_index}`;
 
-      // Validar tamanho do chunk (limite Vercel: 4.5MB total, 4MB de arquivo + overhead)
+      // Validar tamanho do chunk (limite Vercel: 4.5MB total, 3MB de arquivo + overhead)
       const chunkSizeMB = chunkBuffer.length / (1024 * 1024);
-      if (chunkSizeMB > 4) {
-        console.error(`❌ Chunk muito grande: ${chunkSizeMB.toFixed(2)}MB (limite Vercel: 4MB arquivo)`);
+      if (chunkSizeMB > 3) {
+        console.error(`❌ Chunk muito grande: ${chunkSizeMB.toFixed(2)}MB (limite Vercel: 3MB arquivo)`);
         // Limpar arquivo temporário
         try { await fs.unlink(chunkFile.filepath); } catch {}
         return res.status(413).json({ 
           success: false, 
-          error: `Chunk muito grande: ${chunkSizeMB.toFixed(2)}MB. Limite Vercel: 4MB` 
+          error: `Chunk muito grande: ${chunkSizeMB.toFixed(2)}MB. Limite Vercel: 3MB` 
         });
       }
 

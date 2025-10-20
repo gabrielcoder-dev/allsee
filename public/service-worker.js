@@ -32,6 +32,25 @@ self.addEventListener('sync', (event) => {
   }
 });
 
+// Message Handler para comandos do cliente
+self.addEventListener('message', async (event) => {
+  const { type, payload } = event.data;
+  
+  switch (type) {
+    case 'START_UPLOAD':
+      await handleStartUpload(payload);
+      break;
+      
+    case 'GET_UPLOAD_STATUS':
+      await handleGetStatus(payload);
+      break;
+      
+    case 'CANCEL_UPLOAD':
+      await handleCancelUpload(payload);
+      break;
+  }
+});
+
 // Processar fila de uploads
 async function processUploadQueue() {
   try {
@@ -200,6 +219,294 @@ function updateChunkProgress(uploadId, chunkIndex) {
     };
 
     transaction.oncomplete = () => resolve();
+  });
+}
+
+// Handlers para comandos do cliente
+async function handleStartUpload(payload) {
+  try {
+    const { uploadId, file, bucket, strategy } = payload;
+    
+    console.log('🚀 Iniciando upload em background:', {
+      uploadId,
+      fileName: file.name,
+      fileSize: Math.round(file.size / (1024 * 1024) * 100) / 100 + 'MB',
+      strategy
+    });
+    
+    // Salvar no IndexedDB
+    const db = await openUploadDB();
+    await saveUploadToDB(db, {
+      id: uploadId,
+      fileName: file.name,
+      fileType: file.type,
+      fileSize: file.size,
+      fileData: file.data,
+      bucket,
+      strategy,
+      status: 'pending',
+      percentage: 0,
+      startTime: Date.now()
+    });
+    
+    // Iniciar upload baseado na estratégia
+    if (strategy === 'presigned') {
+      await startPresignedUpload(uploadId, file, bucket);
+    } else {
+      await startChunkedUpload(uploadId, file, bucket);
+    }
+    
+  } catch (error) {
+    console.error('❌ Erro ao iniciar upload:', error);
+    await notifyClients({
+      type: 'UPLOAD_ERROR',
+      payload: {
+        uploadId: payload.uploadId,
+        error: error.message
+      }
+    });
+  }
+}
+
+async function handleGetStatus(payload) {
+  try {
+    const { uploadId } = payload;
+    const db = await openUploadDB();
+    const upload = await getUploadFromDB(db, uploadId);
+    
+    if (upload) {
+      await notifyClients({
+        type: 'UPLOAD_STATUS',
+        payload: upload
+      });
+    }
+  } catch (error) {
+    console.error('❌ Erro ao obter status:', error);
+  }
+}
+
+async function handleCancelUpload(payload) {
+  try {
+    const { uploadId } = payload;
+    const db = await openUploadDB();
+    await removeUploadFromDB(db, uploadId);
+    
+    console.log('🗑️ Upload cancelado:', uploadId);
+    
+  } catch (error) {
+    console.error('❌ Erro ao cancelar upload:', error);
+  }
+}
+
+// Upload presigned (ultra-rápido)
+async function startPresignedUpload(uploadId, file, bucket) {
+  try {
+    // Obter presigned URL
+    const presignedResponse = await fetch('/api/admin/create-upload-url', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        file_name: file.name,
+        file_type: file.type,
+        bucket
+      })
+    });
+
+    if (!presignedResponse.ok) {
+      throw new Error('Erro ao criar presigned URL');
+    }
+
+    const presignedResult = await presignedResponse.json();
+    
+    if (!presignedResult.success) {
+      throw new Error(presignedResult.error);
+    }
+
+    // Upload direto para Supabase
+    const fileBlob = await base64ToBlob(file.data, file.type);
+    
+    const uploadResponse = await fetch(presignedResult.signed_url, {
+      method: 'PUT',
+      headers: { 'Content-Type': file.type },
+      body: fileBlob
+    });
+
+    if (!uploadResponse.ok) {
+      throw new Error('Upload falhou');
+    }
+
+    // Notificar sucesso
+    await notifyClients({
+      type: 'UPLOAD_COMPLETE',
+      payload: {
+        uploadId,
+        publicUrl: presignedResult.public_url,
+        strategy: 'presigned'
+      }
+    });
+
+  } catch (error) {
+    console.error('❌ Erro no upload presigned:', error);
+    await notifyClients({
+      type: 'UPLOAD_ERROR',
+      payload: {
+        uploadId,
+        error: error.message
+      }
+    });
+  }
+}
+
+// Upload chunked (para arquivos grandes)
+async function startChunkedUpload(uploadId, file, bucket) {
+  try {
+    // Dividir arquivo em chunks
+    const chunks = await fileToChunks(file.data, file.type, 2.8); // 2.8MB chunks
+    
+    // Iniciar upload no servidor
+    const initResponse = await fetch('/api/admin/upload-direto-storage', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'init',
+        file_type: file.type,
+        total_chunks: chunks.length,
+        bucket
+      })
+    });
+
+    if (!initResponse.ok) {
+      throw new Error('Erro ao iniciar upload');
+    }
+
+    const initResult = await initResponse.json();
+    
+    if (!initResult.success) {
+      throw new Error(initResult.error);
+    }
+
+    const serverUploadId = initResult.upload_id;
+
+    // Enviar chunks
+    for (let i = 0; i < chunks.length; i++) {
+      const formData = new FormData();
+      formData.append('action', 'chunk');
+      formData.append('upload_id', serverUploadId);
+      formData.append('chunk_index', i.toString());
+      formData.append('total_chunks', chunks.length.toString());
+      formData.append('chunk_file', chunks[i], `chunk_${i}`);
+
+      const chunkResponse = await fetch('/api/admin/upload-direto-storage', {
+        method: 'POST',
+        body: formData
+      });
+
+      if (!chunkResponse.ok) {
+        throw new Error(`Erro ao enviar chunk ${i}`);
+      }
+
+      // Atualizar progresso
+      const percentage = Math.round(((i + 1) / chunks.length) * 90); // 90% para chunks
+      await notifyClients({
+        type: 'UPLOAD_PROGRESS',
+        payload: {
+          uploadId,
+          percentage,
+          strategy: 'chunked'
+        }
+      });
+    }
+
+    // Finalizar upload
+    const finalizeResponse = await fetch('/api/admin/upload-direto-storage', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'finalize',
+        upload_id: serverUploadId
+      })
+    });
+
+    if (!finalizeResponse.ok) {
+      throw new Error('Erro ao finalizar upload');
+    }
+
+    const finalizeResult = await finalizeResponse.json();
+    
+    if (!finalizeResult.success) {
+      throw new Error(finalizeResult.error);
+    }
+
+    // Notificar sucesso
+    await notifyClients({
+      type: 'UPLOAD_COMPLETE',
+      payload: {
+        uploadId,
+        publicUrl: finalizeResult.public_url,
+        strategy: 'chunked'
+      }
+    });
+
+  } catch (error) {
+    console.error('❌ Erro no upload chunked:', error);
+    await notifyClients({
+      type: 'UPLOAD_ERROR',
+      payload: {
+        uploadId,
+        error: error.message
+      }
+    });
+  }
+}
+
+// Utilitários
+async function base64ToBlob(base64, mimeType) {
+  const response = await fetch(base64);
+  return response.blob();
+}
+
+async function fileToChunks(base64, mimeType, chunkSizeMB) {
+  const blob = await base64ToBlob(base64, mimeType);
+  const chunkSize = chunkSizeMB * 1024 * 1024;
+  const chunks = [];
+  
+  for (let offset = 0; offset < blob.size; offset += chunkSize) {
+    chunks.push(blob.slice(offset, offset + chunkSize));
+  }
+  
+  return chunks;
+}
+
+async function saveUploadToDB(db, upload) {
+  return new Promise((resolve, reject) => {
+    const transaction = db.transaction(['uploads'], 'readwrite');
+    const store = transaction.objectStore('uploads');
+    const request = store.put(upload);
+
+    request.onsuccess = () => resolve();
+    request.onerror = () => reject(request.error);
+  });
+}
+
+async function getUploadFromDB(db, uploadId) {
+  return new Promise((resolve, reject) => {
+    const transaction = db.transaction(['uploads'], 'readonly');
+    const store = transaction.objectStore('uploads');
+    const request = store.get(uploadId);
+
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+  });
+}
+
+async function removeUploadFromDB(db, uploadId) {
+  return new Promise((resolve, reject) => {
+    const transaction = db.transaction(['uploads'], 'readwrite');
+    const store = transaction.objectStore('uploads');
+    const request = store.delete(uploadId);
+
+    request.onsuccess = () => resolve();
+    request.onerror = () => reject(request.error);
   });
 }
 
