@@ -43,7 +43,7 @@ export default function TermosPage() {
                 2. Descrição dos Serviços
               </h2>
               <p className="text-gray-700 leading-relaxed mb-4">
-                A AllSee oferece uma plataforma completa de publicidade digital que inclui:
+                A ALL SEE oferece uma plataforma completa de publicidade digital que inclui:
               </p>
               <div className="grid md:grid-cols-2 gap-6">
                 <div className="space-y-4">
