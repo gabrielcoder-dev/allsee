@@ -62,16 +62,16 @@ export const useFastUpload = (options: UseFastUploadOptions = {}) => {
     } else if (fileSizeMB <= 25) {
       return {
         method: 'chunked',
-        chunkSizeMB: 1.5,
-        parallelUploads: 6,
-        description: 'Chunks pequenos (1.5MB) com 6 paralelos'
+        chunkSizeMB: 1.0,
+        parallelUploads: 8,
+        description: 'Chunks pequenos (1MB) com 8 paralelos'
       };
     } else {
       return {
         method: 'chunked',
-        chunkSizeMB: 2.0,
-        parallelUploads: 4,
-        description: 'Chunks médios (2MB) com 4 paralelos'
+        chunkSizeMB: 1.5,
+        parallelUploads: 6,
+        description: 'Chunks médios (1.5MB) com 6 paralelos'
       };
     }
   }, []);

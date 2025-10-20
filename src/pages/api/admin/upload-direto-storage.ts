@@ -40,7 +40,7 @@ const uploadsInProgress = new Map<string, {
 const parseFormData = (req: NextApiRequest): Promise<{ fields: any; files: any }> => {
   return new Promise((resolve, reject) => {
     const form = formidable({
-      maxFileSize: 3 * 1024 * 1024, // 3MB por chunk (limite Vercel: 4.5MB com margem segura)
+      maxFileSize: 2 * 1024 * 1024, // 2MB por chunk (limite Vercel: 4.5MB com margem segura)
       keepExtensions: true,
       multiples: false
     });
@@ -188,15 +188,15 @@ export default async function handler(
       const chunkBuffer = await fs.readFile(chunkFile.filepath);
       const chunkPath = `${uploadInfo.file_path}.chunk.${chunk_index}`;
 
-      // Validar tamanho do chunk (limite Vercel: 4.5MB total, 3MB de arquivo + overhead)
+      // Validar tamanho do chunk (limite Vercel: 4.5MB total, 2MB de arquivo + overhead)
       const chunkSizeMB = chunkBuffer.length / (1024 * 1024);
-      if (chunkSizeMB > 3) {
-        console.error(`❌ Chunk muito grande: ${chunkSizeMB.toFixed(2)}MB (limite Vercel: 3MB arquivo)`);
+      if (chunkSizeMB > 2) {
+        console.error(`❌ Chunk muito grande: ${chunkSizeMB.toFixed(2)}MB (limite Vercel: 2MB arquivo)`);
         // Limpar arquivo temporário
         try { await fs.unlink(chunkFile.filepath); } catch {}
         return res.status(413).json({ 
           success: false, 
-          error: `Chunk muito grande: ${chunkSizeMB.toFixed(2)}MB. Limite Vercel: 3MB` 
+          error: `Chunk muito grande: ${chunkSizeMB.toFixed(2)}MB. Limite Vercel: 2MB` 
         });
       }
 
@@ -207,11 +207,11 @@ export default async function handler(
         chunk_path: chunkPath
       });
 
-      // Upload do chunk para o storage (usando MIME type permitido)
+      // Upload do chunk para o storage (usando MIME type correto)
       const { error: uploadError } = await supabase.storage
         .from(uploadInfo.bucket)
         .upload(chunkPath, chunkBuffer, {
-          contentType: 'application/octet-stream', // Binário genérico
+          contentType: uploadInfo.file_type, // Usar o MIME type do arquivo original
           upsert: true,
           cacheControl: '0' // Não cachear chunks temporários
         });
