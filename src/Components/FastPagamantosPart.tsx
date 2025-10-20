@@ -17,40 +17,28 @@ import { PiBarcodeBold } from "react-icons/pi";
 import { useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { useUser } from "@supabase/auth-helpers-react";
-import { useSmartUpload } from '@/hooks/useSmartUpload';
-import { useBackgroundUpload } from '@/hooks/useBackgroundUpload';
-import { UploadProgress } from './UploadProgress';
+import { useFastUpload } from '@/hooks/useFastUpload';
+import { FastUploadProgress } from './FastUploadProgress';
 import { toast } from 'sonner';
 
 /**
- * Componente de pagamento INTELIGENTE que escolhe automaticamente:
- * 1. Upload normal para arquivos pequenos (usuário fica na página)
- * 2. Upload em background para arquivos grandes (usuário pode ir para checkout)
+ * Componente de pagamento com upload SUPER RÁPIDO
+ * 
+ * Características:
+ * - Upload inteligente baseado no tamanho do arquivo
+ * - Arquivos pequenos: Upload direto (sem chunks)
+ * - Arquivos médios/grandes: Chunks otimizados
+ * - Interface limpa e progresso em tempo real
  */
 
-export const SmartPagamantosPart = () => {
+export const FastPagamantosPart = () => {
   const user = useUser();
-  const { produtos, selectedDurationGlobal, formData, updateFormData } = useCart();
-  const duration = "2";
+  const { produtos, formData, updateFormData } = useCart();
   
-  // Hooks para upload
-  const smartUpload = useSmartUpload({
+  // Hook de upload rápido
+  const { uploadFile, progress: uploadProgress, isUploading, error: uploadError } = useFastUpload({
     onProgress: (progress) => {
-      console.log(`📊 Upload normal (${progress.strategy}): ${progress.percentage}%`);
-    }
-  });
-
-  const backgroundUpload = useBackgroundUpload({
-    onProgress: (progress) => {
-      console.log(`📊 Upload background (${progress.strategy}): ${progress.percentage}%`);
-    },
-    onComplete: (result) => {
-      console.log('✅ Upload background concluído:', result);
-      toast.success('Upload concluído em background!');
-    },
-    onError: (error) => {
-      console.error('❌ Erro no upload background:', error);
-      toast.error(`Erro no upload: ${error.error}`);
+      console.log(`📊 Upload progress: ${progress.percentage}%`);
     }
   });
 
@@ -58,8 +46,15 @@ export const SmartPagamantosPart = () => {
   const [isHydrated, setIsHydrated] = useState(false);
   const [carregando, setCarregando] = useState(false);
   const [erro, setErro] = useState("");
-  const [uploadMode, setUploadMode] = useState<'normal' | 'background' | null>(null);
-  const [backgroundUploadId, setBackgroundUploadId] = useState<string | null>(null);
+  const [openAccordion, setOpenAccordion] = useState<"fisica" | "juridica" | null>(null);
+  const [imageUrl, setImageUrl] = useState<string | null>(
+    formData.selectedImage instanceof File ? formData.previewUrl : (formData.selectedImage || null)
+  );
+
+  // Controlar hidratação
+  useEffect(() => {
+    setIsHydrated(true);
+  }, []);
 
   // Preencher automaticamente os campos
   useEffect(() => {
@@ -71,26 +66,6 @@ export const SmartPagamantosPart = () => {
       setOpenAccordion("juridica");
     }
   }, [formData, isHydrated]);
-
-  // Inicializar Service Worker
-  useEffect(() => {
-    const initServiceWorker = async () => {
-      await backgroundUpload.initialize();
-    };
-    
-    initServiceWorker();
-  }, []);
-
-  // Controlar hidratação
-  useEffect(() => {
-    setIsHydrated(true);
-  }, []);
-
-  // Estados do formulário
-  const [openAccordion, setOpenAccordion] = useState<"fisica" | "juridica" | null>(null);
-  const [imageUrl, setImageUrl] = useState<string | null>(
-    formData.selectedImage instanceof File ? formData.previewUrl : (formData.selectedImage || null)
-  );
 
   // Cálculos de preço
   const calcularPrecoComDesconto = (item: any) => {
@@ -152,37 +127,17 @@ export const SmartPagamantosPart = () => {
 
       // Verificar se é um arquivo para upload
       if (artData instanceof File) {
-        const fileSizeMB = artData.size / (1024 * 1024);
+        console.log('🚀 Iniciando upload rápido...');
         
-        // Decidir estratégia baseada no tamanho do arquivo
-        if (fileSizeMB <= 15) {
-          // Arquivo pequeno/médio - upload normal (usuário espera)
-          console.log('🚀 Usando upload normal para arquivo pequeno');
-          setUploadMode('normal');
-          
-          const uploadResult = await smartUpload.uploadFile(artData, 'arte-campanhas');
-          
-          if (!uploadResult) {
-            throw new Error(smartUpload.error || 'Erro ao fazer upload do arquivo');
-          }
-          
-          publicUrl = uploadResult.public_url;
-          
-        } else {
-          // Arquivo grande - upload em background (usuário pode ir para checkout)
-          console.log('🚀 Usando upload em background para arquivo grande');
-          setUploadMode('background');
-          
-          // Iniciar upload em background
-          const uploadId = await backgroundUpload.startBackgroundUpload(artData, 'arte-campanhas');
-          setBackgroundUploadId(uploadId);
-          
-          // Para arquivos grandes, criar um placeholder e continuar para checkout
-          // O upload continuará em background e será processado pelo Service Worker
-          publicUrl = `background://${uploadId}`;
-          
-          toast.info('Upload iniciado em background. Você pode continuar para o checkout.');
+        const uploadResult = await uploadFile(artData, 'arte-campanhas');
+        
+        if (!uploadResult) {
+          throw new Error(uploadError || 'Erro ao fazer upload do arquivo');
         }
+        
+        publicUrl = uploadResult.public_url;
+        toast.success('Upload concluído com sucesso!');
+        
       } else {
         // URL já existente
         publicUrl = artData;
@@ -198,7 +153,7 @@ export const SmartPagamantosPart = () => {
           desconto: (p as any).desconto || 0
         })),
         total,
-        duracao: duration,
+        duracao: "2",
         arte_campanha_url: publicUrl,
         status: 'pending'
       };
@@ -270,7 +225,6 @@ export const SmartPagamantosPart = () => {
     }
   };
 
-  // Renderizar interface
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-4xl mx-auto px-4">
@@ -377,13 +331,13 @@ export const SmartPagamantosPart = () => {
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Email *
                 </label>
-                    <input
-                      type="email"
-                      value={(formData as any).email || ""}
-                      onChange={(e) => updateFormData({ email: e.target.value } as any)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      required
-                    />
+                <input
+                  type="email"
+                  value={(formData as any).email || ""}
+                  onChange={(e) => updateFormData({ email: e.target.value } as any)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  required
+                />
               </div>
 
               <div>
@@ -498,24 +452,15 @@ export const SmartPagamantosPart = () => {
         </div>
 
         {/* Progresso do upload */}
-        <UploadProgress
-          progress={uploadMode === 'normal' ? smartUpload.progress : {
-            chunksUploaded: 0,
-            totalChunks: 0,
-            percentage: backgroundUpload.uploads.find(u => u.uploadId === backgroundUploadId)?.percentage || 0,
-            phase: backgroundUpload.uploads.find(u => u.uploadId === backgroundUploadId)?.status === 'completed' ? 'completed' : 
-                  backgroundUpload.uploads.find(u => u.uploadId === backgroundUploadId)?.status === 'error' ? 'error' : 'uploading',
-            fileSizeMB: formData.selectedImage instanceof File ? formData.selectedImage.size / (1024 * 1024) : 0,
-            currentSpeed: undefined,
-            estimatedTime: undefined
-          }}
-          isUploading={carregando || smartUpload.isUploading || !!backgroundUploadId}
-          error={erro || smartUpload.error || backgroundUpload.uploads.find(u => u.uploadId === backgroundUploadId)?.error || null}
+        <FastUploadProgress
+          progress={uploadProgress}
+          isUploading={isUploading}
+          error={uploadError || (isUploading ? null : erro)}
           fileName={formData.selectedImage instanceof File ? formData.selectedImage.name : undefined}
         />
 
         {/* Mensagem de erro */}
-        {!carregando && !smartUpload.isUploading && !backgroundUploadId && erro && (
+        {!isUploading && erro && !uploadError && (
           <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700 text-sm mb-6">
             ❌ {erro}
           </div>

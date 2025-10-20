@@ -18,8 +18,8 @@ import { PiBarcodeBold } from "react-icons/pi";
 import { useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { useUser } from "@supabase/auth-helpers-react";
-import { useSmartUpload } from '@/hooks/useSmartUpload';
-import { UploadProgress } from './UploadProgress';
+import { useFastUpload } from '@/hooks/useFastUpload';
+import { FastUploadProgress } from './FastUploadProgress';
 import { toast } from 'sonner';
 // Upload otimizado com compressão (sem limitações do Next.js)
 
@@ -67,11 +67,11 @@ export const PagamantosPart = () => {
   // Duração fixa igual ao padrão do carrinho
   const duration = "2";
   
-  // Hook para upload inteligente (escolhe automaticamente a melhor estratégia)
-  const { uploadFile, progress: uploadProgress, isUploading, error: uploadError, currentStrategy } = useSmartUpload({
+  // Hook para upload super rápido
+  const { uploadFile, progress: uploadProgress, isUploading, error: uploadError } = useFastUpload({
     onProgress: (progress) => {
-      console.log(`📊 Progresso do upload (${progress.strategy}): ${progress.percentage}%`);
-      if (progress.strategy === 'chunked' && progress.totalChunks) {
+      console.log(`📊 Progresso do upload: ${progress.percentage}%`);
+      if (progress.totalChunks) {
         console.log(`📦 Chunks: ${progress.chunksUploaded}/${progress.totalChunks}`);
       }
     }
@@ -835,7 +835,7 @@ export const PagamantosPart = () => {
         </div>
 
         {/* Progresso do upload */}
-        <UploadProgress
+        <FastUploadProgress
           progress={uploadProgress}
           isUploading={isUploading}
           error={uploadError || (isUploading ? null : erro)}
