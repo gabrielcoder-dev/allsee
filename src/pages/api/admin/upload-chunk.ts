@@ -1,29 +1,45 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { createClient } from '@supabase/supabase-js';
-import { inflate } from 'zlib';
-import { promisify } from 'util';
-
-const inflateAsync = promisify(inflate);
+import formidable, { File as FormidableFile } from 'formidable';
+import { promises as fs } from 'fs';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
-const supabase = createClient(supabaseUrl, supabaseKey);
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
 
-// Função para descomprimir chunks comprimidos
-const decompressChunk = async (compressedData: string): Promise<string> => {
-  try {
-    // Converter base64 para Buffer
-    const compressedBuffer = Buffer.from(compressedData, 'base64');
-    
-    // Descomprimir usando gzip
-    const decompressedBuffer = await inflateAsync(compressedBuffer);
-    
-    // Converter de volta para base64
-    return decompressedBuffer.toString('base64');
-  } catch (error) {
-    console.warn('⚠️ Falha na descompressão, usando chunk original:', error);
-    return compressedData; // Fallback para chunk original
-  }
+const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+// Mapa de uploads em progresso
+const uploadsInProgress = new Map<string, {
+  file_path: string;
+  total_chunks: number;
+  chunks_received: Set<number>;
+  file_type: string;
+  bucket: string;
+}>();
+
+// Helper para fazer parse de FormData
+const parseFormData = (req: NextApiRequest): Promise<{ fields: any; files: any }> => {
+  return new Promise((resolve, reject) => {
+    const form = formidable({
+      maxFileSize: 2 * 1024 * 1024, // 2MB por chunk
+      keepExtensions: true,
+      multiples: false
+    });
+
+    form.parse(req, (err, fields, files) => {
+      if (err) {
+        reject(err);
+        return;
+      }
+      
+      const cleanFields: any = {};
+      for (const key in fields) {
+        cleanFields[key] = Array.isArray(fields[key]) ? fields[key][0] : fields[key];
+      }
+      
+      resolve({ fields: cleanFields, files });
+    });
+  });
 };
 
 export default async function handler(
@@ -35,283 +51,233 @@ export default async function handler(
   }
 
   try {
-    const { arte_campanha_id, chunk_index, chunk_data, total_chunks } = req.body;
+    const { fields, files } = await parseFormData(req);
     
-    if (!arte_campanha_id || chunk_index === undefined || !chunk_data || !total_chunks) {
+    const action = fields.action;
+    const upload_id = fields.upload_id;
+    const chunk_index = fields.chunk_index ? parseInt(fields.chunk_index) : undefined;
+    const total_chunks = fields.total_chunks ? parseInt(fields.total_chunks) : undefined;
+    const file_type = fields.file_type;
+    const bucket = fields.bucket || 'arte-campanhas';
+    const chunkFile = Array.isArray(files.chunk_file) ? files.chunk_file[0] : files.chunk_file;
+
+    if (!action) {
       return res.status(400).json({ 
         success: false, 
-        error: 'Campos obrigatórios faltando para chunk' 
+        error: 'action é obrigatório' 
       });
     }
 
-    console.log(`📦 Recebendo chunk ${chunk_index + 1}/${total_chunks} para arte ${arte_campanha_id}:`, {
-      chunkSize: Math.round(chunk_data.length / (1024 * 1024)) + 'MB',
-      chunkIndex: chunk_index,
-      totalChunks: total_chunks
-    });
-
-    // Descomprimir chunk se necessário
-    let decompressedChunkData = chunk_data;
-    try {
-      decompressedChunkData = await decompressChunk(chunk_data);
-      const originalSize = chunk_data.length;
-      const decompressedSize = decompressedChunkData.length;
-      const compressionRatio = ((originalSize - decompressedSize) / originalSize * 100).toFixed(1);
-      
-      console.log(`🗜️ Chunk descomprimido:`, {
-        tamanhoOriginal: Math.round(originalSize / 1024) + 'KB',
-        tamanhoDescomprimido: Math.round(decompressedSize / 1024) + 'KB',
-        reducao: compressionRatio + '%'
-      });
-    } catch (error) {
-      console.warn('⚠️ Usando chunk sem descompressão:', error);
-    }
-
-    // Validar chunk antes de salvar
-    if (!decompressedChunkData || decompressedChunkData.length === 0) {
-      console.error('❌ Chunk vazio recebido:', { chunk_index, total_chunks });
-      return res.status(400).json({ 
-        success: false, 
-        error: 'Chunk vazio recebido' 
-      });
-    }
-
-    // Usar upsert para substituir chunks existentes (evita erro de chave duplicada)
-    const { error: chunkError } = await supabase
-      .from('chunks_temp')
-      .upsert({
-        arte_id: arte_campanha_id,
-        chunk_index: chunk_index,
-        chunk_data: decompressedChunkData,
-        total_chunks: total_chunks,
-        created_at: new Date().toISOString()
-      }, {
-        onConflict: 'arte_id,chunk_index'
-      });
-
-    if (chunkError) {
-      console.error('❌ Erro ao salvar chunk:', chunkError);
-      return res.status(500).json({ 
-        success: false, 
-        error: `Erro ao salvar chunk: ${chunkError.message}` 
-      });
-    }
-
-    // Se é o último chunk, reconstruir e salvar
-    if (chunk_index === total_chunks - 1) {
-      console.log('🔧 Último chunk recebido - iniciando reconstrução...');
-      
-      // Aguardar um pouco para garantir que todos os chunks foram processados
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Buscar todos os chunks do banco com retry otimizado
-      let chunks;
-      let attempts = 0;
-      const maxAttempts = 3; // Reduzido de 5 para 3
-      
-      while (attempts < maxAttempts) {
-        const { data: fetchedChunks, error: fetchError } = await supabase
-          .from('chunks_temp')
-          .select('chunk_index, chunk_data')
-          .eq('arte_id', arte_campanha_id)
-          .order('chunk_index')
-          .limit(1000); // Limite para evitar queries muito grandes
-
-        if (fetchError) {
-          console.error(`❌ Erro ao buscar chunks (tentativa ${attempts + 1}):`, fetchError);
-          attempts++;
-          if (attempts >= maxAttempts) {
-            return res.status(500).json({ 
-              success: false, 
-              error: 'Erro ao buscar chunks após múltiplas tentativas' 
-            });
-          }
-          await new Promise(resolve => setTimeout(resolve, 1000)); // Reduzido de 2s para 1s
-          continue;
-        }
-
-        chunks = fetchedChunks;
-        break;
-      }
-
-      if (!chunks) {
-        return res.status(500).json({ 
+    // AÇÃO: INICIAR UPLOAD
+    if (action === 'init') {
+      if (!file_type || !total_chunks) {
+        return res.status(400).json({ 
           success: false, 
-          error: 'Não foi possível buscar chunks' 
+          error: 'file_type e total_chunks são obrigatórios' 
         });
       }
 
-      console.log(`📊 Chunks encontrados: ${chunks.length}/${total_chunks}`, {
-        chunksReceived: chunks.map(c => c.chunk_index).sort(),
-        expectedRange: `0-${total_chunks - 1}`
+      const uploadId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+      const ext = file_type.split('/')[1] || 'bin';
+      const filePath = `temp/${uploadId}.${ext}`;
+
+      uploadsInProgress.set(uploadId, {
+        file_path: filePath,
+        total_chunks,
+        chunks_received: new Set(),
+        file_type,
+        bucket
       });
+
+      console.log(`🚀 Upload iniciado:`, {
+        upload_id: uploadId,
+        file_path: filePath,
+        total_chunks,
+        file_type
+      });
+
+      return res.status(200).json({ 
+        success: true, 
+        upload_id: uploadId,
+        file_path: filePath
+      });
+    }
+
+    // AÇÃO: ENVIAR CHUNK
+    if (action === 'chunk') {
+      if (!upload_id || chunk_index === undefined || !chunkFile) {
+        return res.status(400).json({ 
+          success: false, 
+          error: 'upload_id, chunk_index e chunk_file são obrigatórios' 
+        });
+      }
+
+      const uploadInfo = uploadsInProgress.get(upload_id);
+      if (!uploadInfo) {
+        return res.status(404).json({ 
+          success: false, 
+          error: 'Upload não encontrado' 
+        });
+      }
+
+      const chunkBuffer = await fs.readFile(chunkFile.filepath);
+      const chunkPath = `${uploadInfo.file_path}.chunk.${chunk_index}`;
+
+      // Validar tamanho do chunk
+      const chunkSizeMB = chunkBuffer.length / (1024 * 1024);
+      if (chunkSizeMB > 2) {
+        try { await fs.unlink(chunkFile.filepath); } catch {}
+        return res.status(413).json({ 
+          success: false, 
+          error: `Chunk muito grande: ${chunkSizeMB.toFixed(2)}MB` 
+        });
+      }
+
+      console.log(`📦 Recebendo chunk ${chunk_index + 1}/${uploadInfo.total_chunks}:`, {
+        upload_id,
+        chunk_size_mb: chunkSizeMB.toFixed(2),
+        file_type: uploadInfo.file_type
+      });
+
+      // Upload do chunk com MIME type genérico (sempre aceito)
+      const { error: uploadError } = await supabase.storage
+        .from(uploadInfo.bucket)
+        .upload(chunkPath, chunkBuffer, {
+          contentType: 'application/octet-stream', // Sempre usar binário genérico
+          upsert: true,
+          cacheControl: '0'
+        });
+
+      // Limpar arquivo temporário
+      try { await fs.unlink(chunkFile.filepath); } catch {}
+
+      if (uploadError) {
+        console.error('❌ Erro ao fazer upload do chunk:', uploadError);
+        return res.status(500).json({ 
+          success: false, 
+          error: `Erro ao fazer upload do chunk: ${uploadError.message}` 
+        });
+      }
+
+      uploadInfo.chunks_received.add(chunk_index);
+      console.log(`✅ Chunk ${chunk_index + 1}/${uploadInfo.total_chunks} salvo`);
+
+      return res.status(200).json({ 
+        success: true, 
+        message: `Chunk ${chunk_index + 1}/${uploadInfo.total_chunks} recebido`,
+        chunks_received: uploadInfo.chunks_received.size,
+        total_chunks: uploadInfo.total_chunks
+      });
+    }
+
+    // AÇÃO: FINALIZAR UPLOAD
+    if (action === 'finalize') {
+      if (!upload_id) {
+        return res.status(400).json({ 
+          success: false, 
+          error: 'upload_id é obrigatório' 
+        });
+      }
+
+      const uploadInfo = uploadsInProgress.get(upload_id);
+      if (!uploadInfo) {
+        return res.status(404).json({ 
+          success: false, 
+          error: 'Upload não encontrado' 
+        });
+      }
 
       // Verificar se todos os chunks foram recebidos
-      if (chunks.length !== total_chunks) {
-        const missingChunks = [];
-        for (let i = 0; i < total_chunks; i++) {
-          if (!chunks.find(c => c.chunk_index === i)) {
-            missingChunks.push(i);
-          }
-        }
+      if (uploadInfo.chunks_received.size !== uploadInfo.total_chunks) {
+        return res.status(400).json({ 
+          success: false, 
+          error: `Chunks faltando: ${uploadInfo.total_chunks - uploadInfo.chunks_received.size}` 
+        });
+      }
+
+      console.log('🔧 Montando arquivo final...');
+
+      // Baixar e concatenar todos os chunks
+      const chunkBuffers: Buffer[] = [];
+      
+      for (let i = 0; i < uploadInfo.total_chunks; i++) {
+        const chunkPath = `${uploadInfo.file_path}.chunk.${i}`;
         
-        console.error(`❌ Chunks faltando:`, {
-          recebidos: chunks.length,
-          esperados: total_chunks,
-          chunksFaltando: missingChunks,
-          chunksRecebidos: chunks.map(c => c.chunk_index).sort()
-        });
-        
-        return res.status(400).json({ 
-          success: false, 
-          error: `Chunks faltando: ${missingChunks.join(', ')}. Recebidos: ${chunks.length}/${total_chunks}` 
-        });
-      }
+        const { data: chunkData, error: downloadError } = await supabase.storage
+          .from(uploadInfo.bucket)
+          .download(chunkPath);
 
-      // Verificar se todos os chunks têm dados válidos
-      const invalidChunks = chunks.filter(c => !c.chunk_data || c.chunk_data.length === 0);
-      if (invalidChunks.length > 0) {
-        console.error('❌ Chunks com dados inválidos:', invalidChunks.map(c => c.chunk_index));
-        return res.status(400).json({ 
-          success: false, 
-          error: `Chunks com dados inválidos: ${invalidChunks.map(c => c.chunk_index).join(', ')}` 
-        });
-      }
-
-      // Reconstruir arquivo completo na ordem correta
-      const sortedChunks = chunks.sort((a, b) => a.chunk_index - b.chunk_index);
-      const fullData = sortedChunks.map(c => c.chunk_data).join('');
-      
-      // Verificar se a reconstrução está correta
-      const totalChunkSize = sortedChunks.reduce((sum, chunk) => sum + chunk.chunk_data.length, 0);
-      const reconstructionSize = fullData.length;
-      const isReconstructionCorrect = totalChunkSize === reconstructionSize;
-      
-      console.log('💾 Salvando arquivo completo:', {
-        arteId: arte_campanha_id,
-        totalChunks: sortedChunks.length,
-        sizeMB: Math.round(fullData.length / (1024 * 1024)),
-        sizeKB: Math.round(fullData.length / 1024),
-        firstChunkSize: Math.round(sortedChunks[0]?.chunk_data?.length / 1024) + 'KB',
-        lastChunkSize: Math.round(sortedChunks[sortedChunks.length - 1]?.chunk_data?.length / 1024) + 'KB',
-        reconstructionCheck: isReconstructionCorrect ? '✅ CORRETO' : '❌ ERRO',
-        totalChunkSize: totalChunkSize,
-        reconstructionSize: reconstructionSize,
-        chunkSizes: sortedChunks.map((chunk, i) => ({
-          chunk: i + 1,
-          sizeKB: Math.round(chunk.chunk_data.length / 1024),
-          index: chunk.chunk_index
-        }))
-      });
-      
-      if (!isReconstructionCorrect) {
-        console.error('❌ ERRO CRÍTICO: Reconstrução do arquivo falhou!');
-        console.error(`Tamanho calculado dos chunks: ${totalChunkSize} bytes`);
-        console.error(`Tamanho do arquivo reconstruído: ${reconstructionSize} bytes`);
-        return res.status(400).json({ 
-          success: false, 
-          error: 'Erro na reconstrução do arquivo: tamanhos não coincidem' 
-        });
-      }
-
-      // Verificar se o arquivo reconstruído é válido
-      if (!fullData || fullData.length === 0) {
-        console.error('❌ Arquivo reconstruído está vazio');
-        return res.status(400).json({ 
-          success: false, 
-          error: 'Arquivo reconstruído está vazio' 
-        });
-      }
-
-      // Salvar no banco com retry
-      let updatedRecord;
-      attempts = 0;
-      
-      while (attempts < maxAttempts) {
-        const { data: result, error: updateError } = await supabase
-          .from('arte_campanha')
-          .update({ caminho_imagem: fullData })
-          .eq('id', arte_campanha_id)
-          .select('id, id_order, id_user')
-          .single();
-
-        if (updateError) {
-          console.error(`❌ Erro ao salvar arquivo completo (tentativa ${attempts + 1}):`, updateError);
-          attempts++;
-          if (attempts >= maxAttempts) {
-            return res.status(500).json({ 
-              success: false, 
-              error: 'Erro ao salvar arquivo completo após múltiplas tentativas' 
-            });
-          }
-          await new Promise(resolve => setTimeout(resolve, 2000));
-          continue;
+        if (downloadError || !chunkData) {
+          console.error(`❌ Erro ao baixar chunk ${i}:`, downloadError);
+          return res.status(500).json({ 
+            success: false, 
+            error: `Erro ao baixar chunk ${i}` 
+          });
         }
 
-        updatedRecord = result;
-        break;
+        const arrayBuffer = await chunkData.arrayBuffer();
+        chunkBuffers.push(Buffer.from(arrayBuffer));
       }
 
-      if (!updatedRecord) {
+      // Concatenar chunks
+      const finalBuffer = Buffer.concat(chunkBuffers);
+      const finalPath = uploadInfo.file_path.replace('temp/', '');
+
+      console.log('💾 Salvando arquivo final...');
+
+      // Upload do arquivo final com MIME type correto
+      const { error: finalUploadError } = await supabase.storage
+        .from(uploadInfo.bucket)
+        .upload(finalPath, finalBuffer, {
+          contentType: uploadInfo.file_type, // Usar MIME type correto no arquivo final
+          upsert: true,
+          cacheControl: '3600'
+        });
+
+      if (finalUploadError) {
+        console.error('❌ Erro ao fazer upload do arquivo final:', finalUploadError);
         return res.status(500).json({ 
           success: false, 
-          error: 'Não foi possível salvar arquivo completo' 
+          error: `Erro ao fazer upload do arquivo final: ${finalUploadError.message}` 
         });
       }
 
-      // Limpar chunks temporários de forma otimizada (não crítico se falhar)
+      // Obter URL pública
+      const { data: publicUrlData } = supabase.storage
+        .from(uploadInfo.bucket)
+        .getPublicUrl(finalPath);
+
+      // Limpar chunks temporários
       try {
-        // Usar delete em lote para melhor performance
-        const { error: deleteError } = await supabase
-          .from('chunks_temp')
-          .delete()
-          .eq('arte_id', arte_campanha_id)
-          .limit(1000); // Limite para evitar operações muito grandes
-          
-        if (deleteError) {
-          console.warn('⚠️ Não foi possível limpar chunks temporários:', deleteError);
-        } else {
-          console.log('🧹 Chunks temporários limpos com sucesso');
+        const chunksToDelete = [];
+        for (let i = 0; i < uploadInfo.total_chunks; i++) {
+          chunksToDelete.push(`${uploadInfo.file_path}.chunk.${i}`);
         }
+        await supabase.storage.from(uploadInfo.bucket).remove(chunksToDelete);
       } catch (cleanupError) {
         console.warn('⚠️ Erro na limpeza de chunks:', cleanupError);
       }
 
-      console.log('✅ Arquivo completo salvo com sucesso:', {
-        id: updatedRecord.id,
-        sizeMB: Math.round(fullData.length / (1024 * 1024)),
-        totalChunks: sortedChunks.length
+      uploadsInProgress.delete(upload_id);
+
+      console.log('✅ Upload finalizado:', {
+        file_path: finalPath,
+        public_url: publicUrlData.publicUrl
       });
 
       return res.status(200).json({ 
         success: true, 
-        message: 'Arquivo completo salvo com sucesso',
-        arte_campanha_id: updatedRecord.id,
-        totalChunks: sortedChunks.length,
-        fileSizeMB: Math.round(fullData.length / (1024 * 1024))
-      });
-    } else {
-      // Chunk intermediário - contar chunks recebidos
-      const { data: receivedChunks, error: countError } = await supabase
-        .from('chunks_temp')
-        .select('chunk_index')
-        .eq('arte_id', arte_campanha_id);
-
-      if (countError) {
-        console.error('❌ Erro ao contar chunks:', countError);
-        return res.status(500).json({ 
-          success: false, 
-          error: 'Erro ao contar chunks' 
-        });
-      }
-
-      return res.status(200).json({ 
-        success: true, 
-        message: `Chunk ${chunk_index + 1}/${total_chunks} recebido`,
-        receivedChunks: receivedChunks.length,
-        totalChunks: total_chunks
+        message: 'Upload finalizado com sucesso',
+        file_path: finalPath,
+        public_url: publicUrlData.publicUrl,
+        file_size_mb: Math.round(finalBuffer.length / (1024 * 1024))
       });
     }
+
+    return res.status(400).json({ 
+      success: false, 
+      error: 'Ação inválida' 
+    });
 
   } catch (error: any) {
     console.error("❌ Erro no endpoint upload-chunk:", error);
@@ -324,10 +290,7 @@ export default async function handler(
 
 export const config = {
   api: {
-    bodyParser: {
-      sizeLimit: '10mb', // 8MB por chunk + overhead base64
-      timeout: 10000, // 10 segundos para chunks (mais que suficiente para 5s do cliente)
-    },
+    bodyParser: false,
     responseLimit: '1mb',
   },
 };

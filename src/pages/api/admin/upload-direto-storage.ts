@@ -204,14 +204,26 @@ export default async function handler(
         upload_id,
         chunk_size_mb: chunkSizeMB.toFixed(2),
         chunk_size_kb: Math.round(chunkBuffer.length / 1024),
-        chunk_path: chunkPath
+        chunk_path: chunkPath,
+        file_type: uploadInfo.file_type,
+        mime_type_original: chunkFile.mimetype
       });
 
-      // Upload do chunk para o storage (usando MIME type correto)
+      // Upload do chunk para o storage (usando MIME type genérico aceito)
+      let contentType = 'application/octet-stream';
+      
+      // Se for imagem, usar o MIME type original
+      if (uploadInfo.file_type.startsWith('image/')) {
+        contentType = uploadInfo.file_type;
+      }
+      // Para vídeos e outros arquivos, usar binário genérico
+      
+      console.log(`🔧 Usando MIME type: ${contentType} (original: ${uploadInfo.file_type})`);
+
       const { error: uploadError } = await supabase.storage
         .from(uploadInfo.bucket)
         .upload(chunkPath, chunkBuffer, {
-          contentType: uploadInfo.file_type, // Usar o MIME type do arquivo original
+          contentType: contentType,
           upsert: true,
           cacheControl: '0' // Não cachear chunks temporários
         });

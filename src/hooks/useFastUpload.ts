@@ -157,7 +157,7 @@ export const useFastUpload = (options: UseFastUploadOptions = {}) => {
     });
 
     // Iniciar upload no servidor
-    const initResponse = await fetch('/api/admin/upload-direto-storage', {
+    const initResponse = await fetch('/api/admin/upload-chunk', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -188,9 +188,11 @@ export const useFastUpload = (options: UseFastUploadOptions = {}) => {
       formData.append('upload_id', uploadId);
       formData.append('chunk_index', chunkIndex.toString());
       formData.append('total_chunks', chunks.length.toString());
-      formData.append('chunk_file', chunkBlob, `chunk_${chunkIndex}`);
+      // Criar um novo Blob com o MIME type correto
+      const chunkWithCorrectMime = new Blob([chunkBlob], { type: file.type });
+      formData.append('chunk_file', chunkWithCorrectMime, `chunk_${chunkIndex}`);
 
-      const response = await fetch('/api/admin/upload-direto-storage', {
+      const response = await fetch('/api/admin/upload-chunk', {
         method: 'POST',
         body: formData
       });
@@ -222,7 +224,7 @@ export const useFastUpload = (options: UseFastUploadOptions = {}) => {
     // Finalizar upload
     updateProgress({ phase: 'finalizing', percentage: 95 });
 
-    const finalizeResponse = await fetch('/api/admin/upload-direto-storage', {
+    const finalizeResponse = await fetch('/api/admin/upload-chunk', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
