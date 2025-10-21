@@ -63,12 +63,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
 
     // 🧩 Extrair external_reference (orderId)
     const externalReference = payment.external_reference;
+    console.log("🔍 External reference encontrado:", {
+      value: externalReference,
+      type: typeof externalReference,
+      isNull: externalReference === null,
+      isUndefined: externalReference === undefined,
+      isEmpty: externalReference === '',
+      length: externalReference?.toString().length
+    });
+
     if (!externalReference) {
       console.warn("⚠️ Pagamento sem external_reference");
       return sendResponse(200, { success: false, message: "Sem referência externa" });
     }
 
-    const orderId = externalReference.toString(); // Suporte a UUID (string)
+    const orderId = externalReference.toString();
     console.log("🧾 orderId (external_reference):", orderId);
 
     // 📊 Mapear status do Mercado Pago → status interno
@@ -87,18 +96,47 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
 
     console.log(`📈 Status do pagamento: ${paymentStatus} → ${internalStatus}`);
 
+    // 🔍 Verificar se a order existe antes de atualizar
+    console.log(`🔍 Verificando se order ${orderId} existe...`);
+    const { data: existingOrder, error: checkError } = await supabaseServer
+      .from("order")
+      .select("id, status")
+      .eq("id", orderId)
+      .single();
+
+    if (checkError) {
+      console.error("❌ Erro ao verificar order:", checkError);
+      return sendResponse(200, { success: false, message: "Erro ao verificar order" });
+    }
+
+    if (!existingOrder) {
+      console.error(`❌ Order ${orderId} não encontrada no banco`);
+      return sendResponse(200, { success: false, message: `Order ${orderId} não encontrada` });
+    }
+
+    console.log(`✅ Order encontrada:`, {
+      id: existingOrder.id,
+      status_atual: existingOrder.status
+    });
+
     // 🧮 Atualizar status no Supabase
-    const { error: updateError } = await supabaseServer
+    console.log(`🔄 Atualizando order ${orderId} para status: ${internalStatus}`);
+    const { data: updatedOrder, error: updateError } = await supabaseServer
       .from("order")
       .update({ status: internalStatus })
-      .eq("id", orderId);
+      .eq("id", orderId)
+      .select("id, status")
+      .single();
 
     if (updateError) {
       console.error("❌ Erro ao atualizar status no Supabase:", updateError);
       return sendResponse(200, { success: false, message: "Erro ao atualizar order" });
     }
 
-    console.log("✅ Status da order atualizado com sucesso!");
+    console.log("✅ Status da order atualizado com sucesso:", {
+      id: updatedOrder.id,
+      status_novo: updatedOrder.status
+    });
     return sendResponse(200, { success: true, message: "Order atualizada com sucesso" });
   } catch (error: any) {
     console.error("❌ Erro inesperado no webhook:", error);
