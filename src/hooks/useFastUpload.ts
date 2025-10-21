@@ -157,7 +157,7 @@ export const useFastUpload = (options: UseFastUploadOptions = {}) => {
     });
 
     // Iniciar upload no servidor
-    const initResponse = await fetch('/api/admin/upload-chunk', {
+    const initResponse = await fetch('/api/admin/upload-chunk-test', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -197,7 +197,7 @@ export const useFastUpload = (options: UseFastUploadOptions = {}) => {
 
         console.log(`📤 Enviando chunk ${chunkIndex + 1}/${chunks.length} (tentativa ${retryCount + 1})`);
 
-        const response = await fetch('/api/admin/upload-chunk', {
+        const response = await fetch('/api/admin/upload-chunk-test', {
           method: 'POST',
           body: formData
         });

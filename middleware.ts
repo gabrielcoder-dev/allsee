@@ -10,7 +10,7 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Configurações específicas para upload de arquivos grandes
-  if (pathname === '/api/admin/criar-arte-campanha') {
+  if (pathname === '/api/admin/criar-arte-campanha' || pathname === '/api/admin/upload-chunk') {
     const response = NextResponse.next();
     response.headers.set('Access-Control-Allow-Origin', '*');
     response.headers.set('Access-Control-Allow-Methods', 'POST, OPTIONS');
