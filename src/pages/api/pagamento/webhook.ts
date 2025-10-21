@@ -79,6 +79,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
 
     const orderId = externalReference.toString();
     console.log("🧾 orderId (external_reference):", orderId);
+    console.log("🔍 Tipo do orderId:", typeof orderId);
+    console.log("🔍 É UUID?", orderId.includes('-') && orderId.length === 36);
 
     // 📊 Mapear status do Mercado Pago → status interno
     const statusMapping: Record<string, string> = {
@@ -98,11 +100,42 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
 
     // 🔍 Verificar se a order existe antes de atualizar
     console.log(`🔍 Verificando se order ${orderId} existe...`);
-    const { data: existingOrder, error: checkError } = await supabaseServer
+    
+    // Tentar buscar por UUID primeiro, depois por número se necessário
+    let existingOrder = null;
+    let checkError = null;
+    
+    // Primeira tentativa: buscar diretamente pelo orderId (UUID ou string)
+    const { data: orderData, error: orderError } = await supabaseServer
       .from("order")
       .select("id, status")
       .eq("id", orderId)
       .single();
+    
+    if (!orderError && orderData) {
+      existingOrder = orderData;
+      console.log(`✅ Order encontrada por UUID/string:`, existingOrder);
+    } else {
+      // Segunda tentativa: se orderId for numérico, tentar como número
+      const numericOrderId = parseInt(orderId, 10);
+      if (!isNaN(numericOrderId)) {
+        console.log(`🔢 Tentando buscar por número: ${numericOrderId}`);
+        const { data: numericOrderData, error: numericOrderError } = await supabaseServer
+          .from("order")
+          .select("id, status")
+          .eq("id", numericOrderId)
+          .single();
+        
+        if (!numericOrderError && numericOrderData) {
+          existingOrder = numericOrderData;
+          console.log(`✅ Order encontrada por número:`, existingOrder);
+        } else {
+          checkError = numericOrderError;
+        }
+      } else {
+        checkError = orderError;
+      }
+    }
 
     if (checkError) {
       console.error("❌ Erro ao verificar order:", checkError);
@@ -121,10 +154,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
 
     // 🧮 Atualizar status no Supabase
     console.log(`🔄 Atualizando order ${orderId} para status: ${internalStatus}`);
+    
+    // Usar o ID correto (UUID ou número) para atualizar
+    const updateId = existingOrder.id;
     const { data: updatedOrder, error: updateError } = await supabaseServer
       .from("order")
       .update({ status: internalStatus })
-      .eq("id", orderId)
+      .eq("id", updateId)
       .select("id, status")
       .single();
 
