@@ -180,45 +180,94 @@ export const useFastUpload = (options: UseFastUploadOptions = {}) => {
 
     const uploadId = initResult.upload_id;
 
-    // Enviar chunks em paralelo
+    // Enviar chunks em paralelo com retry
     let chunksUploaded = 0;
-    const uploadChunk = async (chunkIndex: number, chunkBlob: Blob): Promise<void> => {
-      const formData = new FormData();
-      formData.append('action', 'chunk');
-      formData.append('upload_id', uploadId);
-      formData.append('chunk_index', chunkIndex.toString());
-      formData.append('total_chunks', chunks.length.toString());
-      // Criar um novo Blob com o MIME type correto
-      const chunkWithCorrectMime = new Blob([chunkBlob], { type: file.type });
-      formData.append('chunk_file', chunkWithCorrectMime, `chunk_${chunkIndex}`);
+    const uploadChunk = async (chunkIndex: number, chunkBlob: Blob, retryCount = 0): Promise<void> => {
+      const maxRetries = 3;
+      
+      try {
+        const formData = new FormData();
+        formData.append('action', 'chunk');
+        formData.append('upload_id', uploadId);
+        formData.append('chunk_index', chunkIndex.toString());
+        formData.append('total_chunks', chunks.length.toString());
+        // Criar um novo Blob com o MIME type correto
+        const chunkWithCorrectMime = new Blob([chunkBlob], { type: file.type });
+        formData.append('chunk_file', chunkWithCorrectMime, `chunk_${chunkIndex}`);
 
-      const response = await fetch('/api/admin/upload-chunk', {
-        method: 'POST',
-        body: formData
-      });
+        console.log(`📤 Enviando chunk ${chunkIndex + 1}/${chunks.length} (tentativa ${retryCount + 1})`);
 
-      if (!response.ok) {
-        throw new Error(`Erro ao enviar chunk ${chunkIndex}`);
+        const response = await fetch('/api/admin/upload-chunk', {
+          method: 'POST',
+          body: formData
+        });
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error(`❌ Erro no chunk ${chunkIndex}:`, {
+            status: response.status,
+            statusText: response.statusText,
+            error: errorText
+          });
+          
+          if (retryCount < maxRetries) {
+            console.log(`🔄 Tentando novamente chunk ${chunkIndex} (${retryCount + 1}/${maxRetries})`);
+            await new Promise(resolve => setTimeout(resolve, 1000 * (retryCount + 1))); // Backoff exponencial
+            return uploadChunk(chunkIndex, chunkBlob, retryCount + 1);
+          }
+          
+          throw new Error(`Erro ao enviar chunk ${chunkIndex}: ${response.status} ${response.statusText}`);
+        }
+
+        chunksUploaded++;
+        const percentage = Math.round((chunksUploaded / chunks.length) * 90);
+        updateProgress({
+          chunksUploaded,
+          percentage
+        });
+        
+        console.log(`✅ Chunk ${chunkIndex + 1}/${chunks.length} enviado com sucesso`);
+      } catch (error) {
+        console.error(`❌ Erro no chunk ${chunkIndex}:`, error);
+        
+        if (retryCount < maxRetries) {
+          console.log(`🔄 Tentando novamente chunk ${chunkIndex} (${retryCount + 1}/${maxRetries})`);
+          await new Promise(resolve => setTimeout(resolve, 1000 * (retryCount + 1))); // Backoff exponencial
+          return uploadChunk(chunkIndex, chunkBlob, retryCount + 1);
+        }
+        
+        throw error;
       }
-
-      chunksUploaded++;
-      const percentage = Math.round((chunksUploaded / chunks.length) * 90);
-      updateProgress({
-        chunksUploaded,
-        percentage
-      });
     };
 
     // Enviar chunks em lotes paralelos
-    for (let i = 0; i < chunks.length; i += parallelUploads) {
-      const batch = [];
-      
-      for (let j = 0; j < parallelUploads && (i + j) < chunks.length; j++) {
-        const chunkIndex = i + j;
-        batch.push(uploadChunk(chunkIndex, chunks[chunkIndex]));
-      }
+    try {
+      for (let i = 0; i < chunks.length; i += parallelUploads) {
+        const batch = [];
+        
+        for (let j = 0; j < parallelUploads && (i + j) < chunks.length; j++) {
+          const chunkIndex = i + j;
+          batch.push(uploadChunk(chunkIndex, chunks[chunkIndex]));
+        }
 
-      await Promise.all(batch);
+        await Promise.all(batch);
+      }
+    } catch (error) {
+      // Abortar upload em caso de erro
+      console.error('❌ Erro durante upload de chunks, abortando:', error);
+      try {
+        await fetch('/api/admin/upload-chunk', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'abort',
+            upload_id: uploadId
+          })
+        });
+      } catch (abortError) {
+        console.warn('⚠️ Erro ao abortar upload:', abortError);
+      }
+      throw error;
     }
 
     // Finalizar upload

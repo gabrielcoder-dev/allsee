@@ -42,6 +42,24 @@ const parseFormData = (req: NextApiRequest): Promise<{ fields: any; files: any }
   });
 };
 
+// Helper para fazer parse de JSON
+const parseJSON = (req: NextApiRequest): Promise<any> => {
+  return new Promise((resolve, reject) => {
+    let body = '';
+    req.on('data', (chunk) => {
+      body += chunk.toString();
+    });
+    req.on('end', () => {
+      try {
+        resolve(JSON.parse(body));
+      } catch (error) {
+        reject(error);
+      }
+    });
+    req.on('error', reject);
+  });
+};
+
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
@@ -51,15 +69,36 @@ export default async function handler(
   }
 
   try {
-    const { fields, files } = await parseFormData(req);
+    // Detectar se é FormData (chunk binário) ou JSON (init/finalize/abort)
+    const contentType = req.headers['content-type'] || '';
+    const isFormData = contentType.includes('multipart/form-data');
     
-    const action = fields.action;
-    const upload_id = fields.upload_id;
-    const chunk_index = fields.chunk_index ? parseInt(fields.chunk_index) : undefined;
-    const total_chunks = fields.total_chunks ? parseInt(fields.total_chunks) : undefined;
-    const file_type = fields.file_type;
-    const bucket = fields.bucket || 'arte-campanhas';
-    const chunkFile = Array.isArray(files.chunk_file) ? files.chunk_file[0] : files.chunk_file;
+    let action: string;
+    let upload_id: string | undefined;
+    let chunk_index: number | undefined;
+    let total_chunks: number | undefined;
+    let file_type: string | undefined;
+    let bucket: string = 'arte-campanhas';
+    let chunkFile: FormidableFile | undefined;
+
+    if (isFormData) {
+      // Parse FormData (upload binário de chunk)
+      const { fields, files } = await parseFormData(req);
+      action = fields.action;
+      upload_id = fields.upload_id;
+      chunk_index = fields.chunk_index ? parseInt(fields.chunk_index) : undefined;
+      total_chunks = fields.total_chunks ? parseInt(fields.total_chunks) : undefined;
+      chunkFile = Array.isArray(files.chunk_file) ? files.chunk_file[0] : files.chunk_file;
+    } else {
+      // Parse JSON (init, finalize, abort)
+      const body = await parseJSON(req);
+      action = body.action;
+      upload_id = body.upload_id;
+      chunk_index = body.chunk_index;
+      total_chunks = body.total_chunks;
+      file_type = body.file_type;
+      bucket = body.bucket || 'arte-campanhas';
+    }
 
     if (!action) {
       return res.status(400).json({ 
@@ -114,18 +153,38 @@ export default async function handler(
 
       const uploadInfo = uploadsInProgress.get(upload_id);
       if (!uploadInfo) {
+        console.error(`❌ Upload não encontrado: ${upload_id}`);
         return res.status(404).json({ 
           success: false, 
           error: 'Upload não encontrado' 
         });
       }
 
-      const chunkBuffer = await fs.readFile(chunkFile.filepath);
+      // Verificar se o arquivo temporário existe
+      if (!chunkFile.filepath) {
+        console.error(`❌ Arquivo temporário não encontrado para chunk ${chunk_index}`);
+        return res.status(400).json({ 
+          success: false, 
+          error: 'Arquivo temporário não encontrado' 
+        });
+      }
+
+      let chunkBuffer: Buffer;
+      try {
+        chunkBuffer = await fs.readFile(chunkFile.filepath);
+      } catch (error) {
+        console.error(`❌ Erro ao ler arquivo temporário:`, error);
+        return res.status(500).json({ 
+          success: false, 
+          error: 'Erro ao ler arquivo temporário' 
+        });
+      }
+
       const chunkPath = `${uploadInfo.file_path}.chunk.${chunk_index}`;
 
-      // Validar tamanho do chunk
+      // Validar tamanho do chunk (aumentar limite para 5MB)
       const chunkSizeMB = chunkBuffer.length / (1024 * 1024);
-      if (chunkSizeMB > 2) {
+      if (chunkSizeMB > 5) {
         try { await fs.unlink(chunkFile.filepath); } catch {}
         return res.status(413).json({ 
           success: false, 
@@ -153,6 +212,13 @@ export default async function handler(
 
       if (uploadError) {
         console.error('❌ Erro ao fazer upload do chunk:', uploadError);
+        console.error('❌ Detalhes do erro:', {
+          upload_id,
+          chunk_index,
+          chunk_path: chunkPath,
+          bucket: uploadInfo.bucket,
+          chunk_size_mb: chunkSizeMB.toFixed(2)
+        });
         return res.status(500).json({ 
           success: false, 
           error: `Erro ao fazer upload do chunk: ${uploadError.message}` 
@@ -274,6 +340,44 @@ export default async function handler(
       });
     }
 
+    // AÇÃO: ABORTAR UPLOAD
+    if (action === 'abort') {
+      if (!upload_id) {
+        return res.status(400).json({ 
+          success: false, 
+          error: 'upload_id é obrigatório' 
+        });
+      }
+
+      const uploadInfo = uploadsInProgress.get(upload_id);
+      if (!uploadInfo) {
+        return res.status(404).json({ 
+          success: false, 
+          error: 'Upload não encontrado' 
+        });
+      }
+
+      // Limpar chunks temporários
+      try {
+        const chunksToDelete = [];
+        for (let i = 0; i < uploadInfo.total_chunks; i++) {
+          chunksToDelete.push(`${uploadInfo.file_path}.chunk.${i}`);
+        }
+        await supabase.storage.from(uploadInfo.bucket).remove(chunksToDelete);
+        console.log(`🗑️ Chunks limpos para upload abortado: ${upload_id}`);
+      } catch (cleanupError) {
+        console.warn('⚠️ Erro na limpeza de chunks:', cleanupError);
+      }
+
+      uploadsInProgress.delete(upload_id);
+      console.log(`❌ Upload abortado: ${upload_id}`);
+
+      return res.status(200).json({ 
+        success: true, 
+        message: 'Upload abortado com sucesso' 
+      });
+    }
+
     return res.status(400).json({ 
       success: false, 
       error: 'Ação inválida' 
@@ -281,6 +385,7 @@ export default async function handler(
 
   } catch (error: any) {
     console.error("❌ Erro no endpoint upload-chunk:", error);
+    console.error("❌ Stack trace:", error.stack);
     return res.status(500).json({ 
       success: false, 
       error: 'Erro interno do servidor' 
