@@ -273,7 +273,7 @@ export const useFastUpload = (options: UseFastUploadOptions = {}) => {
     // Finalizar upload
     updateProgress({ phase: 'finalizing', percentage: 95 });
 
-    const finalizeResponse = await fetch('/api/admin/upload-chunk', {
+    const finalizeResponse = await fetch('/api/admin/upload-chunk-test', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({

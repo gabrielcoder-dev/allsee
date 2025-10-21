@@ -24,14 +24,36 @@ export default async function handler(
         contentType
       });
     } else {
-      console.log('📄 JSON detectado - simulando init');
-      return res.status(200).json({ 
-        success: true, 
-        upload_id: 'test-' + Date.now(),
-        file_path: 'test/path',
-        message: 'Init recebido com sucesso',
-        contentType
-      });
+      console.log('📄 JSON detectado');
+      
+      // Parse do body JSON
+      const body = req.body || {};
+      
+      if (body.action === 'init') {
+        console.log('🚀 Simulando init');
+        return res.status(200).json({ 
+          success: true, 
+          upload_id: 'test-' + Date.now(),
+          file_path: 'test/path',
+          message: 'Init recebido com sucesso'
+        });
+      } else if (body.action === 'finalize') {
+        console.log('✅ Simulando finalize');
+        return res.status(200).json({ 
+          success: true, 
+          message: 'Upload finalizado com sucesso',
+          file_path: 'test/final-file.jpg',
+          public_url: 'https://example.com/test-file.jpg',
+          file_size_mb: 5.2
+        });
+      } else {
+        console.log('❓ Ação desconhecida:', body.action);
+        return res.status(200).json({ 
+          success: true, 
+          message: 'JSON recebido com sucesso',
+          action: body.action
+        });
+      }
     }
   } catch (error: any) {
     console.error("❌ Erro no upload-chunk-test:", error);
@@ -44,6 +66,8 @@ export default async function handler(
 
 export const config = {
   api: {
-    bodyParser: false,
+    bodyParser: {
+      sizeLimit: '10mb',
+    },
   },
 };
