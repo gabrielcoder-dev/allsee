@@ -19,7 +19,6 @@ import { useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { useUser } from "@supabase/auth-helpers-react";
 import { useFastUpload } from '@/hooks/useFastUpload';
-import { FastUploadProgress } from './FastUploadProgress';
 import { toast } from 'sonner';
 // Upload otimizado com compressão (sem limitações do Next.js)
 
@@ -834,13 +833,6 @@ export const PagamantosPart = () => {
           )}
         </div>
 
-        {/* Progresso do upload */}
-        <FastUploadProgress
-          progress={uploadProgress}
-          isUploading={isUploading}
-          error={uploadError || (isUploading ? null : erro)}
-          fileName={formData.selectedImage instanceof File ? formData.selectedImage.name : undefined}
-        />
 
         {/* Mensagem de erro (apenas quando não está fazendo upload) */}
         {!isUploading && erro && !uploadError && (
