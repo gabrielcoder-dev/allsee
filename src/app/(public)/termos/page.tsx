@@ -26,7 +26,7 @@ export default function TermosPage() {
                 1. Aceitação dos Termos
               </h2>
               <p className="text-gray-700 leading-relaxed mb-4">
-                Bem-vindo à AllSee! Estes Termos de Serviço ("Termos") regem o uso de nossa 
+                Bem-vindo à ALL SEE! Estes Termos de Serviço ("Termos") regem o uso de nossa 
                 plataforma de publicidade digital. Ao acessar ou utilizar nossos serviços, 
                 você concorda em cumprir e estar vinculado a estes termos.
               </p>
@@ -177,7 +177,7 @@ export default function TermosPage() {
                     5.2 Propriedade da Plataforma
                   </h3>
                   <p className="text-gray-700 leading-relaxed mb-4">
-                    Todos os direitos sobre a plataforma AllSee, incluindo software, design, 
+                    Todos os direitos sobre a plataforma ALL SEE, incluindo software, design, 
                     funcionalidades e marca, são de nossa propriedade exclusiva e protegidos 
                     por leis de propriedade intelectual.
                   </p>
