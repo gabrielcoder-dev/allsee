@@ -52,7 +52,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         pending: `${req.headers.origin}/meus-anuncios?orderId=${orderId}&status=pending`,
       },
       auto_return: 'approved',
-      external_reference: orderId.toString(), // 🔥 UUID suportado
+      external_reference: orderId.toString(),
       notification_url: webhookUrl,
       payment_methods: {
         installments: 12,

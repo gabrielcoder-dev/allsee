@@ -6,6 +6,10 @@ import { supabaseServer } from "@/lib/supabaseServer";
 interface WebhookResponse {
   success: boolean;
   message: string;
+  details?: string;
+  orderId?: string;
+  updateId?: any;
+  newStatus?: string;
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse<WebhookResponse>) {
@@ -101,37 +105,37 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     // 🔍 Verificar se a order existe antes de atualizar
     console.log(`🔍 Verificando se order ${orderId} existe...`);
     
-    // Tentar buscar por UUID primeiro, depois por número se necessário
     let existingOrder = null;
     let checkError = null;
     
-    // Primeira tentativa: buscar diretamente pelo orderId (UUID ou string)
-    const { data: orderData, error: orderError } = await supabaseServer
-      .from("order")
-      .select("id, status")
-      .eq("id", orderId)
-      .single();
-    
-    if (!orderError && orderData) {
-      existingOrder = orderData;
-      console.log(`✅ Order encontrada por UUID/string:`, existingOrder);
+    // Primeira tentativa: buscar por número (formato mais comum)
+    const numericOrderId = parseInt(orderId, 10);
+    if (!isNaN(numericOrderId)) {
+      console.log(`🔢 Buscando por número: ${numericOrderId}`);
+      const { data: numericOrderData, error: numericOrderError } = await supabaseServer
+        .from("order")
+        .select("id, status")
+        .eq("id", numericOrderId)
+        .single();
+      
+      if (!numericOrderError && numericOrderData) {
+        existingOrder = numericOrderData;
+        console.log(`✅ Order encontrada por número:`, existingOrder);
+      } else {
+        checkError = numericOrderError;
+      }
     } else {
-      // Segunda tentativa: se orderId for numérico, tentar como número
-      const numericOrderId = parseInt(orderId, 10);
-      if (!isNaN(numericOrderId)) {
-        console.log(`🔢 Tentando buscar por número: ${numericOrderId}`);
-        const { data: numericOrderData, error: numericOrderError } = await supabaseServer
-          .from("order")
-          .select("id, status")
-          .eq("id", numericOrderId)
-          .single();
-        
-        if (!numericOrderError && numericOrderData) {
-          existingOrder = numericOrderData;
-          console.log(`✅ Order encontrada por número:`, existingOrder);
-        } else {
-          checkError = numericOrderError;
-        }
+      // Segunda tentativa: buscar por string (caso seja UUID)
+      console.log(`🔤 Buscando por string: ${orderId}`);
+      const { data: orderData, error: orderError } = await supabaseServer
+        .from("order")
+        .select("id, status")
+        .eq("id", orderId)
+        .single();
+      
+      if (!orderError && orderData) {
+        existingOrder = orderData;
+        console.log(`✅ Order encontrada por string:`, existingOrder);
       } else {
         checkError = orderError;
       }
@@ -154,26 +158,62 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
 
     // 🧮 Atualizar status no Supabase
     console.log(`🔄 Atualizando order ${orderId} para status: ${internalStatus}`);
+    console.log(`🔍 ID da order encontrada: ${existingOrder.id} (tipo: ${typeof existingOrder.id})`);
     
     // Usar o ID correto (UUID ou número) para atualizar
     const updateId = existingOrder.id;
+    console.log(`🔄 Executando update com ID: ${updateId}`);
+    
     const { data: updatedOrder, error: updateError } = await supabaseServer
       .from("order")
-      .update({ status: internalStatus })
+      .update({ 
+        status: internalStatus,
+        updated_at: new Date().toISOString()
+      })
       .eq("id", updateId)
-      .select("id, status")
+      .select("id, status, updated_at")
       .single();
 
     if (updateError) {
-      console.error("❌ Erro ao atualizar status no Supabase:", updateError);
-      return sendResponse(200, { success: false, message: "Erro ao atualizar order" });
+      console.error("❌ Erro ao atualizar status no Supabase:", {
+        error: updateError,
+        updateId: updateId,
+        internalStatus: internalStatus,
+        orderId: orderId
+      });
+      return sendResponse(200, { 
+        success: false, 
+        message: "Erro ao atualizar order",
+        details: updateError.message 
+      });
     }
 
     console.log("✅ Status da order atualizado com sucesso:", {
       id: updatedOrder.id,
-      status_novo: updatedOrder.status
+      status_novo: updatedOrder.status,
+      updated_at: updatedOrder.updated_at
     });
-    return sendResponse(200, { success: true, message: "Order atualizada com sucesso" });
+
+    // 🔍 Verificar se a atualização persistiu
+    const { data: verifyOrder, error: verifyError } = await supabaseServer
+      .from("order")
+      .select("id, status, updated_at")
+      .eq("id", updateId)
+      .single();
+
+    if (verifyError) {
+      console.warn("⚠️ Erro ao verificar atualização:", verifyError);
+    } else {
+      console.log("✅ Verificação final:", verifyOrder);
+    }
+
+    return sendResponse(200, { 
+      success: true, 
+      message: "Order atualizada com sucesso",
+      orderId: orderId,
+      updateId: updateId,
+      newStatus: internalStatus
+    });
   } catch (error: any) {
     console.error("❌ Erro inesperado no webhook:", error);
     return sendResponse(200, { success: false, message: "Erro interno" });
