@@ -61,6 +61,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       expires: true,
       expiration_date_to: new Date(Date.now() + 30 * 60 * 1000).toISOString(), // expira em 30 min
       statement_descriptor: 'ALLSEE',
+      external_reference: orderId.toString(), // ✅ Adicionar external_reference como backup
       metadata: {
         order_id: orderId.toString(),
         user_id: payerData.userId || null
@@ -95,7 +96,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       };
     }
 
-    console.log('📋 metadata enviado ao Mercado Pago:', preferenceBody.metadata);
+    console.log('📋 Dados enviados ao Mercado Pago:');
+    console.log('📋 metadata:', preferenceBody.metadata);
+    console.log('📋 external_reference:', preferenceBody.external_reference);
+    console.log('📋 description:', preferenceBody.items[0].description);
 
     // 💳 Criar preferência no Mercado Pago
     const preference = new Preference(mercadoPagoClient);

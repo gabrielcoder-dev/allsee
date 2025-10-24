@@ -67,31 +67,72 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
 
     // 🧩 Extrair orderId do metadata (método principal)
     let orderId = null;
+    let orderIdSource = "não encontrado";
+    
+    console.log("🔍 Analisando dados do pagamento para encontrar orderId:");
+    console.log("📋 Metadata completo:", JSON.stringify(payment.metadata, null, 2));
+    console.log("📝 Description:", payment.description);
+    console.log("🏷️ External reference:", payment.external_reference);
     
     // 1. Tentar metadata primeiro (método principal)
     if (payment.metadata?.order_id) {
       orderId = payment.metadata.order_id.toString();
-      console.log("🔍 OrderId encontrado via metadata:", orderId);
+      orderIdSource = "metadata.order_id";
+      console.log("✅ OrderId encontrado via metadata:", orderId);
     }
     
-    // 2. Fallback: tentar extrair da descrição do item
+    // 2. Tentar external_reference (método alternativo)
+    if (!orderId && payment.external_reference) {
+      orderId = payment.external_reference.toString();
+      orderIdSource = "external_reference";
+      console.log("✅ OrderId encontrado via external_reference:", orderId);
+    }
+    
+    // 3. Fallback: tentar extrair da descrição do item
     if (!orderId && payment.description) {
       const descMatch = payment.description.match(/Order ID: (\d+)/);
       if (descMatch) {
         orderId = descMatch[1];
-        console.log("🔍 OrderId encontrado via description (fallback):", orderId);
+        orderIdSource = "description";
+        console.log("✅ OrderId encontrado via description (fallback):", orderId);
+      }
+    }
+    
+    // 4. Fallback: tentar extrair do título do item (se disponível)
+    // Nota: payment.items pode não estar disponível em todos os casos
+    if (!orderId && (payment as any).items && (payment as any).items.length > 0) {
+      const item = (payment as any).items[0];
+      if (item.description) {
+        const itemDescMatch = item.description.match(/Order ID: (\d+)/);
+        if (itemDescMatch) {
+          orderId = itemDescMatch[1];
+          orderIdSource = "item.description";
+          console.log("✅ OrderId encontrado via item.description:", orderId);
+        }
       }
     }
 
     console.log("🔍 OrderId final encontrado:", {
       value: orderId,
       type: typeof orderId,
-      source: orderId ? "encontrado" : "não encontrado"
+      source: orderIdSource,
+      found: !!orderId
     });
 
     if (!orderId) {
-      console.warn("⚠️ Pagamento sem orderId identificável");
-      return sendResponse(200, { success: false, message: "Sem orderId identificável" });
+      console.error("❌ Pagamento sem orderId identificável - Dados completos para debug:");
+      console.error("📋 Payment ID:", paymentId);
+      console.error("📋 Payment completo:", JSON.stringify(payment, null, 2));
+      console.error("📋 Metadata:", payment.metadata);
+      console.error("📋 External reference:", payment.external_reference);
+      console.error("📋 Description:", payment.description);
+      console.error("📋 Items:", (payment as any).items);
+      
+      return sendResponse(200, { 
+        success: false, 
+        message: "Sem orderId identificável",
+        details: `Payment ID: ${paymentId}, Metadata: ${JSON.stringify(payment.metadata)}, External ref: ${payment.external_reference}`
+      });
     }
 
     // 📊 Mapear status do Mercado Pago → status interno
