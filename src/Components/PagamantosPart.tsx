@@ -490,6 +490,7 @@ export const PagamantosPart = () => {
       const payerData = {
         name: formData.cpf ? 'Pessoa Física' : formData.razaoSocial || 'Cliente Allsee',
         email: user.email || 'cliente@allsee.com',
+        userId: user.id, // ✅ Adicionando userId
         cpf: formData.cpf || null,
         telefone: formData.telefone || formData.telefonej || null,
         cep: formData.cep || formData.cepJ || null,

@@ -42,6 +42,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       items: [
         {
           title: 'Reserva de espaço na All See',
+          description: `Order ID: ${orderId}`,
           quantity: 1,
           unit_price: total,
         },
@@ -52,7 +53,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         pending: `${req.headers.origin}/meus-anuncios?orderId=${orderId}&status=pending`,
       },
       auto_return: 'approved',
-      external_reference: orderId.toString(),
       notification_url: webhookUrl,
       payment_methods: {
         installments: 12,
@@ -61,6 +61,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       expires: true,
       expiration_date_to: new Date(Date.now() + 30 * 60 * 1000).toISOString(), // expira em 30 min
       statement_descriptor: 'ALLSEE',
+      metadata: {
+        order_id: orderId.toString(),
+        user_id: payerData.userId || null
+      },
       payer: {
         name: payerData.name || 'Cliente Allsee',
         email: payerData.email || 'cliente@allsee.com',
@@ -91,7 +95,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       };
     }
 
-    console.log('📋 external_reference enviado ao Mercado Pago:', preferenceBody.external_reference);
+    console.log('📋 metadata enviado ao Mercado Pago:', preferenceBody.metadata);
 
     // 💳 Criar preferência no Mercado Pago
     const preference = new Preference(mercadoPagoClient);

@@ -65,26 +65,34 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       return sendResponse(200, { success: false, message: "Erro ao buscar pagamento" });
     }
 
-    // 🧩 Extrair external_reference (orderId)
-    const externalReference = payment.external_reference;
-    console.log("🔍 External reference encontrado:", {
-      value: externalReference,
-      type: typeof externalReference,
-      isNull: externalReference === null,
-      isUndefined: externalReference === undefined,
-      isEmpty: externalReference === '',
-      length: externalReference?.toString().length
-    });
-
-    if (!externalReference) {
-      console.warn("⚠️ Pagamento sem external_reference");
-      return sendResponse(200, { success: false, message: "Sem referência externa" });
+    // 🧩 Extrair orderId do metadata (método principal)
+    let orderId = null;
+    
+    // 1. Tentar metadata primeiro (método principal)
+    if (payment.metadata?.order_id) {
+      orderId = payment.metadata.order_id.toString();
+      console.log("🔍 OrderId encontrado via metadata:", orderId);
+    }
+    
+    // 2. Fallback: tentar extrair da descrição do item
+    if (!orderId && payment.description) {
+      const descMatch = payment.description.match(/Order ID: (\d+)/);
+      if (descMatch) {
+        orderId = descMatch[1];
+        console.log("🔍 OrderId encontrado via description (fallback):", orderId);
+      }
     }
 
-    const orderId = externalReference.toString();
-    console.log("🧾 orderId (external_reference):", orderId);
-    console.log("🔍 Tipo do orderId:", typeof orderId);
-    console.log("🔍 É UUID?", orderId.includes('-') && orderId.length === 36);
+    console.log("🔍 OrderId final encontrado:", {
+      value: orderId,
+      type: typeof orderId,
+      source: orderId ? "encontrado" : "não encontrado"
+    });
+
+    if (!orderId) {
+      console.warn("⚠️ Pagamento sem orderId identificável");
+      return sendResponse(200, { success: false, message: "Sem orderId identificável" });
+    }
 
     // 📊 Mapear status do Mercado Pago → status interno
     const statusMapping: Record<string, string> = {
