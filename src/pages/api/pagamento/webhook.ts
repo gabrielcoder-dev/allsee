@@ -12,11 +12,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return sendResponse(405, { success: false, message: "Método não permitido" });
   }
 
-  try {
-   if(req.body.type !== "payment" || !req.body.data?.id) {
-    return sendResponse(200, { success: false, message: "Evento ignorado (não é pagamento)" });
-   }
+  console.log("Webhook recebido:", req.body);
 
+  try {
+    
    const status = req.body.data.status;
    const orderId = req.query.orderId;
    
