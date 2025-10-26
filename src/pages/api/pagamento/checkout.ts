@@ -54,7 +54,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         pending: `${req.headers.origin}/meus-anuncios?orderId=${orderId}&status=pending`,
       },
       auto_return: 'approved',
-      notification_url: webhookUrl,
+      notification_url: `${webhookUrl}?orderId=${orderId}`,
       payment_methods: {
         installments: 12,
         default_installments: 1,
