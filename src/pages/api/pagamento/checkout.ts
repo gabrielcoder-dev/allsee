@@ -1,4 +1,3 @@
-// src/pages/api/pagamento/checkout.ts
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { Preference } from 'mercadopago';
 import { mercadoPagoClient, validateMercadoPagoConfig } from '@/services/mercado-pago';
@@ -8,10 +7,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(405).json({ error: 'Método não permitido' });
   }
 
+  console.log("Token usado no checkout:", process.env.MERCADO_PAGO_ACCESS_TOKEN?.slice(0, 12));
+
+
   try {
     const { total, orderId, arteCampanhaId, payerData } = req.body;
 
-    // 🧩 Validação básica
+    // Validação básica
     if (!total || !orderId || !payerData) {
       return res.status(400).json({ success: false, error: 'Dados incompletos' });
     }
@@ -20,24 +22,23 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(400).json({ success: false, error: 'Total deve ser um número positivo' });
     }
 
-    // 🔧 Validar config do Mercado Pago
+    // Validar config do Mercado Pago
     validateMercadoPagoConfig();
-
-    console.log('🛒 Iniciando checkout:', {
+    console.log('Iniciando checkout:', {
       orderId,
       total,
       arteCampanhaId,
       payerData,
     });
 
-    // 🔗 URL do webhook
+    // URL do webhook
     const webhookUrl =
       process.env.MERCADO_PAGO_WEBHOOK_URL ||
       `${req.headers.origin}/api/pagamento/webhook`;
 
-    console.log('🔔 notification_url do Mercado Pago:', webhookUrl);
+    console.log('notification_url do Mercado Pago:', webhookUrl);
 
-    // 🧾 Criar corpo da preferência
+    // Criar corpo da preferência
     const preferenceBody: any = {
       items: [
         {
@@ -61,7 +62,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       expires: true,
       expiration_date_to: new Date(Date.now() + 30 * 60 * 1000).toISOString(), // expira em 30 min
       statement_descriptor: 'ALLSEE',
-      external_reference: orderId.toString(), // ✅ Adicionar external_reference como backup
+      external_reference: orderId, // ✅ Adicionar external_reference como backup
       metadata: {
         order_id: orderId.toString(),
         user_id: payerData.userId || null
@@ -72,7 +73,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       },
     };
 
-    // 🔎 Adicionar dados opcionais do pagador
+    // Adicionar dados opcionais do pagador
     if (payerData.cpf) {
       preferenceBody.payer.identification = {
         type: 'CPF',
@@ -96,16 +97,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       };
     }
 
-    console.log('📋 Dados enviados ao Mercado Pago:');
-    console.log('📋 metadata:', preferenceBody.metadata);
-    console.log('📋 external_reference:', preferenceBody.external_reference);
-    console.log('📋 description:', preferenceBody.items[0].description);
+    console.log('Dados enviados ao Mercado Pago:');
+    console.log('metadata:', preferenceBody.metadata);
+    console.log('external_reference:', preferenceBody.external_reference);
+    console.log('description:', preferenceBody.items[0].description);
 
-    // 💳 Criar preferência no Mercado Pago
+    // Criar preferência no Mercado Pago
     const preference = new Preference(mercadoPagoClient);
     const result = await preference.create({ body: preferenceBody });
 
-    console.log('✅ Preferência criada com sucesso:', {
+    console.log('Preferência criada com sucesso:', {
       preferenceId: result.id,
       initPoint: result.init_point,
     });
@@ -116,7 +117,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       preference_id: result.id,
     });
   } catch (error: any) {
-    console.error('❌ Erro no checkout:', error);
+    console.error('Erro no checkout:', error);
 
     return res.status(500).json({
       success: false,
