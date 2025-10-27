@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { createClient } from '@supabase/supabase-js'
 import { useCart } from '@/context/CartContext'
-import { PlayIcon, ShoppingCartIcon, TrashIcon, User2, ZoomIn, Monitor, Printer, Zap } from 'lucide-react'
+import { PlayIcon, ShoppingCartIcon, TrashIcon, User2, ZoomIn, Monitor, Printer, Zap, Smartphone } from 'lucide-react'
 import ModalLogin from './ModalLogin'
 import ImageModal from './ImageModal'
 
@@ -27,6 +27,7 @@ type Anuncio = {
   duration_12: boolean
   duration_24: boolean
   type_screen: string;
+  screen_type?: 'standing' | 'down';
   nicho?: 'restaurante' | 'academia' | 'mercado' | 'padaria' | 'banco' | 'outro';
 }
 
@@ -405,6 +406,16 @@ export default function GetAnunciosResults({ onAdicionarProduto, selectedDuratio
                     alt={anuncio.name}
                     className="object-cover w-full h-48"
                   />
+                  {/* Ícone de posição da tela */}
+                  {anuncio.screen_type && (
+                    <div className="absolute top-2 right-2 bg-white/90 backdrop-blur-sm rounded-full p-1.5 shadow-md">
+                      <Smartphone 
+                        className={`w-4 h-4 text-gray-700 ${
+                          anuncio.screen_type === 'down' ? 'rotate-90' : ''
+                        }`} 
+                      />
+                    </div>
+                  )}
                   {/* Overlay de hover */}
                   <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                     <ZoomIn className="text-white w-6 h-6" />
