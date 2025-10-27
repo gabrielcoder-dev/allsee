@@ -574,7 +574,7 @@ export default function GetAnunciosResults({
                   />
                   {/* Ícone de posição da tela */}
                   {anuncio.screen_type && (
-                    <div className="absolute flex items-center gap-1 top-2 right-2 bg-orange-500/90 backdrop-blur-sm rounded-full p-1.5 shadow-md">
+                    <div className="absolute flex items-center gap-1 top-2 right-2 bg-orange-500/90 backdrop-blur-sm rounded-lg p-1.5 shadow-md">
                       <Smartphone
                         className={`w-4 h-4 text-white ${
                           anuncio.screen_type === "down" ? "rotate-90" : ""
