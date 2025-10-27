@@ -2,11 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
-import { X } from "lucide-react";
+import { Smartphone, X } from "lucide-react";
 import { toast } from "sonner";
-import Image from "next/image";
-import standingImg from "@/assets/standing.png";
-import downImg from "@/assets/down.png";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -493,12 +490,8 @@ export default function ModalCreateAnuncios({
               onClick={() => setScreen_type('standing')}
               aria-pressed={screen_type === 'standing'}
             >
-              <Image 
-              src={standingImg}
-              alt="Standing"
-              width={20}
-              height={20}
-              />
+              <Smartphone className="w-4 h-4" />
+              <span>Em pé</span>
             </button>
             <button
               type="button"
@@ -506,12 +499,8 @@ export default function ModalCreateAnuncios({
               onClick={() => setScreen_type('down')}
               aria-pressed={screen_type === 'down'}
             >
-              <Image 
-              src={downImg}
-              alt="Down"
-              width={20}
-              height={20}
-              />
+              <Smartphone className="w-4 h-4 rotate-90" />
+              <span>Deitado</span>
             </button>
           </div>
 
