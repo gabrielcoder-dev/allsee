@@ -169,53 +169,10 @@ export const FastPagamantosPart = () => {
 
       const { orderId } = await createOrderResponse.json();
 
-      // Dados do pagador
-      const payerData = openAccordion === "fisica" ? {
-        name: (formData as any).nome,
-        email: (formData as any).email,
-        identification: {
-          type: "CPF",
-          number: formData.cpf
-        },
-        address: {
-          street_name: formData.endereco,
-          street_number: "123",
-          zip_code: formData.cep
-        }
-      } : {
-        name: (formData as any).razaoSocial,
-        email: (formData as any).email,
-        identification: {
-          type: "CNPJ",
-          number: formData.cnpj
-        },
-        address: {
-          street_name: formData.endereco,
-          street_number: "123",
-          zip_code: formData.cep
-        }
-      };
-
-      // Criar preferência de pagamento
-      const response = await fetch('/api/pagamento/create-preference', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          total,
-          orderId: orderId,
-          arteCampanhaUrl: publicUrl,
-          payerData
-        }),
-      });
-
-      const data = await response.json();
-
-      if (data.init_point) {
-        // Redirecionar para checkout do Mercado Pago
-        window.location.href = data.init_point;
-      } else {
-        throw new Error('Erro ao criar preferência de pagamento');
-      }
+      // Sistema de pagamento removido - Integração com Mercado Pago desativada
+      console.log("💳 Pagamento removido - Integração com Mercado Pago desativada");
+      // TODO: Implementar novo sistema de pagamento
+      throw new Error('Sistema de pagamento temporariamente indisponível. Entre em contato com o suporte.');
 
     } catch (error: any) {
       console.error('❌ Erro no checkout:', error);
