@@ -1,6 +1,7 @@
 "use client";
 import { useCart } from "@/context/CartContext";
 import { ArrowLeft, CalendarIcon, ChevronDownIcon, X, Trash } from "lucide-react";
+import ModalSelecionarArte from "@/Components/ModalSelecionarArte";
 import {
   Select,
   SelectTrigger,
@@ -133,6 +134,7 @@ export default function CartResume({ onCartArtSelected, onCampaignNameChange, ar
   const [campaignName, setCampaignName] = useState(formData.campaignName);
   const [openGroups, setOpenGroups] = useState<{ [key: string]: boolean }>({ impresso: true, digital: true });
   const [videoThumbnail, setVideoThumbnail] = useState<string | null>(null);
+  const [showModalArte, setShowModalArte] = useState(false);
 
   // Sincronizar duration local com o global
   useEffect(() => {
@@ -621,19 +623,12 @@ export default function CartResume({ onCartArtSelected, onCampaignNameChange, ar
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 relative">
                 {!previewUrl ? (
                   <>
-                    <input
-                      type="file"
-                      accept="image/jpeg,image/png,image/gif,image/webp,video/mp4,video/mov"
-                      id="upload-art"
-                      className="hidden"
-                      onChange={handleImageChange}
-                    />
-                    <label
-                      htmlFor="upload-art"
+                    <button
+                      onClick={() => setShowModalArte(true)}
                       className={`w-full sm:w-auto cursor-pointer border px-4 py-2 rounded transition hover:bg-gray-50 text-center`}
                     >
                       Selecionar arte
-                    </label>
+                    </button>
                     {artError && (
                       <span className="text-red-500 text-xs mt-1 block">{artError}</span>
                     )}
@@ -720,6 +715,12 @@ export default function CartResume({ onCartArtSelected, onCampaignNameChange, ar
         )}
         {/* Fim do painel lateral */}
       </div>
+
+      {/* Modal de Seleção de Arte */}
+      <ModalSelecionarArte 
+        open={showModalArte} 
+        onClose={() => setShowModalArte(false)} 
+      />
     </div>
   );
 }
