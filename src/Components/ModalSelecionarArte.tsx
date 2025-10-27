@@ -155,9 +155,9 @@ export default function ModalSelecionarArte({
           </div>
 
           {/* Right Side - Preview */}
-          <div className="flex-1 flex flex-col bg-gray-50 overflow-y-auto">
+          <div className="flex-1 flex flex-col bg-gray-50">
             {/* Header do preview */}
-            <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200 bg-white">
+            <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200 bg-white flex-shrink-0">
               <div className="flex items-center justify-between mb-2 gap-2">
                 <h3 className="text-xs sm:text-sm font-semibold text-gray-700 truncate">
                   Personalize seu anúncio
@@ -189,8 +189,10 @@ export default function ModalSelecionarArte({
               )}
             </div>
 
-            {/* Preview Area */}
-            <div className="flex-1 flex flex-col items-center justify-center p-4 sm:p-6 lg:p-8 bg-gradient-to-br from-gray-50 to-gray-100">
+            {/* Scrollable Container for Preview */}
+            <div className="flex-1 overflow-y-auto">
+              {/* Preview Area */}
+              <div className="min-h-full flex flex-col items-center justify-center p-4 sm:p-6 lg:p-8 bg-gradient-to-br from-gray-50 to-gray-100">
               <div className="relative w-full max-w-3xl">
                 {/* Professional Monitor Design */}
                 <div className="relative mx-auto" style={{ width: '100%', maxWidth: '600px', height: 'auto' }}>
@@ -307,9 +309,10 @@ export default function ModalSelecionarArte({
                 </div>
               </div>
             </div>
+            </div>
 
             {/* Dicas */}
-            <div className="px-4 sm:px-6 py-3 sm:py-4 border-t border-gray-200 bg-white">
+            <div className="px-4 sm:px-6 py-3 sm:py-4 border-t border-gray-200 bg-white flex-shrink-0">
               <button className="flex items-center gap-2 text-xs sm:text-sm text-gray-600 hover:text-orange-600 transition-colors">
                 <span className="text-base sm:text-lg">💡</span>
                 <span className="hidden sm:inline">Ver dicas</span>
