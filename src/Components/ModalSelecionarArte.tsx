@@ -191,96 +191,118 @@ export default function ModalSelecionarArte({
 
             {/* Preview Area */}
             <div className="flex-1 flex flex-col items-center justify-center p-8 bg-gradient-to-br from-gray-50 to-gray-100">
-              <div className="relative w-full max-w-2xl">
-                {/* Monitor/TV Frame Container */}
-                <div className="relative mx-auto" style={{ width: '500px', height: 'auto' }}>
-                  {/* Monitor Frame */}
-                  <div className="relative">
-                    {/* SVG Monitor Bezel */}
-                    <svg
-                      viewBox="0 0 500 700"
-                      className="w-full h-auto drop-shadow-2xl"
-                      style={{ filter: 'drop-shadow(0 25px 50px rgba(0,0,0,0.3))' }}
-                    >
-                      {/* Monitor Base */}
-                      <rect x="50" y="640" width="400" height="50" rx="15" fill="#1a1a1a" />
-                      <path d="M 70 640 Q 70 600 140 600 L 360 600 Q 430 600 430 640" fill="#0f0f0f" />
-                      
-                      {/* Monitor Bezel/Frame */}
-                      <rect x="100" y="80" width="300" height="480" rx="8" fill="#2d2d2d" stroke="#1a1a1a" strokeWidth="4" />
-                      
-                      {/* Screen Border */}
-                      <rect x="120" y="120" width="260" height="420" rx="6" fill="#000000" stroke="#0a0a0a" strokeWidth="2" />
-                    </svg>
+              <div className="relative w-full max-w-3xl">
+                {/* Professional Monitor Design */}
+                <div className="relative mx-auto" style={{ width: '600px', height: 'auto' }}>
+                  <svg
+                    viewBox="0 0 600 800"
+                    className="w-full h-auto"
+                    style={{ filter: 'drop-shadow(0 30px 60px rgba(0,0,0,0.4))' }}
+                  >
+                    {/* Shadow Layer */}
+                    <ellipse cx="300" cy="780" rx="200" ry="20" fill="rgba(0,0,0,0.3)" />
                     
-                    {/* Screen Content - Absolute positioned over SVG */}
-                    <div 
-                      className="absolute"
-                      style={{
-                        left: '120px',
-                        top: '120px',
-                        width: '260px',
-                        height: '420px',
-                        borderRadius: '6px',
-                        overflow: 'hidden',
-                        background: previewUrl ? 'transparent' : 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)'
-                      }}
-                    >
-                      {previewUrl ? (
-                        <div style={{ position: 'relative', width: '100%', height: '100%' }}>
-                          <img
-                            src={previewUrl}
-                            alt="Preview"
-                            style={{
-                              width: '100%',
-                              height: '100%',
-                              objectFit: 'cover',
-                              display: 'block'
-                            }}
-                          />
-                          {/* Remove button */}
-                          <button
-                            onClick={handleRemoveFile}
-                            className="absolute top-2 right-2 bg-red-500 hover:bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm transition-colors"
-                          >
-                            ✕
-                          </button>
-                          
-                          {/* Branding overlay */}
-                          <div className="absolute bottom-2 right-2 bg-black/80 px-2 py-1 rounded flex items-center gap-1">
-                            <Monitor className="w-3 h-3 text-orange-500" />
-                            <span className="text-[10px] text-white font-semibold">ALL SEE</span>
-                          </div>
+                    {/* Base Stand - Modern design */}
+                    <g transform="translate(200, 660)">
+                      {/* Stand */}
+                      <rect x="0" y="0" width="200" height="40" rx="20" fill="#1e1e1e" />
+                      <ellipse cx="100" cy="0" rx="100" ry="10" fill="#0f0f0f" />
+                      
+                      {/* Support pillar */}
+                      <rect x="90" y="-60" width="20" height="60" fill="#2a2a2a" />
+                      <ellipse cx="100" cy="-60" rx="18" ry="8" fill="#1a1a1a" />
+                    </g>
+                    
+                    {/* Monitor Frame - Sleek modern design */}
+                    <g transform="translate(80, 40)">
+                      {/* Outer bezel - glossy finish */}
+                      <rect x="0" y="0" width="440" height="600" rx="25" fill="#2d2d2d" />
+                      <rect x="0" y="0" width="440" height="600" rx="25" fill="url(#gloss-gradient)" />
+                      
+                      {/* Inner bezel - thin border */}
+                      <rect x="15" y="15" width="410" height="570" rx="20" fill="#1a1a1a" />
+                      
+                      {/* Screen area - where the image will appear */}
+                      <rect x="40" y="50" width="360" height="500" rx="12" fill="#000000" />
+                    </g>
+                    
+                    {/* Gradient for glossy effect */}
+                    <defs>
+                      <linearGradient id="gloss-gradient" x1="0%" y1="0%" x2="0%" y2="30%">
+                        <stop offset="0%" style={{ stopColor: 'rgba(255,255,255,0.3)', stopOpacity: 0.3 }} />
+                        <stop offset="100%" style={{ stopColor: 'rgba(255,255,255,0)', stopOpacity: 0 }} />
+                      </linearGradient>
+                    </defs>
+                  </svg>
+                  
+                  {/* Screen Content - positioned inside monitor */}
+                  <div 
+                    className="absolute"
+                    style={{
+                      left: '120px',
+                      top: '90px',
+                      width: '360px',
+                      height: '500px',
+                      borderRadius: '12px',
+                      overflow: 'hidden',
+                      background: previewUrl ? 'transparent' : 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)'
+                    }}
+                  >
+                    {previewUrl ? (
+                      <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+                        <img
+                          src={previewUrl}
+                          alt="Preview"
+                          style={{
+                            width: '100%',
+                            height: '100%',
+                            objectFit: 'cover',
+                            display: 'block'
+                          }}
+                        />
+                        {/* Remove button */}
+                        <button
+                          onClick={handleRemoveFile}
+                          className="absolute top-2 right-2 bg-red-500 hover:bg-red-600 text-white rounded-full w-7 h-7 flex items-center justify-center text-base transition-colors shadow-lg z-10"
+                          title="Remover arquivo"
+                        >
+                          ✕
+                        </button>
+                        
+                        {/* Branding overlay */}
+                        <div className="absolute bottom-2 right-2 bg-black/90 px-3 py-1.5 rounded-md flex items-center gap-1.5 shadow-lg">
+                          <Monitor className="w-4 h-4 text-orange-500" />
+                          <span className="text-[11px] text-white font-bold">ALL SEE</span>
                         </div>
-                      ) : (
-                        <div className="flex flex-col items-center justify-center h-full text-white p-6 text-center">
-                          <div className="bg-white/10 backdrop-blur-sm rounded-full w-16 h-16 flex items-center justify-center mb-4">
-                            <Monitor className="w-8 h-8 opacity-50" />
-                          </div>
-                          <p className="text-xs font-medium opacity-90 mb-2">
-                            Selecione um arquivo para visualizar
-                          </p>
-                          <p className="text-[10px] opacity-60">
-                            Proporção: 1080x1920 px
-                          </p>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col items-center justify-center h-full text-white p-8 text-center">
+                        <div className="bg-white/15 backdrop-blur-sm rounded-full w-20 h-20 flex items-center justify-center mb-6 shadow-xl">
+                          <Monitor className="w-10 h-10 opacity-70" />
                         </div>
-                      )}
-                    </div>
+                        <p className="text-sm font-semibold opacity-95 mb-2">
+                          Selecione um arquivo para visualizar
+                        </p>
+                        <p className="text-xs opacity-70 font-medium">
+                          Proporção recomendada: 1080x1920 px
+                        </p>
+                      </div>
+                    )}
                   </div>
+                </div>
 
-                  {/* Upload Button */}
-                  <div className="absolute -bottom-12 left-1/2 transform -translate-x-1/2">
-                    <label className="cursor-pointer inline-flex items-center gap-2 bg-gray-800 hover:bg-gray-700 text-white px-6 py-3 rounded-lg font-medium transition-all shadow-lg hover:shadow-xl">
-                      <input
-                        type="file"
-                        accept="image/jpeg,image/png,image/gif,image/webp,video/mp4,video/mov"
-                        onChange={handleFileChange}
-                        className="hidden"
-                      />
-                      <Monitor className="w-5 h-5" />
-                      enviar arquivo +
-                    </label>
-                  </div>
+                {/* Upload Button */}
+                <div className="absolute -bottom-14 left-1/2 transform -translate-x-1/2">
+                  <label className="cursor-pointer inline-flex items-center gap-2 bg-gray-800 hover:bg-gray-700 text-white px-8 py-3.5 rounded-lg font-semibold transition-all shadow-xl hover:shadow-2xl hover:scale-105">
+                    <input
+                      type="file"
+                      accept="image/jpeg,image/png,image/gif,image/webp,video/mp4,video/mov"
+                      onChange={handleFileChange}
+                      className="hidden"
+                    />
+                    <Monitor className="w-5 h-5" />
+                    enviar arquivo +
+                  </label>
                 </div>
               </div>
             </div>
