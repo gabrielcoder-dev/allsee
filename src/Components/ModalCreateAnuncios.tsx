@@ -37,6 +37,7 @@ export default function ModalCreateAnuncios({
   const [duration_12, setDuration_12] = useState(false);
   const [duration_24, setDuration_24] = useState(false);
   const [type_screen, setType_screen] = useState<'digital' | 'impresso'>('digital');
+  const [screen_type, setScreen_type] = useState<'standing' | 'down'>('standing');
   const [selectedNicho, setSelectedNicho] = useState<NichoOption | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -79,6 +80,7 @@ export default function ModalCreateAnuncios({
       setSelectedNicho(anuncio.nicho || null);
       const tipoMidia = anuncio.type_screen === 'impresso' ? 'impresso' : 'digital';
       setType_screen(tipoMidia);
+      setScreen_type(anuncio.screen_type || 'standing');
       setDuration_2(anuncio.duration_2 || false);
       setDuration_4(anuncio.duration_4 || false);
       setDuration_12(anuncio.duration_12 || false);
@@ -103,6 +105,7 @@ export default function ModalCreateAnuncios({
       setPrice("");
       setDuration([]);
       setType_screen('digital');
+      setScreen_type('standing');
       setSelectedNicho(null);
       setDuration_2(false);
       setDuration_4(false);
@@ -343,6 +346,7 @@ export default function ModalCreateAnuncios({
           duration_12: duration.includes("12"),
           duration_24: duration.includes("24"),
           type_screen: type_screen,
+          screen_type: screen_type,
           nicho: selectedNicho,
         };
         console.log("Dados atuais do anúncio:", anuncio);
@@ -372,6 +376,7 @@ export default function ModalCreateAnuncios({
           duration_12: duration.includes("12"),
           duration_24: duration.includes("24"),
           type_screen: type_screen,
+          screen_type: screen_type,
           nicho: selectedNicho,
         };
         const { error: insertError } = await supabase.from("anuncios").insert([
@@ -475,6 +480,29 @@ export default function ModalCreateAnuncios({
             min={0}
             step="0.01"
           />
+
+          {/* Posição da tela */}
+          <span className="text-xs font-semibold text-gray-700 pl-1 mt-2">Posição da tela</span>
+          <div className="flex gap-2 mb-2">
+            <button
+              type="button"
+              className={`flex-1 py-2 rounded-lg border font-semibold transition-colors duration-200 cursor-pointer text-sm sm:text-base flex items-center justify-center gap-2 ${screen_type === 'standing' ? 'border-orange-500 text-orange-500 bg-white' : 'border-gray-300 text-gray-700 bg-white'}`}
+              onClick={() => setScreen_type('standing')}
+              aria-pressed={screen_type === 'standing'}
+            >
+              <span className="text-xl">📱</span>
+              <span>Em pé</span>
+            </button>
+            <button
+              type="button"
+              className={`flex-1 py-2 rounded-lg border font-semibold transition-colors duration-200 cursor-pointer text-sm sm:text-base flex items-center justify-center gap-2 ${screen_type === 'down' ? 'border-orange-500 text-orange-500 bg-white' : 'border-gray-300 text-gray-700 bg-white'}`}
+              onClick={() => setScreen_type('down')}
+              aria-pressed={screen_type === 'down'}
+            >
+              <span className="text-xl rotate-90">📱</span>
+              <span>Deitado</span>
+            </button>
+          </div>
 
           {/* Tipo de mídia */}
           <span className="text-xs font-semibold text-gray-700 pl-1 mt-2">Tipo de mídia</span>
