@@ -209,47 +209,84 @@ export default function ModalSelecionarArte({
               <div className="min-h-full flex flex-col items-center justify-center p-4 sm:p-6 lg:p-8 bg-gradient-to-br from-gray-50 to-gray-100">
               <div className="relative w-full max-w-3xl">
                 {/* Professional Monitor Design */}
-                <div className="relative mx-auto" style={{ width: '100%', maxWidth: '400px', height: 'auto' }}>
-                  <svg
-                    viewBox="0 0 600 800"
-                    className="w-full h-auto"
-                    style={{ filter: 'drop-shadow(0 30px 60px rgba(0,0,0,0.4))' }}
-                  >
-                    {/* Shadow Layer */}
-                    <ellipse cx="300" cy="780" rx="200" ry="20" fill="rgba(0,0,0,0.3)" />
-                    
-                    {/* Base Stand - Modern design */}
-                    <g transform="translate(200, 660)">
-                      {/* Stand */}
-                      <rect x="0" y="0" width="200" height="40" rx="20" fill="#1e1e1e" />
-                      <ellipse cx="100" cy="0" rx="100" ry="10" fill="#0f0f0f" />
+                <div className="relative mx-auto" style={{ width: '100%', maxWidth: selectedAnuncio?.screen_type === 'down' ? '600px' : '400px', height: 'auto' }}>
+                  {/* Determine which monitor to render based on screen_type */}
+                  {selectedAnuncio?.screen_type === 'down' ? (
+                    // Monitor deitado (Landscape)
+                    <svg
+                      viewBox="0 0 800 500"
+                      className="w-full h-auto"
+                      style={{ filter: 'drop-shadow(0 30px 60px rgba(0,0,0,0.4))' }}
+                    >
+                      {/* Shadow Layer */}
+                      <ellipse cx="400" cy="480" rx="250" ry="20" fill="rgba(0,0,0,0.3)" />
                       
-                      {/* Support pillar */}
-                      <rect x="90" y="-60" width="20" height="60" fill="#2a2a2a" />
-                      <ellipse cx="100" cy="-60" rx="18" ry="8" fill="#1a1a1a" />
-                    </g>
-                    
-                    {/* Monitor Frame - Sleek modern design */}
-                    <g transform="translate(80, 40)">
-                      {/* Outer bezel - glossy finish */}
-                      <rect x="0" y="0" width="440" height="600" rx="25" fill="#2d2d2d" />
-                      <rect x="0" y="0" width="440" height="600" rx="25" fill="url(#gloss-gradient)" />
+                      {/* Base Stand - Landscape */}
+                      <g transform="translate(300, 380)">
+                        <rect x="0" y="0" width="200" height="40" rx="20" fill="#1e1e1e" />
+                        <ellipse cx="100" cy="0" rx="100" ry="10" fill="#0f0f0f" />
+                        <rect x="90" y="-40" width="20" height="40" fill="#2a2a2a" />
+                        <ellipse cx="100" cy="-40" rx="18" ry="8" fill="#1a1a1a" />
+                      </g>
                       
-                      {/* Inner bezel - thin border */}
-                      <rect x="15" y="15" width="410" height="570" rx="20" fill="#1a1a1a" />
+                      {/* Monitor Frame - Landscape */}
+                      <g transform="translate(150, 40)">
+                        <rect x="0" y="0" width="500" height="320" rx="20" fill="#2d2d2d" />
+                        <rect x="0" y="0" width="500" height="320" rx="20" fill="url(#gloss-gradient-landscape)" />
+                        <rect x="20" y="20" width="460" height="280" rx="15" fill="#1a1a1a" />
+                        <rect x="50" y="40" width="400" height="240" rx="10" fill="#000000" />
+                      </g>
                       
-                      {/* Screen area - where the image will appear */}
-                      <rect x="40" y="50" width="360" height="500" rx="12" fill="#000000" />
-                    </g>
-                    
-                    {/* Gradient for glossy effect */}
-                    <defs>
-                      <linearGradient id="gloss-gradient" x1="0%" y1="0%" x2="0%" y2="30%">
-                        <stop offset="0%" style={{ stopColor: 'rgba(255,255,255,0.3)', stopOpacity: 0.3 }} />
-                        <stop offset="100%" style={{ stopColor: 'rgba(255,255,255,0)', stopOpacity: 0 }} />
-                      </linearGradient>
-                    </defs>
-                  </svg>
+                      <defs>
+                        <linearGradient id="gloss-gradient-landscape" x1="0%" y1="0%" x2="50%" y2="0%">
+                          <stop offset="0%" style={{ stopColor: 'rgba(255,255,255,0.3)', stopOpacity: 0.3 }} />
+                          <stop offset="100%" style={{ stopColor: 'rgba(255,255,255,0)', stopOpacity: 0 }} />
+                        </linearGradient>
+                      </defs>
+                    </svg>
+                  ) : (
+                    // Monitor em pé (Portrait - standing)
+                    <svg
+                      viewBox="0 0 600 800"
+                      className="w-full h-auto"
+                      style={{ filter: 'drop-shadow(0 30px 60px rgba(0,0,0,0.4))' }}
+                    >
+                      {/* Shadow Layer */}
+                      <ellipse cx="300" cy="780" rx="200" ry="20" fill="rgba(0,0,0,0.3)" />
+                      
+                      {/* Base Stand - Modern design */}
+                      <g transform="translate(200, 660)">
+                        {/* Stand */}
+                        <rect x="0" y="0" width="200" height="40" rx="20" fill="#1e1e1e" />
+                        <ellipse cx="100" cy="0" rx="100" ry="10" fill="#0f0f0f" />
+                        
+                        {/* Support pillar */}
+                        <rect x="90" y="-60" width="20" height="60" fill="#2a2a2a" />
+                        <ellipse cx="100" cy="-60" rx="18" ry="8" fill="#1a1a1a" />
+                      </g>
+                      
+                      {/* Monitor Frame - Sleek modern design */}
+                      <g transform="translate(80, 40)">
+                        {/* Outer bezel - glossy finish */}
+                        <rect x="0" y="0" width="440" height="600" rx="25" fill="#2d2d2d" />
+                        <rect x="0" y="0" width="440" height="600" rx="25" fill="url(#gloss-gradient)" />
+                        
+                        {/* Inner bezel - thin border */}
+                        <rect x="15" y="15" width="410" height="570" rx="20" fill="#1a1a1a" />
+                        
+                        {/* Screen area - where the image will appear */}
+                        <rect x="40" y="50" width="360" height="500" rx="12" fill="#000000" />
+                      </g>
+                      
+                      {/* Gradient for glossy effect */}
+                      <defs>
+                        <linearGradient id="gloss-gradient" x1="0%" y1="0%" x2="0%" y2="30%">
+                          <stop offset="0%" style={{ stopColor: 'rgba(255,255,255,0.3)', stopOpacity: 0.3 }} />
+                          <stop offset="100%" style={{ stopColor: 'rgba(255,255,255,0)', stopOpacity: 0 }} />
+                        </linearGradient>
+                      </defs>
+                    </svg>
+                  )}
                   
                   {/* Hidden file input */}
                   <input
@@ -264,7 +301,17 @@ export default function ModalSelecionarArte({
                   <div 
                     className={`absolute transition-all ${selectedAnuncio ? 'cursor-pointer hover:opacity-90' : 'cursor-not-allowed'}`}
                     onClick={handleMonitorClick}
-                    style={{
+                    style={selectedAnuncio?.screen_type === 'down' ? {
+                      // Para monitor deitado (landscape)
+                      left: '11.2%',
+                      top: '12.8%',
+                      width: '57.6%',
+                      height: '48%',
+                      borderRadius: '10px',
+                      overflow: 'hidden',
+                      background: currentTotemArt ? 'transparent' : 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)'
+                    } : {
+                      // Para monitor em pé (portrait/standing)
                       left: '20%',
                       top: '11.25%',
                       width: '60%',
@@ -313,7 +360,7 @@ export default function ModalSelecionarArte({
                               Selecione um arquivo para visualizar
                             </p>
                             <p className="text-xs opacity-70 font-medium">
-                              Proporção recomendada: 1080x1920 px
+                              Proporção recomendada: {selectedAnuncio.screen_type === 'down' ? '1920x1080 px' : '1080x1920 px'}
                             </p>
                           </>
                         ) : (

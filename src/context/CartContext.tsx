@@ -20,6 +20,7 @@ type Produto = {
   selectedDuration?: string
   precoMultiplicado?: number
   type_screen: string
+  screen_type?: "standing" | "down"
 }
 
 type FormData = {
