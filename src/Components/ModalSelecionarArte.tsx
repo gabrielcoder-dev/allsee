@@ -214,24 +214,24 @@ export default function ModalSelecionarArte({
                   {selectedAnuncio?.screen_type === 'down' ? (
                     // Monitor deitado (Landscape) - sem base
                     <svg
-                      viewBox="0 0 800 500"
+                      viewBox="0 0 800 400"
                       className="w-full h-auto"
                       style={{ filter: 'drop-shadow(0 30px 60px rgba(0,0,0,0.4))' }}
                     >
                       {/* Shadow Layer */}
-                      <ellipse cx="400" cy="490" rx="280" ry="15" fill="rgba(0,0,0,0.3)" />
+                      <ellipse cx="400" cy="390" rx="280" ry="15" fill="rgba(0,0,0,0.3)" />
                       
                       {/* Monitor Frame - Landscape */}
                       <g transform="translate(50, 20)">
                         {/* Outer bezel */}
-                        <rect x="0" y="0" width="700" height="440" rx="25" fill="#2d2d2d" />
-                        <rect x="0" y="0" width="700" height="440" rx="25" fill="url(#gloss-gradient-landscape)" />
+                        <rect x="0" y="0" width="700" height="340" rx="25" fill="#2d2d2d" />
+                        <rect x="0" y="0" width="700" height="340" rx="25" fill="url(#gloss-gradient-landscape)" />
                         
                         {/* Inner bezel - borda mais fina */}
-                        <rect x="20" y="20" width="660" height="400" rx="18" fill="#1a1a1a" />
+                        <rect x="20" y="20" width="660" height="300" rx="18" fill="#1a1a1a" />
                         
                         {/* Screen area - tela maior em altura */}
-                        <rect x="50" y="50" width="600" height="340" rx="8" fill="#000000" />
+                        <rect x="50" y="50" width="600" height="240" rx="8" fill="#000000" />
                       </g>
                       
                       <defs>
@@ -302,9 +302,9 @@ export default function ModalSelecionarArte({
                     style={selectedAnuncio?.screen_type === 'down' ? {
                       // Para monitor deitado (landscape)
                       left: '12.5%',
-                      top: '14%',
+                      top: '17.5%',
                       width: '75%',
-                      height: '68%',
+                      height: '60%',
                       borderRadius: '8px',
                       overflow: 'hidden',
                       background: currentTotemArt ? 'transparent' : 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)'
