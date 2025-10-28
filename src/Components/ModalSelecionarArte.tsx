@@ -80,7 +80,7 @@ export default function ModalSelecionarArte({
         {/* Content */}
         <div className="flex-1 flex flex-col lg:flex-row">
           {/* Left Side - Lista de totens */}
-          <div className="w-full lg:w-1/3 border-b lg:border-b-0 lg:border-r border-gray-200 overflow-y-auto p-4 lg:p-6 max-h-[40vh] lg:max-h-none">
+          <div className="w-full lg:w-1/3 border-b lg:border-b-0 lg:border-r border-gray-200 overflow-y-auto p-4 lg:p-6">
             <h2 className="text-lg sm:text-xl font-bold mb-4">Totens</h2>
             <div className="space-y-2">
               {/* Seções Digitais e Impressos como accordion */}
@@ -284,7 +284,7 @@ export default function ModalSelecionarArte({
                       left: '12.5%',
                       top: '12.5%',
                       width: '75%',
-                      height: '70%',
+                      height: '65.96%',
                       borderRadius: '8px',
                       overflow: 'hidden',
                       background: currentTotemArt ? 'transparent' : 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)'
@@ -367,7 +367,7 @@ export default function ModalSelecionarArte({
           <button
             onClick={handleConcluir}
             disabled={Object.keys(totensArtes).length === 0}
-            className="fixed bottom-0 right-0 z-10 bg-orange-500 hover:bg-orange-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white px-4 sm:px-6 py-2 rounded-lg font-semibold transition-colors text-sm sm:text-base"
+            className="bg-orange-500 hover:bg-orange-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white px-4 sm:px-6 py-2 rounded-lg font-semibold transition-colors text-sm sm:text-base"
           >
             Concluir
           </button>
