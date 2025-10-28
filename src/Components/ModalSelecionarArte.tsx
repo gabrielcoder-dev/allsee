@@ -314,7 +314,7 @@ export default function ModalSelecionarArte({
                       left: '12.5%',
                       top: '12.5%',
                       width: '75%',
-                      height: '65.96%',
+                      height: '70%',
                       borderRadius: '8px',
                       overflow: 'hidden',
                       background: currentTotemArt ? 'transparent' : 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)'
