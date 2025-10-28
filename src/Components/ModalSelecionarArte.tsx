@@ -200,29 +200,29 @@ export default function ModalSelecionarArte({
               <div className="min-h-full flex flex-col items-center justify-center p-4 sm:p-6 lg:p-8 bg-gradient-to-br from-gray-50 to-gray-100">
               <div className="relative w-full max-w-3xl">
                 {/* Professional Monitor Design */}
-                <div className="relative mx-auto" style={{ width: '100%', maxWidth: selectedAnuncio?.screen_type === 'down' ? '550px' : '400px', height: 'auto' }}>
+                <div className={`relative mx-auto ${selectedAnuncio?.screen_type === 'down' ? 'w-full max-w-full sm:max-w-[350px] lg:max-w-[550px]' : 'w-full max-w-[280px] sm:max-w-[320px] lg:max-w-[400px]'}`} style={{ height: 'auto' }}>
                   {/* Determine which monitor to render based on screen_type */}
                   {selectedAnuncio?.screen_type === 'down' ? (
                     // Monitor deitado (Landscape) - sem base
                     <svg
-                      viewBox="0 0 800 450"
+                      viewBox="0 0 800 470"
                       className="w-full h-auto"
                       style={{ filter: 'drop-shadow(0 30px 60px rgba(0,0,0,0.4))' }}
                     >
                       {/* Shadow Layer */}
-                      <ellipse cx="400" cy="440" rx="280" ry="15" fill="rgba(0,0,0,0.3)" />
+                      <ellipse cx="400" cy="460" rx="280" ry="15" fill="rgba(0,0,0,0.3)" />
                       
                       {/* Monitor Frame - Landscape */}
                       <g transform="translate(50, 20)">
                         {/* Outer bezel */}
-                        <rect x="0" y="0" width="700" height="390" rx="25" fill="#2d2d2d" />
-                        <rect x="0" y="0" width="700" height="390" rx="25" fill="url(#gloss-gradient-landscape)" />
+                        <rect x="0" y="0" width="700" height="410" rx="25" fill="#2d2d2d" />
+                        <rect x="0" y="0" width="700" height="410" rx="25" fill="url(#gloss-gradient-landscape)" />
                         
                         {/* Inner bezel - borda mais fina */}
-                        <rect x="20" y="20" width="660" height="350" rx="18" fill="#1a1a1a" />
+                        <rect x="20" y="20" width="660" height="370" rx="18" fill="#1a1a1a" />
                         
                         {/* Screen area - tela maior em altura */}
-                        <rect x="50" y="50" width="600" height="290" rx="8" fill="#000000" />
+                        <rect x="50" y="50" width="600" height="310" rx="8" fill="#000000" />
                       </g>
                       
                       <defs>
@@ -293,9 +293,9 @@ export default function ModalSelecionarArte({
                     style={selectedAnuncio?.screen_type === 'down' ? {
                       // Para monitor deitado (landscape)
                       left: '12.5%',
-                      top: '15.56%',
+                      top: '15.96%',
                       width: '75%',
-                      height: '64.44%',
+                      height: '65.96%',
                       borderRadius: '8px',
                       overflow: 'hidden',
                       background: currentTotemArt ? 'transparent' : 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)'
