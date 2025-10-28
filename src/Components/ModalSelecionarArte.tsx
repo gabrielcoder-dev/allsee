@@ -16,6 +16,7 @@ export default function ModalSelecionarArte({
   const { produtos, updateFormData, formData } = useCart();
   const [selectedAnuncio, setSelectedAnuncio] = useState<any>(null);
   const [totensArtes, setTotensArtes] = useState<Record<string, { file: File; previewUrl: string }>>({});
+  const [openGroups, setOpenGroups] = useState<{ [key: string]: boolean }>({ impresso: true, digital: true });
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   if (!open) return null;
@@ -80,91 +81,81 @@ export default function ModalSelecionarArte({
         <div className="flex-1 flex flex-col lg:flex-row overflow-y-auto">
           {/* Left Side - Lista de totens */}
           <div className="w-full lg:w-1/3 border-b lg:border-b-0 lg:border-r border-gray-200 overflow-y-auto p-4 lg:p-6 max-h-[40vh] lg:max-h-none">
-            <h2 className="text-lg sm:text-xl font-bold">Arquivos</h2>
-            <div className="space-y-4">
-              {/* Seção Digital */}
-              {produtosDigitais.length > 0 && (
-                <div className="mb-6">
-                  <h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
-                    <Monitor className="w-4 h-4" />
-                    Digital
-                  </h3>
-                  <div className="space-y-2">
-                    {produtosDigitais.map((produto) => {
-                      const hasArt = totensArtes[produto.id] !== undefined;
-                      return (
-                      <div
-                        key={produto.id}
-                        className={`p-2 sm:p-3 border-2 rounded-lg cursor-pointer transition-all ${
-                          selectedAnuncio?.id === produto.id
-                            ? "border-orange-500 bg-orange-50 shadow-sm"
-                            : hasArt
-                            ? "border-green-500 bg-green-50"
-                            : "border-gray-300 hover:bg-gray-50"
-                        }`}
-                        onClick={() => setSelectedAnuncio(produto)}
+            <h2 className="text-lg sm:text-xl font-bold mb-4">Totens</h2>
+            <div className="space-y-2">
+              {/* Seções Digitais e Impressos como accordion */}
+              {['digital', 'impresso'].map((tipo) => {
+                const itensTipo = tipo === 'digital' ? produtosDigitais : produtosImpressos;
+                if (itensTipo.length === 0) return null;
+                const isOpen = openGroups[tipo];
+                const pontosLabel = itensTipo.length === 1 ? 'Ponto' : 'Pontos';
+                
+                return (
+                  <div
+                    key={tipo}
+                    className="mb-2 rounded-lg border bg-gray-50 transition-all duration-300"
+                    style={{ overflow: 'hidden' }}
+                  >
+                    <div
+                      className="flex items-center justify-between px-4 py-3 bg-white cursor-pointer select-none transition-colors duration-200 rounded-t-lg"
+                      onClick={() => setOpenGroups((prev) => ({ ...prev, [tipo]: !prev[tipo] }))}
+                    >
+                      <span className="font-semibold text-sm capitalize text-gray-800 tracking-tight flex items-center gap-2">
+                        {tipo === 'digital' ? <Monitor className="w-4 h-4" /> : <Printer className="w-4 h-4" />}
+                        {tipo === 'digital' ? 'Digital' : 'Impresso'} ({itensTipo.length} {pontosLabel})
+                      </span>
+                      <button
+                        className="rounded-full p-1 hover:bg-gray-100 transition"
+                        tabIndex={-1}
+                        onClick={e => { e.stopPropagation(); setOpenGroups((prev) => ({ ...prev, [tipo]: !prev[tipo] })); }}
                       >
-                        <div className="flex items-start justify-between gap-2">
-                          <div className="flex-1 min-w-0">
-                            <div className="font-medium text-xs sm:text-sm text-gray-900 truncate">
-                              {produto.nome}
-                            </div>
-                            <div className="text-[10px] sm:text-xs text-gray-500 mt-1 line-clamp-2">
-                              {produto.endereco}
-                            </div>
-                          </div>
-                          <span className="bg-purple-600 text-white text-[9px] sm:text-[10px] px-1.5 sm:px-2 py-0.5 rounded whitespace-nowrap">
-                            digital
-                          </span>
+                        <svg className={`w-4 h-4 text-gray-500 transition-transform duration-300 ${isOpen ? 'rotate-180' : 'rotate-0'}`} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                        </svg>
+                      </button>
+                    </div>
+                    <div
+                      className={`transition-all duration-300 ${isOpen ? 'max-h-[1000px] opacity-100' : 'max-h-0 opacity-0'}`}
+                      style={{ overflow: 'hidden' }}
+                    >
+                      {isOpen && (
+                        <div className="p-3 space-y-2 bg-gray-50">
+                          {itensTipo.map((produto) => {
+                            const hasArt = totensArtes[produto.id] !== undefined;
+                            return (
+                              <div
+                                key={produto.id}
+                                className={`p-3 bg-white border-2 rounded-lg cursor-pointer transition-all ${
+                                  selectedAnuncio?.id === produto.id
+                                    ? "border-orange-500 bg-orange-50 shadow-sm"
+                                    : hasArt
+                                    ? "border-green-500 bg-green-50"
+                                    : "border-gray-200 hover:bg-gray-50"
+                                }`}
+                                onClick={() => setSelectedAnuncio(produto)}
+                              >
+                                <div className="flex items-start justify-between gap-2">
+                                  <div className="flex-1 min-w-0">
+                                    <div className="font-medium text-sm text-gray-900 truncate mb-1">
+                                      {produto.nome}
+                                    </div>
+                                    <div className="text-xs text-gray-500 line-clamp-2">
+                                      {produto.endereco}
+                                    </div>
+                                  </div>
+                                  <span className={`${tipo === 'digital' ? 'bg-purple-600' : 'bg-green-600'} text-white text-xs px-2 py-0.5 rounded whitespace-nowrap`}>
+                                    {tipo}
+                                  </span>
+                                </div>
+                              </div>
+                            );
+                          })}
                         </div>
-                      </div>
-                    );
-                    })}
+                      )}
+                    </div>
                   </div>
-                </div>
-              )}
-
-              {/* Seção Impresso */}
-              {produtosImpressos.length > 0 && (
-                <div>
-                  <h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
-                    <Printer className="w-4 h-4" />
-                    Impresso
-                  </h3>
-                  <div className="space-y-2">
-                    {produtosImpressos.map((produto) => {
-                      const hasArt = totensArtes[produto.id] !== undefined;
-                      return (
-                      <div
-                        key={produto.id}
-                        className={`p-2 sm:p-3 border-2 rounded-lg cursor-pointer transition-all ${
-                          selectedAnuncio?.id === produto.id
-                            ? "border-orange-500 bg-orange-50 shadow-sm"
-                            : hasArt
-                            ? "border-green-500 bg-green-50"
-                            : "border-gray-300 hover:bg-gray-50"
-                        }`}
-                        onClick={() => setSelectedAnuncio(produto)}
-                      >
-                        <div className="flex items-start justify-between gap-2">
-                          <div className="flex-1 min-w-0">
-                            <div className="font-medium text-xs sm:text-sm text-gray-900 truncate">
-                              {produto.nome}
-                            </div>
-                            <div className="text-[10px] sm:text-xs text-gray-500 mt-1 line-clamp-2">
-                              {produto.endereco}
-                            </div>
-                          </div>
-                          <span className="bg-green-600 text-white text-[9px] sm:text-[10px] px-1.5 sm:px-2 py-0.5 rounded whitespace-nowrap">
-                            impresso
-                          </span>
-                        </div>
-                      </div>
-                    );
-                    })}
-                  </div>
-                </div>
-              )}
+                );
+              })}
             </div>
           </div>
 
