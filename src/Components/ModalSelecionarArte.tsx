@@ -78,11 +78,14 @@ export default function ModalSelecionarArte({
       <div className="w-full h-full flex flex-col">
 
         {/* Content */}
-        <div className="flex-1 flex flex-col lg:flex-row overflow-y-auto">
+        <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
           {/* Left Side - Lista de totens */}
-          <div className="w-full lg:w-1/3 border-b lg:border-b-0 lg:border-r border-gray-200 overflow-y-auto p-4 lg:p-6 max-h-[40vh] lg:max-h-none">
-            <h2 className="text-lg sm:text-xl font-bold mb-4">Totens</h2>
-            <div className="space-y-2">
+          <div className="w-full lg:w-1/3 border-b lg:border-b-0 lg:border-r border-gray-200 flex flex-col overflow-hidden">
+            <div className="flex-shrink-0 p-4 lg:p-6 pb-3">
+              <h2 className="text-lg sm:text-xl font-bold">Totens</h2>
+            </div>
+            <div className="flex-1 overflow-y-auto px-4 lg:px-6 pb-4 lg:pb-6">
+              <div className="space-y-2">
               {/* Seções Digitais e Impressos como accordion */}
               {['digital', 'impresso'].map((tipo) => {
                 const itensTipo = tipo === 'digital' ? produtosDigitais : produtosImpressos;
@@ -156,6 +159,7 @@ export default function ModalSelecionarArte({
                   </div>
                 );
               })}
+              </div>
             </div>
           </div>
 
