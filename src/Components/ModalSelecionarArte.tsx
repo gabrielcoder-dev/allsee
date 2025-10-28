@@ -78,7 +78,7 @@ export default function ModalSelecionarArte({
       <div className="w-full h-full flex flex-col">
 
         {/* Content */}
-        <div className="flex-1 flex flex-col lg:flex-row overflow-y-auto">
+        <div className="flex-1 flex flex-col lg:flex-row">
           {/* Left Side - Lista de totens */}
           <div className="w-full lg:w-1/3 border-b lg:border-b-0 lg:border-r border-gray-200 overflow-y-auto p-4 lg:p-6 max-h-[40vh] lg:max-h-none">
             <h2 className="text-lg sm:text-xl font-bold mb-4">Totens</h2>
@@ -290,10 +290,10 @@ export default function ModalSelecionarArte({
                       background: currentTotemArt ? 'transparent' : 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)'
                     } : {
                       // Para monitor em pé (portrait/standing)
-                      left: '20%',
-                      top: '11.25%',
-                      width: '60%',
-                      height: '62.5%',
+                      left: '19%',
+                      top: '13%',
+                      width: '62%',
+                      height: '75%',
                       borderRadius: '12px',
                       overflow: 'hidden',
                       background: currentTotemArt ? 'transparent' : 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)'
