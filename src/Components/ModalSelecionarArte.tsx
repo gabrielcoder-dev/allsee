@@ -204,7 +204,7 @@ export default function ModalSelecionarArte({
               <div className="min-h-full flex flex-col items-center justify-center p-2 sm:p-4 lg:p-8 bg-gradient-to-br from-gray-50 to-gray-100">
               <div className="relative w-full max-w-3xl">
                 {/* Professional Monitor Design */}
-                <div className={`relative mx-auto ${selectedAnuncio?.screen_type === 'down' ? 'w-[280px] h-[175px] sm:w-[350px] sm:h-[210px] lg:w-[550px] lg:h-[330px]' : 'w-[200px] h-[260px] sm:w-[260px] sm:h-[320px] lg:w-[320px] lg:h-[400px]'}`} style={{ maxWidth: '100%' }}>
+                <div className={`relative mx-auto ${selectedAnuncio?.screen_type === 'down' ? 'w-[280px] h-[175px] sm:w-[350px] sm:h-[210px] lg:w-[550px] lg:h-[330px]' : 'w-[220px] h-[285px] sm:w-[285px] sm:h-[355px] lg:w-[350px] lg:h-[440px]'}`} style={{ maxWidth: '100%' }}>
                   {/* Determine which monitor to render based on screen_type */}
                   {selectedAnuncio?.screen_type === 'down' ? (
                     // Monitor deitado (Landscape) - sem base
@@ -294,10 +294,10 @@ export default function ModalSelecionarArte({
                       background: currentTotemArt ? 'transparent' : 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)'
                     } : {
                       // Para monitor em pé (portrait) - ajustado para ficar certinho
-                      left: '17%',
-                      top: '12.5%',
-                      width: '66%',
-                      height: '79%',
+                      left: '20%',
+                      top: '13.85%',
+                      width: '60%',
+                      height: '76.92%',
                       borderRadius: '12px',
                       overflow: 'hidden',
                       background: currentTotemArt ? 'transparent' : 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)'
