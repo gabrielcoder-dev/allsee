@@ -724,6 +724,7 @@ export default function GetAnunciosResults({
                           anuncio.type_screen && anuncio.type_screen.trim()
                             ? anuncio.type_screen
                             : "digital",
+                        screen_type: anuncio.screen_type,
                       });
                     }
                   }}

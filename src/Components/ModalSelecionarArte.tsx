@@ -214,33 +214,38 @@ export default function ModalSelecionarArte({
                   {selectedAnuncio?.screen_type === 'down' ? (
                     // Monitor deitado (Landscape)
                     <svg
-                      viewBox="0 0 800 500"
+                      viewBox="0 0 800 550"
                       className="w-full h-auto"
                       style={{ filter: 'drop-shadow(0 30px 60px rgba(0,0,0,0.4))' }}
                     >
                       {/* Shadow Layer */}
-                      <ellipse cx="400" cy="480" rx="250" ry="20" fill="rgba(0,0,0,0.3)" />
+                      <ellipse cx="400" cy="530" rx="250" ry="20" fill="rgba(0,0,0,0.3)" />
                       
                       {/* Base Stand - Landscape */}
-                      <g transform="translate(300, 380)">
-                        <rect x="0" y="0" width="200" height="40" rx="20" fill="#1e1e1e" />
-                        <ellipse cx="100" cy="0" rx="100" ry="10" fill="#0f0f0f" />
-                        <rect x="90" y="-40" width="20" height="40" fill="#2a2a2a" />
-                        <ellipse cx="100" cy="-40" rx="18" ry="8" fill="#1a1a1a" />
+                      <g transform="translate(300, 430)">
+                        <rect x="0" y="0" width="200" height="30" rx="15" fill="#1e1e1e" />
+                        <ellipse cx="100" cy="0" rx="100" ry="8" fill="#0f0f0f" />
+                        <rect x="90" y="-50" width="20" height="50" fill="#2a2a2a" />
                       </g>
                       
                       {/* Monitor Frame - Landscape */}
-                      <g transform="translate(150, 40)">
-                        <rect x="0" y="0" width="500" height="320" rx="20" fill="#2d2d2d" />
-                        <rect x="0" y="0" width="500" height="320" rx="20" fill="url(#gloss-gradient-landscape)" />
-                        <rect x="20" y="20" width="460" height="280" rx="15" fill="#1a1a1a" />
-                        <rect x="50" y="40" width="400" height="240" rx="10" fill="#000000" />
+                      <g transform="translate(150, 50)">
+                        {/* Outer bezel */}
+                        <rect x="0" y="0" width="500" height="340" rx="25" fill="#2d2d2d" />
+                        <rect x="0" y="0" width="500" height="340" rx="25" fill="url(#gloss-gradient-landscape)" />
+                        
+                        {/* Inner bezel */}
+                        <rect x="20" y="20" width="460" height="300" rx="15" fill="#1a1a1a" />
+                        
+                        {/* Screen area */}
+                        <rect x="50" y="45" width="400" height="250" rx="10" fill="#000000" />
                       </g>
                       
                       <defs>
-                        <linearGradient id="gloss-gradient-landscape" x1="0%" y1="0%" x2="50%" y2="0%">
-                          <stop offset="0%" style={{ stopColor: 'rgba(255,255,255,0.3)', stopOpacity: 0.3 }} />
-                          <stop offset="100%" style={{ stopColor: 'rgba(255,255,255,0)', stopOpacity: 0 }} />
+                        <linearGradient id="gloss-gradient-landscape" x1="0%" y1="0%" x2="100%" y2="0%">
+                          <stop offset="0%" style={{ stopColor: 'rgba(255,255,255,0.2)', stopOpacity: 0.2 }} />
+                          <stop offset="50%" style={{ stopColor: 'rgba(255,255,255,0)', stopOpacity: 0 }} />
+                          <stop offset="100%" style={{ stopColor: 'rgba(255,255,255,0.2)', stopOpacity: 0.2 }} />
                         </linearGradient>
                       </defs>
                     </svg>
@@ -303,10 +308,10 @@ export default function ModalSelecionarArte({
                     onClick={handleMonitorClick}
                     style={selectedAnuncio?.screen_type === 'down' ? {
                       // Para monitor deitado (landscape)
-                      left: '11.2%',
-                      top: '12.8%',
-                      width: '57.6%',
-                      height: '48%',
+                      left: '25%',
+                      top: '17.27%',
+                      width: '50%',
+                      height: '45.45%',
                       borderRadius: '10px',
                       overflow: 'hidden',
                       background: currentTotemArt ? 'transparent' : 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)'
