@@ -282,7 +282,7 @@ export default function ModalSelecionarArte({
                     style={selectedAnuncio?.screen_type === 'down' ? {
                       // Para monitor deitado (landscape)
                       left: '12.5%',
-                      top: '13%',
+                      top: '12.7%',
                       width: '75%',
                       height: '65.96%',
                       borderRadius: '8px',
