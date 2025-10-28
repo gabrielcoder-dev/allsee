@@ -224,14 +224,14 @@ export default function ModalSelecionarArte({
                       {/* Monitor Frame - Landscape */}
                       <g transform="translate(50, 20)">
                         {/* Outer bezel */}
-                        <rect x="0" y="0" width="700" height="340" rx="30" fill="#2d2d2d" />
-                        <rect x="0" y="0" width="700" height="340" rx="30" fill="url(#gloss-gradient-landscape)" />
+                        <rect x="0" y="0" width="700" height="340" rx="25" fill="#2d2d2d" />
+                        <rect x="0" y="0" width="700" height="340" rx="25" fill="url(#gloss-gradient-landscape)" />
                         
-                        {/* Inner bezel */}
-                        <rect x="30" y="30" width="640" height="280" rx="20" fill="#1a1a1a" />
+                        {/* Inner bezel - borda mais fina */}
+                        <rect x="20" y="20" width="660" height="300" rx="18" fill="#1a1a1a" />
                         
-                        {/* Screen area */}
-                        <rect x="75" y="75" width="550" height="190" rx="10" fill="#000000" />
+                        {/* Screen area - tela maior */}
+                        <rect x="50" y="50" width="600" height="240" rx="8" fill="#000000" />
                       </g>
                       
                       <defs>
@@ -301,11 +301,11 @@ export default function ModalSelecionarArte({
                     onClick={handleMonitorClick}
                     style={selectedAnuncio?.screen_type === 'down' ? {
                       // Para monitor deitado (landscape)
-                      left: '15.625%',
-                      top: '23.75%',
-                      width: '68.75%',
-                      height: '47.5%',
-                      borderRadius: '10px',
+                      left: '12.5%',
+                      top: '17.5%',
+                      width: '75%',
+                      height: '60%',
+                      borderRadius: '8px',
                       overflow: 'hidden',
                       background: currentTotemArt ? 'transparent' : 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)'
                     } : {
