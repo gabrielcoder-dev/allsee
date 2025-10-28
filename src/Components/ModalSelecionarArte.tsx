@@ -15,8 +15,7 @@ export default function ModalSelecionarArte({
 }: ModalSelecionarArteProps) {
   const { produtos, updateFormData, formData } = useCart();
   const [selectedAnuncio, setSelectedAnuncio] = useState<any>(null);
-  const [file, setFile] = useState<File | null>(null);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [totensArtes, setTotensArtes] = useState<Record<string, { file: File; previewUrl: string }>>({});
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   if (!open) return null;
@@ -30,13 +29,17 @@ export default function ModalSelecionarArte({
   );
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
+    if (e.target.files && e.target.files[0] && selectedAnuncio) {
       const file = e.target.files[0];
-      setFile(file);
       
       // Criar URL de preview
       const url = URL.createObjectURL(file);
-      setPreviewUrl(url);
+      
+      // Salvar a arte para o totem específico
+      setTotensArtes(prev => ({
+        ...prev,
+        [selectedAnuncio.id]: { file, previewUrl: url }
+      }));
     }
   };
 
@@ -47,22 +50,27 @@ export default function ModalSelecionarArte({
   };
 
   const handleConcluir = () => {
-    if (file) {
-      // Salvar arquivo selecionado no contexto
-      updateFormData({
-        selectedImage: file,
-        previewUrl: previewUrl,
-        isArtSelected: true
-      });
-    }
+    // Salvar todas as artes no contexto
+    updateFormData({
+      totensArtes: totensArtes,
+      isArtSelected: Object.keys(totensArtes).length > 0
+    });
     onClose();
   };
 
   const handleRemoveFile = (e: React.MouseEvent) => {
     e.stopPropagation();
-    setFile(null);
-    setPreviewUrl(null);
+    if (selectedAnuncio) {
+      setTotensArtes(prev => {
+        const newTotensArtes = { ...prev };
+        delete newTotensArtes[selectedAnuncio.id];
+        return newTotensArtes;
+      });
+    }
   };
+
+  // Obter arte do totem selecionado
+  const currentTotemArt = selectedAnuncio ? totensArtes[selectedAnuncio.id] : null;
 
   return (
     <div className="fixed inset-0 z-[9999] bg-white overflow-hidden">
@@ -82,13 +90,17 @@ export default function ModalSelecionarArte({
                     Digital
                   </h3>
                   <div className="space-y-2">
-                    {produtosDigitais.map((produto) => (
+                    {produtosDigitais.map((produto) => {
+                      const hasArt = totensArtes[produto.id] !== undefined;
+                      return (
                       <div
                         key={produto.id}
-                        className={`p-2 sm:p-3 border rounded-lg cursor-pointer transition-all ${
+                        className={`p-2 sm:p-3 border-2 rounded-lg cursor-pointer transition-all ${
                           selectedAnuncio?.id === produto.id
                             ? "border-orange-500 bg-orange-50 shadow-sm"
-                            : "hover:bg-gray-50"
+                            : hasArt
+                            ? "border-green-500 bg-green-50"
+                            : "border-gray-300 hover:bg-gray-50"
                         }`}
                         onClick={() => setSelectedAnuncio(produto)}
                       >
@@ -106,7 +118,8 @@ export default function ModalSelecionarArte({
                           </span>
                         </div>
                       </div>
-                    ))}
+                    );
+                    })}
                   </div>
                 </div>
               )}
@@ -119,13 +132,17 @@ export default function ModalSelecionarArte({
                     Impresso
                   </h3>
                   <div className="space-y-2">
-                    {produtosImpressos.map((produto) => (
+                    {produtosImpressos.map((produto) => {
+                      const hasArt = totensArtes[produto.id] !== undefined;
+                      return (
                       <div
                         key={produto.id}
-                        className={`p-2 sm:p-3 border rounded-lg cursor-pointer transition-all ${
+                        className={`p-2 sm:p-3 border-2 rounded-lg cursor-pointer transition-all ${
                           selectedAnuncio?.id === produto.id
                             ? "border-orange-500 bg-orange-50 shadow-sm"
-                            : "hover:bg-gray-50"
+                            : hasArt
+                            ? "border-green-500 bg-green-50"
+                            : "border-gray-300 hover:bg-gray-50"
                         }`}
                         onClick={() => setSelectedAnuncio(produto)}
                       >
@@ -143,7 +160,8 @@ export default function ModalSelecionarArte({
                           </span>
                         </div>
                       </div>
-                    ))}
+                    );
+                    })}
                   </div>
                 </div>
               )}
@@ -253,13 +271,13 @@ export default function ModalSelecionarArte({
                       height: '62.5%',
                       borderRadius: '12px',
                       overflow: 'hidden',
-                      background: previewUrl ? 'transparent' : 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)'
+                      background: currentTotemArt ? 'transparent' : 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)'
                     }}
                   >
-                    {previewUrl ? (
+                    {currentTotemArt ? (
                       <div style={{ position: 'relative', width: '100%', height: '100%' }}>
                         <img
-                          src={previewUrl}
+                          src={currentTotemArt.previewUrl}
                           alt="Preview"
                           style={{
                             width: '100%',
@@ -323,7 +341,7 @@ export default function ModalSelecionarArte({
           </button>
           <button
             onClick={handleConcluir}
-            disabled={!previewUrl}
+            disabled={Object.keys(totensArtes).length === 0}
             className="bg-orange-500 hover:bg-orange-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white px-4 sm:px-6 py-2 rounded-lg font-semibold transition-colors text-sm sm:text-base"
           >
             Concluir

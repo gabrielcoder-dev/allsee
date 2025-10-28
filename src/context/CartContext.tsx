@@ -28,6 +28,7 @@ type FormData = {
   selectedImage: string | File | null // Base64 string ou File object
   previewUrl: string | null
   isArtSelected: boolean
+  totensArtes?: Record<string, { file: File; previewUrl: string }>
   // Dados de pagamento - Pessoa Física
   nome: string
   cpf: string
