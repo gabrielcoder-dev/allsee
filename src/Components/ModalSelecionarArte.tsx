@@ -293,11 +293,11 @@ export default function ModalSelecionarArte({
                       overflow: 'hidden',
                       background: currentTotemArt ? 'transparent' : 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)'
                     } : {
-                      // Para monitor em pé (portrait) - ajustado para ficar certinho
-                      left: '20%',
-                      top: '13.85%',
-                      width: '60%',
-                      height: '76.92%',
+                      // Para monitor em pé (portrait) - ajustado para não sair do monitor
+                      left: '22%',
+                      top: '15%',
+                      width: '56%',
+                      height: '74%',
                       borderRadius: '12px',
                       overflow: 'hidden',
                       background: currentTotemArt ? 'transparent' : 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)'
