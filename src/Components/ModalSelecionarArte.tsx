@@ -200,7 +200,7 @@ export default function ModalSelecionarArte({
               <div className="min-h-full flex flex-col items-center justify-center p-4 sm:p-6 lg:p-8 bg-gradient-to-br from-gray-50 to-gray-100">
               <div className="relative w-full max-w-3xl">
                 {/* Professional Monitor Design */}
-                <div className="relative mx-auto" style={{ width: '100%', maxWidth: selectedAnuncio?.screen_type === 'down' ? '800px' : '400px', height: 'auto' }}>
+                <div className="relative mx-auto" style={{ width: '100%', maxWidth: selectedAnuncio?.screen_type === 'down' ? '550px' : '400px', height: 'auto' }}>
                   {/* Determine which monitor to render based on screen_type */}
                   {selectedAnuncio?.screen_type === 'down' ? (
                     // Monitor deitado (Landscape) - sem base
