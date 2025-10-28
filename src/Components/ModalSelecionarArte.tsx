@@ -201,10 +201,10 @@ export default function ModalSelecionarArte({
             {/* Scrollable Container for Preview */}
             <div className="flex-1">
               {/* Preview Area */}
-              <div className="min-h-full flex flex-col items-center justify-center p-4 sm:p-6 lg:p-8 bg-gradient-to-br from-gray-50 to-gray-100">
+              <div className="min-h-full flex flex-col items-center justify-center p-2 sm:p-4 lg:p-8 bg-gradient-to-br from-gray-50 to-gray-100">
               <div className="relative w-full max-w-3xl">
                 {/* Professional Monitor Design */}
-                <div className={`relative mx-auto ${selectedAnuncio?.screen_type === 'down' ? 'w-full max-w-full sm:max-w-[350px] lg:max-w-[550px]' : 'w-full max-w-[280px] sm:max-w-[320px] lg:max-w-[400px]'}`} style={{ height: 'auto' }}>
+                <div className={`relative mx-auto ${selectedAnuncio?.screen_type === 'down' ? 'w-[280px] h-[175px] sm:w-[350px] sm:h-[210px] lg:w-[550px] lg:h-[330px]' : 'w-[200px] h-[260px] sm:w-[260px] sm:h-[320px] lg:w-[320px] lg:h-[400px]'}`} style={{ maxWidth: '100%' }}>
                   {/* Determine which monitor to render based on screen_type */}
                   {selectedAnuncio?.screen_type === 'down' ? (
                     // Monitor deitado (Landscape) - sem base
@@ -240,23 +240,12 @@ export default function ModalSelecionarArte({
                   ) : (
                     // Monitor em pé (Portrait - standing)
                     <svg
-                      viewBox="0 0 600 800"
+                      viewBox="0 0 600 650"
                       className="w-full h-auto"
                       style={{ filter: 'drop-shadow(0 30px 60px rgba(0,0,0,0.4))' }}
                     >
                       {/* Shadow Layer */}
-                      <ellipse cx="300" cy="780" rx="200" ry="20" fill="rgba(0,0,0,0.3)" />
-                      
-                      {/* Base Stand - Modern design */}
-                      <g transform="translate(200, 660)">
-                        {/* Stand */}
-                        <rect x="0" y="0" width="200" height="40" rx="20" fill="#1e1e1e" />
-                        <ellipse cx="100" cy="0" rx="100" ry="10" fill="#0f0f0f" />
-                        
-                        {/* Support pillar */}
-                        <rect x="90" y="-60" width="20" height="60" fill="#2a2a2a" />
-                        <ellipse cx="100" cy="-60" rx="18" ry="8" fill="#1a1a1a" />
-                      </g>
+                      <ellipse cx="300" cy="630" rx="200" ry="20" fill="rgba(0,0,0,0.3)" />
                       
                       {/* Monitor Frame - Sleek modern design */}
                       <g transform="translate(80, 40)">
@@ -330,41 +319,41 @@ export default function ModalSelecionarArte({
                         {/* Remove button */}
                         <button
                           onClick={handleRemoveFile}
-                          className="absolute top-2 right-2 bg-red-500 hover:bg-red-600 text-white rounded-full w-7 h-7 flex items-center justify-center text-base transition-colors shadow-lg z-10"
+                          className="absolute top-1 right-1 sm:top-2 sm:right-2 bg-red-500 hover:bg-red-600 text-white rounded-full w-5 h-5 sm:w-7 sm:h-7 flex items-center justify-center text-xs sm:text-base transition-colors shadow-lg z-10"
                           title="Remover arquivo"
                         >
                           ✕
                         </button>
                         
                         {/* Branding overlay */}
-                        <div className="absolute bottom-2 right-2 bg-black/90 px-3 py-1.5 rounded-md flex items-center gap-1.5 shadow-lg pointer-events-none">
-                          <Monitor className="w-4 h-4 text-orange-500" />
-                          <span className="text-[11px] text-white font-bold">ALL SEE</span>
+                        <div className="absolute bottom-1 right-1 sm:bottom-2 sm:right-2 bg-black/90 px-2 py-1 sm:px-3 sm:py-1.5 rounded-md flex items-center gap-1 sm:gap-1.5 shadow-lg pointer-events-none">
+                          <Monitor className="w-3 h-3 sm:w-4 sm:h-4 text-orange-500" />
+                          <span className="text-[9px] sm:text-[11px] text-white font-bold">ALL SEE</span>
                         </div>
                       </div>
                     ) : (
-                      <div className="flex flex-col items-center justify-center h-full text-white p-8 text-center">
-                        <div className="bg-white/15 backdrop-blur-sm rounded-full w-20 h-20 flex items-center justify-center mb-6 shadow-xl">
-                          <Monitor className="w-10 h-10 opacity-70" />
+                      <div className="flex flex-col items-center justify-center h-full text-white p-4 sm:p-6 lg:p-8 text-center">
+                        <div className="bg-white/15 backdrop-blur-sm rounded-full w-12 h-12 sm:w-16 sm:h-16 lg:w-20 lg:h-20 flex items-center justify-center mb-3 sm:mb-4 lg:mb-6 shadow-xl">
+                          <Monitor className="w-6 h-6 sm:w-8 sm:h-8 lg:w-10 lg:h-10 opacity-70" />
                         </div>
                         {selectedAnuncio ? (
                           <>
-                            <p className="text-sm font-semibold opacity-95 mb-2">
+                            <p className="text-[10px] sm:text-xs lg:text-sm font-semibold opacity-95 mb-1 sm:mb-2 px-2">
                               Selecione um arquivo para visualizar
                             </p>
-                            <p className="text-xs opacity-70 font-medium">
-                              Proporção recomendada: {selectedAnuncio.screen_type === 'down' ? '1920x1080 px' : '1080x1920 px'}
+                            <p className="text-[9px] sm:text-[10px] lg:text-xs opacity-70 font-medium px-2">
+                              Proporção: {selectedAnuncio.screen_type === 'down' ? '1920x1080 px' : '1080x1920 px'}
                             </p>
                           </>
                         ) : (
-                          <p className="text-sm font-semibold opacity-95">
+                          <p className="text-[10px] sm:text-xs lg:text-sm font-semibold opacity-95 px-2">
                             Selecione o totem e escolha uma arte
                           </p>
                         )}
                       </div>
                     )}
                   </div>
-                </div>
+                  </div>
               </div>
             </div>
             </div>
