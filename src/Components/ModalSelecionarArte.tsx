@@ -65,24 +65,12 @@ export default function ModalSelecionarArte({
   return (
     <div className="fixed inset-0 z-[9999] bg-white overflow-hidden">
       <div className="w-full h-full flex flex-col">
-        {/* Header */}
-        <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200 bg-white">
-          <div>
-            <h2 className="text-lg sm:text-xl font-bold">Arquivos</h2>
-            <div className="text-xs text-gray-500 mt-0.5 sm:mt-1">0/1 concluído</div>
-          </div>
-          <button
-            onClick={onClose}
-            className="p-2 rounded hover:bg-gray-100 transition-colors"
-          >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
 
         {/* Content */}
         <div className="flex-1 flex flex-col lg:flex-row overflow-y-auto">
           {/* Left Side - Lista de totens */}
           <div className="w-full lg:w-1/3 border-b lg:border-b-0 lg:border-r border-gray-200 overflow-y-auto p-4 lg:p-6 max-h-[40vh] lg:max-h-none">
+            <h2 className="text-lg sm:text-xl font-bold">Arquivos</h2>
             <div className="space-y-4">
               {/* Seção Digital */}
               {produtosDigitais.length > 0 && (
