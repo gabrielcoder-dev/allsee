@@ -195,7 +195,7 @@ export default function ModalSelecionarArte({
               <div className="min-h-full flex flex-col items-center justify-center p-4 sm:p-6 lg:p-8 bg-gradient-to-br from-gray-50 to-gray-100">
               <div className="relative w-full max-w-3xl">
                 {/* Professional Monitor Design */}
-                <div className="relative mx-auto" style={{ width: '100%', maxWidth: '600px', height: 'auto' }}>
+                <div className="relative mx-auto" style={{ width: '100%', maxWidth: '400px', height: 'auto' }}>
                   <svg
                     viewBox="0 0 600 800"
                     className="w-full h-auto"
@@ -241,10 +241,10 @@ export default function ModalSelecionarArte({
                   <div 
                     className="absolute"
                     style={{
-                      left: '8%',
+                      left: '20%',
                       top: '11.25%',
                       width: '60%',
-                      height: '83.33%',
+                      height: '62.5%',
                       borderRadius: '12px',
                       overflow: 'hidden',
                       background: previewUrl ? 'transparent' : 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)'
