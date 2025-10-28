@@ -282,9 +282,9 @@ export default function ModalSelecionarArte({
                     style={selectedAnuncio?.screen_type === 'down' ? {
                       // Para monitor deitado (landscape)
                       left: '12.5%',
-                      top: '12.7%',
+                      top: '12.5%',
                       width: '75%',
-                      height: '65.96%',
+                      height: '70%',
                       borderRadius: '8px',
                       overflow: 'hidden',
                       background: currentTotemArt ? 'transparent' : 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)'
@@ -367,7 +367,7 @@ export default function ModalSelecionarArte({
           <button
             onClick={handleConcluir}
             disabled={Object.keys(totensArtes).length === 0}
-            className="bg-orange-500 hover:bg-orange-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white px-4 sm:px-6 py-2 rounded-lg font-semibold transition-colors text-sm sm:text-base"
+            className="fixed bottom-0 right-0 z-10 bg-orange-500 hover:bg-orange-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white px-4 sm:px-6 py-2 rounded-lg font-semibold transition-colors text-sm sm:text-base"
           >
             Concluir
           </button>
