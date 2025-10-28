@@ -41,7 +41,9 @@ export default function ModalSelecionarArte({
   };
 
   const handleMonitorClick = () => {
-    fileInputRef.current?.click();
+    if (selectedAnuncio) {
+      fileInputRef.current?.click();
+    }
   };
 
   const handleConcluir = () => {
@@ -242,7 +244,7 @@ export default function ModalSelecionarArte({
                   
                   {/* Screen Content - positioned inside monitor */}
                   <div 
-                    className="absolute cursor-pointer transition-all hover:opacity-90"
+                    className={`absolute transition-all ${selectedAnuncio ? 'cursor-pointer hover:opacity-90' : 'cursor-not-allowed'}`}
                     onClick={handleMonitorClick}
                     style={{
                       left: '20%',
@@ -287,12 +289,20 @@ export default function ModalSelecionarArte({
                         <div className="bg-white/15 backdrop-blur-sm rounded-full w-20 h-20 flex items-center justify-center mb-6 shadow-xl">
                           <Monitor className="w-10 h-10 opacity-70" />
                         </div>
-                        <p className="text-sm font-semibold opacity-95 mb-2">
-                          Selecione um arquivo para visualizar
-                        </p>
-                        <p className="text-xs opacity-70 font-medium">
-                          Proporção recomendada: 1080x1920 px
-                        </p>
+                        {selectedAnuncio ? (
+                          <>
+                            <p className="text-sm font-semibold opacity-95 mb-2">
+                              Selecione um arquivo para visualizar
+                            </p>
+                            <p className="text-xs opacity-70 font-medium">
+                              Proporção recomendada: 1080x1920 px
+                            </p>
+                          </>
+                        ) : (
+                          <p className="text-sm font-semibold opacity-95">
+                            Selecione o totem e escolha uma arte
+                          </p>
+                        )}
                       </div>
                     )}
                   </div>
