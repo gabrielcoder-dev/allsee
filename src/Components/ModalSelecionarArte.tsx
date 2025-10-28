@@ -285,8 +285,10 @@ export default function ModalSelecionarArte({
                     onClick={handleMonitorClick}
                     style={selectedAnuncio?.screen_type === 'down' ? {
                       // Para monitor deitado (landscape)
+                      // Tela: x=50+50=100 (800), y=50+20=70 (470) - dentro do translate(50, 20)
+                      // Dimensões: width=600/800=75%, height=310/470=65.96%
                       left: '12.5%',
-                      top: '15.96%',
+                      top: '14.89%',
                       width: '75%',
                       height: '65.96%',
                       borderRadius: '8px',
@@ -294,10 +296,12 @@ export default function ModalSelecionarArte({
                       background: currentTotemArt ? 'transparent' : 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)'
                     } : {
                       // Para monitor em pé (portrait/standing)
+                      // Tela: x=80+40=120 (600), y=40+50=90 (650) - dentro do translate(80, 40)
+                      // Dimensões: width=360/600=60%, height=500/650=76.92%
                       left: '20%',
-                      top: '11.25%',
+                      top: '13.85%',
                       width: '60%',
-                      height: '62.5%',
+                      height: '76.92%',
                       borderRadius: '12px',
                       overflow: 'hidden',
                       background: currentTotemArt ? 'transparent' : 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)'
