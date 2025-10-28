@@ -74,7 +74,7 @@ export default function ModalSelecionarArte({
         </div>
 
         {/* Content */}
-        <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
+        <div className="flex-1 flex flex-col lg:flex-row overflow-y-auto">
           {/* Left Side - Lista de totens */}
           <div className="w-full lg:w-1/3 border-b lg:border-b-0 lg:border-r border-gray-200 overflow-y-auto p-4 lg:p-6 max-h-[40vh] lg:max-h-none">
             <div className="space-y-4">
@@ -190,7 +190,7 @@ export default function ModalSelecionarArte({
             </div>
 
             {/* Scrollable Container for Preview */}
-            <div className="flex-1 overflow-y-auto">
+            <div className="flex-1">
               {/* Preview Area */}
               <div className="min-h-full flex flex-col items-center justify-center p-4 sm:p-6 lg:p-8 bg-gradient-to-br from-gray-50 to-gray-100">
               <div className="relative w-full max-w-3xl">
@@ -309,15 +309,6 @@ export default function ModalSelecionarArte({
                 </div>
               </div>
             </div>
-            </div>
-
-            {/* Dicas */}
-            <div className="px-4 sm:px-6 py-3 sm:py-4 border-t border-gray-200 bg-white flex-shrink-0">
-              <button className="flex items-center gap-2 text-xs sm:text-sm text-gray-600 hover:text-orange-600 transition-colors">
-                <span className="text-base sm:text-lg">💡</span>
-                <span className="hidden sm:inline">Ver dicas</span>
-                <span className="sm:hidden">Dicas</span>
-              </button>
             </div>
           </div>
         </div>
