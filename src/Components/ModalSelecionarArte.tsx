@@ -236,23 +236,12 @@ export default function ModalSelecionarArte({
                   ) : (
                     // Monitor em pé (Portrait - standing)
                     <svg
-                      viewBox="0 0 600 800"
+                      viewBox="0 0 600 650"
                       className="w-full h-auto"
                       style={{ filter: 'drop-shadow(0 30px 60px rgba(0,0,0,0.4))' }}
                     >
                       {/* Shadow Layer */}
-                      <ellipse cx="300" cy="780" rx="200" ry="20" fill="rgba(0,0,0,0.3)" />
-                      
-                      {/* Base Stand - Modern design */}
-                      <g transform="translate(200, 660)">
-                        {/* Stand */}
-                        <rect x="0" y="0" width="200" height="40" rx="20" fill="#1e1e1e" />
-                        <ellipse cx="100" cy="0" rx="100" ry="10" fill="#0f0f0f" />
-                        
-                        {/* Support pillar */}
-                        <rect x="90" y="-60" width="20" height="60" fill="#2a2a2a" />
-                        <ellipse cx="100" cy="-60" rx="18" ry="8" fill="#1a1a1a" />
-                      </g>
+                      <ellipse cx="300" cy="630" rx="200" ry="20" fill="rgba(0,0,0,0.3)" />
                       
                       {/* Monitor Frame - Sleek modern design */}
                       <g transform="translate(80, 40)">
