@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { X, Monitor, Printer } from "lucide-react";
 import { useCart } from "@/context/CartContext";
 
@@ -17,6 +17,7 @@ export default function ModalSelecionarArte({
   const [selectedAnuncio, setSelectedAnuncio] = useState<any>(null);
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   if (!open) return null;
 
@@ -39,6 +40,10 @@ export default function ModalSelecionarArte({
     }
   };
 
+  const handleMonitorClick = () => {
+    fileInputRef.current?.click();
+  };
+
   const handleConcluir = () => {
     if (file) {
       // Salvar arquivo selecionado no contexto
@@ -51,7 +56,8 @@ export default function ModalSelecionarArte({
     onClose();
   };
 
-  const handleRemoveFile = () => {
+  const handleRemoveFile = (e: React.MouseEvent) => {
+    e.stopPropagation();
     setFile(null);
     setPreviewUrl(null);
   };
@@ -237,9 +243,19 @@ export default function ModalSelecionarArte({
                     </defs>
                   </svg>
                   
+                  {/* Hidden file input */}
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/jpeg,image/png,image/gif,image/webp,video/mp4,video/mov"
+                    onChange={handleFileChange}
+                    className="hidden"
+                  />
+                  
                   {/* Screen Content - positioned inside monitor */}
                   <div 
-                    className="absolute"
+                    className="absolute cursor-pointer transition-all hover:opacity-90"
+                    onClick={handleMonitorClick}
                     style={{
                       left: '20%',
                       top: '11.25%',
@@ -259,7 +275,8 @@ export default function ModalSelecionarArte({
                             width: '100%',
                             height: '100%',
                             objectFit: 'cover',
-                            display: 'block'
+                            display: 'block',
+                            pointerEvents: 'none'
                           }}
                         />
                         {/* Remove button */}
@@ -272,7 +289,7 @@ export default function ModalSelecionarArte({
                         </button>
                         
                         {/* Branding overlay */}
-                        <div className="absolute bottom-2 right-2 bg-black/90 px-3 py-1.5 rounded-md flex items-center gap-1.5 shadow-lg">
+                        <div className="absolute bottom-2 right-2 bg-black/90 px-3 py-1.5 rounded-md flex items-center gap-1.5 shadow-lg pointer-events-none">
                           <Monitor className="w-4 h-4 text-orange-500" />
                           <span className="text-[11px] text-white font-bold">ALL SEE</span>
                         </div>
@@ -291,21 +308,6 @@ export default function ModalSelecionarArte({
                       </div>
                     )}
                   </div>
-                </div>
-
-                {/* Upload Button */}
-                <div className="absolute -bottom-12 sm:-bottom-14 left-1/2 transform -translate-x-1/2 mt-4">
-                  <label className="cursor-pointer inline-flex items-center gap-2 bg-gray-800 hover:bg-gray-700 text-white px-4 sm:px-8 py-2.5 sm:py-3.5 rounded-lg font-semibold transition-all shadow-xl hover:shadow-2xl hover:scale-105 text-sm sm:text-base">
-                    <input
-                      type="file"
-                      accept="image/jpeg,image/png,image/gif,image/webp,video/mp4,video/mov"
-                      onChange={handleFileChange}
-                      className="hidden"
-                    />
-                    <Monitor className="w-4 h-4 sm:w-5 sm:h-5" />
-                    <span className="hidden sm:inline">enviar arquivo +</span>
-                    <span className="sm:hidden">enviar +</span>
-                  </label>
                 </div>
               </div>
             </div>
