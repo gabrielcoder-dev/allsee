@@ -3,6 +3,7 @@
 import React, { useState, useRef } from "react";
 import { X, Monitor, Printer } from "lucide-react";
 import { useCart } from "@/context/CartContext";
+import { toast } from "sonner";
 
 interface ModalSelecionarArteProps {
   open: boolean;
@@ -17,6 +18,7 @@ export default function ModalSelecionarArte({
   const [selectedAnuncio, setSelectedAnuncio] = useState<any>(null);
   const [totensArtes, setTotensArtes] = useState<Record<string, { file: File; previewUrl: string }>>({});
   const [openGroups, setOpenGroups] = useState<{ [key: string]: boolean }>({ impresso: true, digital: true });
+  const [totensSemArte, setTotensSemArte] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   if (!open) return null;
@@ -41,6 +43,9 @@ export default function ModalSelecionarArte({
         ...prev,
         [selectedAnuncio.id]: { file, previewUrl: url }
       }));
+      
+      // Remover da lista de totens sem arte
+      setTotensSemArte(prev => prev.filter(id => id !== selectedAnuncio.id));
     }
   };
 
@@ -51,10 +56,27 @@ export default function ModalSelecionarArte({
   };
 
   const handleConcluir = () => {
-    // Salvar todas as artes no contexto
+    // Verificar se todos os totens têm arte
+    const totensQuePrecisamArte = produtos.filter(
+      produto => !totensArtes[produto.id]
+    );
+
+    if (totensQuePrecisamArte.length > 0) {
+      // Marcar totens sem arte
+      setTotensSemArte(totensQuePrecisamArte.map(p => p.id));
+      
+      // Mostrar toast de erro
+      toast.error(
+        `Adicione uma arte para todos os totens (${totensQuePrecisamArte.length} totem${totensQuePrecisamArte.length > 1 ? 's' : ''} sem arte)`,
+        { duration: 5000 }
+      );
+      return;
+    }
+
+    // Se todos os totens têm arte, salvar e fechar
     updateFormData({
       totensArtes: totensArtes,
-      isArtSelected: Object.keys(totensArtes).length > 0
+      isArtSelected: true
     });
     onClose();
   };
@@ -67,6 +89,11 @@ export default function ModalSelecionarArte({
         delete newTotensArtes[selectedAnuncio.id];
         return newTotensArtes;
       });
+      
+      // Adicionar de volta à lista de totens sem arte (se não estiver já presente)
+      setTotensSemArte(prev => 
+        prev.includes(selectedAnuncio.id) ? prev : [...prev, selectedAnuncio.id]
+      );
     }
   };
 
@@ -122,11 +149,14 @@ export default function ModalSelecionarArte({
                         <div className="p-3 space-y-2 bg-gray-50">
                           {itensTipo.map((produto) => {
                             const hasArt = totensArtes[produto.id] !== undefined;
+                            const needsArt = totensSemArte.includes(produto.id);
                             return (
                               <div
                                 key={produto.id}
                                 className={`p-3 bg-white border-2 rounded-lg cursor-pointer transition-all ${
-                                  selectedAnuncio?.id === produto.id
+                                  needsArt
+                                    ? "border-red-500 bg-red-50 animate-pulse"
+                                    : selectedAnuncio?.id === produto.id
                                     ? "border-orange-500 bg-orange-50 shadow-sm"
                                     : hasArt
                                     ? "border-green-500 bg-green-50"
@@ -366,8 +396,7 @@ export default function ModalSelecionarArte({
           </button>
           <button
             onClick={handleConcluir}
-            disabled={Object.keys(totensArtes).length === 0}
-            className="bg-orange-500 hover:bg-orange-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white px-4 sm:px-6 py-2 rounded-lg font-semibold transition-colors text-sm sm:text-base"
+            className="bg-orange-500 hover:bg-orange-600 text-white px-4 sm:px-6 py-2 rounded-lg font-semibold transition-colors text-sm sm:text-base"
           >
             Concluir
           </button>
