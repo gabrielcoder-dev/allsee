@@ -462,7 +462,7 @@ export const FastPagamantosPart = () => {
           <Button
             className="bg-orange-500 hover:bg-orange-600 text-white px-8 py-2 rounded-md cursor-pointer"
             type="button"
-            disabled={carregando || produtos.length === 0}
+            disabled={carregando}
             onClick={handleCheckout}
           >
             {carregando ? "Processando..." : "Concluir"}
