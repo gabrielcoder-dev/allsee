@@ -124,6 +124,13 @@ export const FastPagamantosPart = () => {
     try {
       let publicUrl: string;
 
+      // Pegar arte - pode ser File ou URL
+      const artData = formData.selectedImage || imageUrl;
+
+      if (!artData) {
+        throw new Error("Arte não encontrada. Por favor, selecione uma arte.");
+      }
+
       // Verificar se é um arquivo para upload
       if (artData instanceof File) {
         console.log('🚀 Iniciando upload rápido...');
@@ -139,7 +146,7 @@ export const FastPagamantosPart = () => {
         
       } else {
         // URL já existente
-        publicUrl = artData;
+        publicUrl = artData as string;
       }
 
       // Criar pedido no banco
