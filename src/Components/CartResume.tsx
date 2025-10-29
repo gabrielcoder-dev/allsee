@@ -815,7 +815,7 @@ export default function CartResume({
                       onClick={() => setShowModalArte(true)}
                       className={`w-full sm:w-auto cursor-pointer border px-4 py-2 bg-orange-600 text-white rounded transition hover:bg-orange-500 text-center`}
                     >
-                      <span className="flex items-center gap-2">
+                      <span className="flex  w-full justify-center items-center gap-2">
                         Selecionar arte
                         <ImageUp className="w-4 h-4" />
                       </span>
