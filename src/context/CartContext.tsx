@@ -188,6 +188,8 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
       }
       const newProducts = [...prev, produto];
       console.log("➕ Produtos no carrinho após adição:", newProducts.map(p => p.id));
+      // Toast apenas quando é uma nova adição
+      toast.success("Ponto adicionado ao carrinho");
       return newProducts;
     });
   }
@@ -195,8 +197,13 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   const removerProduto = (id: string) => {
     console.log("🗑️ Removendo produto do carrinho:", id);
     setProdutos((prev) => {
+      const produtoRemovido = prev.find((p) => p.id === id);
       const filtered = prev.filter((p) => p.id !== id);
       console.log("➖ Produtos no carrinho após remoção:", filtered.map(p => p.id));
+      // Toast quando um produto é removido
+      if (produtoRemovido) {
+        toast.success("Ponto removido do carrinho");
+      }
       return filtered;
     });
   }
