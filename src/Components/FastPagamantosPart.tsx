@@ -112,8 +112,8 @@ export const FastPagamantosPart = () => {
       return;
     }
 
-    const artData = formData.selectedImage || imageUrl;
-    if (!artData) {
+    const hasArt = !!formData.isArtSelected || !!imageUrl;
+    if (!hasArt) {
       setErro("Por favor, selecione ou faça upload da arte da campanha (imagem ou vídeo).");
       return;
     }
