@@ -390,13 +390,13 @@ export default function ModalSelecionarArte({
         <div className="border-t border-gray-200 px-4 sm:px-6 py-3 sm:py-4 flex flex-col sm:flex-row justify-end gap-2 sm:gap-3 bg-white">
           <button
             onClick={onClose}
-            className="px-4 sm:px-6 py-2 rounded-lg font-semibold border border-gray-300 hover:bg-gray-50 transition-colors text-sm sm:text-base"
+            className="px-4 sm:px-6 cursor-pointer py-2 rounded-lg font-semibold border border-gray-300 hover:bg-gray-50 transition-colors text-sm sm:text-base"
           >
             Cancelar
           </button>
           <button
             onClick={handleConcluir}
-            className="bg-orange-500 hover:bg-orange-600 text-white px-4 sm:px-6 py-2 rounded-lg font-semibold transition-colors text-sm sm:text-base"
+            className="bg-orange-500 cursor-pointer hover:bg-orange-600 text-white px-4 sm:px-6 py-2 rounded-lg font-semibold transition-colors text-sm sm:text-base"
           >
             Concluir
           </button>
