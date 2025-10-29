@@ -169,6 +169,33 @@ export const FastPagamantosPart = () => {
 
       const { orderId } = await createOrderResponse.json();
 
+      // Salvar orderId no formData para uso posterior (ex: upload de artes)
+      updateFormData({ orderId } as any);
+
+      // Se houver totensArtes no formData, fazer upload automaticamente
+      if (formData.totensArtes && Object.keys(formData.totensArtes).length > 0) {
+        try {
+          const { uploadArtesDoPedido } = await import('@/services/arteCampanha');
+          const results = await uploadArtesDoPedido({
+            orderId,
+            userId: user.id,
+            produtos,
+            totensArtes: formData.totensArtes,
+          });
+          
+          const errors = results.filter(r => !r.apiOk);
+          if (errors.length > 0) {
+            console.warn('Alguns uploads falharam:', errors);
+            toast.warning('Algumas artes não foram enviadas. Tente novamente no modal de seleção de arte.');
+          } else {
+            toast.success(`${results.length} arte(s) enviada(s) com sucesso!`);
+          }
+        } catch (uploadError: any) {
+          console.error('Erro ao fazer upload das artes:', uploadError);
+          toast.warning('Erro ao fazer upload das artes. Você pode enviá-las depois no modal de seleção de arte.');
+        }
+      }
+
       // Sistema de pagamento removido - Integração com Mercado Pago desativada
       console.log("💳 Pagamento removido - Integração com Mercado Pago desativada");
       // TODO: Implementar novo sistema de pagamento

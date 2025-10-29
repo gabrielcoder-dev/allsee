@@ -18,7 +18,7 @@ export default async function handler(
   }
 
   try {
-    const { id_order, caminho_imagem, id_user } = req.body;
+    const { id_order, caminho_imagem, id_user, id_anuncio, mime_type, screen_type, status } = req.body;
 
     // Validação básica
     if (!id_order || !id_user) {
@@ -79,15 +79,24 @@ export default async function handler(
       caminho_preview: caminho_imagem ? caminho_imagem.substring(0, 50) + '...' : 'empty'
     });
 
+    // Normalizar campos opcionais
+    const normalizedStatus = (status && typeof status === 'string') ? status : 'pendente';
+    const normalizedScreenType = (screen_type && typeof screen_type === 'string') ? screen_type : null;
+    const normalizedMimeType = (mime_type && typeof mime_type === 'string') ? mime_type : (caminho_imagem?.startsWith('data:') ? caminho_imagem.substring(5, caminho_imagem.indexOf(';')) : null);
+
     // Salvar no banco de dados
     const { data: arteCampanha, error } = await supabase
       .from('arte_campanha')
       .insert([{ 
-        id_order, 
-        caminho_imagem, 
-        id_user 
+        id_order,
+        id_user,
+        caminho_imagem: caminho_imagem || null,
+        id_anuncio: id_anuncio ?? null,
+        mime_type: normalizedMimeType,
+        screen_type: normalizedScreenType,
+        status: normalizedStatus,
       }])
-      .select('id, id_order, id_user')
+      .select('id, id_order, id_user, id_anuncio')
       .single();
 
     if (error) {

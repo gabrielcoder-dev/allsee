@@ -4,6 +4,8 @@ import React, { useState, useRef } from "react";
 import { X, Monitor, Printer } from "lucide-react";
 import { useCart } from "@/context/CartContext";
 import { toast } from "sonner";
+import { supabase } from "@/lib/supabase";
+import { uploadArtesDoPedido } from "@/services/arteCampanha";
 
 interface ModalSelecionarArteProps {
   open: boolean;
@@ -19,6 +21,7 @@ export default function ModalSelecionarArte({
   const [totensArtes, setTotensArtes] = useState<Record<string, { file: File; previewUrl: string }>>({});
   const [openGroups, setOpenGroups] = useState<{ [key: string]: boolean }>({ impresso: true, digital: true });
   const [totensSemArte, setTotensSemArte] = useState<string[]>([]);
+  const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   if (!open) return null;
@@ -55,7 +58,7 @@ export default function ModalSelecionarArte({
     }
   };
 
-  const handleConcluir = () => {
+  const handleConcluir = async () => {
     // Verificar se todos os totens têm arte
     const totensQuePrecisamArte = produtos.filter(
       produto => !totensArtes[produto.id]
@@ -73,12 +76,65 @@ export default function ModalSelecionarArte({
       return;
     }
 
-    // Se todos os totens têm arte, salvar e fechar
-    updateFormData({
-      totensArtes: totensArtes,
-      isArtSelected: true
-    });
-    onClose();
+    // Verificar se já existe orderId no formData
+    const orderId = (formData as any).orderId;
+    
+    if (!orderId) {
+      // Se não existe orderId, apenas salvar no formData e fechar
+      // O upload será feito quando o pedido for criado
+      updateFormData({
+        totensArtes: totensArtes,
+        isArtSelected: true
+      });
+      toast.success("Artes selecionadas! Você poderá fazer upload após criar o pedido.");
+      onClose();
+      return;
+    }
+
+    // Se existe orderId, fazer upload das artes
+    setUploading(true);
+    
+    try {
+      // Pegar usuário logado
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      
+      if (userError || !user) {
+        throw new Error("Usuário não autenticado. Faça login para continuar.");
+      }
+
+      // Fazer upload das artes
+      const results = await uploadArtesDoPedido({
+        orderId,
+        userId: user.id,
+        produtos,
+        totensArtes,
+      });
+
+      // Verificar se houve erros
+      const errors = results.filter(r => !r.apiOk);
+      if (errors.length > 0) {
+        const errorMsg = errors.map(e => `${e.anuncioId}: ${e.error}`).join(", ");
+        toast.error(`Erro ao fazer upload de algumas artes: ${errorMsg}`);
+        return;
+      }
+
+      // Sucesso!
+      const successCount = results.filter(r => r.apiOk).length;
+      toast.success(`${successCount} arte(s) enviada(s) com sucesso!`);
+      
+      // Salvar no formData e fechar
+      updateFormData({
+        totensArtes: totensArtes,
+        isArtSelected: true
+      });
+      
+      onClose();
+    } catch (error: any) {
+      console.error("Erro ao fazer upload das artes:", error);
+      toast.error(`Erro ao fazer upload: ${error.message || "Erro desconhecido"}`);
+    } finally {
+      setUploading(false);
+    }
   };
 
   const handleRemoveFile = (e: React.MouseEvent) => {
@@ -396,9 +452,17 @@ export default function ModalSelecionarArte({
           </button>
           <button
             onClick={handleConcluir}
-            className="bg-orange-500 cursor-pointer hover:bg-orange-600 text-white px-4 sm:px-6 py-2 rounded-lg font-semibold transition-colors text-sm sm:text-base"
+            disabled={uploading}
+            className="bg-orange-500 cursor-pointer hover:bg-orange-600 text-white px-4 sm:px-6 py-2 rounded-lg font-semibold transition-colors text-sm sm:text-base disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
           >
-            Concluir
+            {uploading ? (
+              <>
+                <span className="animate-spin">⏳</span>
+                Enviando...
+              </>
+            ) : (
+              "Concluir"
+            )}
           </button>
         </div>
       </div>

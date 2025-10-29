@@ -30,6 +30,7 @@ type FormData = {
   previewUrl: string | null
   isArtSelected: boolean
   totensArtes?: Record<string, { file: File; previewUrl: string }>
+  orderId?: number | string // ID do pedido quando criado
   // Dados de pagamento - Pessoa Física
   nome: string
   cpf: string
