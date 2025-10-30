@@ -89,7 +89,7 @@ export const PagamantosPart = () => {
     if (!isHydrated) return;
     
     // Se já temos dados de pessoa física preenchidos, seleciona automaticamente
-    if ((formData as any).nome && formData.cpf && formData.cep && formData.endereco) {
+    if (formData.nome && formData.cpf && formData.cep && formData.endereco) {
       setOpenAccordion("fisica");
     }
     // Se já temos dados de pessoa jurídica preenchidos, e seleciona automaticamente
@@ -186,8 +186,9 @@ export const PagamantosPart = () => {
     // Pessoa Física
     if (openAccordion === "fisica") {
       return (
-        !!(formData as any).nome &&  // Nome é obrigatório
+        !!formData.nome &&  // Nome é obrigatório
         !!formData.cpf &&
+        !!formData.email &&
         !!formData.telefone &&
         !!formData.cep &&
         !!formData.endereco &&
@@ -203,6 +204,7 @@ export const PagamantosPart = () => {
       return (
         !!formData.cnpj &&
         !!formData.razaoSocial &&
+        !!formData.email &&
         !!formData.segmento &&
         !!formData.telefonej &&
         !!formData.cepJ &&
@@ -358,7 +360,7 @@ export const PagamantosPart = () => {
                   type="text"
                   placeholder="Nome completo"
                   className="border rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-200"
-                  value={(formData as any).nome}
+                  value={formData.nome}
                   onChange={(e) => updateFormData({ nome: e.target.value })}
                   required
                 />
@@ -379,6 +381,15 @@ export const PagamantosPart = () => {
                   className="border rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-200"
                   value={formData.telefone}
                   onChange={(e) => updateFormData({ telefone: e.target.value })}
+                />
+              </div>
+              <div className="grid grid-cols-1 gap-4">
+                <input
+                  type="email"
+                  placeholder="Email"
+                  className="border rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-200"
+                  value={formData.email}
+                  onChange={(e) => updateFormData({ email: e.target.value })}
                 />
               </div>
               <hr />
@@ -501,6 +512,15 @@ export const PagamantosPart = () => {
                   className="border rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-200"
                   value={formData.telefonej}
                   onChange={(e) => updateFormData({ telefonej: e.target.value })}
+                />
+              </div>
+              <div className="grid grid-cols-1 gap-4">
+                <input
+                  type="email"
+                  placeholder="Email"
+                  className="border rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-200"
+                  value={formData.email}
+                  onChange={(e) => updateFormData({ email: e.target.value })}
                 />
               </div>
               <hr />
