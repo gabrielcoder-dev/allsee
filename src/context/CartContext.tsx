@@ -34,6 +34,7 @@ type FormData = {
   // Dados de pagamento - Pessoa Física
   nome: string
   cpf: string
+  email: string
   telefone: string
   cep: string
   endereco: string
@@ -87,6 +88,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     // Dados de pagamento - Pessoa Física
     nome: "",
     cpf: "",
+    email: "",
     telefone: "",
     cep: "",
     endereco: "",
@@ -259,6 +261,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
       // Dados de pagamento - Pessoa Física
       nome: "",
       cpf: "",
+      email: "",
       telefone: "",
       cep: "",
       endereco: "",
@@ -378,7 +381,9 @@ export const useCart = () => {
         isArtSelected: false,
         totensArtes: undefined,
         orderId: undefined,
+        nome: "",
         cpf: "",
+        email: "",
         telefone: "",
         cep: "",
         endereco: "",
@@ -424,7 +429,9 @@ export const useCart = () => {
         isArtSelected: false,
         totensArtes: undefined,
         orderId: undefined,
+        nome: "",
         cpf: "",
+        email: "",
         telefone: "",
         cep: "",
         endereco: "",

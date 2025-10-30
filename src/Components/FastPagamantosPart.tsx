@@ -54,7 +54,7 @@ export const FastPagamantosPart = () => {
   useEffect(() => {
     if (!isHydrated) return;
     
-    if ((formData as any).nome && formData.cpf && formData.cep && formData.endereco) {
+    if (formData.nome && formData.cpf && formData.cep && formData.endereco) {
       setOpenAccordion("fisica");
     } else if (formData.cnpj && formData.razaoSocial) {
       setOpenAccordion("juridica");
@@ -76,9 +76,9 @@ export const FastPagamantosPart = () => {
     if (!openAccordion) return false;
     
     if (openAccordion === "fisica") {
-      return !!(formData as any).nome && formData.cpf && formData.cep && formData.endereco && formData.cidade && formData.estado && formData.telefone && (formData as any).email;
+      return !!formData.nome && formData.cpf && formData.cep && formData.endereco && formData.cidade && formData.estado && formData.telefone && formData.email;
     } else {
-      return !!(formData as any).razaoSocial && formData.cnpj && formData.cep && formData.endereco && formData.cidade && formData.estado && formData.telefone && (formData as any).email;
+      return !!formData.razaoSocial && formData.cnpj && formData.cep && formData.endereco && formData.cidade && formData.estado && formData.telefone && formData.email;
     }
   };
 
@@ -119,24 +119,24 @@ export const FastPagamantosPart = () => {
       }
 
       let cliente: any;
-      if (openAccordion === 'fisica' || (!openAccordion && !(formData as any).cnpj)) {
+      if (openAccordion === 'fisica' || (!openAccordion && !formData.cnpj)) {
         cliente = {
           tipo: 'fisica',
-          nome: (formData as any).nome,
+          nome: formData.nome,
           cpf: formData.cpf,
-          email: (formData as any).email,
+          email: formData.email,
           telefone: formData.telefone,
           cep: formData.cep,
           endereco: formData.endereco,
           cidade: formData.cidade,
           estado: formData.estado,
         };
-      } else if (openAccordion === 'juridica' || (!openAccordion && (formData as any).cnpj)) {
+      } else if (openAccordion === 'juridica' || (!openAccordion && formData.cnpj)) {
         cliente = {
           tipo: 'juridica',
-          razaoSocial: (formData as any).razaoSocial,
+          razaoSocial: formData.razaoSocial,
           cnpj: formData.cnpj,
-          email: (formData as any).email,
+          email: formData.email,
           telefone: formData.telefone,
           cep: formData.cep,
           endereco: formData.endereco,
@@ -146,7 +146,7 @@ export const FastPagamantosPart = () => {
       } else {
         cliente = {
           tipo: 'desconhecido',
-          email: (formData as any).email,
+          email: formData.email,
           telefone: formData.telefone,
           cep: formData.cep,
           endereco: formData.endereco,
@@ -267,7 +267,7 @@ export const FastPagamantosPart = () => {
                     </label>
                     <input
                       type="text"
-                      value={(formData as any).nome || ""}
+                      value={formData.nome || ""}
                       onChange={(e) => updateFormData({ nome: e.target.value })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                       required
@@ -294,7 +294,7 @@ export const FastPagamantosPart = () => {
                     </label>
                     <input
                       type="text"
-                      value={(formData as any).razaoSocial || ""}
+                      value={formData.razaoSocial || ""}
                       onChange={(e) => updateFormData({ razaoSocial: e.target.value })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                       required
@@ -322,8 +322,8 @@ export const FastPagamantosPart = () => {
                 </label>
                 <input
                   type="email"
-                  value={(formData as any).email || ""}
-                  onChange={(e) => updateFormData({ email: e.target.value } as any)}
+                  value={formData.email || ""}
+                  onChange={(e) => updateFormData({ email: e.target.value })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   required
                 />
@@ -459,8 +459,9 @@ export const FastPagamantosPart = () => {
             Voltar
           </Button>
           <Button
-            className="bg-orange-500 hover:bg-orange-600 text-white px-8 py-2 rounded-md cursor-pointer pointer-events-auto relative z-10"
+            className="bg-orange-500 hover:bg-orange-600 text-white px-8 py-2 rounded-md cursor-pointer pointer-events-auto relative z-10 disabled:opacity-50 disabled:cursor-not-allowed"
             type="button"
+            disabled={carregando || !isFormValid()}
             onClick={handleSalvarPedido}
           >
             {carregando ? "Processando..." : "Concluir"}
