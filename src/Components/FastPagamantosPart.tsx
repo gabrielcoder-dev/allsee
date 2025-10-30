@@ -99,10 +99,7 @@ export const FastPagamantosPart = () => {
       return;
     }
 
-    if (!isFormValid()) {
-      setErro("Por favor, preencha todos os campos obrigatórios.");
-      return;
-    }
+    // Não bloquear salvamento por validação de formulário neste momento
 
     setCarregando(true);
     setErro("");
@@ -121,29 +118,42 @@ export const FastPagamantosPart = () => {
         publicUrl = artData;
       }
 
-      const cliente = openAccordion === 'fisica'
-        ? {
-            tipo: 'fisica',
-            nome: (formData as any).nome,
-            cpf: formData.cpf,
-            email: (formData as any).email,
-            telefone: formData.telefone,
-            cep: formData.cep,
-            endereco: formData.endereco,
-            cidade: formData.cidade,
-            estado: formData.estado,
-          }
-        : {
-            tipo: 'juridica',
-            razaoSocial: (formData as any).razaoSocial,
-            cnpj: formData.cnpj,
-            email: (formData as any).email,
-            telefone: formData.telefone,
-            cep: formData.cep,
-            endereco: formData.endereco,
-            cidade: formData.cidade,
-            estado: formData.estado,
-          };
+      let cliente: any;
+      if (openAccordion === 'fisica' || (!openAccordion && !(formData as any).cnpj)) {
+        cliente = {
+          tipo: 'fisica',
+          nome: (formData as any).nome,
+          cpf: formData.cpf,
+          email: (formData as any).email,
+          telefone: formData.telefone,
+          cep: formData.cep,
+          endereco: formData.endereco,
+          cidade: formData.cidade,
+          estado: formData.estado,
+        };
+      } else if (openAccordion === 'juridica' || (!openAccordion && (formData as any).cnpj)) {
+        cliente = {
+          tipo: 'juridica',
+          razaoSocial: (formData as any).razaoSocial,
+          cnpj: formData.cnpj,
+          email: (formData as any).email,
+          telefone: formData.telefone,
+          cep: formData.cep,
+          endereco: formData.endereco,
+          cidade: formData.cidade,
+          estado: formData.estado,
+        };
+      } else {
+        cliente = {
+          tipo: 'desconhecido',
+          email: (formData as any).email,
+          telefone: formData.telefone,
+          cep: formData.cep,
+          endereco: formData.endereco,
+          cidade: formData.cidade,
+          estado: formData.estado,
+        };
+      }
 
       const orderData: any = {
         id_user: user.id,
