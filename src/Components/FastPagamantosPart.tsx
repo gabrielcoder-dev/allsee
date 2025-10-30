@@ -449,7 +449,7 @@ export const FastPagamantosPart = () => {
             Voltar
           </Button>
           <Button
-            className="bg-orange-500 hover:bg-orange-600 text-white px-8 py-2 rounded-md cursor-pointer"
+            className="bg-orange-500 hover:bg-orange-600 text-white px-8 py-2 rounded-md cursor-pointer pointer-events-auto relative z-10"
             type="button"
             onClick={handleSalvarPedido}
           >
