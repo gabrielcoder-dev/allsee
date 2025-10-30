@@ -10,11 +10,6 @@ import {
   SelectValue,
 } from "@/Components/ui/select";
 import { useCart } from "@/context/CartContext";
-import { SiPix } from "react-icons/si";
-import { FaRegCreditCard } from "react-icons/fa";
-import { MdCreditCard } from "react-icons/md";
-import { PiBarcodeBold } from "react-icons/pi";
-import { useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { useUser } from "@supabase/auth-helpers-react";
 import { useFastUpload } from '@/hooks/useFastUpload';
@@ -35,7 +30,7 @@ export const FastPagamantosPart = () => {
   const { produtos, formData, updateFormData } = useCart();
   
   // Hook de upload rápido
-  const { uploadFile, progress: uploadProgress, isUploading, error: uploadError } = useFastUpload({
+  const { uploadFile, isUploading, error: uploadError } = useFastUpload({
     onProgress: (progress) => {
       console.log(`📊 Upload progress: ${progress.percentage}%`);
     }
@@ -87,11 +82,8 @@ export const FastPagamantosPart = () => {
     }
   };
 
-  // Função principal de checkout
-  const handleCheckout = async () => {
-    console.log("✅ Form válido:", isFormValid());
-    console.log("💰 Total:", total);
-
+  // Salvar pedido (sem checkout/pagamento)
+  const handleSalvarPedido = async () => {
     if (!isHydrated) {
       setErro("Ainda carregando dados...");
       return;
@@ -112,45 +104,48 @@ export const FastPagamantosPart = () => {
       return;
     }
 
-    const hasArt = !!formData.isArtSelected || !!imageUrl;
-    if (!hasArt) {
-      setErro("Por favor, selecione ou faça upload da arte da campanha (imagem ou vídeo).");
-      return;
-    }
-
     setCarregando(true);
     setErro("");
 
     try {
-      let publicUrl: string;
+      let publicUrl: string | undefined;
 
-      // Pegar arte - pode ser File ou URL
       const artData = formData.selectedImage || imageUrl;
-
-      if (!artData) {
-        throw new Error("Arte não encontrada. Por favor, selecione uma arte.");
-      }
-
-      // Verificar se é um arquivo para upload
       if (artData instanceof File) {
-        console.log('🚀 Iniciando upload rápido...');
-        
         const uploadResult = await uploadFile(artData, 'arte-campanhas');
-        
         if (!uploadResult) {
           throw new Error(uploadError || 'Erro ao fazer upload do arquivo');
         }
-        
         publicUrl = uploadResult.public_url;
-        toast.success('Upload concluído com sucesso!');
-        
-      } else {
-        // URL já existente
-        publicUrl = artData as string;
+      } else if (typeof artData === 'string') {
+        publicUrl = artData;
       }
 
-      // Criar pedido no banco
-      const orderData = {
+      const cliente = openAccordion === 'fisica'
+        ? {
+            tipo: 'fisica',
+            nome: (formData as any).nome,
+            cpf: formData.cpf,
+            email: (formData as any).email,
+            telefone: formData.telefone,
+            cep: formData.cep,
+            endereco: formData.endereco,
+            cidade: formData.cidade,
+            estado: formData.estado,
+          }
+        : {
+            tipo: 'juridica',
+            razaoSocial: (formData as any).razaoSocial,
+            cnpj: formData.cnpj,
+            email: (formData as any).email,
+            telefone: formData.telefone,
+            cep: formData.cep,
+            endereco: formData.endereco,
+            cidade: formData.cidade,
+            estado: formData.estado,
+          };
+
+      const orderData: any = {
         id_user: user.id,
         produtos: produtos.map(p => ({
           id_produto: p.id,
@@ -160,9 +155,13 @@ export const FastPagamantosPart = () => {
         })),
         total,
         duracao: "2",
-        arte_campanha_url: publicUrl,
-        status: 'pending'
+        status: 'draft',
+        cliente,
       };
+
+      if (publicUrl) {
+        orderData.arte_campanha_url = publicUrl;
+      }
 
       const createOrderResponse = await fetch('/api/admin/criar-pedido', {
         method: 'POST',
@@ -175,11 +174,8 @@ export const FastPagamantosPart = () => {
       }
 
       const { orderId } = await createOrderResponse.json();
-
-      // Salvar orderId no formData para uso posterior (ex: upload de artes)
       updateFormData({ orderId } as any);
 
-      // Se houver totensArtes no formData, fazer upload automaticamente
       if (formData.totensArtes && Object.keys(formData.totensArtes).length > 0) {
         try {
           const { uploadArtesDoPedido } = await import('@/services/arteCampanha');
@@ -189,27 +185,20 @@ export const FastPagamantosPart = () => {
             produtos,
             totensArtes: formData.totensArtes,
           });
-          
-          const errors = results.filter(r => !r.apiOk);
+          const errors = results.filter((r: any) => !r.apiOk);
           if (errors.length > 0) {
-            console.warn('Alguns uploads falharam:', errors);
-            toast.warning('Algumas artes não foram enviadas. Tente novamente no modal de seleção de arte.');
-          } else {
-            toast.success(`${results.length} arte(s) enviada(s) com sucesso!`);
+            toast.warning('Algumas artes não foram enviadas. Você pode tentar novamente depois.');
           }
-        } catch (uploadError: any) {
-          console.error('Erro ao fazer upload das artes:', uploadError);
-          toast.warning('Erro ao fazer upload das artes. Você pode enviá-las depois no modal de seleção de arte.');
+        } catch (e) {
+          console.error('Erro ao enviar artes dos totens:', e);
+          toast.warning('Erro ao enviar artes dos totens. Você pode enviar depois.');
         }
       }
 
-      // Sistema de pagamento removido - Integração com Mercado Pago desativada
-      console.log("💳 Pagamento removido - Integração com Mercado Pago desativada");
-      // TODO: Implementar novo sistema de pagamento
-      throw new Error('Sistema de pagamento temporariamente indisponível. Entre em contato com o suporte.');
-
+      toast.success('Pedido salvo com sucesso!');
+      setCarregando(false);
     } catch (error: any) {
-      console.error('❌ Erro no checkout:', error);
+      console.error('Erro ao salvar pedido:', error);
       setErro(`Erro: ${error.message}`);
       setCarregando(false);
     }
@@ -462,8 +451,8 @@ export const FastPagamantosPart = () => {
           <Button
             className="bg-orange-500 hover:bg-orange-600 text-white px-8 py-2 rounded-md cursor-pointer"
             type="button"
-            disabled={carregando || !isFormValid()}
-            onClick={handleCheckout}
+            disabled={carregando}
+            onClick={handleSalvarPedido}
           >
             {carregando ? "Processando..." : "Concluir"}
           </Button>
