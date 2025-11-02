@@ -28,6 +28,15 @@ export default async function handler(
       });
     }
 
+    // Garantir que id_order é um número (bigint)
+    const orderIdNumber = typeof id_order === 'number' ? id_order : parseInt(id_order, 10);
+    if (isNaN(orderIdNumber)) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'id_order deve ser um número válido' 
+      });
+    }
+
     // Se caminho_imagem está vazio (upload em chunks), permitir
     if (caminho_imagem && caminho_imagem !== '') {
       // NOVO SISTEMA: Aceitar URLs públicas do Supabase Storage
@@ -88,7 +97,7 @@ export default async function handler(
     const { data: arteCampanha, error } = await supabase
       .from('arte_campanha')
       .insert([{ 
-        id_order,
+        id_order: orderIdNumber,
         id_user,
         caminho_imagem: caminho_imagem || null,
         id_anuncio: id_anuncio ?? null,
