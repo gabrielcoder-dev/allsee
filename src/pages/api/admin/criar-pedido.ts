@@ -107,7 +107,7 @@ export default async function handler(
     const { data: order, error } = await supabase
       .from('order')
       .insert([orderData])
-      .select('id, id_user, total, status, created_at')
+      .select('id, id_user, preco, status, created_at')
       .single();
 
     if (error) {
@@ -132,7 +132,7 @@ export default async function handler(
     console.log('✅ Pedido criado com sucesso:', {
       id: order.id,
       id_user: order.id_user,
-      total: order.total,
+      preco: order.preco,
       status: order.status
     });
 
