@@ -49,9 +49,13 @@ export default async function handler(
     });
 
     // Preparar dados do pedido
+    // Gerar id_produto como string separada por vírgulas (se a tabela usar esse campo)
+    const id_produto = produtos.map((p: any) => p.id_produto || p.id).join(',');
+    
     const orderData: any = {
       id_user,
       produtos: JSON.stringify(produtos),
+      id_produto: id_produto, // Também salvar como string separada por vírgulas para compatibilidade
       total: typeof total === 'number' ? total : parseFloat(total),
       duracao: duracao || '2',
       status: status || 'draft',
@@ -62,6 +66,12 @@ export default async function handler(
       orderData.arte_campanha_url = arte_campanha_url;
     }
 
+    console.log('📦 Dados do pedido a serem inseridos:', {
+      ...orderData,
+      produtos: produtos.length + ' produtos',
+      cliente: cliente ? JSON.stringify(cliente).substring(0, 100) + '...' : null
+    });
+
     // Inserir pedido no banco de dados
     const { data: order, error } = await supabase
       .from('order')
@@ -70,10 +80,22 @@ export default async function handler(
       .single();
 
     if (error) {
-      console.error("❌ Erro ao criar pedido:", error);
+      console.error("❌ Erro ao criar pedido - Detalhes completos:", {
+        message: error.message,
+        details: error.details,
+        hint: error.hint,
+        code: error.code,
+        orderData: {
+          ...orderData,
+          produtos: 'JSON string',
+          cliente: cliente ? 'JSON string' : null
+        }
+      });
       return res.status(500).json({ 
         success: false, 
-        error: `Erro ao salvar pedido: ${error.message}` 
+        error: `Erro ao salvar pedido: ${error.message || 'Erro desconhecido'}`,
+        details: error.details || null,
+        hint: error.hint || null
       });
     }
 

@@ -334,7 +334,11 @@ export const PagamantosPart = () => {
       });
 
       if (!createOrderResponse.ok) {
-        throw new Error('Erro ao criar pedido');
+        const errorData = await createOrderResponse.json().catch(() => ({ error: 'Erro desconhecido' }));
+        const errorMessage = errorData.error || errorData.message || 'Erro ao criar pedido';
+        const errorDetails = errorData.details ? ` Detalhes: ${errorData.details}` : '';
+        const errorHint = errorData.hint ? ` Dica: ${errorData.hint}` : '';
+        throw new Error(errorMessage + errorDetails + errorHint);
       }
 
       const { orderId } = await createOrderResponse.json();
