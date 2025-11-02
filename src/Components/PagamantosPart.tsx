@@ -252,14 +252,119 @@ export const PagamantosPart = () => {
     }
 
     try {
-      // Sistema de pagamento removido - Integração com Mercado Pago desativada
-      console.log("💳 Pagamento removido - Integração com Mercado Pago desativada");
-      // TODO: Implementar novo sistema de pagamento
-      setErro("Sistema de pagamento temporariamente indisponível. Entre em contato com o suporte.");
-    } catch (e) {
-      setErro("Erro ao conectar ao servidor");
-      console.error("Erro no handleCheckout:", e);
-    } finally {
+      let publicUrl: string | undefined;
+
+      // Upload da imagem/arte da campanha
+      const artData = formData.selectedImage || imageUrl;
+      if (artData instanceof File) {
+        const uploadResult = await uploadFile(artData, 'arte-campanhas');
+        if (!uploadResult) {
+          throw new Error(uploadError || 'Erro ao fazer upload do arquivo');
+        }
+        publicUrl = uploadResult.public_url;
+      } else if (typeof artData === 'string') {
+        publicUrl = artData;
+      }
+
+      // Preparar dados do cliente baseado no tipo selecionado
+      let cliente: any;
+      if (openAccordion === 'fisica' || (!openAccordion && !formData.cnpj)) {
+        cliente = {
+          tipo: 'fisica',
+          nome: formData.nome,
+          cpf: formData.cpf,
+          email: formData.email,
+          telefone: formData.telefone,
+          cep: formData.cep,
+          endereco: formData.endereco,
+          numero: formData.numero,
+          bairro: formData.bairro,
+          complemento: formData.complemento,
+          cidade: formData.cidade,
+          estado: formData.estado,
+        };
+      } else if (openAccordion === 'juridica' || (!openAccordion && formData.cnpj)) {
+        cliente = {
+          tipo: 'juridica',
+          razaoSocial: formData.razaoSocial,
+          cnpj: formData.cnpj,
+          email: formData.email,
+          segmento: formData.segmento,
+          telefone: formData.telefonej,
+          cep: formData.cepJ,
+          endereco: formData.enderecoJ,
+          numero: formData.numeroJ,
+          bairro: formData.bairroJ,
+          complemento: formData.complementoJ,
+          cidade: formData.cidadeJ,
+          estado: formData.estadoJ,
+        };
+      } else {
+        cliente = {
+          tipo: 'desconhecido',
+          email: formData.email || '',
+          telefone: formData.telefone || formData.telefonej || '',
+        };
+      }
+
+      // Preparar dados do pedido
+      const orderData: any = {
+        id_user: user.id,
+        produtos: produtos.map(p => ({
+          id_produto: p.id,
+          quantidade: p.quantidade || 1,
+          preco: p.preco,
+          desconto: (p as any).desconto || 0
+        })),
+        total,
+        duracao: selectedDurationGlobal || "2",
+        status: 'draft',
+        cliente,
+      };
+
+      if (publicUrl) {
+        orderData.arte_campanha_url = publicUrl;
+      }
+
+      // Criar pedido
+      const createOrderResponse = await fetch('/api/admin/criar-pedido', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(orderData)
+      });
+
+      if (!createOrderResponse.ok) {
+        throw new Error('Erro ao criar pedido');
+      }
+
+      const { orderId } = await createOrderResponse.json();
+      updateFormData({ orderId } as any);
+
+      // Upload de artes dos totens (se houver)
+      if (formData.totensArtes && Object.keys(formData.totensArtes).length > 0) {
+        try {
+          const { uploadArtesDoPedido } = await import('@/services/arteCampanha');
+          const results = await uploadArtesDoPedido({
+            orderId,
+            userId: user.id,
+            produtos,
+            totensArtes: formData.totensArtes,
+          });
+          const errors = results.filter((r: any) => !r.apiOk);
+          if (errors.length > 0) {
+            toast.warning('Algumas artes não foram enviadas. Você pode tentar novamente depois.');
+          }
+        } catch (e) {
+          console.error('Erro ao enviar artes dos totens:', e);
+          toast.warning('Erro ao enviar artes dos totens. Você pode enviar depois.');
+        }
+      }
+
+      toast.success('Pedido salvo com sucesso!');
+      setCarregando(false);
+    } catch (error: any) {
+      console.error('Erro ao salvar pedido:', error);
+      setErro(`Erro: ${error.message}`);
       setCarregando(false);
     }
   };
