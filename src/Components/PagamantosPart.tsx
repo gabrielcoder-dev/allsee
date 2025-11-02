@@ -320,6 +320,9 @@ export const PagamantosPart = () => {
         duracao: selectedDurationGlobal || "2",
         status: 'draft',
         cliente,
+        // Adicionar informações da campanha
+        campaignName: formData.campaignName || null,
+        startDate: formData.startDate || null,
       };
 
       if (publicUrl) {

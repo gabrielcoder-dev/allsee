@@ -14,7 +14,7 @@ export default async function handler(
   }
 
   try {
-    const { id_user, produtos, total, duracao, status, cliente, arte_campanha_url } = req.body;
+    const { id_user, produtos, total, duracao, status, cliente, arte_campanha_url, campaignName, startDate } = req.body;
 
     // Validação básica
     if (!id_user) {
@@ -58,8 +58,12 @@ export default async function handler(
       produtos: JSON.stringify(produtos),
       id_produto: id_produto, // Também salvar como string separada por vírgulas para compatibilidade
       total: typeof total === 'number' ? total : parseFloat(total),
-      duracao: duracao || '2',
+      preco: typeof total === 'number' ? total : parseFloat(total), // preco pode ser o mesmo que total
+      duracao_campanha: duracao || '2',
       status: status || 'draft',
+      // Informações da campanha
+      nome_campanha: campaignName || null,
+      inicio_campanha: startDate || null,
     };
 
     // Salvar dados do cliente em campos individuais (não como JSON)
