@@ -52,6 +52,7 @@ export default async function handler(
     // Gerar id_produto como string separada por vírgulas (se a tabela usar esse campo)
     const id_produto = produtos.map((p: any) => p.id_produto || p.id).join(',');
     
+    // Preparar dados do pedido com campos individuais do cliente (em vez de coluna JSON)
     const orderData: any = {
       id_user,
       produtos: JSON.stringify(produtos),
@@ -59,8 +60,37 @@ export default async function handler(
       total: typeof total === 'number' ? total : parseFloat(total),
       duracao: duracao || '2',
       status: status || 'draft',
-      cliente: cliente ? JSON.stringify(cliente) : null,
     };
+
+    // Salvar dados do cliente em campos individuais (não como JSON)
+    if (cliente) {
+      if (cliente.tipo === 'fisica') {
+        orderData.nome = cliente.nome || null;
+        orderData.cpf = cliente.cpf || null;
+        orderData.email = cliente.email || null;
+        orderData.telefone = cliente.telefone || null;
+        orderData.cep = cliente.cep || null;
+        orderData.endereco = cliente.endereco || null;
+        orderData.numero = cliente.numero || null;
+        orderData.bairro = cliente.bairro || null;
+        orderData.complemento = cliente.complemento || null;
+        orderData.cidade = cliente.cidade || null;
+        orderData.estado = cliente.estado || null;
+      } else if (cliente.tipo === 'juridica') {
+        orderData.razao_social = cliente.razaoSocial || null;
+        orderData.cnpj = cliente.cnpj || null;
+        orderData.setor = cliente.segmento || null;
+        orderData.email = cliente.email || null;
+        orderData.telefone = cliente.telefone || null;
+        orderData.cep = cliente.cep || null;
+        orderData.endereco = cliente.endereco || null;
+        orderData.numero = cliente.numero || null;
+        orderData.bairro = cliente.bairro || null;
+        orderData.complemento = cliente.complemento || null;
+        orderData.cidade = cliente.cidade || null;
+        orderData.estado = cliente.estado || null;
+      }
+    }
 
     if (arte_campanha_url) {
       orderData.arte_campanha_url = arte_campanha_url;
@@ -69,7 +99,7 @@ export default async function handler(
     console.log('📦 Dados do pedido a serem inseridos:', {
       ...orderData,
       produtos: produtos.length + ' produtos',
-      cliente: cliente ? JSON.stringify(cliente).substring(0, 100) + '...' : null
+      tipoCliente: cliente?.tipo || 'nenhum'
     });
 
     // Inserir pedido no banco de dados
@@ -87,8 +117,7 @@ export default async function handler(
         code: error.code,
         orderData: {
           ...orderData,
-          produtos: 'JSON string',
-          cliente: cliente ? 'JSON string' : null
+          produtos: 'JSON string'
         }
       });
       return res.status(500).json({ 
