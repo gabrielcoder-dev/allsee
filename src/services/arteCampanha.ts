@@ -29,7 +29,7 @@ export async function uploadArtesDoPedido(params: {
   totensArtes: Record<string, TotemArte>
   bucket?: string
 }): Promise<UploadArteResult[]> {
-  const { orderId, userId, produtos, totensArtes, bucket = 'public' } = params
+  const { orderId, userId, produtos, totensArtes, bucket = 'arte-campanhas' } = params
   const results: UploadArteResult[] = []
 
   for (const produto of produtos) {
