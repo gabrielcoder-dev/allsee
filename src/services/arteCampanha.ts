@@ -19,7 +19,7 @@ function buildStoragePath(orderId: string | number, anuncioId: string, file: Fil
   const uuid = (typeof crypto !== 'undefined' && 'randomUUID' in crypto)
     ? (crypto as any).randomUUID()
     : Math.random().toString(36).slice(2)
-  return `arte-campanhas/${orderId}/${anuncioId}/${uuid}.${ext}`
+  return `${orderId}/${anuncioId}/${uuid}.${ext}`
 }
 
 export async function uploadArtesDoPedido(params: {
