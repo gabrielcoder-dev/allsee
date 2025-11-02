@@ -49,18 +49,16 @@ export default async function handler(
     });
 
     // Preparar dados do pedido
-    // Gerar id_produto como string separada por vírgulas (se a tabela usar esse campo)
+    // Gerar id_produto como string separada por vírgulas
     const id_produto = produtos.map((p: any) => p.id_produto || p.id).join(',');
     
-    // Preparar dados do pedido com campos individuais do cliente (em vez de coluna JSON)
+    // Preparar dados do pedido com apenas as colunas que existem na tabela
     const orderData: any = {
       id_user,
-      produtos: JSON.stringify(produtos),
-      id_produto: id_produto, // Também salvar como string separada por vírgulas para compatibilidade
-      total: typeof total === 'number' ? total : parseFloat(total),
-      preco: typeof total === 'number' ? total : parseFloat(total), // preco pode ser o mesmo que total
+      id_produto: id_produto, // string separada por vírgulas
+      preco: typeof total === 'number' ? total : parseFloat(total),
       duracao_campanha: duracao || '2',
-      status: status || 'draft',
+      status: status || 'pendente',
       // Informações da campanha
       nome_campanha: campaignName || null,
       inicio_campanha: startDate || null,
@@ -96,9 +94,8 @@ export default async function handler(
       }
     }
 
-    if (arte_campanha_url) {
-      orderData.arte_campanha_url = arte_campanha_url;
-    }
+    // arte_campanha_url não é salvo diretamente na tabela order
+    // será salvo separadamente na tabela arte_campanha se necessário
 
     console.log('📦 Dados do pedido a serem inseridos:', {
       ...orderData,
