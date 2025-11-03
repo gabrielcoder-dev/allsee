@@ -3,7 +3,20 @@ import Stripe from 'stripe';
 import { createClient } from '@supabase/supabase-js';
 import { atualizarStatusCompra } from '@/lib/utils';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
+// Validar se as chaves do Stripe estão configuradas
+const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
+const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+
+if (!stripeSecretKey) {
+  console.error('❌ STRIPE_SECRET_KEY não está configurada nas variáveis de ambiente');
+}
+
+// STRIPE_WEBHOOK_SECRET é opcional por enquanto, mas recomendado para produção
+if (!webhookSecret) {
+  console.warn('⚠️ STRIPE_WEBHOOK_SECRET não está configurada. Recomendado para produção.');
+}
+
+const stripe = new Stripe(stripeSecretKey || '', {
   apiVersion: '2025-10-29.clover',
 });
 
@@ -26,6 +39,13 @@ export default async function handler(
     return res.status(405).json({ error: 'Method Not Allowed' });
   }
 
+  // Validar se a chave secreta está configurada
+  if (!stripeSecretKey) {
+    return res.status(500).json({ 
+      error: 'Configuração do Stripe não encontrada. Verifique STRIPE_SECRET_KEY nas variáveis de ambiente.' 
+    });
+  }
+
   const sig = req.headers['stripe-signature'];
 
   if (!sig) {
@@ -35,20 +55,21 @@ export default async function handler(
   let event: Stripe.Event;
 
   try {
-    // Verificar webhook secret (você deve adicionar isso no .env)
-    const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
-    
-    if (webhookSecret) {
-      event = stripe.webhooks.constructEvent(
-        req.body as any,
-        sig,
-        webhookSecret
-      );
-    } else {
-      // Em desenvolvimento, pode usar uma validação mais simples
-      // Mas em produção, sempre use o webhook secret
-      return res.status(400).json({ error: 'Webhook secret não configurado' });
+    // Verificar webhook secret (opcional por enquanto, mas recomendado para produção)
+    if (!webhookSecret) {
+      console.warn('⚠️ Webhook secret não configurado. Processando sem validação de assinatura.');
+      // Em produção, sempre use o webhook secret
+      // Por enquanto, vamos apenas logar o evento sem validação
+      return res.status(400).json({ 
+        error: 'Webhook secret não configurado. Configure STRIPE_WEBHOOK_SECRET para produção.' 
+      });
     }
+
+    event = stripe.webhooks.constructEvent(
+      req.body as any,
+      sig,
+      webhookSecret
+    );
   } catch (err: any) {
     console.error('❌ Erro ao verificar webhook:', err.message);
     return res.status(400).json({ error: `Webhook Error: ${err.message}` });

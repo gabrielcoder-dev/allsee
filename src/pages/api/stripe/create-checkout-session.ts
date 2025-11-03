@@ -1,7 +1,14 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import Stripe from 'stripe';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
+// Validar se a chave secreta do Stripe está configurada
+const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
+
+if (!stripeSecretKey) {
+  console.error('❌ STRIPE_SECRET_KEY não está configurada nas variáveis de ambiente');
+}
+
+const stripe = new Stripe(stripeSecretKey || '', {
   apiVersion: '2025-10-29.clover',
 });
 
@@ -11,6 +18,14 @@ export default async function handler(
 ) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method Not Allowed' });
+  }
+
+  // Validar se a chave secreta está configurada
+  if (!stripeSecretKey) {
+    return res.status(500).json({ 
+      success: false, 
+      error: 'Configuração do Stripe não encontrada. Verifique STRIPE_SECRET_KEY nas variáveis de ambiente.' 
+    });
   }
 
   try {
