@@ -55,9 +55,10 @@ export default async function handler(
       amountFormatted: `R$ ${amount}`
     });
 
-    // Criar sessão de checkout com suporte para PIX e cartão
+    // Criar sessão de checkout com suporte para cartão
+    // PIX pode ser adicionado depois de ativar no dashboard do Stripe
     const session = await stripe.checkout.sessions.create({
-      payment_method_types: ['card', 'pix'],
+      payment_method_types: ['card'],
       line_items: [
         {
           price_data: {
