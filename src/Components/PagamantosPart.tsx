@@ -367,8 +367,9 @@ export const PagamantosPart = () => {
         }
       }
 
-      toast.success('Pedido salvo com sucesso!');
-      setCarregando(false);
+      // Redirecionar para página de checkout/pagamento
+      toast.success('Pedido salvo! Redirecionando para pagamento...');
+      router.push(`/checkout?orderId=${orderId}`);
     } catch (error: any) {
       console.error('Erro ao salvar pedido:', error);
       setErro(`Erro: ${error.message}`);
