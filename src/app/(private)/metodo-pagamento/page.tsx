@@ -6,14 +6,23 @@ import { useCart } from '@/context/CartContext';
 import { HeaderResume } from '@/Components/HeaderResume';
 import { SiPix } from 'react-icons/si';
 import { MdCreditCard } from 'react-icons/md';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Copy, Check, ExternalLink } from 'lucide-react';
+import { QRCodeSVG } from 'qrcode.react';
 
 function MetodoPagamentoContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { produtos, selectedDurationGlobal, precoComDesconto } = useCart();
   const [loading, setLoading] = useState(false);
+  const [loadingPix, setLoadingPix] = useState(false);
   const [orderId, setOrderId] = useState<string | null>(null);
+  const [pixData, setPixData] = useState<{
+    qrCode: string;
+    qrCodeText: string;
+    paymentLink: string;
+    billingId: string;
+  } | null>(null);
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     if (searchParams) {
@@ -89,9 +98,49 @@ function MetodoPagamentoContent() {
     router.push(`/checkout?orderId=${orderId}`);
   };
 
-  const handlePixClick = () => {
-    // TODO: Implementar pagamento PIX
-    alert('Pagamento via PIX será implementado em breve!');
+  const handlePixClick = async () => {
+    if (!orderId) {
+      alert('ID do pedido não encontrado');
+      return;
+    }
+
+    setLoadingPix(true);
+    try {
+      const response = await fetch('/api/abacatepay/create-pix-payment', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          orderId,
+          amount: total,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.error || 'Erro ao gerar pagamento PIX');
+      }
+
+      setPixData({
+        qrCode: data.qrCode || data.qrCodeText || '',
+        qrCodeText: data.qrCodeText || data.qrCode || '',
+        paymentLink: data.paymentLink || '',
+        billingId: data.billingId || '',
+      });
+    } catch (error: any) {
+      console.error('Erro ao criar pagamento PIX:', error);
+      alert(`Erro ao gerar pagamento PIX: ${error.message}`);
+    } finally {
+      setLoadingPix(false);
+    }
+  };
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
   };
 
   return (
@@ -142,42 +191,143 @@ function MetodoPagamentoContent() {
         </div>
 
         {/* Métodos de pagamento */}
-        <div className="bg-white rounded-xl shadow border border-gray-100 p-4 md:p-8 flex flex-col gap-4 w-full max-w-2xl">
-          <h2 className="text-xl font-bold mb-2">Escolha o método de pagamento</h2>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* PIX */}
-            <button
-              onClick={handlePixClick}
-              disabled={loading}
-              className="flex items-center gap-3 p-4 border-2 border-gray-200 rounded-lg hover:border-orange-500 hover:bg-orange-50 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <div className="w-8 h-8 flex items-center justify-center">
-                <SiPix className="w-6 h-6 text-gray-800" />
-              </div>
-              <span className="font-medium text-gray-800">pix</span>
-            </button>
+        {!pixData && (
+          <div className="bg-white rounded-xl shadow border border-gray-100 p-4 md:p-8 flex flex-col gap-4 w-full max-w-2xl">
+            <h2 className="text-xl font-bold mb-2">Escolha o método de pagamento</h2>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* PIX */}
+              <button
+                onClick={handlePixClick}
+                disabled={loading || loadingPix}
+                className="flex items-center gap-3 p-4 border-2 border-gray-200 rounded-lg hover:border-orange-500 hover:bg-orange-50 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <div className="w-8 h-8 flex items-center justify-center">
+                  <SiPix className="w-6 h-6 text-gray-800" />
+                </div>
+                <span className="font-medium text-gray-800">pix</span>
+              </button>
 
-            {/* Cartão de crédito */}
-            <button
-              onClick={handleCartaoClick}
-              disabled={loading}
-              className="flex items-center gap-3 p-4 border-2 border-gray-200 rounded-lg hover:border-orange-500 hover:bg-orange-50 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <div className="w-8 h-8 flex items-center justify-center">
-                <MdCreditCard className="w-6 h-6 text-gray-800" />
-              </div>
-              <span className="font-medium text-gray-800">cartão de crédito</span>
-            </button>
-          </div>
-
-          {loading && (
-            <div className="flex items-center justify-center gap-2 text-gray-600">
-              <Loader2 className="w-5 h-5 animate-spin" />
-              <span>Redirecionando...</span>
+              {/* Cartão de crédito */}
+              <button
+                onClick={handleCartaoClick}
+                disabled={loading || loadingPix}
+                className="flex items-center gap-3 p-4 border-2 border-gray-200 rounded-lg hover:border-orange-500 hover:bg-orange-50 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <div className="w-8 h-8 flex items-center justify-center">
+                  <MdCreditCard className="w-6 h-6 text-gray-800" />
+                </div>
+                <span className="font-medium text-gray-800">cartão de crédito</span>
+              </button>
             </div>
-          )}
-        </div>
+
+            {loading && (
+              <div className="flex items-center justify-center gap-2 text-gray-600">
+                <Loader2 className="w-5 h-5 animate-spin" />
+                <span>Redirecionando...</span>
+              </div>
+            )}
+
+            {loadingPix && (
+              <div className="flex items-center justify-center gap-2 text-gray-600">
+                <Loader2 className="w-5 h-5 animate-spin" />
+                <span>Gerando QR Code PIX...</span>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Exibição do QR Code PIX */}
+        {pixData && (
+          <div className="bg-white rounded-xl shadow border border-gray-100 p-4 md:p-8 flex flex-col gap-6 w-full max-w-2xl">
+            <div className="flex items-center justify-between">
+              <h2 className="text-xl font-bold">Pagamento via PIX</h2>
+              <button
+                onClick={() => setPixData(null)}
+                className="text-gray-500 hover:text-gray-700 text-sm underline"
+              >
+                Escolher outro método
+              </button>
+            </div>
+
+            <div className="border-b border-gray-200"></div>
+
+            <div className="flex flex-col items-center gap-4">
+              <p className="text-gray-700 text-center">
+                Escaneie o QR Code abaixo ou copie o código PIX para realizar o pagamento
+              </p>
+
+              {/* QR Code */}
+              <div className="bg-white p-4 rounded-lg border-2 border-gray-200">
+                {pixData.qrCodeText ? (
+                  <QRCodeSVG
+                    value={pixData.qrCodeText}
+                    size={256}
+                    level="H"
+                    includeMargin={true}
+                  />
+                ) : (
+                  <div className="w-64 h-64 flex items-center justify-center text-gray-400">
+                    QR Code não disponível
+                  </div>
+                )}
+              </div>
+
+              {/* Código PIX (copiável) */}
+              {pixData.qrCodeText && (
+                <div className="w-full">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Código PIX (Copiar e Colar)
+                  </label>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      readOnly
+                      value={pixData.qrCodeText}
+                      className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-sm bg-gray-50"
+                    />
+                    <button
+                      onClick={() => copyToClipboard(pixData.qrCodeText)}
+                      className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors flex items-center gap-2"
+                    >
+                      {copied ? (
+                        <>
+                          <Check className="w-4 h-4" />
+                          Copiado!
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="w-4 h-4" />
+                          Copiar
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Link de pagamento */}
+              {pixData.paymentLink && (
+                <div className="w-full">
+                  <a
+                    href={pixData.paymentLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors font-medium"
+                  >
+                    <ExternalLink className="w-5 h-5" />
+                    Abrir link de pagamento
+                  </a>
+                </div>
+              )}
+
+              <div className="text-sm text-gray-500 text-center mt-4">
+                <p>Após o pagamento, você será redirecionado automaticamente.</p>
+                <p className="mt-2">O pagamento pode levar alguns minutos para ser confirmado.</p>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
