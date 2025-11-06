@@ -98,15 +98,21 @@ export default async function handler(
                   paymentData.metadata?.order_id ||
                   pixQrCode.metadata?.order_id;
 
+    console.log('🔍 Tentativa 1 - orderId dos metadados:', orderId);
+
     // Se não encontrou nos metadados, tentar extrair do externalId
     if (!orderId) {
       const externalId = pixQrCode.externalId || paymentData.externalId;
+      console.log('🔍 Tentativa 2 - externalId encontrado:', externalId);
+      
       if (externalId) {
         // Se externalId for "ORDER_123", extrair apenas "123"
         if (typeof externalId === 'string' && externalId.startsWith('ORDER_')) {
           orderId = externalId.replace('ORDER_', '');
+          console.log('🔍 orderId extraído do externalId (removido ORDER_):', orderId);
         } else {
           orderId = externalId;
+          console.log('🔍 orderId = externalId:', orderId);
         }
       }
     }
@@ -117,13 +123,21 @@ export default async function handler(
         paymentDataMetadata: paymentData.metadata,
         pixQrCodeMetadata: pixQrCode.metadata,
         eventMetadata: event.metadata,
-        externalId: pixQrCode.externalId || paymentData.externalId
+        externalId: pixQrCode.externalId || paymentData.externalId,
+        paymentDataKeys: Object.keys(paymentData),
+        pixQrCodeKeys: Object.keys(pixQrCode)
       });
       return res.status(400).json({ 
         error: 'orderId não encontrado nos metadados',
         received: true 
       });
     }
+
+    console.log('✅ orderId extraído:', {
+      orderId,
+      tipo: typeof orderId,
+      valor: orderId.toString()
+    });
 
     console.log('✅ Pagamento concluído:', {
       paymentId: paymentData.id,
@@ -134,19 +148,21 @@ export default async function handler(
 
     // Atualizar status do pedido para "pago"
     try {
-      const orderIdNumber = parseInt(orderId.toString(), 10);
+      // Passar orderId como string (pode ser UUID ou número)
+      // A função atualizarStatusCompra agora aceita ambos
+      const orderIdStr = orderId.toString();
       
-      if (isNaN(orderIdNumber)) {
+      if (!orderIdStr || orderIdStr.trim() === '') {
         throw new Error(`orderId inválido: ${orderId}`);
       }
 
-      await atualizarStatusCompra(orderIdNumber, 'pago');
-      console.log(`✅ Pedido ${orderIdNumber} atualizado para "pago"`);
+      await atualizarStatusCompra(orderIdStr, 'pago');
+      console.log(`✅ Pedido ${orderIdStr} atualizado para "pago"`);
       
       return res.status(200).json({ 
         received: true,
-        message: `Pedido ${orderIdNumber} atualizado para "pago"`,
-        orderId: orderIdNumber
+        message: `Pedido ${orderIdStr} atualizado para "pago"`,
+        orderId: orderIdStr
       });
     } catch (error: any) {
       console.error(`❌ Erro ao atualizar pedido ${orderId}:`, error);

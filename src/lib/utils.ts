@@ -9,8 +9,9 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 // Função para atualizar status da compra no banco
-export async function atualizarStatusCompra(orderId: number, status: "pendente" | "pago") {
-  console.log(`🔄 Atualizando status do order ${orderId} para: ${status}`);
+// Aceita tanto UUID (string) quanto number (integer)
+export async function atualizarStatusCompra(orderId: number | string, status: "pendente" | "pago") {
+  console.log(`🔄 Atualizando status do order ${orderId} (tipo: ${typeof orderId}) para: ${status}`);
   
   if (!orderId || !status) {
     throw new Error('orderId e status são obrigatórios');
@@ -22,12 +23,15 @@ export async function atualizarStatusCompra(orderId: number, status: "pendente" 
   );
   
   try {
-    console.log(`🔍 Verificando se order ${orderId} existe...`);
+    // Converter orderId para string se for number (para compatibilidade com UUID)
+    const orderIdStr = typeof orderId === 'number' ? orderId.toString() : orderId;
+    
+    console.log(`🔍 Verificando se order ${orderIdStr} existe...`);
     
     const { data: existingOrder, error: checkError } = await supabase
       .from('order')
       .select('id, status, id_user')
-      .eq('id', orderId)
+      .eq('id', orderIdStr)
       .single();
 
     if (checkError) {
@@ -48,7 +52,7 @@ export async function atualizarStatusCompra(orderId: number, status: "pendente" 
         status,
         updated_at: new Date().toISOString()
       })
-      .eq('id', orderId)
+      .eq('id', orderIdStr)
       .select('id, status, updated_at');
 
     if (error) {
