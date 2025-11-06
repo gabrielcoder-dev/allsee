@@ -137,27 +137,65 @@ export default async function handler(
     const pixResult = await response.json();
 
     console.log('✅ PIX criado - resposta completa:', JSON.stringify(pixResult, null, 2));
-    console.log('✅ Pagamento PIX criado:', {
-      pixId: pixResult.id,
-      status: pixResult.status
+    console.log('✅ Chaves disponíveis na resposta:', Object.keys(pixResult));
+
+    // Extrair informações do PIX - tentar todas as possibilidades de nomes de campos
+    // A API pode retornar: brCode, qrCode, pixQrCode, paymentLink, pixLink, etc.
+    const qrCodeText = pixResult.brCode || 
+                      pixResult.br_code || 
+                      pixResult.pixCode || 
+                      pixResult.pix_code ||
+                      pixResult.qrCodeText || 
+                      pixResult.qr_code_text ||
+                      pixResult.code ||
+                      '';
+    
+    const qrCodeBase64 = pixResult.qrCode || 
+                        pixResult.qr_code || 
+                        pixResult.qrcode || 
+                        pixResult.qr_code_base64 ||
+                        pixResult.pixQrCode ||
+                        pixResult.pix_qr_code ||
+                        '';
+    
+    const paymentLink = pixResult.paymentLink || 
+                       pixResult.payment_link || 
+                       pixResult.link || 
+                       pixResult.pixLink ||
+                       pixResult.pix_link ||
+                       pixResult.url ||
+                       pixResult.checkoutUrl ||
+                       pixResult.checkout_url ||
+                       '';
+
+    const pixId = pixResult.id || pixResult.pixId || pixResult.pix_id || '';
+
+    console.log('✅ Dados extraídos:', {
+      qrCodeText: qrCodeText ? `${qrCodeText.substring(0, 50)}...` : 'VAZIO',
+      qrCodeBase64: qrCodeBase64 ? 'PRESENTE' : 'VAZIO',
+      paymentLink: paymentLink || 'VAZIO',
+      pixId
     });
 
-    // Extrair informações do PIX - estrutura da resposta da API Abacate Pay
-    // A API retorna: qrCode (base64), brCode (string do PIX), paymentLink, etc.
-    const qrCodeText = pixResult.brCode || pixResult.qrCode || pixResult.qrcode || pixResult.qrCodeText || '';
-    const qrCodeBase64 = pixResult.qrCode || pixResult.qr_code_base64 || '';
-    const paymentLink = pixResult.paymentLink || pixResult.payment_link || pixResult.link || pixResult.pixLink || '';
-    const pixId = pixResult.id || '';
+    // Se não tiver qrCodeText, tentar usar o qrCodeBase64 como fallback
+    const finalQrCodeText = qrCodeText || qrCodeBase64;
+
+    if (!finalQrCodeText && !paymentLink) {
+      console.error('⚠️ ATENÇÃO: Nenhum código PIX ou link encontrado na resposta!');
+      console.error('Resposta completa:', JSON.stringify(pixResult, null, 2));
+    }
 
     return res.status(200).json({ 
       success: true,
       billingId: pixId,
-      qrCode: qrCodeText || qrCodeBase64,
-      qrCodeText: qrCodeText,
+      qrCode: finalQrCodeText,
+      qrCodeText: finalQrCodeText,
       qrCodeBase64: qrCodeBase64,
       paymentLink: paymentLink,
       status: pixResult.status,
-      expiresAt: pixResult.expiresAt || pixResult.expires_at
+      expiresAt: pixResult.expiresAt || pixResult.expires_at || pixResult.expiresIn,
+      // Incluir resposta completa para debug
+      _debug: process.env.NODE_ENV === 'development' ? pixResult : undefined
     });
   } catch (error: any) {
     console.error('❌ Erro ao criar pagamento PIX:', error);

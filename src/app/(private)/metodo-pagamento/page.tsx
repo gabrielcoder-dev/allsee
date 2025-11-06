@@ -119,14 +119,33 @@ function MetodoPagamentoContent() {
 
       const data = await response.json();
 
+      console.log('📦 Resposta da API:', data);
+
       if (!response.ok || !data.success) {
         throw new Error(data.error || 'Erro ao gerar pagamento PIX');
       }
 
+      // Extrair dados do PIX - tentar todas as possibilidades
+      const qrCodeText = data.qrCodeText || data.qrCode || data.brCode || '';
+      const paymentLink = data.paymentLink || data.link || '';
+
+      console.log('📋 Dados extraídos:', {
+        qrCodeText: qrCodeText ? `${qrCodeText.substring(0, 50)}...` : 'VAZIO',
+        paymentLink: paymentLink || 'VAZIO',
+        billingId: data.billingId || 'VAZIO'
+      });
+
+      if (!qrCodeText && !paymentLink) {
+        console.error('⚠️ ERRO: Nenhum código PIX ou link recebido!');
+        console.error('Dados completos:', data);
+        alert('Erro: Não foi possível gerar o código PIX. Verifique os logs do console.');
+        return;
+      }
+
       setPixData({
-        qrCode: data.qrCode || data.qrCodeText || '',
-        qrCodeText: data.qrCodeText || data.qrCode || '',
-        paymentLink: data.paymentLink || '',
+        qrCode: qrCodeText,
+        qrCodeText: qrCodeText,
+        paymentLink: paymentLink,
         billingId: data.billingId || '',
       });
     } catch (error: any) {
@@ -258,7 +277,7 @@ function MetodoPagamentoContent() {
               </p>
 
               {/* QR Code */}
-              <div className="bg-white p-4 rounded-lg border-2 border-gray-200">
+              <div className="bg-white p-4 rounded-lg border-2 border-gray-200 flex items-center justify-center">
                 {pixData.qrCodeText ? (
                   <QRCodeSVG
                     value={pixData.qrCodeText}
@@ -267,8 +286,9 @@ function MetodoPagamentoContent() {
                     includeMargin={true}
                   />
                 ) : (
-                  <div className="w-64 h-64 flex items-center justify-center text-gray-400">
-                    QR Code não disponível
+                  <div className="w-64 h-64 flex flex-col items-center justify-center text-gray-400 gap-2">
+                    <Loader2 className="w-8 h-8 animate-spin" />
+                    <p className="text-sm">Gerando QR Code...</p>
                   </div>
                 )}
               </div>
