@@ -138,51 +138,75 @@ export default async function handler(
 
     console.log('✅ PIX criado - resposta completa:', JSON.stringify(pixResult, null, 2));
     console.log('✅ Chaves disponíveis na resposta:', Object.keys(pixResult));
+    
+    // A resposta pode estar dentro de um objeto 'data'
+    const data = pixResult.data || pixResult;
+    console.log('✅ Dados extraídos do objeto data:', Object.keys(data));
 
     // Extrair informações do PIX - tentar todas as possibilidades de nomes de campos
-    // A API pode retornar: brCode, qrCode, pixQrCode, paymentLink, pixLink, etc.
-    const qrCodeText = pixResult.brCode || 
-                      pixResult.br_code || 
-                      pixResult.pixCode || 
-                      pixResult.pix_code ||
-                      pixResult.qrCodeText || 
-                      pixResult.qr_code_text ||
-                      pixResult.code ||
+    // A API pode retornar: brCode, brCodeBase64, qrCode, pixQrCode, paymentLink, etc.
+    const qrCodeText = data.brCode || 
+                      data.br_code || 
+                      pixResult.brCode ||
+                      pixResult.br_code ||
+                      data.pixCode || 
+                      data.pix_code ||
+                      data.qrCodeText || 
+                      data.qr_code_text ||
+                      data.code ||
                       '';
     
-    const qrCodeBase64 = pixResult.qrCode || 
-                        pixResult.qr_code || 
-                        pixResult.qrcode || 
-                        pixResult.qr_code_base64 ||
-                        pixResult.pixQrCode ||
-                        pixResult.pix_qr_code ||
+    const qrCodeBase64 = data.brCodeBase64 ||
+                        data.br_code_base64 ||
+                        pixResult.brCodeBase64 ||
+                        pixResult.br_code_base64 ||
+                        data.qrCode || 
+                        data.qr_code || 
+                        data.qrcode || 
+                        data.qr_code_base64 ||
+                        data.pixQrCode ||
+                        data.pix_qr_code ||
+                        pixResult.qrCode ||
                         '';
     
-    const paymentLink = pixResult.paymentLink || 
-                       pixResult.payment_link || 
-                       pixResult.link || 
-                       pixResult.pixLink ||
-                       pixResult.pix_link ||
-                       pixResult.url ||
-                       pixResult.checkoutUrl ||
-                       pixResult.checkout_url ||
+    const paymentLink = data.paymentLink || 
+                       data.payment_link || 
+                       data.link || 
+                       data.pixLink ||
+                       data.pix_link ||
+                       data.url ||
+                       data.checkoutUrl ||
+                       data.checkout_url ||
+                       pixResult.paymentLink ||
+                       pixResult.link ||
                        '';
 
-    const pixId = pixResult.id || pixResult.pixId || pixResult.pix_id || '';
+    const pixId = data.id || data.pixId || data.pix_id || pixResult.id || pixResult.pixId || pixResult.pix_id || '';
 
     console.log('✅ Dados extraídos:', {
       qrCodeText: qrCodeText ? `${qrCodeText.substring(0, 50)}...` : 'VAZIO',
-      qrCodeBase64: qrCodeBase64 ? 'PRESENTE' : 'VAZIO',
+      qrCodeBase64: qrCodeBase64 ? `${qrCodeBase64.substring(0, 50)}...` : 'VAZIO',
       paymentLink: paymentLink || 'VAZIO',
       pixId
     });
 
     // Se não tiver qrCodeText, tentar usar o qrCodeBase64 como fallback
-    const finalQrCodeText = qrCodeText || qrCodeBase64;
+    // Mas primeiro, se brCodeBase64 for uma imagem base64, extrair apenas o código
+    let finalQrCodeText = qrCodeText;
+    
+    if (!finalQrCodeText && qrCodeBase64) {
+      // Se for uma imagem base64 (data:image/...), não usar como código PIX
+      if (qrCodeBase64.startsWith('data:image')) {
+        console.log('⚠️ qrCodeBase64 é uma imagem, não um código PIX');
+      } else {
+        finalQrCodeText = qrCodeBase64;
+      }
+    }
 
     if (!finalQrCodeText && !paymentLink) {
       console.error('⚠️ ATENÇÃO: Nenhum código PIX ou link encontrado na resposta!');
       console.error('Resposta completa:', JSON.stringify(pixResult, null, 2));
+      console.error('Data extraída:', JSON.stringify(data, null, 2));
     }
 
     return res.status(200).json({ 
@@ -192,10 +216,14 @@ export default async function handler(
       qrCodeText: finalQrCodeText,
       qrCodeBase64: qrCodeBase64,
       paymentLink: paymentLink,
-      status: pixResult.status,
-      expiresAt: pixResult.expiresAt || pixResult.expires_at || pixResult.expiresIn,
+      status: data.status || pixResult.status,
+      expiresAt: data.expiresAt || data.expires_at || data.expiresIn || pixResult.expiresAt || pixResult.expires_at || pixResult.expiresIn,
       // Incluir resposta completa para debug
-      _debug: process.env.NODE_ENV === 'development' ? pixResult : undefined
+      _debug: process.env.NODE_ENV === 'development' ? {
+        originalResponse: pixResult,
+        extractedData: data,
+        allKeys: Object.keys(pixResult)
+      } : undefined
     });
   } catch (error: any) {
     console.error('❌ Erro ao criar pagamento PIX:', error);
