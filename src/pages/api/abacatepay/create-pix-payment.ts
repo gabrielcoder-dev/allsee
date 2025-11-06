@@ -69,54 +69,45 @@ export default async function handler(
     const customerTaxId = order.cpf || order.cnpj || '';
 
     // Preparar dados para criar o pagamento PIX
-    const origin = req.headers.origin || 'https://allseeads.com.br';
-    
     // Se tiver email, incluir todos os campos obrigatórios do customer
     const customer = customerEmail ? {
-      email: customerEmail,
       name: customerName || 'Cliente',
-      document: customerTaxId || '',
-      phone: customerPhone || '',
+      cellphone: customerPhone || '',
+      email: customerEmail,
+      taxId: customerTaxId || '',
     } : undefined;
     
-    const billingData: any = {
-      frequency: "ONE_TIME",
-      methods: ["PIX"],
-      products: [
-        {
-          externalId: `ORDER_${orderId}`,
-          name: order.nome_campanha || 'Campanha ALL SEE',
-          quantity: 1,
-          price: amountInCents
-        }
-      ],
-      returnUrl: `${origin}/metodo-pagamento?orderId=${orderId}`,
-      completionUrl: `${origin}/pagamento-concluido?order_id=${orderId}&payment_method=pix`,
+    const pixData: any = {
+      amount: amountInCents,
+      expiresIn: ONE_MINUTE * 30, // 30 minutos em segundos
+      description: order.nome_campanha || `Pedido #${orderId} - Campanha ALL SEE`,
       metadata: {
         orderId: orderId.toString(),
         userId: order.id_user?.toString() || '',
+        externalId: `ORDER_${orderId}`
       }
     };
 
     // Adicionar customer apenas se tiver dados completos
-    if (customer && customer.email) {
-      billingData.customer = customer;
+    if (customer && customer.email && customer.name) {
+      pixData.customer = customer;
     }
 
     console.log('🔷 Criando pagamento PIX via Abacate Pay:', {
       orderId,
       amount: amountInCents,
-      amountFormatted: `R$ ${amount}`
+      amountFormatted: `R$ ${amount}`,
+      endpoint: `${ABACATE_PAY_API_URL}/pixQrCode/create`
     });
 
-    // Criar pagamento via Abacate Pay usando billing endpoint
-    const response = await fetch(`${ABACATE_PAY_API_URL}/billing`, {
+    // Criar pagamento PIX via Abacate Pay usando o endpoint correto
+    const response = await fetch(`${ABACATE_PAY_API_URL}/pixQrCode/create`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${ABACATE_PAY_API_KEY}`,
       },
-      body: JSON.stringify(billingData),
+      body: JSON.stringify(pixData),
     });
 
     if (!response.ok) {
@@ -128,52 +119,30 @@ export default async function handler(
       });
     }
 
-    const billing = await response.json();
+    const pixResult = await response.json();
 
-    console.log('✅ Billing criado - resposta completa:', JSON.stringify(billing, null, 2));
+    console.log('✅ PIX criado - resposta completa:', JSON.stringify(pixResult, null, 2));
     console.log('✅ Pagamento PIX criado:', {
-      billingId: billing.id,
-      status: billing.status,
-      methods: billing.methods,
-      pixData: billing.pix
+      pixId: pixResult.id,
+      status: pixResult.status
     });
 
-    // Buscar informações do PIX (QR code e link)
-    let pixData = null;
-    if (billing.id) {
-      try {
-        // Tentar buscar dados do PIX do billing
-        const pixResponse = await fetch(`${ABACATE_PAY_API_URL}/billing/${billing.id}/pix`, {
-          method: 'GET',
-          headers: {
-            'Authorization': `Bearer ${ABACATE_PAY_API_KEY}`,
-          },
-        });
-
-        if (pixResponse.ok) {
-          pixData = await pixResponse.json();
-        }
-      } catch (error) {
-        console.error('⚠️ Erro ao buscar dados PIX:', error);
-      }
-    }
-
-    // Extrair informações do PIX - tentar múltiplas possibilidades
-    const qrCodeText = pixData?.qr_code || pixData?.qrCode || pixData?.qrcode || pixData?.qrCodeText || 
-                      billing.pix?.qr_code || billing.pix?.qrCode || billing.pix?.qrcode || 
-                      billing.qr_code || billing.qrCode || billing.qrcode || '';
-    
-    const paymentLink = billing.paymentLink || billing.payment_link || billing.link || 
-                       pixData?.payment_link || pixData?.paymentLink || pixData?.link || '';
+    // Extrair informações do PIX - estrutura da resposta da API Abacate Pay
+    // A API retorna: qrCode (base64), brCode (string do PIX), paymentLink, etc.
+    const qrCodeText = pixResult.brCode || pixResult.qrCode || pixResult.qrcode || pixResult.qrCodeText || '';
+    const qrCodeBase64 = pixResult.qrCode || pixResult.qr_code_base64 || '';
+    const paymentLink = pixResult.paymentLink || pixResult.payment_link || pixResult.link || pixResult.pixLink || '';
+    const pixId = pixResult.id || '';
 
     return res.status(200).json({ 
       success: true,
-      billingId: billing.id,
-      qrCode: qrCodeText,
+      billingId: pixId,
+      qrCode: qrCodeText || qrCodeBase64,
       qrCodeText: qrCodeText,
+      qrCodeBase64: qrCodeBase64,
       paymentLink: paymentLink,
-      status: billing.status,
-      expiresAt: billing.expiresAt || billing.expires_at
+      status: pixResult.status,
+      expiresAt: pixResult.expiresAt || pixResult.expires_at
     });
   } catch (error: any) {
     console.error('❌ Erro ao criar pagamento PIX:', error);
