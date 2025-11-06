@@ -68,13 +68,28 @@ export default async function handler(
     const customerPhone = order.telefone || '';
     const customerTaxId = order.cpf || order.cnpj || '';
 
+    // Função para limpar e validar CPF/CNPJ (remover caracteres especiais)
+    const cleanTaxId = (taxId: string): string | null => {
+      if (!taxId) return null;
+      // Remove todos os caracteres não numéricos
+      const cleaned = taxId.replace(/\D/g, '');
+      // Valida se tem 11 dígitos (CPF) ou 14 dígitos (CNPJ)
+      if (cleaned.length === 11 || cleaned.length === 14) {
+        return cleaned;
+      }
+      return null;
+    };
+
     // Preparar dados para criar o pagamento PIX
     // Se tiver email, incluir todos os campos obrigatórios do customer
+    const cleanedTaxId = cleanTaxId(customerTaxId);
+    const cleanedPhone = customerPhone ? customerPhone.replace(/\D/g, '') : '';
+    
     const customer = customerEmail ? {
       name: customerName || 'Cliente',
-      cellphone: customerPhone || '',
+      cellphone: cleanedPhone || '',
       email: customerEmail,
-      taxId: customerTaxId || '',
+      ...(cleanedTaxId && { taxId: cleanedTaxId }),
     } : undefined;
     
     const pixData: any = {
