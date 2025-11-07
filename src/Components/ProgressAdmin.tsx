@@ -19,7 +19,7 @@ const supabase = createClient(
 interface ArteCampanha {
   id: number;
   caminho_imagem: string;
-  id_order: string;
+  order_id: string;
 }
 
 interface OrderDetails {
@@ -228,7 +228,7 @@ const ProgressAdmin = () => {
         // Buscar todas as artes de campanha
         const { data: artes, error: artesError } = await supabase
           .from('arte_campanha')
-          .select('*');
+          .select('id, caminho_imagem, order_id, id_user');
 
         if (artesError) {
           console.error('Erro ao buscar artes:', artesError);
@@ -247,7 +247,7 @@ const ProgressAdmin = () => {
           const { data: order, error: orderError } = await supabase
             .from('order')
             .select('*')
-            .eq('id', arte.id_order)
+            .eq('id', arte.order_id)
             .single();
 
           if (!orderError && order) {

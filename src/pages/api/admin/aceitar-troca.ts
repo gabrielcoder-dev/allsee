@@ -93,7 +93,7 @@ export default async function handler(
         .from('arte_campanha')
         .update({ caminho_imagem: arteTroca.caminho_imagem })
         .eq('id', arte_campanha_id)
-        .select('id, id_order, id_user')
+        .select('id, order_id, id_user')
         .single();
 
       if (updateError) {
@@ -278,7 +278,7 @@ export default async function handler(
                 .from('arte_campanha')
                 .update({ caminho_imagem: fullData })
                 .eq('id', arte_campanha_id)
-                .select('id, id_order, id_user')
+                .select('id, order_id, id_user')
                 .single();
 
               if (updateError) {
@@ -291,7 +291,7 @@ export default async function handler(
               } else {
                 console.log('✅ Arte da campanha atualizada com sucesso via chunks:', {
                   id: updatedArteCampanha.id,
-                  id_order: updatedArteCampanha.id_order,
+                  order_id: updatedArteCampanha.order_id,
                   id_user: updatedArteCampanha.id_user,
                   fileSizeMB: Math.round(fullData.length / (1024 * 1024))
                 });
@@ -338,7 +338,7 @@ export default async function handler(
       .from('arte_campanha')
       .update({ caminho_imagem: arteTroca.caminho_imagem })
       .eq('id', arte_campanha_id)
-      .select('id, id_order, id_user')
+      .select('id, order_id, id_user')
       .single();
 
     if (updateError) {
@@ -351,7 +351,7 @@ export default async function handler(
 
     console.log('✅ Arte da campanha atualizada com sucesso:', {
       id: updatedArteCampanha.id,
-      id_order: updatedArteCampanha.id_order,
+      order_id: updatedArteCampanha.order_id,
       id_user: updatedArteCampanha.id_user
     });
     }

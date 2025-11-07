@@ -22,23 +22,30 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
 
   const fetchApprovalCount = async (): Promise<number> => {
     try {
-      // Buscar artes pendentes de aprovação
-      const { data: approvalData, error: approvalError } = await supabase
-        .from("arte_campanha")
-        .select("id, id_order")
-        .order("id", { ascending: false });
+      const { data: authData, error: authError } = await supabase.auth.getUser();
+      if (authError || !authData?.user) {
+        console.warn('Usuário não autenticado ao buscar aprovações:', authError);
+        return 0;
+      }
+      const userId = authData.user.id;
 
-      if (approvalError) {
-        console.error('Erro ao buscar aprovações:', approvalError);
+      // Buscar artes pendentes de aprovação
+      const { data, error } = await supabase
+        .from("arte_campanha")
+        .select("id, order_id")
+        .eq("id_user", userId);
+
+      if (error) {
+        console.error('Erro ao buscar aprovações:', error);
         return 0;
       }
 
-      if (!approvalData) return 0;
+      if (!data) return 0;
 
       // Filtrar apenas as que não foram aprovadas/rejeitadas
       let pendingCount = 0;
-      for (const item of approvalData) {
-        const status = localStorage.getItem(`order_${item.id_order}`) || "pendente";
+      for (const item of data) {
+        const status = localStorage.getItem(`order_${item.order_id}`) || "pendente";
         if (status !== 'aprovado' && status !== 'rejeitado') {
           pendingCount++;
         }

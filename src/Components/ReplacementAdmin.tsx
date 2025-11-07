@@ -10,7 +10,7 @@ interface Order {
   id: number;
   caminho_imagem: string | null;
   id_campanha: number;
-  order_id?: number; // Adicionar order_id para sincronização
+  order_id?: string; // Adicionar order_id para sincronização
 }
 
 const isVideo = (url: string) => {
@@ -25,7 +25,7 @@ const ReplacementAdmin = () => {
   const [selectedOrderId, setSelectedOrderId] = useState<number | string | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
 
-  const getOrderStatus = (orderId: number) => {
+  const getOrderStatus = (orderId: string) => {
     return localStorage.getItem(`replacement_order_${orderId}`) || "pendente";
   };
 
@@ -59,7 +59,7 @@ const ReplacementAdmin = () => {
         const campanhaIds = trocaData.map(item => item.id_campanha);
         const { data: campanhaData, error: campanhaError } = await supabase
           .from("arte_campanha")
-          .select("id, id_order")
+          .select("id, order_id")
           .in("id", campanhaIds);
 
         if (campanhaError) {
@@ -75,7 +75,7 @@ const ReplacementAdmin = () => {
             id: troca.id,
             caminho_imagem: troca.caminho_imagem,
             id_campanha: troca.id_campanha,
-            order_id: campanha?.id_order,
+            order_id: campanha?.order_id ? String(campanha.order_id) : undefined,
           };
           
           console.log('🔗 Combinando dados:', {
@@ -171,12 +171,13 @@ const ReplacementAdmin = () => {
       // Também atualizar o status principal da order para "aprovado"
       const { data: orderData } = await supabase
         .from('arte_campanha')
-        .select('id_order')
+        .select('order_id')
         .eq('id', numericArteCampanhaId)
         .single();
       
-      if (orderData?.id_order) {
-        localStorage.setItem(`order_${orderData.id_order}`, "aprovado");
+      if (orderData?.order_id) {
+        const orderKey = String(orderData.order_id);
+        localStorage.setItem(`order_${orderKey}`, "aprovado");
       }
       
       setOrders(prev => prev.filter(order => order.id_campanha !== numericArteCampanhaId));
@@ -235,12 +236,13 @@ const ReplacementAdmin = () => {
       // Também atualizar o status principal da order para "rejeitado"
       const { data: orderData } = await supabase
         .from('arte_campanha')
-        .select('id_order')
+        .select('order_id')
         .eq('id', orderId)
         .single();
       
-      if (orderData?.id_order) {
-        localStorage.setItem(`order_${orderData.id_order}`, "rejeitado");
+      if (orderData?.order_id) {
+        const orderKey = String(orderData.order_id);
+        localStorage.setItem(`order_${orderKey}`, "rejeitado");
       }
       
       setOrders(prev => prev.filter(order => order.id_campanha !== orderId));
@@ -342,28 +344,28 @@ const ReplacementAdmin = () => {
                     console.log('🔍 Clicando em Ver Detalhes:', { id_campanha: order.id_campanha, order: order });
                     if (order.id_campanha) {
                       try {
-                        // Buscar o id_order através do id_campanha na tabela arte_campanha
+                        // Buscar o order_id através do id_campanha na tabela arte_campanha
                         const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL as string;
                         const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string;
                         const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
                         const { data: arteCampanha, error } = await supabase
                           .from('arte_campanha')
-                          .select('id_order')
+                          .select('order_id')
                           .eq('id', order.id_campanha)
                           .single();
 
                         if (error) {
-                          console.error('❌ Erro ao buscar id_order:', error);
+                          console.error('❌ Erro ao buscar order_id:', error);
                           return;
                         }
 
-                        if (arteCampanha?.id_order) {
-                          console.log('✅ Encontrado id_order:', arteCampanha.id_order);
-                          setSelectedOrderId(arteCampanha.id_order);
+                        if (arteCampanha?.order_id) {
+                          console.log('✅ Encontrado order_id:', arteCampanha.order_id);
+                          setSelectedOrderId(String(arteCampanha.order_id));
                           setShowOrderDetails(true);
                         } else {
-                          console.log('❌ id_order não encontrado para id_campanha:', order.id_campanha);
+                          console.log('❌ order_id não encontrado para id_campanha:', order.id_campanha);
                         }
                       } catch (error) {
                         console.error('❌ Erro ao buscar dados:', error);

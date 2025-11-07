@@ -17,7 +17,7 @@ const isVideo = (url: string) => {
 interface ArteCampanha {
   id: number;
   caminho_imagem: string;
-  id_order: number; // Alterado para number
+  order_id: string;
 }
 
 interface Order {
@@ -149,20 +149,20 @@ const MeusAnuncios = () => {
         // PRIMEIRO: Vamos ver TODAS as arte_campanha para debug
         const { data: allArteCampanhas, error: allError } = await supabase
           .from("arte_campanha")
-          .select(`id, caminho_imagem, id_order, id_user`)
+          .select(`id, caminho_imagem, order_id, id_user`)
           .order("id", { ascending: false });
         
         console.log('🔍 TODAS as arte_campanha no banco:', allArteCampanhas);
         
         // SEGUNDO: Filtrar apenas as do usuário atual
-        const { data: arteCampanhas, error: arteCampanhasError } = await supabase
+        const { data: arteCampanhas, error: arteError } = await supabase
           .from("arte_campanha")
-          .select(`id, caminho_imagem, id_order`)
+          .select(`id, caminho_imagem, order_id`)
           .eq('id_user', userId);
 
-        if (arteCampanhasError) {
-          console.error("❌ arteCampanhas error:", arteCampanhasError);
-          setError(arteCampanhasError.message);
+        if (arteError) {
+          console.error("❌ arteCampanhas error:", arteError);
+          setError(arteError.message);
           setLoading(false);
           return;
         }
@@ -216,13 +216,13 @@ const MeusAnuncios = () => {
         // Fetch orders for the current user
         console.log('📋 Processando orders para', arteCampanhas.length, 'arteCampanhas...');
         const anunciosPromises = arteCampanhas.map(async (arteCampanha: ArteCampanha) => {
-          console.log(`🔍 Buscando order para arteCampanha ${arteCampanha.id} (id_order: ${arteCampanha.id_order})`);
+          console.log(`🔍 Buscando order para arteCampanha ${arteCampanha.id} (order_id: ${arteCampanha.order_id})`);
           
           // Fetch orders para pegar o nome, inicio e fim da campanha
           const { data: orders, error: ordersError } = await supabase
             .from("order")
             .select(`id, nome_campanha, inicio_campanha, duracao_campanha, preco`)
-            .eq("id", arteCampanha.id_order) // Busca order pelo id da arteCampanha
+            .eq("id", arteCampanha.order_id) // Busca order pelo id da arteCampanha
 
           if (ordersError) {
             setError(ordersError.message);

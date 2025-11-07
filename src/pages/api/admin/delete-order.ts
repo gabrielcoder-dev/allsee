@@ -29,7 +29,7 @@ export default async function handler(
     const { data: arteCampanhas, error: arteFetchError } = await supabase
       .from('arte_campanha')
       .select('id')
-      .eq('id_order', orderIdStr);
+      .eq('order_id', orderIdStr);
 
     if (arteFetchError) {
       console.error('❌ Erro ao buscar artes do pedido:', arteFetchError);

@@ -18,20 +18,31 @@ export default async function handler(
   }
 
   try {
-    const { id_order, caminho_imagem, id_user, id_anuncio, mime_type, screen_type, status } = req.body;
+    const {
+      order_id: explicitOrderId,
+      id_order: legacyOrderId,
+      caminho_imagem,
+      id_user,
+      id_anuncio,
+      mime_type,
+      screen_type,
+      status,
+    } = req.body;
+
+    const rawOrderId = explicitOrderId ?? legacyOrderId;
 
     // Validação básica
-    if (!id_order || !id_user) {
+    if (!rawOrderId || !id_user) {
       return res.status(400).json({ 
         success: false, 
-        error: 'Campos obrigatórios faltando: id_order, id_user' 
+        error: 'Campos obrigatórios faltando: order_id, id_user' 
       });
     }
 
-    if (typeof id_order === 'string' && id_order.trim() === '') {
+    if (typeof rawOrderId === 'string' && rawOrderId.trim() === '') {
       return res.status(400).json({ 
         success: false, 
-        error: 'id_order é obrigatório' 
+        error: 'order_id é obrigatório' 
       });
     }
 
@@ -75,7 +86,7 @@ export default async function handler(
     }
 
     console.log('📥 Criando arte da campanha:', {
-      id_order,
+      order_id: rawOrderId,
       id_user,
       fileType: caminho_imagem ? (
         caminho_imagem.startsWith('http') ? 'storage_url' : 
@@ -87,30 +98,18 @@ export default async function handler(
     });
 
     // Normalizar id da order (suporta uuid ou inteiro)
-    let orderIdValue: string | number;
-    if (typeof id_order === 'number') {
-      orderIdValue = id_order;
-    } else {
-      const trimmed = id_order.trim();
-      const numericAttempt = Number(trimmed);
-      if (!Number.isNaN(numericAttempt) && trimmed === numericAttempt.toString()) {
-        orderIdValue = numericAttempt;
-      } else {
-        orderIdValue = trimmed;
-      }
-    }
-
-    console.log('🔍 Buscando pedido relacionado antes de inserir arte:', {
-      originalIdOrder: id_order,
-      orderIdValue,
-      type: typeof orderIdValue,
-    });
-
-    const { data: existingOrder, error: orderFetchError } = await supabase
-      .from('order')
-      .select('id')
-      .eq('id', orderIdValue)
-      .maybeSingle();
+    const orderIdentifierString = String(rawOrderId).trim();
+ 
+     console.log('🔍 Buscando pedido relacionado antes de inserir arte:', {
+       originalIdOrder: rawOrderId,
+       orderIdentifierString,
+     });
+ 
+     const { data: existingOrder, error: orderFetchError } = await supabase
+       .from('order')
+       .select('id')
+       .eq('id', orderIdentifierString)
+       .maybeSingle();
 
     console.log('📄 Resultado busca order:', {
       existingOrder,
@@ -120,7 +119,7 @@ export default async function handler(
     if (!existingOrder) {
       return res.status(400).json({
         success: false,
-        error: `Pedido ${orderIdValue} não encontrado ao criar arte.`
+        error: `Pedido ${orderIdentifierString} não encontrado ao criar arte.`
       });
     }
 
@@ -133,7 +132,7 @@ export default async function handler(
     const { data: arteCampanha, error } = await supabase
       .from('arte_campanha')
       .insert([{ 
-        id_order: orderIdValue,
+        order_id: orderIdentifierString,
         id_user,
         caminho_imagem: caminho_imagem || null,
         id_anuncio: id_anuncio ?? null,
@@ -141,7 +140,7 @@ export default async function handler(
         screen_type: normalizedScreenType,
         status: normalizedStatus,
       }])
-      .select('id, id_order, id_user, id_anuncio')
+      .select('id, order_id, id_user, id_anuncio')
       .single();
 
     if (error) {
@@ -154,7 +153,7 @@ export default async function handler(
 
     console.log('✅ Arte da campanha criada com sucesso:', {
       id: arteCampanha.id,
-      id_order: arteCampanha.id_order,
+      order_id: arteCampanha.order_id,
       id_user: arteCampanha.id_user
     });
 

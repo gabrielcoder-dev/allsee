@@ -56,19 +56,25 @@ const AproveitionAdmin = () => {
       setLoading(true);
       const { data, error } = await supabase
         .from("arte_campanha")
-        .select("id, caminho_imagem, id_order, id_anuncio, mime_type, screen_type")
+        .select("id, caminho_imagem, order_id, id_anuncio, mime_type, screen_type")
         .order("id", { ascending: false });
 
       if (!error && data) {
         const adaptedOrders: ArteCampanhaItem[] = data.map((item) => {
-          const originalOrderId = item.id_order ?? item.id;
-          const orderKey = String(originalOrderId);
+          const originalOrderId = item.order_id ?? item.id;
+          const orderKey = originalOrderId !== undefined && originalOrderId !== null
+            ? String(originalOrderId)
+            : String(item.id);
+
+          const orderValue = originalOrderId !== undefined && originalOrderId !== null
+            ? originalOrderId
+            : item.id;
 
           return {
             id: item.id,
             caminho_imagem: item.caminho_imagem,
             order_id: orderKey,
-            order_id_value: originalOrderId,
+            order_id_value: orderValue,
             anuncio_id: item.id_anuncio ?? null,
             mime_type: item.mime_type ?? null,
             screen_type: item.screen_type ?? null,

@@ -58,7 +58,7 @@ export async function uploadArtesDoPedido(params: {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          id_order: orderId,
+          order_id: orderId,
           id_user: userId,
           id_anuncio: anuncioId,
           caminho_imagem: publicUrl,
