@@ -100,6 +100,30 @@ export default async function handler(
       }
     }
 
+    console.log('🔍 Buscando pedido relacionado antes de inserir arte:', {
+      originalIdOrder: id_order,
+      orderIdValue,
+      type: typeof orderIdValue,
+    });
+
+    const { data: existingOrder, error: orderFetchError } = await supabase
+      .from('order')
+      .select('id')
+      .eq('id', orderIdValue)
+      .maybeSingle();
+
+    console.log('📄 Resultado busca order:', {
+      existingOrder,
+      orderFetchError,
+    });
+
+    if (!existingOrder) {
+      return res.status(400).json({
+        success: false,
+        error: `Pedido ${orderIdValue} não encontrado ao criar arte.`
+      });
+    }
+
     // Normalizar campos opcionais
     const normalizedStatus = (status && typeof status === 'string') ? status : 'pendente';
     const normalizedScreenType = (screen_type && typeof screen_type === 'string') ? screen_type : null;
