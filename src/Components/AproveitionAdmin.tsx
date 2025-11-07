@@ -39,33 +39,13 @@ const AproveitionAdmin = () => {
   const [showOrderDetails, setShowOrderDetails] = useState(false);
   const [selectedOrderId, setSelectedOrderId] = useState<OrderIdentifier | null>(null);
   const [imagesModalOrderId, setImagesModalOrderId] = useState<OrderIdentifier | null>(null);
-  const [orderStatuses, setOrderStatuses] = useState<Record<OrderIdentifier, string>>({});
   const [anunciosMap, setAnunciosMap] = useState<Record<string, string>>({});
+  const [orderToDelete, setOrderToDelete] = useState<OrderIdentifier | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   
   const getOrderStatus = (orderId: OrderIdentifier) => {
-    return orderStatuses[orderId] || localStorage.getItem(`order_${orderId}`) || "pendente";
-  };
-
-  const updateOrderStatus = (orderId: OrderIdentifier, status: string) => {
-    localStorage.setItem(`order_${orderId}`, status);
-    setOrderStatuses(prev => ({
-      ...prev,
-      [orderId]: status
-    }));
-
-    // Disparar evento customizado para atualizar notificações
-    window.dispatchEvent(new CustomEvent('approvalStatusChanged', {
-      detail: {
-        orderId: orderId,
-        status: status,
-        chave: `order_${orderId}`
-      }
-    }));
-
-    console.log('📡 Evento de aprovação disparado:', {
-      orderId: orderId,
-      status: status
-    });
+    if (typeof window === 'undefined') return 'pendente';
+    return localStorage.getItem(`order_${orderId}`) || "pendente";
   };
 
   useEffect(() => {
@@ -194,22 +174,12 @@ const AproveitionAdmin = () => {
             </div>
             <div className="flex items-center gap-2 md:gap-3 flex-shrink-0">
               <button
-                className="bg-green-500 hover:bg-green-600 text-white rounded-lg md:rounded-xl px-3 py-2 font-medium text-xs md:text-sm min-w-[70px] cursor-pointer transition-colors"
-                onClick={() => {
-                  console.log('Aprovando order:', group.orderId);
-                  updateOrderStatus(group.orderId, "aprovado");
-                }}
+                className="bg-red-500 hover:bg-red-600 text-white rounded-lg md:rounded-xl px-3 py-2 font-medium text-xs md:text-sm min-w-[70px] cursor-pointer transition-colors flex items-center gap-2"
+                onClick={() => setOrderToDelete(group.orderId)}
+                title="Excluir pedido"
               >
-                Aprovar
-              </button>
-              <button
-                className="bg-red-500 hover:bg-red-600 text-white rounded-lg md:rounded-xl px-3 py-2 font-medium text-xs md:text-sm min-w-[70px] cursor-pointer transition-colors"
-                onClick={() => {
-                  console.log('Rejeitando order:', group.orderId);
-                  updateOrderStatus(group.orderId, "rejeitado");
-                }}
-              >
-                Recusar
+                <span className="font-semibold text-base">×</span>
+                Excluir pedido
               </button>
             </div>
           </div>
@@ -364,6 +334,82 @@ const AproveitionAdmin = () => {
           }}
           orderId={selectedOrderId as string}
         />
+      )}
+
+      {/* Modal de confirmação de exclusão */}
+      {orderToDelete && (
+        <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/50" onClick={() => !isDeleting && setOrderToDelete(null)}></div>
+          <div className="relative bg-white rounded-xl shadow-xl border border-gray-200 p-5 md:p-7 max-w-md w-full z-10">
+            <h3 className="text-lg md:text-xl font-semibold text-gray-800 mb-3">Excluir pedido #{orderToDelete}</h3>
+            <p className="text-sm md:text-base text-gray-600 mb-4">
+              Tem certeza que deseja excluir este pedido e todas as artes relacionadas?
+              Esta ação não pode ser desfeita.
+            </p>
+            <div className="flex flex-col md:flex-row gap-2 md:gap-3 justify-end">
+              <button
+                className="px-4 py-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-100 transition-colors"
+                onClick={() => !isDeleting && setOrderToDelete(null)}
+                disabled={isDeleting}
+              >
+                Cancelar
+              </button>
+              <button
+                className="px-4 py-2 rounded-lg bg-red-500 hover:bg-red-600 text-white transition-colors disabled:opacity-60"
+                onClick={async () => {
+                  if (!orderToDelete || isDeleting) return;
+                  setIsDeleting(true);
+                  try {
+                    const response = await fetch('/api/admin/delete-order', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ orderId: orderToDelete }),
+                    });
+
+                    const result = await response.json().catch(() => ({}));
+
+                    if (!response.ok || !result.success) {
+                      throw new Error(result.error || 'Erro ao excluir pedido');
+                    }
+
+                    setArteCampanhas((prev) => prev.filter((arte) => arte.order_id !== orderToDelete));
+
+                    if (typeof window !== 'undefined') {
+                      localStorage.removeItem(`order_${orderToDelete}`);
+                      window.dispatchEvent(new CustomEvent('approvalStatusChanged', {
+                        detail: {
+                          orderId: orderToDelete,
+                          status: 'excluido',
+                          chave: `order_${orderToDelete}`,
+                        },
+                      }));
+                    }
+
+                    if (imagesModalOrderId === orderToDelete) {
+                      setImagesModalOrderId(null);
+                    }
+                    if (selectedOrderId === orderToDelete) {
+                      setSelectedOrderId(null);
+                      setShowOrderDetails(false);
+                    }
+                    if (modalFile?.orderId === orderToDelete) {
+                      setModalFile(null);
+                    }
+                  } catch (error: any) {
+                    console.error('❌ Erro ao excluir pedido:', error);
+                    alert(error?.message || 'Erro ao excluir pedido. Tente novamente.');
+                  } finally {
+                    setIsDeleting(false);
+                    setOrderToDelete(null);
+                  }
+                }}
+                disabled={isDeleting}
+              >
+                {isDeleting ? 'Excluindo...' : 'Sim, excluir'}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
