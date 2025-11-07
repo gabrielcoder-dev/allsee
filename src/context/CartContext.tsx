@@ -165,8 +165,13 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     if (!mounted) return;
     
     try {
-      console.log("Salvando form data no localStorage:", formData);
-      localStorage.setItem('formData', JSON.stringify(formData));
+      const { totensArtes, selectedImage, ...rest } = formData;
+      const persistableSelectedImage = typeof selectedImage === 'string' ? selectedImage : null;
+      console.log("Salvando form data no localStorage:", rest);
+      localStorage.setItem('formData', JSON.stringify({
+        ...rest,
+        selectedImage: persistableSelectedImage,
+      }));
     } catch (error) {
       console.warn('Erro ao salvar form data no localStorage:', error);
     }
