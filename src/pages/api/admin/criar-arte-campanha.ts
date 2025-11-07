@@ -28,12 +28,10 @@ export default async function handler(
       });
     }
 
-    // Garantir que id_order é um número (bigint)
-    const orderIdNumber = typeof id_order === 'number' ? id_order : parseInt(id_order, 10);
-    if (isNaN(orderIdNumber)) {
+    if (typeof id_order === 'string' && id_order.trim() === '') {
       return res.status(400).json({ 
         success: false, 
-        error: 'id_order deve ser um número válido' 
+        error: 'id_order é obrigatório' 
       });
     }
 
@@ -88,6 +86,50 @@ export default async function handler(
       caminho_preview: caminho_imagem ? caminho_imagem.substring(0, 50) + '...' : 'empty'
     });
 
+    // Buscar pedido para garantir que existe e obter tipo correto do ID
+    let orderIdValue: string | number = typeof id_order === 'number' ? id_order : id_order;
+
+    let orderRecord = null;
+    let orderError = null;
+
+    try {
+      const { data, error: fetchError } = await supabase
+        .from('order')
+        .select('id')
+        .eq('id', orderIdValue)
+        .maybeSingle();
+
+      orderRecord = data;
+      orderError = fetchError;
+    } catch (fetchErr: any) {
+      orderError = fetchErr;
+    }
+
+    if (!orderRecord && typeof id_order === 'string') {
+      const numericAttempt = Number(id_order);
+      if (!Number.isNaN(numericAttempt)) {
+        const { data: numericOrder, error: numericError } = await supabase
+          .from('order')
+          .select('id')
+          .eq('id', numericAttempt)
+          .maybeSingle();
+
+        orderRecord = numericOrder;
+        orderError = numericError;
+        if (numericOrder) {
+          orderIdValue = numericAttempt;
+        }
+      }
+    }
+
+    if (!orderRecord) {
+      console.error('❌ Pedido relacionado não encontrado ou erro ao buscar:', orderError);
+      return res.status(400).json({
+        success: false,
+        error: 'Pedido relacionado não encontrado. Verifique se o pedido foi criado corretamente antes de enviar as artes.'
+      });
+    }
+
     // Normalizar campos opcionais
     const normalizedStatus = (status && typeof status === 'string') ? status : 'pendente';
     const normalizedScreenType = (screen_type && typeof screen_type === 'string') ? screen_type : null;
@@ -97,7 +139,7 @@ export default async function handler(
     const { data: arteCampanha, error } = await supabase
       .from('arte_campanha')
       .insert([{ 
-        id_order: orderIdNumber,
+        id_order: orderIdValue,
         id_user,
         caminho_imagem: caminho_imagem || null,
         id_anuncio: id_anuncio ?? null,

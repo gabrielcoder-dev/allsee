@@ -65,10 +65,18 @@ export default function OrderDetailsModal({ isOpen, onClose, orderId }: OrderDet
     setLoading(true)
     try {
       // Buscar dados do pedido
+      let orderFilter: number | string
+      if (typeof orderId === 'number') {
+        orderFilter = orderId
+      } else {
+        const parsed = Number(orderId)
+        orderFilter = Number.isNaN(parsed) ? orderId : parsed
+      }
+
       const { data: order, error: orderError } = await supabase
         .from('order')
         .select('*')
-        .eq('id', typeof orderId === 'number' ? orderId : orderId.toString())
+        .eq('id', orderFilter)
         .single()
 
       if (orderError) {
@@ -80,8 +88,12 @@ export default function OrderDetailsModal({ isOpen, onClose, orderId }: OrderDet
 
       // Buscar totens se houver id_produto
       if (order.id_produto) {
-        const productIds = order.id_produto.split(',').map((id: string) => id.trim())
-        
+        const productIdsRaw = order.id_produto.split(',').map((id: string) => id.trim())
+        const productIds = productIdsRaw.map((id: string) => {
+          const parsed = Number(id)
+          return Number.isNaN(parsed) ? id : parsed
+        })
+
         const { data: totemsData, error: totemsError } = await supabase
           .from('anuncios')
           .select('*')
