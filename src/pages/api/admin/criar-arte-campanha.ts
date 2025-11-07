@@ -19,8 +19,8 @@ export default async function handler(
 
   try {
     const {
-      order_id: explicitOrderId,
-      id_order: legacyOrderId,
+      order_id,
+      id_order,
       caminho_imagem,
       id_user,
       id_anuncio,
@@ -29,20 +29,20 @@ export default async function handler(
       status,
     } = req.body;
 
-    const rawOrderId = explicitOrderId ?? legacyOrderId;
+    const rawOrderId = order_id ?? id_order;
 
     // Validação básica
     if (!rawOrderId || !id_user) {
       return res.status(400).json({ 
         success: false, 
-        error: 'Campos obrigatórios faltando: order_id, id_user' 
+        error: 'Campos obrigatórios faltando: order_id/id_order, id_user' 
       });
     }
 
     if (typeof rawOrderId === 'string' && rawOrderId.trim() === '') {
       return res.status(400).json({ 
         success: false, 
-        error: 'order_id é obrigatório' 
+        error: 'order_id/id_order é obrigatório' 
       });
     }
 
@@ -86,7 +86,7 @@ export default async function handler(
     }
 
     console.log('📥 Criando arte da campanha:', {
-      order_id: rawOrderId,
+      id_order: rawOrderId,
       id_user,
       fileType: caminho_imagem ? (
         caminho_imagem.startsWith('http') ? 'storage_url' : 
@@ -132,7 +132,7 @@ export default async function handler(
     const { data: arteCampanha, error } = await supabase
       .from('arte_campanha')
       .insert([{ 
-        order_id: orderIdentifierString,
+        id_order: orderIdentifierString,
         id_user,
         caminho_imagem: caminho_imagem || null,
         id_anuncio: id_anuncio ?? null,
@@ -140,7 +140,7 @@ export default async function handler(
         screen_type: normalizedScreenType,
         status: normalizedStatus,
       }])
-      .select('id, order_id, id_user, id_anuncio')
+      .select('id, id_order, id_user, id_anuncio')
       .single();
 
     if (error) {
@@ -153,7 +153,7 @@ export default async function handler(
 
     console.log('✅ Arte da campanha criada com sucesso:', {
       id: arteCampanha.id,
-      order_id: arteCampanha.order_id,
+      id_order: arteCampanha.id_order,
       id_user: arteCampanha.id_user
     });
 

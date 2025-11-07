@@ -10,8 +10,8 @@ type OrderIdentifier = string;
 interface ArteCampanhaItem {
   id: number;
   caminho_imagem: string | null;
-  order_id: OrderIdentifier;
-  order_id_value: string | number;
+  id_order: OrderIdentifier;
+  id_order_value: string | number;
   anuncio_id: string | number | null;
   mime_type?: string | null;
   screen_type?: string | null;
@@ -56,12 +56,12 @@ const AproveitionAdmin = () => {
       setLoading(true);
       const { data, error } = await supabase
         .from("arte_campanha")
-        .select("id, caminho_imagem, order_id, id_anuncio, mime_type, screen_type")
+        .select("id, caminho_imagem, id_order, id_anuncio, mime_type, screen_type")
         .order("id", { ascending: false });
 
       if (!error && data) {
         const adaptedOrders: ArteCampanhaItem[] = data.map((item) => {
-          const originalOrderId = item.order_id ?? item.id;
+          const originalOrderId = item.id_order ?? item.id;
           const orderKey = originalOrderId !== undefined && originalOrderId !== null
             ? String(originalOrderId)
             : String(item.id);
@@ -73,8 +73,8 @@ const AproveitionAdmin = () => {
           return {
             id: item.id,
             caminho_imagem: item.caminho_imagem,
-            order_id: orderKey,
-            order_id_value: orderValue,
+            id_order: orderKey,
+            id_order_value: orderValue,
             anuncio_id: item.id_anuncio ?? null,
             mime_type: item.mime_type ?? null,
             screen_type: item.screen_type ?? null,
@@ -89,7 +89,7 @@ const AproveitionAdmin = () => {
             .map((id) => String(id))
         ));
 
-        const orderIdsRaw = Array.from(new Set(adaptedOrders.map((item) => item.order_id_value)));
+        const orderIdsRaw = Array.from(new Set(adaptedOrders.map((item) => item.id_order_value)));
 
         if (anuncioIds.length > 0) {
           const { data: anunciosData, error: anunciosError } = await supabase
@@ -146,7 +146,7 @@ const AproveitionAdmin = () => {
   const groupedOrders: GroupedOrder[] = useMemo(() => {
     const groups = new Map<OrderIdentifier, ArteCampanhaItem[]>();
     arteCampanhas.forEach((item) => {
-      const key = item.order_id;
+      const key = item.id_order;
       if (!groups.has(key)) {
         groups.set(key, []);
       }
@@ -156,7 +156,7 @@ const AproveitionAdmin = () => {
     return Array.from(groups.entries())
       .map(([orderId, artes]) => ({
         orderId,
-        orderIdValue: artes[0]?.order_id_value ?? orderId,
+        orderIdValue: artes[0]?.id_order_value ?? orderId,
         artes,
       }))
       .sort((a, b) => {
@@ -295,7 +295,7 @@ const AproveitionAdmin = () => {
                           onClick={() => arte.caminho_imagem && setModalFile({
                             url: arte.caminho_imagem,
                             id: arte.id,
-                            orderId: arte.order_id_value,
+                            orderId: arte.id_order_value,
                             anuncioName,
                           })}
                           disabled={!arte.caminho_imagem}
@@ -304,7 +304,7 @@ const AproveitionAdmin = () => {
                         </button>
                         <button
                           className="flex-1 bg-orange-500 hover:bg-orange-600 text-white text-sm font-medium px-3 py-2 rounded-lg transition-colors"
-                          onClick={() => arte.caminho_imagem && handleDownload(arte.caminho_imagem, `pedido-${arte.order_id_value}_anuncio-${anuncioKey ?? arte.id}`)}
+                          onClick={() => arte.caminho_imagem && handleDownload(arte.caminho_imagem, `pedido-${arte.id_order_value}_anuncio-${anuncioKey ?? arte.id}`)}
                           disabled={!arte.caminho_imagem}
                         >
                           Baixar
@@ -417,7 +417,7 @@ const AproveitionAdmin = () => {
                       throw new Error(result.error || 'Erro ao excluir pedido');
                     }
 
-                    setArteCampanhas((prev) => prev.filter((arte) => arte.order_id !== orderToDelete));
+                    setArteCampanhas((prev) => prev.filter((arte) => arte.id_order !== orderToDelete));
 
                     if (typeof window !== 'undefined') {
                       localStorage.removeItem(`order_${orderToDelete}`);
