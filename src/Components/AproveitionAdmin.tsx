@@ -4,6 +4,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import { supabase } from "@/lib/supabase";
 import OrderDetailsModal from "./OrderDetailsModal";
+import { Check, X } from "lucide-react";
 
 type OrderIdentifier = string;
 
@@ -141,6 +142,14 @@ const AproveitionAdmin = () => {
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
+  };
+
+  const handleApproveArte = (arte: ArteCampanhaItem) => {
+    console.log('✅ Aprovar arte', arte.id);
+  };
+
+  const handleRejectArte = (arte: ArteCampanhaItem) => {
+    console.log('❌ Reprovar arte', arte.id);
   };
 
   const groupedOrders: GroupedOrder[] = useMemo(() => {
@@ -285,9 +294,27 @@ const AproveitionAdmin = () => {
                       )}
                     </div>
                     <div className="flex flex-col gap-2">
-                      <div>
-                        <p className="text-sm font-semibold text-gray-700">Anúncio:</p>
-                        <p className="text-sm text-gray-600">{anuncioName}</p>
+                      <div className="flex items-center justify-between gap-3">
+                        <div>
+                          <p className="text-sm font-semibold text-gray-700">Anúncio:</p>
+                          <p className="text-sm text-gray-600">{anuncioName}</p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <button
+                            className="p-2 rounded-md bg-emerald-500 hover:bg-emerald-600 text-white transition-colors"
+                            onClick={() => handleApproveArte(arte)}
+                            aria-label="Aprovar arte"
+                          >
+                            <Check className="w-4 h-4" />
+                          </button>
+                          <button
+                            className="p-2 rounded-md bg-red-500 hover:bg-red-600 text-white transition-colors"
+                            onClick={() => handleRejectArte(arte)}
+                            aria-label="Reprovar arte"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
                       </div>
                       <div className="flex gap-2">
                         <button
