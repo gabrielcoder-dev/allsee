@@ -4,8 +4,6 @@ import React, { useState, useRef } from "react";
 import { X, Monitor, Printer } from "lucide-react";
 import { useCart } from "@/context/CartContext";
 import { toast } from "sonner";
-import { supabase } from "@/lib/supabase";
-import { uploadArtesDoPedido } from "@/services/arteCampanha";
 
 interface ModalSelecionarArteProps {
   open: boolean;
@@ -21,7 +19,7 @@ export default function ModalSelecionarArte({
   const [totensArtes, setTotensArtes] = useState<Record<string, { file: File; previewUrl: string }>>({});
   const [openGroups, setOpenGroups] = useState<{ [key: string]: boolean }>({ impresso: true, digital: true });
   const [totensSemArte, setTotensSemArte] = useState<string[]>([]);
-  const [uploading, setUploading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   if (!open) return null;
@@ -76,64 +74,22 @@ export default function ModalSelecionarArte({
       return;
     }
 
-    // Verificar se já existe orderId no formData
-    const orderId = (formData as any).orderId;
-    
-    if (!orderId) {
-      // Se não existe orderId, apenas salvar no formData e fechar
-      // O upload será feito quando o pedido for criado
-      updateFormData({
-        totensArtes: totensArtes,
-        isArtSelected: true
-      });
-      toast.success("Artes selecionadas! Você poderá fazer upload após criar o pedido.");
-      onClose();
-      return;
-    }
-
-    // Se existe orderId, fazer upload das artes
-    setUploading(true);
-    
     try {
-      // Pegar usuário logado
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
-      
-      if (userError || !user) {
-        throw new Error("Usuário não autenticado. Faça login para continuar.");
-      }
+      setIsSaving(true);
 
-      // Fazer upload das artes
-      const results = await uploadArtesDoPedido({
-        orderId,
-        userId: user.id,
-        produtos,
-        totensArtes,
-      });
-
-      // Verificar se houve erros
-      const errors = results.filter(r => !r.apiOk);
-      if (errors.length > 0) {
-        const errorMsg = errors.map(e => `${e.anuncioId}: ${e.error}`).join(", ");
-        toast.error(`Erro ao fazer upload de algumas artes: ${errorMsg}`);
-        return;
-      }
-
-      // Sucesso!
-      const successCount = results.filter(r => r.apiOk).length;
-      toast.success(`${successCount} arte(s) enviada(s) com sucesso!`);
-      
-      // Salvar no formData e fechar
+      // Sempre salvar localmente; upload ocorrerá após criação do pedido
       updateFormData({
         totensArtes: totensArtes,
         isArtSelected: true
       });
-      
+
+      toast.success("Artes selecionadas! Elas serão enviadas após a conclusão da compra.");
       onClose();
     } catch (error: any) {
-      console.error("Erro ao fazer upload das artes:", error);
-      toast.error(`Erro ao fazer upload: ${error.message || "Erro desconhecido"}`);
+      console.error("Erro ao salvar artes selecionadas:", error);
+      toast.error(`Erro ao salvar artes: ${error.message || "Erro desconhecido"}`);
     } finally {
-      setUploading(false);
+      setIsSaving(false);
     }
   };
 
@@ -452,13 +408,13 @@ export default function ModalSelecionarArte({
           </button>
           <button
             onClick={handleConcluir}
-            disabled={uploading}
+            disabled={isSaving}
             className="bg-orange-500 cursor-pointer hover:bg-orange-600 text-white px-4 sm:px-6 py-2 rounded-lg font-semibold transition-colors text-sm sm:text-base disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
           >
-            {uploading ? (
+            {isSaving ? (
               <>
                 <span className="animate-spin">⏳</span>
-                Enviando...
+                Salvando...
               </>
             ) : (
               "Concluir"
