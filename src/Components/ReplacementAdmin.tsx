@@ -22,7 +22,7 @@ const ReplacementAdmin = () => {
   const [loading, setLoading] = useState(true);
   const [modalFile, setModalFile] = useState<{ url: string; id: number } | null>(null);
   const [showOrderDetails, setShowOrderDetails] = useState(false);
-  const [selectedOrderId, setSelectedOrderId] = useState<number | null>(null);
+  const [selectedOrderId, setSelectedOrderId] = useState<number | string | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
 
   const getOrderStatus = (orderId: number) => {
@@ -96,7 +96,7 @@ const ReplacementAdmin = () => {
     fetchOrders();
   }, [refreshKey]);
 
-  const handleDownload = (url: string, id: number) => {
+  const handleDownload = (url: string, id: number | string) => {
     // Cria um link temporário para download
     const a = document.createElement("a");
     a.href = url;

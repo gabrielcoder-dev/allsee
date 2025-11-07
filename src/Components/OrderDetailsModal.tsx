@@ -10,7 +10,7 @@ const supabase = createClient(
 )
 
 interface OrderData {
-  id: number
+  id: number | string
   nome?: string
   cpf?: string
   cnpj?: string
@@ -46,7 +46,7 @@ interface TotemData {
 interface OrderDetailsModalProps {
   isOpen: boolean
   onClose: () => void
-  orderId: number
+  orderId: number | string
 }
 
 export default function OrderDetailsModal({ isOpen, onClose, orderId }: OrderDetailsModalProps) {
@@ -68,7 +68,7 @@ export default function OrderDetailsModal({ isOpen, onClose, orderId }: OrderDet
       const { data: order, error: orderError } = await supabase
         .from('order')
         .select('*')
-        .eq('id', orderId)
+        .eq('id', typeof orderId === 'number' ? orderId : orderId.toString())
         .single()
 
       if (orderError) {

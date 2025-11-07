@@ -42,7 +42,7 @@ const ProgressAdmin = () => {
   const [exibicoesAtuais, setExibicoesAtuais] = useState<{ [key: number]: number }>({});
   const [alcanceAtual, setAlcanceAtual] = useState<{ [key: number]: number }>({});
   const [showOrderDetails, setShowOrderDetails] = useState(false);
-  const [selectedOrderId, setSelectedOrderId] = useState<number | null>(null);
+  const [selectedOrderId, setSelectedOrderId] = useState<number | string | null>(null);
   const [modalImage, setModalImage] = useState<{ url: string; name: string } | null>(null);
 
   // Função para calcular dias restantes (mesma lógica do meus-anuncios)
