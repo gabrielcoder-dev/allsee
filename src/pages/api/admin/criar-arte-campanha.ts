@@ -86,48 +86,18 @@ export default async function handler(
       caminho_preview: caminho_imagem ? caminho_imagem.substring(0, 50) + '...' : 'empty'
     });
 
-    // Buscar pedido para garantir que existe e obter tipo correto do ID
-    let orderIdValue: string | number = typeof id_order === 'number' ? id_order : id_order;
-
-    let orderRecord = null;
-    let orderError = null;
-
-    try {
-      const { data, error: fetchError } = await supabase
-        .from('order')
-        .select('id')
-        .eq('id', orderIdValue)
-        .maybeSingle();
-
-      orderRecord = data;
-      orderError = fetchError;
-    } catch (fetchErr: any) {
-      orderError = fetchErr;
-    }
-
-    if (!orderRecord && typeof id_order === 'string') {
-      const numericAttempt = Number(id_order);
-      if (!Number.isNaN(numericAttempt)) {
-        const { data: numericOrder, error: numericError } = await supabase
-          .from('order')
-          .select('id')
-          .eq('id', numericAttempt)
-          .maybeSingle();
-
-        orderRecord = numericOrder;
-        orderError = numericError;
-        if (numericOrder) {
-          orderIdValue = numericAttempt;
-        }
+    // Normalizar id da order (suporta uuid ou inteiro)
+    let orderIdValue: string | number;
+    if (typeof id_order === 'number') {
+      orderIdValue = id_order;
+    } else {
+      const trimmed = id_order.trim();
+      const numericAttempt = Number(trimmed);
+      if (!Number.isNaN(numericAttempt) && trimmed === numericAttempt.toString()) {
+        orderIdValue = numericAttempt;
+      } else {
+        orderIdValue = trimmed;
       }
-    }
-
-    if (!orderRecord) {
-      console.error('❌ Pedido relacionado não encontrado ou erro ao buscar:', orderError);
-      return res.status(400).json({
-        success: false,
-        error: 'Pedido relacionado não encontrado. Verifique se o pedido foi criado corretamente antes de enviar as artes.'
-      });
     }
 
     // Normalizar campos opcionais
