@@ -40,6 +40,7 @@ const AproveitionAdmin = () => {
   const [selectedOrderId, setSelectedOrderId] = useState<OrderIdentifier | null>(null);
   const [imagesModalOrderId, setImagesModalOrderId] = useState<OrderIdentifier | null>(null);
   const [anunciosMap, setAnunciosMap] = useState<Record<string, string>>({});
+  const [orderInfoMap, setOrderInfoMap] = useState<Record<string, { nome_campanha?: string | null }>>({});
   const [orderToDelete, setOrderToDelete] = useState<OrderIdentifier | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   
@@ -74,6 +75,8 @@ const AproveitionAdmin = () => {
             .map((id) => String(id))
         ));
 
+        const orderIds = Array.from(new Set(adaptedOrders.map((item) => item.order_id)));
+
         if (anuncioIds.length > 0) {
           const { data: anunciosData, error: anunciosError } = await supabase
             .from('anuncios')
@@ -86,6 +89,21 @@ const AproveitionAdmin = () => {
               map[String(anuncio.id)] = anuncio.name || `Anúncio ${anuncio.id}`;
             });
             setAnunciosMap(map);
+          }
+        }
+
+        if (orderIds.length > 0) {
+          const { data: ordersData, error: ordersError } = await supabase
+            .from('order')
+            .select('id, nome_campanha')
+            .in('id', orderIds);
+
+          if (!ordersError && ordersData) {
+            const map: Record<string, { nome_campanha?: string | null }> = {};
+            ordersData.forEach((order: any) => {
+              map[String(order.id)] = { nome_campanha: order.nome_campanha };
+            });
+            setOrderInfoMap(map);
           }
         }
       }
@@ -145,14 +163,16 @@ const AproveitionAdmin = () => {
             key={group.orderId}
             className="flex flex-col md:flex-row md:items-center gap-3 md:gap-4 justify-between bg-white border border-gray-200 rounded-xl md:rounded-2xl p-3 md:p-4 shadow-sm hover:shadow-md transition-shadow"
           >
-            <div className="flex items-center gap-3 md:gap-4 min-w-0 flex-1">
-              <div className="w-16 h-16 md:w-24 md:h-24 bg-orange-100 text-orange-600 rounded-lg md:rounded-xl flex flex-col items-center justify-center flex-shrink-0">
-                <span className="text-xs md:text-sm font-semibold">Pedido</span>
-                <span className="text-sm md:text-base font-bold">#{group.orderId}</span>
-                <span className="text-[10px] md:text-xs text-orange-500">{group.artes.length} arquivo(s)</span>
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3 md:gap-4 min-w-0 flex-1">
+              <div className="flex flex-col gap-1 min-w-0">
+                <span className="text-xs md:text-sm uppercase tracking-wide text-gray-400">Campanha</span>
+                <span className="text-base md:text-lg font-semibold text-gray-800 truncate max-w-full">
+                  {orderInfoMap[group.orderId]?.nome_campanha || `Pedido #${group.orderId}`}
+                </span>
+                <span className="text-xs text-gray-500">{group.artes.length} arquivo(s)</span>
+                <span className="text-xs text-gray-500">Status atual: {status}</span>
               </div>
-              <div className="flex flex-col md:flex-row items-start md:items-center gap-2 md:gap-4 min-w-0 flex-1">
-                <div className="flex items-center gap-2 md:gap-3 flex-wrap">
+              <div className="flex items-center gap-2 md:gap-3 flex-wrap sm:ml-auto">
                   <button
                     className="text-white bg-orange-500 hover:bg-orange-600 text-xs md:text-sm font-medium px-3 py-1.5 rounded-lg cursor-pointer transition-colors"
                     onClick={() => setImagesModalOrderId(group.orderId)}
@@ -169,7 +189,6 @@ const AproveitionAdmin = () => {
                     Ver Detalhes
                   </button>
                 </div>
-                <span className="text-xs md:text-sm text-gray-500">Status atual: {status}</span>
               </div>
             </div>
             <div className="flex items-center gap-2 md:gap-3 flex-shrink-0">
