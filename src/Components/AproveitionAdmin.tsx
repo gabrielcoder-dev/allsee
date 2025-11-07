@@ -159,20 +159,20 @@ const AproveitionAdmin = () => {
         }).map((group) => {
           const status = getOrderStatus(group.orderId);
           return (
-          <div
-            key={group.orderId}
-            className="flex flex-col md:flex-row md:items-center gap-3 md:gap-4 justify-between bg-white border border-gray-200 rounded-xl md:rounded-2xl p-3 md:p-4 shadow-sm hover:shadow-md transition-shadow"
-          >
-            <div className="flex flex-col sm:flex-row sm:items-center gap-3 md:gap-4 min-w-0 flex-1">
-              <div className="flex flex-col gap-1 min-w-0">
-                <span className="text-xs md:text-sm uppercase tracking-wide text-gray-400">Campanha</span>
-                <span className="text-base md:text-lg font-semibold text-gray-800 truncate max-w-full">
-                  {orderInfoMap[group.orderId]?.nome_campanha || `Pedido #${group.orderId}`}
-                </span>
-                <span className="text-xs text-gray-500">{group.artes.length} arquivo(s)</span>
-                <span className="text-xs text-gray-500">Status atual: {status}</span>
-              </div>
-              <div className="flex items-center gap-2 md:gap-3 flex-wrap sm:ml-auto">
+            <div
+              key={group.orderId}
+              className="flex flex-col md:flex-row md:items-center gap-3 md:gap-4 justify-between bg-white border border-gray-200 rounded-xl md:rounded-2xl p-3 md:p-4 shadow-sm hover:shadow-md transition-shadow"
+            >
+              <div className="flex flex-col sm:flex-row sm:items-center gap-3 md:gap-4 min-w-0 flex-1">
+                <div className="flex flex-col gap-1 min-w-0">
+                  <span className="text-xs md:text-sm uppercase tracking-wide text-gray-400">Campanha</span>
+                  <span className="text-base md:text-lg font-semibold text-gray-800 truncate max-w-full">
+                    {orderInfoMap[group.orderId]?.nome_campanha || `Pedido #${group.orderId}`}
+                  </span>
+                  <span className="text-xs text-gray-500">{group.artes.length} arquivo(s)</span>
+                  <span className="text-xs text-gray-500">Status atual: {status}</span>
+                </div>
+                <div className="flex items-center gap-2 md:gap-3 flex-wrap sm:ml-auto">
                   <button
                     className="text-white bg-orange-500 hover:bg-orange-600 text-xs md:text-sm font-medium px-3 py-1.5 rounded-lg cursor-pointer transition-colors"
                     onClick={() => setImagesModalOrderId(group.orderId)}
@@ -190,18 +190,17 @@ const AproveitionAdmin = () => {
                   </button>
                 </div>
               </div>
+              <div className="flex items-center gap-2 md:gap-3 flex-shrink-0">
+                <button
+                  className="bg-red-500 hover:bg-red-600 text-white rounded-lg md:rounded-xl px-3 py-2 font-medium text-xs md:text-sm min-w-[70px] cursor-pointer transition-colors flex items-center gap-2"
+                  onClick={() => setOrderToDelete(group.orderId)}
+                  title="Excluir pedido"
+                >
+                  <span className="font-semibold text-base">×</span>
+                  Excluir pedido
+                </button>
+              </div>
             </div>
-            <div className="flex items-center gap-2 md:gap-3 flex-shrink-0">
-              <button
-                className="bg-red-500 hover:bg-red-600 text-white rounded-lg md:rounded-xl px-3 py-2 font-medium text-xs md:text-sm min-w-[70px] cursor-pointer transition-colors flex items-center gap-2"
-                onClick={() => setOrderToDelete(group.orderId)}
-                title="Excluir pedido"
-              >
-                <span className="font-semibold text-base">×</span>
-                Excluir pedido
-              </button>
-            </div>
-          </div>
           );
         })}
       </div>
