@@ -11,6 +11,7 @@ interface ArteCampanhaItem {
   id: number;
   caminho_imagem: string | null;
   order_id: OrderIdentifier;
+  order_id_value: string | number;
   anuncio_id: string | number | null;
   mime_type?: string | null;
   screen_type?: string | null;
@@ -18,13 +19,14 @@ interface ArteCampanhaItem {
 
 interface GroupedOrder {
   orderId: OrderIdentifier;
+  orderIdValue: string | number;
   artes: ArteCampanhaItem[];
 }
 
 interface ModalFileData {
   url: string;
   id: number | string;
-  orderId?: OrderIdentifier;
+  orderId?: string | number;
   anuncioName?: string | null;
 }
 
@@ -37,7 +39,7 @@ const AproveitionAdmin = () => {
   const [loading, setLoading] = useState(true);
   const [modalFile, setModalFile] = useState<ModalFileData | null>(null);
   const [showOrderDetails, setShowOrderDetails] = useState(false);
-  const [selectedOrderId, setSelectedOrderId] = useState<OrderIdentifier | null>(null);
+  const [selectedOrderId, setSelectedOrderId] = useState<string | number | null>(null);
   const [imagesModalOrderId, setImagesModalOrderId] = useState<OrderIdentifier | null>(null);
   const [anunciosMap, setAnunciosMap] = useState<Record<string, string>>({});
   const [orderInfoMap, setOrderInfoMap] = useState<Record<string, { nome_campanha?: string | null }>>({});
@@ -58,14 +60,20 @@ const AproveitionAdmin = () => {
         .order("id", { ascending: false });
 
       if (!error && data) {
-        const adaptedOrders: ArteCampanhaItem[] = data.map((item) => ({
-          id: item.id,
-          caminho_imagem: item.caminho_imagem,
-          order_id: item.id_order ? String(item.id_order) : String(item.id),
-          anuncio_id: item.id_anuncio ?? null,
-          mime_type: item.mime_type ?? null,
-          screen_type: item.screen_type ?? null,
-        }));
+        const adaptedOrders: ArteCampanhaItem[] = data.map((item) => {
+          const originalOrderId = item.id_order ?? item.id;
+          const orderKey = String(originalOrderId);
+
+          return {
+            id: item.id,
+            caminho_imagem: item.caminho_imagem,
+            order_id: orderKey,
+            order_id_value: originalOrderId,
+            anuncio_id: item.id_anuncio ?? null,
+            mime_type: item.mime_type ?? null,
+            screen_type: item.screen_type ?? null,
+          };
+        });
         setArteCampanhas(adaptedOrders);
 
         const anuncioIds = Array.from(new Set(
@@ -75,7 +83,7 @@ const AproveitionAdmin = () => {
             .map((id) => String(id))
         ));
 
-        const orderIds = Array.from(new Set(adaptedOrders.map((item) => item.order_id)));
+        const orderIdsRaw = Array.from(new Set(adaptedOrders.map((item) => item.order_id_value)));
 
         if (anuncioIds.length > 0) {
           const { data: anunciosData, error: anunciosError } = await supabase
@@ -91,12 +99,18 @@ const AproveitionAdmin = () => {
             setAnunciosMap(map);
           }
         }
+        
+        if (orderIdsRaw.length > 0) {
+          const orderIdsForQuery = orderIdsRaw.map((id) => {
+            if (typeof id === 'number') return id;
+            const numeric = Number(id);
+            return !Number.isNaN(numeric) && !String(id).includes('-') ? numeric : String(id);
+          });
 
-        if (orderIds.length > 0) {
           const { data: ordersData, error: ordersError } = await supabase
             .from('order')
             .select('id, nome_campanha')
-            .in('id', orderIds);
+            .in('id', orderIdsForQuery);
 
           if (!ordersError && ordersData) {
             const map: Record<string, { nome_campanha?: string | null }> = {};
@@ -134,7 +148,11 @@ const AproveitionAdmin = () => {
     });
 
     return Array.from(groups.entries())
-      .map(([orderId, artes]) => ({ orderId, artes }))
+      .map(([orderId, artes]) => ({
+        orderId,
+        orderIdValue: artes[0]?.order_id_value ?? orderId,
+        artes,
+      }))
       .sort((a, b) => {
         const aLatest = Math.max(...a.artes.map((arte) => arte.id));
         const bLatest = Math.max(...b.artes.map((arte) => arte.id));
@@ -182,7 +200,7 @@ const AproveitionAdmin = () => {
                   <button
                     className="text-gray-600 hover:text-gray-700 text-xs md:text-sm font-medium bg-gray-100 hover:bg-gray-200 px-3 py-1.5 rounded-lg cursor-pointer transition-colors"
                     onClick={() => {
-                      setSelectedOrderId(group.orderId);
+                      setSelectedOrderId(group.orderIdValue);
                       setShowOrderDetails(true);
                     }}
                   >
@@ -271,7 +289,7 @@ const AproveitionAdmin = () => {
                           onClick={() => arte.caminho_imagem && setModalFile({
                             url: arte.caminho_imagem,
                             id: arte.id,
-                            orderId: arte.order_id,
+                            orderId: arte.order_id_value,
                             anuncioName,
                           })}
                           disabled={!arte.caminho_imagem}
@@ -280,7 +298,7 @@ const AproveitionAdmin = () => {
                         </button>
                         <button
                           className="flex-1 bg-orange-500 hover:bg-orange-600 text-white text-sm font-medium px-3 py-2 rounded-lg transition-colors"
-                          onClick={() => arte.caminho_imagem && handleDownload(arte.caminho_imagem, `pedido-${arte.order_id}_anuncio-${anuncioKey ?? arte.id}`)}
+                          onClick={() => arte.caminho_imagem && handleDownload(arte.caminho_imagem, `pedido-${arte.order_id_value}_anuncio-${anuncioKey ?? arte.id}`)}
                           disabled={!arte.caminho_imagem}
                         >
                           Baixar
@@ -334,7 +352,7 @@ const AproveitionAdmin = () => {
             )}
             <button
               className="bg-orange-500 hover:bg-orange-600 text-white rounded-lg md:rounded-xl px-4 py-2 font-medium text-sm md:text-base mt-2 cursor-pointer transition-colors"
-              onClick={() => handleDownload(modalFile.url, modalFile.orderId ? `pedido-${modalFile.orderId}` : modalFile.id)}
+                onClick={() => handleDownload(modalFile.url, modalFile.orderId ? `pedido-${modalFile.orderId}` : modalFile.id)}
             >
               Baixar arquivo
             </button>
@@ -378,10 +396,13 @@ const AproveitionAdmin = () => {
                   if (!orderToDelete || isDeleting) return;
                   setIsDeleting(true);
                   try {
+                    const targetGroup = groupedOrders.find((group) => group.orderId === orderToDelete);
+                    const rawOrderId = targetGroup?.orderIdValue ?? orderToDelete;
+
                     const response = await fetch('/api/admin/delete-order', {
                       method: 'POST',
                       headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({ orderId: orderToDelete }),
+                      body: JSON.stringify({ orderId: rawOrderId }),
                     });
 
                     const result = await response.json().catch(() => ({}));
@@ -406,11 +427,11 @@ const AproveitionAdmin = () => {
                     if (imagesModalOrderId === orderToDelete) {
                       setImagesModalOrderId(null);
                     }
-                    if (selectedOrderId === orderToDelete) {
+                    if (selectedOrderId === rawOrderId) {
                       setSelectedOrderId(null);
                       setShowOrderDetails(false);
                     }
-                    if (modalFile?.orderId === orderToDelete) {
+                    if (modalFile?.orderId === rawOrderId) {
                       setModalFile(null);
                     }
                   } catch (error: any) {
