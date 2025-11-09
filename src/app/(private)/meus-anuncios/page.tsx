@@ -46,6 +46,9 @@ interface AnuncioGroup {
   duracao_campanha_semanas: number;
   preco: number;
   status: ArteStatus;
+  statusResumo: string;
+  statusBadgeClass: string;
+  statusDotClass: string;
   artes: ArteResumo[];
 }
 
@@ -256,12 +259,16 @@ const MeusAnuncios = () => {
 
           let status: ArteStatus = "em_analise";
 
-          if (replacementStatus === "aceita" || orderStatus === "aprovado") {
+          if (replacementStatus === "aceita") {
             status = "aceita";
-          } else if (replacementStatus === "não aceita" || orderStatus === "rejeitado") {
+          } else if (replacementStatus === "não aceita") {
             status = "nao_aceita";
           } else if (hasPendingReplacement) {
             status = "em_analise";
+          } else if (orderStatus === "aprovado") {
+            status = "aceita";
+          } else if (orderStatus === "rejeitado") {
+            status = "nao_aceita";
           }
 
           return {
@@ -295,8 +302,20 @@ const MeusAnuncios = () => {
 
             const fimCampanha = new Date(orderInfo.inicio_campanha);
             fimCampanha.setDate(fimCampanha.getDate() + orderInfo.duracao_campanha);
-            const artesOrdenadas = [...artes].sort((a, b) => b.id - a.id);
-            const status = artesOrdenadas[0]?.status ?? "em_analise";
+            const artesOrdenadas = [...artes]
+              .sort((a, b) => b.id - a.id)
+              .map((arte) => {
+                const localStatus = localStorage.getItem(`replacement_order_${arte.id}`);
+                if (localStatus === 'aceita') {
+                  return { ...arte, status: 'aceita' as ArteStatus };
+                }
+                if (localStatus === 'não aceita') {
+                  return { ...arte, status: 'nao_aceita' as ArteStatus };
+                }
+                return arte;
+              });
+
+            const resumo = summarizeArteStatuses(artesOrdenadas);
 
             return {
               order_id: orderInfo.id,
@@ -305,7 +324,10 @@ const MeusAnuncios = () => {
               fim_campanha: fimCampanha.toLocaleDateString(),
               duracao_campanha_semanas: orderInfo.duracao_campanha,
               preco: orderInfo.preco,
-              status,
+              status: resumo.status,
+              statusResumo: resumo.text,
+              statusBadgeClass: resumo.badgeClass,
+              statusDotClass: resumo.dotClass,
               artes: artesOrdenadas,
             } as AnuncioGroup;
           })
@@ -467,31 +489,78 @@ const MeusAnuncios = () => {
     return horasPassadas;
   };
 
-  const getStatusDisplay = (status: ArteStatus) => {
-    switch (status) {
-      case "aceita":
-        return {
-          text: "Arte Aceita",
-          badgeClass: "bg-green-100 text-green-700",
-          dotClass: "bg-green-500",
-          canRequestSwap: true,
-        };
-      case "nao_aceita":
-        return {
-          text: "Arte não aceita, tente novamente!",
-          badgeClass: "bg-red-100 text-red-700",
-          dotClass: "bg-red-500",
-          canRequestSwap: true,
-        };
-      default:
-        return {
-          text: "Arte em Análise...",
-          badgeClass: "bg-yellow-100 text-yellow-700",
-          dotClass: "bg-yellow-500",
-          canRequestSwap: false,
-        };
-    }
+const summarizeArteStatuses = (artes: ArteResumo[]) => {
+  let aceitas = 0;
+  let naoAceitas = 0;
+  let emAnalise = 0;
+
+  artes.forEach((arte) => {
+    if (arte.status === 'aceita') aceitas++;
+    else if (arte.status === 'nao_aceita') naoAceitas++;
+    else emAnalise++;
+  });
+
+  if (artes.length === 0 || emAnalise === artes.length) {
+    return {
+      status: "em_analise" as ArteStatus,
+      text: "Artes em análise...",
+      badgeClass: "bg-yellow-100 text-yellow-700",
+      dotClass: "bg-yellow-500",
+    };
+  }
+
+  if (aceitas === artes.length) {
+    return {
+      status: "aceita" as ArteStatus,
+      text: "Todas as artes aceitas",
+      badgeClass: "bg-green-100 text-green-700",
+      dotClass: "bg-green-500",
+    };
+  }
+
+  if (aceitas > 0 && naoAceitas > 0) {
+    return {
+      status: "nao_aceita" as ArteStatus,
+      text: "Uma arte não aceita",
+      badgeClass: "bg-red-100 text-red-700",
+      dotClass: "bg-red-500",
+    };
+  }
+
+  if (aceitas > 0 && emAnalise > 0) {
+    return {
+      status: "em_analise" as ArteStatus,
+      text: "Artes em análise...",
+      badgeClass: "bg-yellow-100 text-yellow-700",
+      dotClass: "bg-yellow-500",
+    };
+  }
+
+  if (naoAceitas === artes.length) {
+    return {
+      status: "nao_aceita" as ArteStatus,
+      text: "Nenhuma arte aceita",
+      badgeClass: "bg-red-100 text-red-700",
+      dotClass: "bg-red-500",
+    };
+  }
+
+  if (naoAceitas > 0) {
+    return {
+      status: "nao_aceita" as ArteStatus,
+      text: "Nenhuma arte aceita",
+      badgeClass: "bg-red-100 text-red-700",
+      dotClass: "bg-red-500",
+    };
+  }
+
+  return {
+    status: "em_analise" as ArteStatus,
+    text: "Artes em análise...",
+    badgeClass: "bg-yellow-100 text-yellow-700",
+    dotClass: "bg-yellow-500",
   };
+};
 
   const fetchOrderDetails = async (orderId: number) => {
     setLoadingDetails(true);
@@ -719,7 +788,22 @@ const MeusAnuncios = () => {
           {anuncios.map((anuncio) => {
             const destaque = anuncio.artes[0];
             const statusInfo = getStatusDisplay(anuncio.status);
-            const statusText = statusInfo.text;
+            const hasAnalise = anuncio.artes.some((arte) => arte.status === "em_analise");
+            const totalArtes = anuncio.artes.length;
+            const totalAceitas = anuncio.artes.filter((arte) => arte.status === "aceita").length;
+            const totalNaoAceitas = anuncio.artes.filter((arte) => arte.status === "nao_aceita").length;
+
+            let statusText = statusInfo.text;
+
+            if (hasAnalise) {
+              statusText = "Artes em análise...";
+            } else if (totalAceitas === totalArtes && totalArtes > 0) {
+              statusText = "Todas as artes aceitas";
+            } else if (totalAceitas === 0 && totalNaoAceitas > 0) {
+              statusText = "Nenhuma arte aceita";
+            } else if (totalNaoAceitas > 0) {
+              statusText = "Uma arte não aceita";
+            }
 
             console.log(`Order ${anuncio.order_id} - Status: ${anuncio.status}, StatusText: ${statusText}`);
 
