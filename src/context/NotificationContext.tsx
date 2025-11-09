@@ -32,7 +32,7 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
       // Buscar artes pendentes de aprovação
       const { data, error } = await supabase
         .from("arte_campanha")
-        .select("id, order_id")
+        .select("id, order_id:id_order")
         .eq("id_user", userId);
 
       if (error) {

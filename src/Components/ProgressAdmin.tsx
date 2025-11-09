@@ -228,7 +228,7 @@ const ProgressAdmin = () => {
         // Buscar todas as artes de campanha
         const { data: artes, error: artesError } = await supabase
           .from('arte_campanha')
-          .select('id, caminho_imagem, order_id, id_user');
+          .select('id, caminho_imagem, order_id:id_order, id_user');
 
         if (artesError) {
           console.error('Erro ao buscar artes:', artesError);

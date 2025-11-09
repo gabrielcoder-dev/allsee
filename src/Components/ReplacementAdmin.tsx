@@ -59,7 +59,7 @@ const ReplacementAdmin = () => {
         const campanhaIds = trocaData.map(item => item.id_campanha);
         const { data: campanhaData, error: campanhaError } = await supabase
           .from("arte_campanha")
-          .select("id, order_id")
+          .select("id, order_id:id_order")
           .in("id", campanhaIds);
 
         if (campanhaError) {
@@ -171,7 +171,7 @@ const ReplacementAdmin = () => {
       // Também atualizar o status principal da order para "aprovado"
       const { data: orderData } = await supabase
         .from('arte_campanha')
-        .select('order_id')
+        .select('order_id:id_order')
         .eq('id', numericArteCampanhaId)
         .single();
       
@@ -236,7 +236,7 @@ const ReplacementAdmin = () => {
       // Também atualizar o status principal da order para "rejeitado"
       const { data: orderData } = await supabase
         .from('arte_campanha')
-        .select('order_id')
+        .select('order_id:id_order')
         .eq('id', orderId)
         .single();
       
@@ -351,7 +351,7 @@ const ReplacementAdmin = () => {
 
                         const { data: arteCampanha, error } = await supabase
                           .from('arte_campanha')
-                          .select('order_id')
+                          .select('order_id:id_order')
                           .eq('id', order.id_campanha)
                           .single();
 

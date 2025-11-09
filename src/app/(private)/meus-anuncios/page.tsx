@@ -149,7 +149,7 @@ const MeusAnuncios = () => {
         // PRIMEIRO: Vamos ver TODAS as arte_campanha para debug
         const { data: allArteCampanhas, error: allError } = await supabase
           .from("arte_campanha")
-          .select(`id, caminho_imagem, order_id, id_user`)
+          .select(`id, caminho_imagem, order_id:id_order, id_user`)
           .order("id", { ascending: false });
         
         console.log('🔍 TODAS as arte_campanha no banco:', allArteCampanhas);
@@ -157,7 +157,7 @@ const MeusAnuncios = () => {
         // SEGUNDO: Filtrar apenas as do usuário atual
         const { data: arteCampanhas, error: arteError } = await supabase
           .from("arte_campanha")
-          .select(`id, caminho_imagem, order_id`)
+          .select(`id, caminho_imagem, order_id:id_order`)
           .eq('id_user', userId);
 
         if (arteError) {
