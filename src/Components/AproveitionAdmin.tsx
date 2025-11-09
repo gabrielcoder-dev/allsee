@@ -16,6 +16,7 @@ interface ArteCampanhaItem {
   anuncio_id: string | number | null;
   mime_type?: string | null;
   screen_type?: string | null;
+  statusLocal?: 'aceita' | 'não aceita';
 }
 
 interface GroupedOrder {
@@ -144,30 +145,40 @@ const AproveitionAdmin = () => {
     document.body.removeChild(a);
   };
 
+  const updateArteStatus = (arte: ArteCampanhaItem, status: 'aceita' | 'não aceita') => {
+    const arteKey = `replacement_order_${arte.id}`;
+
+    window.dispatchEvent(new Event('storage'));
+    window.dispatchEvent(new CustomEvent('replacementStatusChanged', {
+      detail: {
+        id_campanha: arte.id,
+        status,
+        chave: arteKey,
+      },
+    }));
+
+    setArteCampanhas((prev) =>
+      prev.map((item) =>
+        item.id === arte.id
+          ? { ...item, statusLocal: status }
+          : item
+      )
+    );
+  };
+
   const handleApproveArte = (arte: ArteCampanhaItem) => {
     if (typeof window === 'undefined') return;
 
     const orderKeyRaw = arte.id_order_value ?? arte.id_order ?? arte.id;
     const orderKey = String(orderKeyRaw);
-    const arteKey = `replacement_order_${arte.id}`;
 
     try {
       console.log('✅ Aprovar arte', { arteId: arte.id, orderKey });
 
       localStorage.setItem(`order_${orderKey}`, 'aprovado');
-      localStorage.setItem(arteKey, 'aceita');
+      localStorage.setItem(`replacement_order_${arte.id}`, 'aceita');
 
-      window.dispatchEvent(new Event('storage'));
-      window.dispatchEvent(new CustomEvent('replacementStatusChanged', {
-        detail: {
-          id_campanha: arte.id,
-          status: 'aceita',
-          chave: arteKey,
-        },
-      }));
-
-      // Forçar re-render para refletir status atualizado
-      setArteCampanhas((prev) => [...prev]);
+      updateArteStatus(arte, 'aceita');
     } catch (error) {
       console.error('❌ Erro ao aprovar arte:', error);
     }
@@ -178,24 +189,14 @@ const AproveitionAdmin = () => {
 
     const orderKeyRaw = arte.id_order_value ?? arte.id_order ?? arte.id;
     const orderKey = String(orderKeyRaw);
-    const arteKey = `replacement_order_${arte.id}`;
 
     try {
       console.log('❌ Reprovar arte', { arteId: arte.id, orderKey });
 
       localStorage.setItem(`order_${orderKey}`, 'rejeitado');
-      localStorage.setItem(arteKey, 'não aceita');
+      localStorage.setItem(`replacement_order_${arte.id}`, 'não aceita');
 
-      window.dispatchEvent(new Event('storage'));
-      window.dispatchEvent(new CustomEvent('replacementStatusChanged', {
-        detail: {
-          id_campanha: arte.id,
-          status: 'não aceita',
-          chave: arteKey,
-        },
-      }));
-
-      setArteCampanhas((prev) => [...prev]);
+      updateArteStatus(arte, 'não aceita');
     } catch (error) {
       console.error('❌ Erro ao rejeitar arte:', error);
     }
@@ -235,10 +236,7 @@ const AproveitionAdmin = () => {
         </h2>
       </div>
       <div className="space-y-3 md:space-y-4">
-        {groupedOrders.filter(group => {
-          const status = getOrderStatus(group.orderId);
-          return status !== 'aprovado' && status !== 'rejeitado';
-        }).map((group) => {
+        {groupedOrders.map((group) => {
           const status = getOrderStatus(group.orderId);
           return (
             <div
