@@ -17,7 +17,7 @@ const isVideo = (url: string) => {
 interface ArteCampanha {
   id: number;
   caminho_imagem: string;
-  order_id: string;
+  order_id: string | number | null;
 }
 
 interface Order {
@@ -30,22 +30,29 @@ interface Order {
   exibicoes_campanha: number;
 }
 
-interface Anuncio {
+type ArteStatus = "em_analise" | "aceita" | "nao_aceita";
+
+interface ArteResumo {
   id: number;
+  caminho_imagem: string;
+  status: ArteStatus;
+}
+
+interface AnuncioGroup {
+  order_id: number;
   nome_campanha: string;
   inicio_campanha: string;
   fim_campanha: string;
-  caminho_imagem: string;
   duracao_campanha_semanas: number;
   preco: number;
-  order_id: number;
-  status: string | null;
+  status: ArteStatus;
+  artes: ArteResumo[];
 }
 
 const MeusAnuncios = () => {
   console.log('🚀 COMPONENTE INICIANDO...');
   
-  const [anuncios, setAnuncios] = useState<Anuncio[]>([]);
+  const [anuncios, setAnuncios] = useState<AnuncioGroup[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
@@ -53,13 +60,16 @@ const MeusAnuncios = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [selectedAnuncioId, setSelectedAnuncioId] = useState<number | null>(null);
-  const [selectedAnuncioDetails, setSelectedAnuncioDetails] = useState<Anuncio | null>(null);
+  const [selectedAnuncioDetails, setSelectedAnuncioDetails] = useState<AnuncioGroup | null>(null);
   const [orderDetails, setOrderDetails] = useState<any>(null);
   const [loadingDetails, setLoadingDetails] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [refresh, setRefresh] = useState(false);
   const [diasRestantes, setDiasRestantes] = useState<number | null>(null);
   const [alcanceAtual, setAlcanceAtual] = useState<number>(0);
+  const [isArtModalOpen, setIsArtModalOpen] = useState(false);
+  const [selectedOrderForArts, setSelectedOrderForArts] = useState<AnuncioGroup | null>(null);
+  const [selectedOrderIdForTroca, setSelectedOrderIdForTroca] = useState<number | null>(null);
 
   // Hook para upload direto para storage
   const { uploadFile, progress: uploadProgress, isUploading, error: uploadError } = useDirectStorageUpload({
@@ -213,79 +223,95 @@ const MeusAnuncios = () => {
          data: arteTrocaCampanhas
        });
 
-        // Fetch orders for the current user
+        // Agrupar artes por order
         console.log('📋 Processando orders para', arteCampanhas.length, 'arteCampanhas...');
-        const anunciosPromises = arteCampanhas.map(async (arteCampanha: ArteCampanha) => {
-          console.log(`🔍 Buscando order para arteCampanha ${arteCampanha.id} (order_id: ${arteCampanha.order_id})`);
-          
-          // Fetch orders para pegar o nome, inicio e fim da campanha
-          const { data: orders, error: ordersError } = await supabase
-            .from("order")
-            .select(`id, nome_campanha, inicio_campanha, duracao_campanha, preco`)
-            .eq("id", arteCampanha.order_id) // Busca order pelo id da arteCampanha
+        const uniqueOrderIdsRaw = Array.from(new Set(arteCampanhas.map((arte) => arte.order_id))).filter(Boolean);
+        const orderIdsForQuery = uniqueOrderIdsRaw.map((id) => {
+          const numericId = Number(id);
+          return Number.isNaN(numericId) ? id : numericId;
+        });
 
-          if (ordersError) {
-            setError(ordersError.message);
-            console.error("Orders error:", ordersError);
-            return null;
+        const { data: ordersData, error: ordersError } = await supabase
+          .from("order")
+          .select(`id, nome_campanha, inicio_campanha, duracao_campanha, preco`)
+          .in("id", orderIdsForQuery.length > 0 ? orderIdsForQuery : [-1]);
+
+        if (ordersError) {
+          setError(ordersError.message);
+          console.error("Orders error:", ordersError);
+          setLoading(false);
+          return;
+        }
+
+        const orderMap = new Map<string, Order>();
+        ordersData?.forEach((order) => {
+          orderMap.set(String(order.id), order as Order);
+        });
+
+        const arteCampanhasComStatus = arteCampanhas.map((arteCampanha) => {
+          const orderKey = String(arteCampanha.order_id);
+          const replacementStatus = localStorage.getItem(`replacement_order_${arteCampanha.id}`);
+          const orderStatus = localStorage.getItem(`order_${orderKey}`);
+          const hasPendingReplacement = arteTrocaCampanhas?.some((atc) => atc.id_campanha === arteCampanha.id);
+
+          let status: ArteStatus = "em_analise";
+
+          if (replacementStatus === "aceita" || orderStatus === "aprovado") {
+            status = "aceita";
+          } else if (replacementStatus === "não aceita" || orderStatus === "rejeitado") {
+            status = "nao_aceita";
+          } else if (hasPendingReplacement) {
+            status = "em_analise";
           }
-
-          if (!orders || orders.length === 0) {
-            setAnuncios([]);
-            setLoading(false);
-            console.log("No orders found for this user.");
-            return null;
-          }
-
-           // Find the corresponding arteTrocaCampanha
-           const arteTrocaCampanha = arteTrocaCampanhas?.find(atc => atc.id_campanha === arteCampanha.id);
-
-          const fim_campanha = new Date(orders[0].inicio_campanha);
-          fim_campanha.setDate(fim_campanha.getDate() + orders[0].duracao_campanha);
-
-           // Retrieve status from arteTrocaCampanhas or local storage
-           const arteTrocaCampanhaStatus = arteTrocaCampanhas?.find(atc => atc.id_campanha === arteCampanha.id) || null;
-           const localStorageStatus = localStorage.getItem(`order_${orders[0].id}`) || null;
-           const replacementStatus = localStorage.getItem(`replacement_order_${arteCampanha.id}`) || null;
-           const status = replacementStatus || arteTrocaCampanhaStatus || localStorageStatus;
-           
-           console.log(`📋 Status para order ${orders[0].id} (arte_campanha ${arteCampanha.id}):`, {
-             arteTrocaCampanhaStatus,
-             localStorageStatus,
-             replacementStatus,
-             finalStatus: status,
-             chave_replacement: `replacement_order_${arteCampanha.id}`,
-             todas_chaves_localStorage: Object.keys(localStorage).filter(key => key.includes('order')),
-             chaves_replacement: Object.keys(localStorage).filter(key => key.startsWith('replacement_order_')),
-             valores_replacement: Object.keys(localStorage)
-               .filter(key => key.startsWith('replacement_order_'))
-               .map(key => ({ chave: key, valor: localStorage.getItem(key) }))
-           });
-           
-           // Debug: verificar todos os status
-           console.log(`Order ${orders[0].id}:`, {
-             arteTrocaCampanhaStatus,
-             localStorageStatus,
-             replacementStatus,
-             finalStatus: status
-           });
 
           return {
             id: arteCampanha.id,
-            order_id: orders[0].id,
-            nome_campanha: orders[0].nome_campanha,
-            inicio_campanha: orders[0].inicio_campanha,
-            fim_campanha: fim_campanha.toLocaleDateString(),
             caminho_imagem: arteCampanha?.caminho_imagem || "",
-            duracao_campanha_semanas: orders[0].duracao_campanha, // Agora armazena dias
-            preco: orders[0].preco,
-            status: status,
+            orderKey,
+            status,
           };
         });
 
-        const anunciosData = (await Promise.all(anunciosPromises)).filter(Boolean) as Anuncio[];
-        console.log('✅ Anúncios processados:', anunciosData.length);
-        console.log('📊 Dados finais dos anúncios:', anunciosData);
+        const grupos = arteCampanhasComStatus.reduce((acc, arte) => {
+          if (!acc[arte.orderKey]) {
+            acc[arte.orderKey] = [];
+          }
+          acc[arte.orderKey].push({
+            id: arte.id,
+            caminho_imagem: arte.caminho_imagem,
+            status: arte.status,
+          });
+          return acc;
+        }, {} as Record<string, ArteResumo[]>);
+
+        const anunciosData = Object.entries(grupos)
+          .map(([orderKey, artes]) => {
+            const orderInfo = orderMap.get(orderKey);
+
+            if (!orderInfo) {
+              console.warn('⚠️ Dados de order não encontrados para order_id:', orderKey);
+              return null;
+            }
+
+            const fimCampanha = new Date(orderInfo.inicio_campanha);
+            fimCampanha.setDate(fimCampanha.getDate() + orderInfo.duracao_campanha);
+            const artesOrdenadas = [...artes].sort((a, b) => b.id - a.id);
+            const status = artesOrdenadas[0]?.status ?? "em_analise";
+
+            return {
+              order_id: orderInfo.id,
+              nome_campanha: orderInfo.nome_campanha,
+              inicio_campanha: orderInfo.inicio_campanha,
+              fim_campanha: fimCampanha.toLocaleDateString(),
+              duracao_campanha_semanas: orderInfo.duracao_campanha,
+              preco: orderInfo.preco,
+              status,
+              artes: artesOrdenadas,
+            } as AnuncioGroup;
+          })
+          .filter(Boolean) as AnuncioGroup[];
+
+        console.log('✅ Orders agrupadas:', anunciosData);
         setAnuncios(anunciosData);
 
       } catch (err: any) {
@@ -309,6 +335,15 @@ const MeusAnuncios = () => {
       window.removeEventListener('replacementStatusChanged', handleReplacementStatusChange);
     };
   }, [refresh]);
+
+  useEffect(() => {
+    if (isArtModalOpen && selectedOrderForArts) {
+      const updatedGroup = anuncios.find((group) => group.order_id === selectedOrderForArts.order_id);
+      if (updatedGroup && updatedGroup !== selectedOrderForArts) {
+        setSelectedOrderForArts(updatedGroup);
+      }
+    }
+  }, [anuncios, isArtModalOpen, selectedOrderForArts]);
 
   // Função para calcular dias restantes
   const calcularDiasRestantes = (inicioCampanha: string, duracaoSemanas: number) => {
@@ -432,6 +467,32 @@ const MeusAnuncios = () => {
     return horasPassadas;
   };
 
+  const getStatusDisplay = (status: ArteStatus) => {
+    switch (status) {
+      case "aceita":
+        return {
+          text: "Arte Aceita",
+          badgeClass: "bg-green-100 text-green-700",
+          dotClass: "bg-green-500",
+          canRequestSwap: true,
+        };
+      case "nao_aceita":
+        return {
+          text: "Arte não aceita, tente novamente!",
+          badgeClass: "bg-red-100 text-red-700",
+          dotClass: "bg-red-500",
+          canRequestSwap: true,
+        };
+      default:
+        return {
+          text: "Arte em Análise...",
+          badgeClass: "bg-yellow-100 text-yellow-700",
+          dotClass: "bg-yellow-500",
+          canRequestSwap: false,
+        };
+    }
+  };
+
   const fetchOrderDetails = async (orderId: number) => {
     setLoadingDetails(true);
     try {
@@ -510,23 +571,27 @@ const MeusAnuncios = () => {
   };
 
   const handleTrocarArte = async () => {
-    if (!selectedFile || !selectedAnuncioId) {
-      console.error("Nenhum arquivo selecionado ou ID do anúncio não definido.");
+    if (!selectedFile || !selectedAnuncioId || !selectedOrderIdForTroca) {
+      console.error("Nenhum arquivo selecionado ou IDs necessários não definidos.");
       return;
     }
 
     try {
-      // Encontrar o order_id correspondente ao selectedAnuncioId (arte_campanha.id)
-      const anuncio = anuncios.find(anuncio => anuncio.id === selectedAnuncioId);
-      if (!anuncio) {
-        console.error("Anúncio não encontrado.");
+      const grupo = anuncios.find((anuncio) =>
+        anuncio.order_id === selectedOrderIdForTroca
+      );
+
+      const arteSelecionada = grupo?.artes.find((arte) => arte.id === selectedAnuncioId);
+
+      if (!grupo || !arteSelecionada) {
+        console.error("Arte ou pedido não encontrados.");
         return;
       }
       
-      console.log(`Trocando arte para anuncio.id: ${selectedAnuncioId}, order_id: ${anuncio.order_id}`);
+      console.log(`Trocando arte para arte_campanha.id: ${selectedAnuncioId}, order_id: ${grupo.order_id}`);
 
       console.log('📤 Preparando upload direto para storage (troca):', {
-        order_id: anuncio.order_id,
+        order_id: grupo.order_id,
         fileName: selectedFile.name,
         fileSize: Math.round(selectedFile.size / (1024 * 1024)) + 'MB',
         fileType: selectedFile.type
@@ -555,7 +620,7 @@ const MeusAnuncios = () => {
           'Accept': 'application/json'
         },
         body: JSON.stringify({
-          id_campanha: anuncio.id,
+          id_campanha: selectedAnuncioId,
           caminho_imagem: publicUrl // URL pública do storage
         })
       });
@@ -568,10 +633,10 @@ const MeusAnuncios = () => {
       console.log('✅ Registro de troca criado com sucesso');
 
       // Remove o status do localStorage para que a arte volte para "Em Análise"
-      localStorage.removeItem(`order_${anuncio.order_id}`);
-      localStorage.removeItem(`replacement_order_${anuncio.order_id}`);
+      localStorage.removeItem(`order_${grupo.order_id}`);
+      localStorage.removeItem(`replacement_order_${selectedAnuncioId}`);
       
-      console.log(`Removendo status do localStorage para order ${anuncio.order_id}`);
+      console.log(`Removendo status do localStorage para order ${grupo.order_id} e arte ${selectedAnuncioId}`);
 
       console.log("Arquivo de troca enviado e registro criado com sucesso!");
       setIsModalOpen(false);
@@ -587,6 +652,7 @@ const MeusAnuncios = () => {
       
       // Atualizar a página para mostrar o novo status
       setRefresh(!refresh);
+      setSelectedOrderIdForTroca(null);
 
     } catch (err: any) {
       console.error("Erro ao trocar a arte:", err);
@@ -651,59 +717,51 @@ const MeusAnuncios = () => {
       ) : (
         <div className="grid gap-4 md:gap-6 pb-8">
           {anuncios.map((anuncio) => {
-            let statusText = "Arte em Análise...";
-            let statusColor = "yellow";
-            
-            // Verificar se há troca de arte pendente
-            const hasTrocaPendente = localStorage.getItem(`replacement_order_${anuncio.id}`) !== null;
-            const trocaStatus = localStorage.getItem(`replacement_order_${anuncio.id}`);
-            
-            if (hasTrocaPendente) {
-              if (trocaStatus === "aceita") {
-                statusText = "Arte Aceita";
-                statusColor = "green";
-              } else if (trocaStatus === "não aceita") {
-                statusText = "Arte não aceita, tente novamente!";
-                statusColor = "red";
-              } else {
-                // Troca pendente (sem status específico)
-                statusText = "Arte em análise";
-                statusColor = "yellow";
+            const destaque = anuncio.artes[0];
+            const statusInfo = getStatusDisplay(anuncio.status);
+            const statusText = statusInfo.text;
+
+            console.log(`Order ${anuncio.order_id} - Status: ${anuncio.status}, StatusText: ${statusText}`);
+
+            const renderArtePreview = () => {
+              if (!destaque || !destaque.caminho_imagem) {
+                return (
+                  <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center text-[10px] uppercase text-gray-500">
+                    Sem arte
+                  </div>
+                );
               }
-            } else if (anuncio.status === "aprovado") {
-              statusText = "Arte Aceita";
-              statusColor = "green";
-            } else if (anuncio.status === "rejeitado") {
-              statusText = "Arte não aceita, tente novamente!";
-              statusColor = "red";
-            }
-            
-            // Debug: verificar o status
-            console.log(`Anúncio ${anuncio.id} - Status: ${anuncio.status}, StatusText: ${statusText}`);
+
+              if (isVideo(destaque.caminho_imagem)) {
+                return (
+                  <video
+                    src={destaque.caminho_imagem}
+                    className="w-12 h-12 object-cover rounded-lg"
+                    controls={false}
+                    preload="metadata"
+                    muted
+                  />
+                );
+              }
+
+              return (
+                <Image
+                  src={destaque.caminho_imagem}
+                  alt={anuncio.nome_campanha}
+                  width={60}
+                  height={60}
+                  className="w-12 h-12 object-cover rounded-lg"
+                />
+              );
+            };
 
             return (
-              <div key={anuncio.id} className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+              <div key={anuncio.order_id} className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
                 {/* Header do card */}
                 <div className="p-4 border-b border-gray-100">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      {isVideo(anuncio.caminho_imagem) ? (
-                        <video
-                          src={anuncio.caminho_imagem}
-                          className="w-12 h-12 object-cover rounded-lg"
-                          controls={false}
-                          preload="metadata"
-                          muted
-                        />
-                      ) : (
-                        <Image
-                          src={anuncio.caminho_imagem}
-                          alt={anuncio.nome_campanha}
-                          width={60}
-                          height={60}
-                          className="w-12 h-12 object-cover rounded-lg"
-                        />
-                      )}
+                      {renderArtePreview()}
                       <div>
                         <h3 className="font-semibold text-gray-900 text-sm">{anuncio.nome_campanha}</h3>
                         <p className="text-xs text-gray-500">Início: {anuncio.inicio_campanha}</p>
@@ -719,16 +777,8 @@ const MeusAnuncios = () => {
                 {/* Status e ações */}
                 <div className="p-4">
                   <div className="flex items-center justify-between mb-3">
-                    <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium ${
-                      statusColor === "green" ? "bg-green-100 text-green-700" :
-                      statusColor === "red" ? "bg-red-100 text-red-700" :
-                      "bg-yellow-100 text-yellow-700"
-                    }`}>
-                      <div className={`w-2 h-2 rounded-full ${
-                        statusColor === "green" ? "bg-green-500" :
-                        statusColor === "red" ? "bg-red-500" :
-                        "bg-yellow-500"
-                      }`}></div>
+                    <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium ${statusInfo.badgeClass}`}>
+                      <div className={`w-2 h-2 rounded-full ${statusInfo.dotClass}`}></div>
                       {statusText}
                     </div>
                   </div>
@@ -745,20 +795,13 @@ const MeusAnuncios = () => {
                       Ver detalhes
                     </button>
                     <button 
-                      className={`flex-1 text-xs font-medium py-2 px-3 rounded-lg border transition-colors ${
-                        statusText === "Arte em Análise..." 
-                          ? "border-gray-200 text-gray-400 cursor-not-allowed" 
-                          : "border-orange-200 text-orange-600 hover:bg-orange-50"
-                      }`}
+                      className="flex-1 text-xs font-medium py-2 px-3 rounded-lg border border-orange-200 text-orange-600 hover:bg-orange-50 transition-colors"
                       onClick={() => {
-                        if (statusText !== "Arte em Análise...") {
-                          setIsModalOpen(true);
-                          setSelectedAnuncioId(anuncio.id);
-                        }
+                        setSelectedOrderForArts(anuncio);
+                        setIsArtModalOpen(true);
                       }}
-                      disabled={statusText === "Arte em Análise..."}
                     >
-                      Trocar arte
+                      Ver arte(s)
                     </button>
                   </div>
                 </div>
@@ -768,15 +811,125 @@ const MeusAnuncios = () => {
         </div>
         )}
       </div>
+      {isArtModalOpen && selectedOrderForArts && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={() => {
+          setIsArtModalOpen(false);
+          setSelectedOrderForArts(null);
+          setSelectedOrderIdForTroca(null);
+        }}>
+          <div className="bg-white rounded-2xl w-full max-w-3xl mx-auto shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            <div className="p-6 border-b border-gray-100 flex items-center justify-between">
+              <div>
+                <h2 className="text-lg font-semibold text-gray-900">Artes do pedido</h2>
+                <p className="text-sm text-gray-500 mt-1">
+                  {selectedOrderForArts.nome_campanha}
+                </p>
+              </div>
+              <button
+                onClick={() => {
+                  setIsArtModalOpen(false);
+                  setSelectedOrderForArts(null);
+                  setSelectedOrderIdForTroca(null);
+                }}
+                className="p-1 hover:bg-gray-100 rounded-full transition-colors"
+              >
+                <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <div className="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
+              {selectedOrderForArts.artes.length === 0 ? (
+                <div className="text-center text-gray-500 py-12">
+                  Nenhuma arte encontrada para este pedido.
+                </div>
+              ) : (
+                selectedOrderForArts.artes.map((arte) => {
+                  const statusInfo = getStatusDisplay(arte.status);
+                  const isVideoArte = arte.caminho_imagem ? isVideo(arte.caminho_imagem) : false;
+
+                  return (
+                    <div key={arte.id} className="flex flex-col sm:flex-row sm:items-center gap-4 p-4 border border-gray-200 rounded-xl">
+                      <div className="w-full sm:w-32 h-32 bg-gray-100 rounded-lg flex items-center justify-center overflow-hidden">
+                        {arte.caminho_imagem ? (
+                          isVideoArte ? (
+                            <video
+                              src={arte.caminho_imagem}
+                              className="w-full h-full object-cover"
+                              controls={false}
+                              preload="metadata"
+                              muted
+                            />
+                          ) : (
+                            <Image
+                              src={arte.caminho_imagem}
+                              alt={`Arte ${arte.id}`}
+                              width={128}
+                              height={128}
+                              className="w-full h-full object-cover"
+                            />
+                          )
+                        ) : (
+                          <span className="text-xs text-gray-500 uppercase">Sem arte</span>
+                        )}
+                      </div>
+                      <div className="flex-1 flex flex-col gap-2">
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                          <div>
+                            <p className="text-sm font-semibold text-gray-900">Arte #{arte.id}</p>
+                            <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium ${statusInfo.badgeClass}`}>
+                              <div className={`w-2 h-2 rounded-full ${statusInfo.dotClass}`}></div>
+                              {statusInfo.text}
+                            </div>
+                          </div>
+                          <button
+                            className={`text-xs font-medium py-2 px-4 rounded-lg border transition-colors ${
+                              statusInfo.canRequestSwap
+                                ? "border-orange-200 text-orange-600 hover:bg-orange-50"
+                                : "border-gray-200 text-gray-400 cursor-not-allowed"
+                            }`}
+                            disabled={!statusInfo.canRequestSwap}
+                            onClick={() => {
+                              if (!statusInfo.canRequestSwap) return;
+                              setIsArtModalOpen(false);
+                              setSelectedOrderForArts(null);
+                              setSelectedFile(null);
+                              setSelectedAnuncioId(arte.id);
+                              setSelectedOrderIdForTroca(selectedOrderForArts.order_id);
+                              setIsModalOpen(true);
+                            }}
+                          >
+                            Trocar arte
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          </div>
+        </div>
+      )}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={() => setIsModalOpen(false)}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={() => {
+          setIsModalOpen(false);
+          setSelectedAnuncioId(null);
+          setSelectedOrderIdForTroca(null);
+          setSelectedFile(null);
+        }}>
           <div className="bg-white rounded-2xl w-full max-w-sm mx-auto shadow-2xl" onClick={(e) => e.stopPropagation()}>
             {/* Header do modal */}
             <div className="p-6 border-b border-gray-100">
               <div className="flex items-center justify-between">
                 <h2 className="text-lg font-semibold text-gray-900">Trocar Arte</h2>
                 <button 
-                  onClick={() => setIsModalOpen(false)}
+                  onClick={() => {
+                    setIsModalOpen(false);
+                    setSelectedAnuncioId(null);
+                    setSelectedOrderIdForTroca(null);
+                    setSelectedFile(null);
+                  }}
                   className="p-1 hover:bg-gray-100 rounded-full transition-colors"
                 >
                   <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -821,7 +974,12 @@ const MeusAnuncios = () => {
               <div className="flex gap-3">
                 <button 
                   className="flex-1 py-3 px-4 rounded-xl border border-gray-200 text-gray-600 font-medium hover:bg-gray-50 transition-colors" 
-                  onClick={() => setIsModalOpen(false)}
+                  onClick={() => {
+                    setIsModalOpen(false);
+                    setSelectedAnuncioId(null);
+                    setSelectedOrderIdForTroca(null);
+                    setSelectedFile(null);
+                  }}
                 >
                   Cancelar
                 </button>
@@ -879,22 +1037,38 @@ const MeusAnuncios = () => {
                 <div className="space-y-4">
                   {/* Imagem/Vídeo */}
                   <div className="flex justify-center">
-                    {selectedAnuncioDetails?.caminho_imagem && isVideo(selectedAnuncioDetails.caminho_imagem) ? (
-                      <video
-                        src={selectedAnuncioDetails.caminho_imagem}
-                        className="w-32 h-32 object-cover rounded-lg"
-                        controls
-                        preload="metadata"
-                      />
-                    ) : (
-                      <Image
-                        src={selectedAnuncioDetails?.caminho_imagem || ''}
-                        alt={orderDetails.nome_campanha || ''}
-                        width={200}
-                        height={200}
-                        className="w-32 h-32 object-cover rounded-lg"
-                      />
-                    )}
+                    {(() => {
+                      const destaqueDetalhes = selectedAnuncioDetails.artes[0];
+
+                      if (!destaqueDetalhes || !destaqueDetalhes.caminho_imagem) {
+                        return (
+                          <div className="w-32 h-32 bg-gray-100 rounded-lg flex items-center justify-center text-xs text-gray-500">
+                            Sem arte
+                          </div>
+                        );
+                      }
+
+                      if (isVideo(destaqueDetalhes.caminho_imagem)) {
+                        return (
+                          <video
+                            src={destaqueDetalhes.caminho_imagem}
+                            className="w-32 h-32 object-cover rounded-lg"
+                            controls
+                            preload="metadata"
+                          />
+                        );
+                      }
+
+                      return (
+                        <Image
+                          src={destaqueDetalhes.caminho_imagem}
+                          alt={orderDetails.nome_campanha || ''}
+                          width={200}
+                          height={200}
+                          className="w-32 h-32 object-cover rounded-lg"
+                        />
+                      );
+                    })()}
                   </div>
 
                   {/* Informações */}
