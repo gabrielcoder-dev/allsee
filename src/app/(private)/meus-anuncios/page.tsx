@@ -489,6 +489,32 @@ const MeusAnuncios = () => {
     return horasPassadas;
   };
 
+const getStatusDisplay = (status: ArteStatus) => {
+  switch (status) {
+    case "aceita":
+      return {
+        text: "Arte Aceita",
+        badgeClass: "bg-green-100 text-green-700",
+        dotClass: "bg-green-500",
+        canRequestSwap: true,
+      };
+    case "nao_aceita":
+      return {
+        text: "Arte não aceita, tente novamente!",
+        badgeClass: "bg-red-100 text-red-700",
+        dotClass: "bg-red-500",
+        canRequestSwap: true,
+      };
+    default:
+      return {
+        text: "Arte em Análise...",
+        badgeClass: "bg-yellow-100 text-yellow-700",
+        dotClass: "bg-yellow-500",
+        canRequestSwap: false,
+      };
+  }
+};
+
 const summarizeArteStatuses = (artes: ArteResumo[]) => {
   let aceitas = 0;
   let naoAceitas = 0;
@@ -787,23 +813,14 @@ const summarizeArteStatuses = (artes: ArteResumo[]) => {
         <div className="grid gap-4 md:gap-6 pb-8">
           {anuncios.map((anuncio) => {
             const destaque = anuncio.artes[0];
-            const statusInfo = getStatusDisplay(anuncio.status);
-            const hasAnalise = anuncio.artes.some((arte) => arte.status === "em_analise");
-            const totalArtes = anuncio.artes.length;
-            const totalAceitas = anuncio.artes.filter((arte) => arte.status === "aceita").length;
-            const totalNaoAceitas = anuncio.artes.filter((arte) => arte.status === "nao_aceita").length;
-
-            let statusText = statusInfo.text;
-
-            if (hasAnalise) {
-              statusText = "Artes em análise...";
-            } else if (totalAceitas === totalArtes && totalArtes > 0) {
-              statusText = "Todas as artes aceitas";
-            } else if (totalAceitas === 0 && totalNaoAceitas > 0) {
-              statusText = "Nenhuma arte aceita";
-            } else if (totalNaoAceitas > 0) {
-              statusText = "Uma arte não aceita";
-            }
+            const resumoStatus = summarizeArteStatuses(anuncio.artes);
+            const statusInfo = {
+              ...getStatusDisplay(resumoStatus.status),
+              text: resumoStatus.text,
+              badgeClass: resumoStatus.badgeClass,
+              dotClass: resumoStatus.dotClass,
+            };
+            const statusText = statusInfo.text;
 
             console.log(`Order ${anuncio.order_id} - Status: ${anuncio.status}, StatusText: ${statusText}`);
 
