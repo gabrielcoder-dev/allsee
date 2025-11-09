@@ -145,11 +145,60 @@ const AproveitionAdmin = () => {
   };
 
   const handleApproveArte = (arte: ArteCampanhaItem) => {
-    console.log('✅ Aprovar arte', arte.id);
+    if (typeof window === 'undefined') return;
+
+    const orderKeyRaw = arte.id_order_value ?? arte.id_order ?? arte.id;
+    const orderKey = String(orderKeyRaw);
+    const arteKey = `replacement_order_${arte.id}`;
+
+    try {
+      console.log('✅ Aprovar arte', { arteId: arte.id, orderKey });
+
+      localStorage.setItem(`order_${orderKey}`, 'aprovado');
+      localStorage.setItem(arteKey, 'aceita');
+
+      window.dispatchEvent(new Event('storage'));
+      window.dispatchEvent(new CustomEvent('replacementStatusChanged', {
+        detail: {
+          id_campanha: arte.id,
+          status: 'aceita',
+          chave: arteKey,
+        },
+      }));
+
+      // Forçar re-render para refletir status atualizado
+      setArteCampanhas((prev) => [...prev]);
+    } catch (error) {
+      console.error('❌ Erro ao aprovar arte:', error);
+    }
   };
 
   const handleRejectArte = (arte: ArteCampanhaItem) => {
-    console.log('❌ Reprovar arte', arte.id);
+    if (typeof window === 'undefined') return;
+
+    const orderKeyRaw = arte.id_order_value ?? arte.id_order ?? arte.id;
+    const orderKey = String(orderKeyRaw);
+    const arteKey = `replacement_order_${arte.id}`;
+
+    try {
+      console.log('❌ Reprovar arte', { arteId: arte.id, orderKey });
+
+      localStorage.setItem(`order_${orderKey}`, 'rejeitado');
+      localStorage.setItem(arteKey, 'não aceita');
+
+      window.dispatchEvent(new Event('storage'));
+      window.dispatchEvent(new CustomEvent('replacementStatusChanged', {
+        detail: {
+          id_campanha: arte.id,
+          status: 'não aceita',
+          chave: arteKey,
+        },
+      }));
+
+      setArteCampanhas((prev) => [...prev]);
+    } catch (error) {
+      console.error('❌ Erro ao rejeitar arte:', error);
+    }
   };
 
   const groupedOrders: GroupedOrder[] = useMemo(() => {
