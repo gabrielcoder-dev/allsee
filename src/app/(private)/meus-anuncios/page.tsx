@@ -886,7 +886,7 @@ const summarizeArteStatuses = (artes: ArteResumo[]) => {
                   
                   <div className="flex gap-2">
                     <button 
-                      className="flex-1 text-xs font-medium py-2 px-3 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors"
+                      className="flex-1 text-xs font-medium py-2 px-3 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors cursor-pointer"
                       onClick={() => {
                         setSelectedAnuncioDetails(anuncio);
                         fetchOrderDetails(anuncio.order_id);
@@ -896,7 +896,7 @@ const summarizeArteStatuses = (artes: ArteResumo[]) => {
                       Ver detalhes
                     </button>
                     <button 
-                      className="flex-1 text-xs font-medium py-2 px-3 rounded-lg border border-orange-200 text-orange-600 hover:bg-orange-50 transition-colors"
+                      className="flex-1 text-xs font-medium py-2 px-3 rounded-lg border border-orange-200 text-orange-600 hover:bg-orange-50 transition-colors cursor-pointer"
                       onClick={() => {
                         setSelectedOrderForArts(anuncio);
                         setIsArtModalOpen(true);
@@ -932,7 +932,7 @@ const summarizeArteStatuses = (artes: ArteResumo[]) => {
                   setSelectedOrderForArts(null);
                   setSelectedOrderIdForTroca(null);
                 }}
-                className="p-1 hover:bg-gray-100 rounded-full transition-colors"
+                className="p-1 hover:bg-gray-100 rounded-full transition-colors cursor-pointer"
               >
                 <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
@@ -986,7 +986,7 @@ const summarizeArteStatuses = (artes: ArteResumo[]) => {
                           <button
                             className={`text-xs font-medium py-2 px-4 rounded-lg border transition-colors ${
                               statusInfo.canRequestSwap
-                                ? "border-orange-200 text-orange-600 hover:bg-orange-50"
+                                ? "border-orange-200 text-orange-600 hover:bg-orange-50 cursor-pointer"
                                 : "border-gray-200 text-gray-400 cursor-not-allowed"
                             }`}
                             disabled={!statusInfo.canRequestSwap}
@@ -1031,7 +1031,7 @@ const summarizeArteStatuses = (artes: ArteResumo[]) => {
                     setSelectedOrderIdForTroca(null);
                     setSelectedFile(null);
                   }}
-                  className="p-1 hover:bg-gray-100 rounded-full transition-colors"
+                  className="p-1 hover:bg-gray-100 rounded-full transition-colors cursor-pointer"
                 >
                   <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
@@ -1074,7 +1074,7 @@ const summarizeArteStatuses = (artes: ArteResumo[]) => {
               
               <div className="flex gap-3">
                 <button 
-                  className="flex-1 py-3 px-4 rounded-xl border border-gray-200 text-gray-600 font-medium hover:bg-gray-50 transition-colors" 
+                  className="flex-1 py-3 px-4 rounded-xl border border-gray-200 text-gray-600 font-medium hover:bg-gray-50 transition-colors cursor-pointer" 
                   onClick={() => {
                     setIsModalOpen(false);
                     setSelectedAnuncioId(null);
@@ -1085,7 +1085,7 @@ const summarizeArteStatuses = (artes: ArteResumo[]) => {
                   Cancelar
                 </button>
                 <button 
-                  className="flex-1 py-3 px-4 rounded-xl bg-orange-600 text-white font-medium hover:bg-orange-700 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed" 
+                  className="flex-1 py-3 px-4 rounded-xl bg-orange-600 text-white font-medium hover:bg-orange-700 transition-colors cursor-pointer disabled:bg-gray-300 disabled:cursor-not-allowed" 
                   onClick={handleTrocarArte}
                   disabled={!selectedFile}
                 >
@@ -1118,7 +1118,7 @@ const summarizeArteStatuses = (artes: ArteResumo[]) => {
                     setSelectedAnuncioDetails(null);
                     setDiasRestantes(null);
                   }}
-                  className="p-1 hover:bg-gray-100 rounded-full transition-colors"
+                  className="p-1 hover:bg-gray-100 rounded-full transition-colors cursor-pointer"
                 >
                   <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />

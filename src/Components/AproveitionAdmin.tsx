@@ -296,7 +296,7 @@ const AproveitionAdmin = () => {
                 <p className="text-sm text-gray-500">Visualize e aprove as artes enviadas para este pedido.</p>
               </div>
               <button
-                className="text-gray-400 hover:text-gray-600 text-lg font-bold p-2 bg-gray-100 hover:bg-gray-200 rounded-full transition-colors"
+                className="text-gray-400 hover:text-gray-600 text-lg font-bold p-2 bg-gray-100 hover:bg-gray-200 rounded-full transition-colors cursor-pointer"
                 onClick={() => setImagesModalOrderId(null)}
                 aria-label="Fechar"
               >
@@ -348,14 +348,14 @@ const AproveitionAdmin = () => {
                         </div>
                         <div className="flex items-center gap-2">
                           <button
-                            className="p-2 rounded-md bg-emerald-500 hover:bg-emerald-600 text-white transition-colors"
+                            className="p-2 rounded-md bg-emerald-500 hover:bg-emerald-600 text-white transition-colors cursor-pointer"
                             onClick={() => handleApproveArte(arte)}
                             aria-label="Aprovar arte"
                           >
                             <Check className="w-4 h-4" />
                           </button>
                           <button
-                            className="p-2 rounded-md bg-red-500 hover:bg-red-600 text-white transition-colors"
+                            className="p-2 rounded-md bg-red-500 hover:bg-red-600 text-white transition-colors cursor-pointer"
                             onClick={() => handleRejectArte(arte)}
                             aria-label="Reprovar arte"
                           >
@@ -365,7 +365,7 @@ const AproveitionAdmin = () => {
                       </div>
                       <div className="flex gap-2">
                         <button
-                          className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium px-3 py-2 rounded-lg transition-colors"
+                          className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium px-3 py-2 rounded-lg transition-colors cursor-pointer disabled:cursor-not-allowed"
                           onClick={() => arte.caminho_imagem && setModalFile({
                             url: arte.caminho_imagem,
                             id: arte.id,
@@ -377,7 +377,7 @@ const AproveitionAdmin = () => {
                           Assistir
                         </button>
                         <button
-                          className="flex-1 bg-orange-500 hover:bg-orange-600 text-white text-sm font-medium px-3 py-2 rounded-lg transition-colors"
+                          className="flex-1 bg-orange-500 hover:bg-orange-600 text-white text-sm font-medium px-3 py-2 rounded-lg transition-colors cursor-pointer disabled:cursor-not-allowed"
                           onClick={() => arte.caminho_imagem && handleDownload(arte.caminho_imagem, `pedido-${arte.id_order_value}_anuncio-${anuncioKey ?? arte.id}`)}
                           disabled={!arte.caminho_imagem}
                         >
@@ -464,14 +464,14 @@ const AproveitionAdmin = () => {
             </p>
             <div className="flex flex-col md:flex-row gap-2 md:gap-3 justify-end">
               <button
-                className="px-4 py-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-100 transition-colors"
+                className="px-4 py-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-100 transition-colors cursor-pointer disabled:cursor-not-allowed"
                 onClick={() => !isDeleting && setOrderToDelete(null)}
                 disabled={isDeleting}
               >
                 Cancelar
               </button>
               <button
-                className="px-4 py-2 rounded-lg bg-red-500 hover:bg-red-600 text-white transition-colors disabled:opacity-60"
+                className="px-4 py-2 rounded-lg bg-red-500 hover:bg-red-600 text-white transition-colors cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
                 onClick={async () => {
                   if (!orderToDelete || isDeleting) return;
                   setIsDeleting(true);
