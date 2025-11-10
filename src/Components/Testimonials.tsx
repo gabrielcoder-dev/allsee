@@ -29,7 +29,7 @@ const Testimonials = () => {
             Alguns dos nossos clientes
           </h3>
         </div>
-        <div className="carousel-container mt-8 md:mt-10">
+        <div className="carousel-container mt-12 md:mt-16">
           <div className="carousel-track">
             {[...logos, ...logos].map((logo, index) => (
               <Image
