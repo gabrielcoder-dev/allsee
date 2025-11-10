@@ -10,28 +10,31 @@ import transtermatImg from "@/assets/transtermat.png";
 import ttImg from "@/assets/tt.png";
 import Image from "next/image";
 
+const logos = [
+  { src: allRede, alt: "allRede", className: "w-40" },
+  { src: atacadaoImg, alt: "atacadao", className: "w-40" },
+  { src: boraAli, alt: "boraAli", className: "rounded-2xl w-20 h-20" },
+  { src: oboticarioImg, alt: "oboticario", className: "w-40" },
+  { src: sicoobImg, alt: "sicoob", className: "w-40" },
+  { src: transtermatImg, alt: "transtermat", className: "w-40" },
+  { src: ttImg, alt: "ttImg", className: "rounded-2xl w-40" },
+];
+
 const Testimonials = () => {
   return (
     <section className="py-16">
       <div className="landing-container">
         <div className="carousel-container">
-          <div className="carousel-wrapper flex items-center">
-            <div className="carousel-slide flex items-center gap-[150px]">
-              <Image alt='allRede' src={allRede} className="carousel-image w-40" />
-              <Image alt='atacadao' src={atacadaoImg} className="carousel-image w-40" />
-              <Image alt='boraAli' src={boraAli} className="carousel-image rounded-2xl w-20 h-20" />
-              <Image alt='oboticario' src={oboticarioImg} className="carousel-image w-40" />
-              <Image alt='sicoob' src={sicoobImg} className="carousel-image w-40" />
-              <Image alt='transtermat' src={transtermatImg} className="carousel-image w-40" />
-              <Image alt='ttImg' src={ttImg} className="carousel-image rounded-2xl w-40" />
-              <Image alt='allRede' src={allRede} className="carousel-image w-40" />
-              <Image alt='atacadao' src={atacadaoImg} className="carousel-image w-40" />
-              <Image alt='boraAli' src={boraAli} className="carousel-image rounded-2xl w-20 h-20" />
-              <Image alt='oboticario' src={oboticarioImg} className="carousel-image w-40" />
-              <Image alt='sicoob' src={sicoobImg} className="carousel-image w-40" />
-              <Image alt='transtermat' src={transtermatImg} className="carousel-image w-40" />
-              <Image alt='ttImg' src={ttImg} className="carousel-image rounded-2xl w-40" />
-            </div>
+          <div className="carousel-track">
+            {[...logos, ...logos].map((logo, index) => (
+              <Image
+                key={`${logo.alt}-${index}`}
+                alt={logo.alt}
+                src={logo.src}
+                className={`carousel-image ${logo.className}`}
+                loading={index < logos.length ? "eager" : "lazy"}
+              />
+            ))}
           </div>
         </div>
       </div>
@@ -39,61 +42,67 @@ const Testimonials = () => {
         .carousel-container {
           overflow: hidden;
           width: 100%;
+          mask-image: linear-gradient(
+            to right,
+            transparent 0%,
+            rgba(0, 0, 0, 1) 10%,
+            rgba(0, 0, 0, 1) 90%,
+            transparent 100%
+          );
+          -webkit-mask-image: linear-gradient(
+            to right,
+            transparent 0%,
+            rgba(0, 0, 0, 1) 10%,
+            rgba(0, 0, 0, 1) 90%,
+            transparent 100%
+          );
         }
 
-        .carousel-wrapper {
+        .carousel-track {
           display: flex;
-          width: 200%; /* Double the width */
-          animation: slide 30s linear infinite; /* Desktop animation */
+          align-items: center;
+          gap: clamp(60px, 8vw, 140px);
+          width: max-content;
+          animation: marquee 22s linear infinite;
         }
 
-        .carousel-slide {
-          display: flex;
-          width: auto;
-          gap: 100px; 
+        .carousel-track:hover {
+          animation-play-state: paused;
         }
 
         .carousel-image {
           flex-shrink: 0;
-          margin: 0 120px;
+          filter: grayscale(100%);
+          opacity: 0.85;
+          transition: opacity 0.3s ease, filter 0.3s ease, transform 0.3s ease;
         }
 
-        @keyframes slide {
+        .carousel-image:hover {
+          filter: grayscale(0%);
+          opacity: 1;
+          transform: scale(1.02);
+        }
+
+        @keyframes marquee {
           0% {
             transform: translateX(0);
           }
           100% {
-            transform: translateX(-50%); /* Move by 50% */
+            transform: translateX(-50%);
           }
         }
 
-        /* Faster animation for mobile */
         @media (max-width: 768px) {
-          .carousel-wrapper {
-            animation: slide 15s linear infinite; /* Faster for mobile */
-          }
-          
-          .carousel-slide {
-            gap: 50px; /* Smaller gap on mobile */
-          }
-          
-          .carousel-image {
-            margin: 0 40px; /* Smaller margins on mobile */
+          .carousel-track {
+            gap: clamp(40px, 12vw, 80px);
+            animation-duration: 16s;
           }
         }
 
-        /* Even faster for very small screens */
         @media (max-width: 480px) {
-          .carousel-wrapper {
-            animation: slide 12s linear infinite; /* Even faster for small mobile */
-          }
-          
-          .carousel-slide {
-            gap: 30px; /* Even smaller gap */
-          }
-          
-          .carousel-image {
-            margin: 0 20px; /* Even smaller margins */
+          .carousel-track {
+            gap: clamp(24px, 10vw, 60px);
+            animation-duration: 12s;
           }
         }
       `}</style>
