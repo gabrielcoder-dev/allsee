@@ -1,38 +1,56 @@
 'use client'
 
-import { useRef } from 'react'
-import { FaStar } from 'react-icons/fa'
-import feiraImg from "@/assets/feira.jpg"
-import resImg from "@/assets/restaurante.jpg"
-import restauranteImg from "@/assets/restaurante-2.jpg"
-import Image from 'next/image'
+import { useEffect, useRef, useState } from 'react'
+import { createClient } from '@supabase/supabase-js'
+import { Monitor, Printer, MapPin } from 'lucide-react'
 
-const locais = [
-  {
-    titulo: 'Feira Municipal',
-    descricao: 'Mais de 10 mil visualizações por mês',
-    img: feiraImg,
-    preco: 'R$ 250,90/Mês',
-    button: 'QUERO ADQUIRIR',
-  },
-  {
-    titulo: 'Restaurante Gabriela',
-    descricao: 'Mais de 8 mil visualizações por mês',
-    img: resImg,
-    preco: 'R$ 290,90/Mês',
-    button: 'QUERO COMPRAR',
-  },
-  {
-    titulo: 'Restaurante Skinão',
-    descricao: 'Mais de 12 mil visualizações por mês',
-    img: restauranteImg,
-    preco: 'R$ 250,90/Mês',
-    button: 'QUERO COMPRAR',
-  },
-]
+type Anuncio = {
+  id: number
+  name: string
+  image: string | null
+  address: string | null
+  price: number
+  type_screen: string | null
+  views?: number | null
+  display?: number | null
+  screens?: number | null
+}
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+)
 
 export default function Plans() {
   const scrollRef = useRef<HTMLDivElement>(null)
+  const [anuncios, setAnuncios] = useState<Anuncio[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    async function fetchAnuncios() {
+      setLoading(true)
+      try {
+        const { data, error } = await supabase
+          .from('anuncios')
+          .select('id, name, image, address, price, type_screen, views, display, screens')
+          .order('id', { ascending: false })
+
+        if (error) {
+          console.error('Erro ao buscar anúncios:', error)
+          setAnuncios([])
+        } else if (Array.isArray(data)) {
+          setAnuncios(data)
+        }
+      } catch (err) {
+        console.error('Erro inesperado ao buscar anúncios:', err)
+        setAnuncios([])
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchAnuncios()
+  }, [])
 
   const scroll = (direction: 'left' | 'right') => {
     if (scrollRef.current) {
@@ -50,8 +68,8 @@ export default function Plans() {
         {/* Título */}
         <div className="mb-10 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
-            <p className="uppercase text-sm text-orange-600 font-bold tracking-wider">Planos</p>
-            <h2 className="text-3xl md:text-4xl xl:text-5xl font-bold text-gray-900 leading-tight">Locais mais Requisitados</h2>
+            <p className="uppercase text-sm text-orange-600 font-bold tracking-wider">Telas</p>
+            <h2 className="text-3xl md:text-4xl xl:text-5xl font-bold text-gray-900 leading-tight">Totens de Divulgação</h2>
           </div>
 
           {/* Navegação */}
@@ -83,37 +101,82 @@ export default function Plans() {
             "
           style={{ scrollbarWidth: 'thin' }}
         >
-          {locais.map((local, i) => (
-            <div
-              key={i}
-              className="rounded-[24px] min-w-[270px] max-w-xs w-full overflow-hidden shadow-md bg-white flex flex-col flex-shrink-0"
-            >
-              {/* Imagem */}
-              <Image
-                src={local.img ?? feiraImg}
-                alt={local.titulo}
-                className='border-2 rounded-t-3xl h-60 object-cover border-orange-600 w-full'
-              />
-
-              {/* Conteúdo */}
-              <div className="p-5 flex flex-col justify-between gap-3 flex-grow">
-                <div>
-                  <p className="text-xs text-orange-600 font-semibold">{local.descricao}</p>
-                  <h3 className="text-md font-bold text-gray-900">{local.titulo}</h3>
-                  <p className="text-gray-400 text-sm">Localizado em Primavera do Leste - MT</p>
-                </div>
-                <div>
-                  <p className="text-orange-600 font-bold text-2xl flex items-center gap-2 mt-2">
-                    {local.preco}
-                    <FaStar className="text-orange-600" />
-                  </p>
-                  <button className="bg-orange-600 w-full hover:bg-orange-500 text-white mt-4 text-sm font-semibold p-4 rounded-full transition">
-                    {local.button}
-                  </button>
+          {loading ? (
+            Array.from({ length: 3 }).map((_, index) => (
+              <div
+                key={`skeleton-${index}`}
+                className="rounded-[24px] min-w-[270px] max-w-xs w-full h-[360px] bg-white border border-gray-100 shadow-sm animate-pulse flex-shrink-0"
+              >
+                <div className="h-48 bg-gray-200 rounded-t-[24px]" />
+                <div className="p-5 space-y-4">
+                  <div className="h-3 bg-gray-200 rounded w-1/2" />
+                  <div className="h-4 bg-gray-200 rounded w-3/4" />
+                  <div className="h-10 bg-gray-200 rounded" />
                 </div>
               </div>
+            ))
+          ) : anuncios.length === 0 ? (
+            <div className="col-span-full flex flex-col items-center justify-center py-10 text-center text-gray-500">
+              <span className="text-lg font-semibold text-gray-700">Nenhum totem disponível no momento.</span>
+              <p className="text-sm">Estamos atualizando nossa base de totens. Volte em breve!</p>
             </div>
-          ))}
+          ) : (
+            anuncios.map((anuncio) => (
+              <div
+                key={anuncio.id}
+                className="rounded-[24px] min-w-[280px] max-w-xs w-full overflow-hidden shadow-md bg-white flex flex-col flex-shrink-0 border border-gray-100 transition-transform hover:-translate-y-1 hover:shadow-xl"
+              >
+                <div className="relative h-48 overflow-hidden">
+                  <img
+                    src={anuncio.image ?? 'https://placehold.co/600x800?text=Totem'}
+                    alt={anuncio.name}
+                    className="w-full h-full object-cover"
+                    loading="lazy"
+                  />
+                  <span className="absolute top-3 left-3 inline-flex items-center gap-1 rounded-full bg-white/90 px-3 py-1 text-xs font-semibold text-gray-700 shadow-sm">
+                    {anuncio.type_screen?.toLowerCase() === 'impresso' ? (
+                      <>
+                        <Printer className="w-3.5 h-3.5 text-orange-600" /> Impresso
+                      </>
+                    ) : (
+                      <>
+                        <Monitor className="w-3.5 h-3.5 text-orange-600" /> Digital
+                      </>
+                    )}
+                  </span>
+                </div>
+
+                <div className="p-6 flex flex-col gap-4 flex-grow">
+                  <div className="space-y-2">
+                    <h3 className="text-lg font-bold text-gray-900 leading-snug">
+                      {anuncio.name}
+                    </h3>
+                    <p className="text-gray-500 text-sm flex items-start gap-1">
+                      <MapPin className="w-4 h-4 text-orange-600 flex-shrink-0 mt-0.5" />
+                      <span>{anuncio.address ?? 'Local a confirmar'}</span>
+                    </p>
+                    <div className="flex gap-4 text-xs text-gray-600">
+                      {anuncio.screens !== null && anuncio.screens !== undefined && (
+                        <span className="font-semibold">Telas: {anuncio.screens}</span>
+                      )}
+                      {anuncio.views !== null && anuncio.views !== undefined && (
+                        <span className="font-semibold">Alcance: {anuncio.views.toLocaleString('pt-BR')}</span>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="mt-auto space-y-3">
+                    <p className="text-2xl font-bold text-orange-600">
+                      R$ {Number(anuncio.price ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                    </p>
+                    <button className="bg-orange-600 w-full hover:bg-orange-500 text-white text-sm font-semibold py-3 rounded-full transition">
+                      QUERO ADQUIRIR
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))
+          )}
         </div>
       </div>
     </section>
