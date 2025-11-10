@@ -9,7 +9,7 @@ const Hero = () => {
 
         {/* Conteúdo esquerdo */}
         <div className="w-full max-w-[28rem] lg:max-w-[26rem] xl:max-w-[27rem] flex flex-col gap-6">
-          <button className="inline-flex w-full items-center justify-center border border-orange-600 px-5 py-3 rounded-3xl text-orange-600 font-semibold text-sm sm:text-base lg:text-base lg:w-auto lg:justify-start lg:px-6 lg:py-2.5">
+          <button className="inline-flex items-center justify-center border border-orange-600 px-8 py-2.5 rounded-3xl text-orange-600 font-semibold text-sm sm:text-base lg:text-base self-start min-w-[220px]">
             Anuncie com nossos Totens
           </button>
 
@@ -17,20 +17,20 @@ const Hero = () => {
             Anuncie onde os seus clientes <span className="text-orange-600">moram, trabalham e passam</span> todos os dias.
           </h2>
 
-          <p className="text-gray-500 text-base sm:text-lg lg:text-base xl:text-lg">
+          <p className="text-gray-500 text-base leading-relaxed">
             Produzindo maior engajamento com seu público e sendo lembrado por onde passar!
           </p>
 
           <a
             href="/results"
-            className="inline-flex w-full sm:w-auto items-center justify-center bg-orange-600 px-6 py-3 sm:px-8 sm:py-3.5 lg:px-10 lg:py-4 rounded-3xl text-white text-base sm:text-lg font-semibold cursor-pointer hover:bg-orange-500 transition duration-300 shadow-md"
+            className="inline-flex items-center justify-center bg-orange-600 px-6 py-3 sm:px-7 sm:py-3.5 rounded-3xl text-white text-base font-semibold cursor-pointer hover:bg-orange-500 transition duration-300 shadow-md self-start min-w-[190px]"
           >
             Anunciar Agora!
           </a>
         </div>
 
         {/* Conteúdo direito - imagem hero */}
-        <div className="w-full max-w-lg md:max-w-xl lg:max-w-[34rem] xl:max-w-[40rem] 2xl:max-w-[46rem]">
+        <div className="w-full max-w-lg md:max-w-xl lg:max-w-[38rem] xl:max-w-[44rem] 2xl:max-w-[50rem]">
           <Image
             src={heroImg}
             alt="Imagem Hero"
