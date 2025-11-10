@@ -4,9 +4,9 @@ import heroImg from "@/assets/hero-img.png"
 const Hero = () => {
   return (
     <section className="relative overflow-hidden pt-32 pb-16 lg:pt-40 lg:pb-24" id="home">
-      <div className="absolute bg-orange-200 w-[420px] h-[420px] -z-10 rounded-full -top-24 -left-24 blur-3xl opacity-70 lg:w-[520px] lg:h-[520px]"></div>
+      <div className="landing-container relative flex flex-col-reverse items-center gap-12 lg:flex-row lg:items-center lg:justify-between lg:gap-28">
+        <div className="pointer-events-none absolute -z-10 w-[380px] h-[380px] -top-24 -left-10 rounded-full bg-orange-200 blur-3xl opacity-60 sm:w-[420px] sm:h-[420px] sm:-left-12 lg:w-[500px] lg:h-[500px] lg:-left-16 xl:w-[540px] xl:h-[540px] xl:-left-12"></div>
 
-      <div className="landing-container flex flex-col-reverse items-center gap-12 lg:flex-row lg:items-center lg:justify-between lg:gap-28">
         {/* Conteúdo esquerdo */}
         <div className="w-full max-w-[28rem] lg:max-w-[26rem] xl:max-w-[27rem] flex flex-col gap-6">
           <button className="inline-flex w-full items-center justify-center border border-orange-600 px-5 py-3 rounded-3xl text-orange-600 font-semibold text-sm sm:text-base lg:text-base lg:w-auto lg:justify-start lg:px-6 lg:py-2.5">

@@ -22,10 +22,10 @@ const Card = ({
 export default function AllseeSection() {
   return (
     <section className="relative overflow-hidden py-20 bg-gradient-to-r md:mt-9">
-      <div className="absolute bg-orange-100 w-96 h-96 -z-10 rounded-full top-20 -right-30 blur-3xl"></div>
-      <div className="absolute bg-gray-200 w-7xl h-72 -z-10 rounded-full top-72 right-30 blur-3xl"></div>
+      <div className="landing-container relative text-center">
+        <div className="pointer-events-none absolute -z-10 w-[460px] h-[460px] top-16 -left-40 rounded-full bg-orange-100 blur-3xl opacity-60 sm:w-[520px] sm:h-[520px] sm:-left-28 lg:w-[620px] lg:h-[620px] lg:-left-20 xl:w-[680px] xl:h-[680px]"></div>
+        <div className="pointer-events-none absolute -z-10 w-[760px] h-[360px] top-56 -right-60 rounded-full bg-gray-200 blur-3xl opacity-50 sm:-right-40 lg:w-[860px] lg:h-[420px] lg:-right-32 xl:w-[940px] xl:h-[460px]"></div>
 
-      <div className="landing-container text-center">
         <h2 className="text-2xl md:text-4xl font-bold mb-16 leading-snug">
           <span className="text-orange-600">ALLSEE,</span> onde todos te veem!
         </h2>
