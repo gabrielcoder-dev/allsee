@@ -56,24 +56,14 @@ export default function About() {
         </div>
 
         {/* Coluna de imagem */}
-        <div className="relative flex justify-center items-center">
-          {/* Imagem grande */}
-          <div className="w-[340px] h-[340px] sm:w-[280px] sm:h-[380px] md:w-[350px] md:h-[520px] bg-gray-100 rounded-[120px] border-2 border-orange-500 overflow-hidden z-10">
+        <div className="flex justify-center items-center">
+          <div className="relative w-[320px] h-[320px] sm:w-[260px] sm:h-[320px] md:w-[340px] md:h-[480px] bg-gray-100 rounded-[120px] border-2 border-orange-500 overflow-hidden shadow-lg">
             <Image
-             src={EmpressaImg}
-             className='w-full h-full object-cover'
-             alt='Empressa'
+              src={LogoV2}
+              className="w-full h-full object-cover"
+              alt="ALL SEE"
+              priority
             />
-          </div>
-
-          {/* Imagem menor */}
-          <div className="absolute right-0 bottom-0 w-[150px] h-[180px] sm:w-[180px] sm:h-[220px] bg-gray-100 rounded-full border-4 border-white overflow-hidden z-20 shadow-md">
-          <Image
-             src={LogoV2}
-             className='w-full h-full object-cover'
-             alt='Empressa'
-            />
-            
           </div>
         </div>
       </div>
