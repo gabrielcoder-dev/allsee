@@ -29,7 +29,7 @@ export default function Plans() {
   const [cardWidth, setCardWidth] = useState<number | null>(null)
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const [autoScrollActive, setAutoScrollActive] = useState(true)
-  const [cardOffset, setCardOffset] = useState(0)
+  const [currentIndex, setCurrentIndex] = useState(0)
 
   useEffect(() => {
     async function fetchAnuncios() {
@@ -86,40 +86,41 @@ export default function Plans() {
     }
   }, [])
 
-  const scroll = (direction: 'left' | 'right') => {
+  const scroll = (direction: 'left' | 'right', triggeredByAuto = false) => {
     if (!scrollRef.current) return
     const container = scrollRef.current
-    const { clientWidth, scrollWidth, scrollLeft } = container
+    const { clientWidth, scrollWidth } = container
 
-    const gap = 24
-    const effectiveCardWidth = cardWidth ?? (clientWidth - gap) / Math.max(1, Math.round(clientWidth / 320))
-    const cardsPerPage = Math.max(1, Math.round(clientWidth / (effectiveCardWidth || 1)))
-    const step = cardsPerPage
-    const maxOffset = Math.max(0, anuncios.length - step)
+    const cardsPerView = Math.max(1, cardWidth ? Math.round(clientWidth / cardWidth) : 1)
+    const step = cardsPerView
+    const maxIndex = Math.max(0, anuncios.length - cardsPerView)
 
-    let nextOffset = cardOffset
+    let nextIndex = currentIndex
 
     if (direction === 'right') {
-      nextOffset = cardOffset + step
-      if (nextOffset > maxOffset) {
+      nextIndex = currentIndex + step
+      if (nextIndex > maxIndex) {
+        // Loop back to start
         container.scrollTo({ left: 0, behavior: 'smooth' })
-        setCardOffset(0)
+        setCurrentIndex(0)
         return
       }
     } else {
-      nextOffset = cardOffset - step
-      if (nextOffset < 0) {
-        const target = scrollWidth - clientWidth
-        container.scrollTo({ left: target >= 0 ? target : 0, behavior: 'smooth' })
-        setCardOffset(maxOffset)
+      nextIndex = currentIndex - step
+      if (nextIndex < 0) {
+        const targetLeft = scrollWidth - clientWidth
+        container.scrollTo({ left: targetLeft > 0 ? targetLeft : 0, behavior: 'smooth' })
+        setCurrentIndex(maxIndex)
         return
       }
     }
 
-    setCardOffset(nextOffset)
+    setCurrentIndex(nextIndex)
 
+    const cardTotal = cardWidth ? cardWidth + 24 : clientWidth
+    const targetLeft = nextIndex * cardTotal
     container.scrollTo({
-      left: direction === 'right' ? Math.min(scrollWidth, scrollLeft + clientWidth) : Math.max(0, scrollLeft - clientWidth),
+      left: Math.max(0, Math.min(targetLeft, scrollWidth)),
       behavior: 'smooth',
     })
   }
@@ -157,10 +158,10 @@ export default function Plans() {
         intervalRef.current = null
       }
     }
-  }, [autoScrollActive, cardWidth, anuncios.length])
+  }, [autoScrollActive, cardWidth, anuncios.length, currentIndex])
 
   useEffect(() => {
-    setCardOffset(0)
+    setCurrentIndex(0)
     if (scrollRef.current) {
       scrollRef.current.scrollTo({ left: 0 })
     }
