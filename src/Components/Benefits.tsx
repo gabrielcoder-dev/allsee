@@ -27,7 +27,7 @@ export default function AllseeSection() {
         <div className="pointer-events-none absolute -z-10 w-[760px] h-[360px] top-56 -right-60 rounded-full bg-gray-200 blur-3xl opacity-50 sm:-right-40 lg:w-[860px] lg:h-[420px] lg:-right-32 xl:w-[940px] xl:h-[460px]"></div>
 
         <h2 className="text-2xl md:text-4xl font-bold mb-16 leading-snug">
-          <span className="text-orange-600">ALLSEE,</span> onde todos te veem!
+          <span className="text-orange-600">ALL SEE,</span> onde todos te veem!
         </h2>
 
         <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
