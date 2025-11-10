@@ -38,12 +38,14 @@ export default function Plans() {
         const { data, error } = await supabase
           .from('anuncios')
           .select('id, name, image, address, price, type_screen, views, display, screens')
+          .range(0, 99)
           .order('id', { ascending: false })
 
         if (error) {
           console.error('Erro ao buscar anúncios:', error)
           setAnuncios([])
         } else if (Array.isArray(data)) {
+          console.log('Totens carregados:', data.length)
           setAnuncios(data)
         }
       } catch (err) {
@@ -86,12 +88,13 @@ export default function Plans() {
     }
   }, [])
 
-  const scroll = (direction: 'left' | 'right', triggeredByAuto = false) => {
+  const scroll = (direction: 'left' | 'right') => {
     if (!scrollRef.current) return
     const container = scrollRef.current
     const { clientWidth, scrollWidth } = container
 
-    const cardsPerView = Math.max(1, cardWidth ? Math.round(clientWidth / cardWidth) : 1)
+    const cardTotal = (cardWidth ?? clientWidth) + 24
+    const cardsPerView = Math.max(1, Math.floor((clientWidth + 24) / cardTotal))
     const step = cardsPerView
     const maxIndex = Math.max(0, anuncios.length - cardsPerView)
 
@@ -117,7 +120,6 @@ export default function Plans() {
 
     setCurrentIndex(nextIndex)
 
-    const cardTotal = cardWidth ? cardWidth + 24 : clientWidth
     const targetLeft = nextIndex * cardTotal
     container.scrollTo({
       left: Math.max(0, Math.min(targetLeft, scrollWidth)),
