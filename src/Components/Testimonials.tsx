@@ -25,11 +25,11 @@ const Testimonials = () => {
     <section className="py-16">
       <div className="landing-container space-y-8">
         <div className="text-center">
-          <h3 className="text-2xl md:text-3xl font-semibold text-gray-800">
+          <h3 className="text-3xl md:text-[2.2rem] font-bold text-gray-800 tracking-wide">
             Alguns dos nossos clientes
           </h3>
         </div>
-        <div className="carousel-container">
+        <div className="carousel-container mt-6 md:mt-8">
           <div className="carousel-track">
             {[...logos, ...logos].map((logo, index) => (
               <Image
