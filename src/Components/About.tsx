@@ -10,13 +10,13 @@ import { Smartphone, SmartphoneCharging } from 'lucide-react'
 
 export default function About() {
   return (
-    <section className="relative  md:px-32 px-6 py-20 bg-white overflow-hidden" id='sobre'>
-      <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 items-center gap-10">
+    <section className="relative py-20 bg-white overflow-hidden" id='sobre'>
+      <div className="landing-container grid grid-cols-1 md:grid-cols-2 items-center gap-12 lg:gap-16">
 
         {/* Coluna de texto */}
         <div>
           <p className="uppercase text-sm text-orange-600 font-bold tracking-wider mb-1">Sobre</p>
-          <h2 className="text-3xl md:text-4xl font-extrabold text-black mb-4">ALLSEE</h2>
+          <h2 className="text-3xl md:text-4xl xl:text-5xl font-extrabold text-black mb-4">ALLSEE</h2>
           <p className="text-gray-500 mb-10">A ALL SEE é a maior empresa de mídia indoor e OOH de Primavera do Leste e uma referência em toda a região. Fundada por empresários com mais de 20 anos de experiência, destaca-se pela inovação, credibilidade e qualidade. Com tecnologia de ponta e telas digitais estrategicamente posicionadas, oferece soluções de comunicação que garantem visibilidade, engajamento e fortalecimento de marcas.</p>
 
           <div className="space-y-6">

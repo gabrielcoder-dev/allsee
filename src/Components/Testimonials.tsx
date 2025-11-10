@@ -12,23 +12,27 @@ import Image from "next/image";
 
 const Testimonials = () => {
   return (
-    <div className="carousel-container my-16">
-      <div className="carousel-wrapper flex items-center">
-        <div className="carousel-slide flex items-center gap-[150px]">
-          <Image alt='allRede' src={allRede} className="carousel-image w-40" />
-          <Image alt='atacadao' src={atacadaoImg} className="carousel-image w-40" />
-          <Image alt='boraAli' src={boraAli} className="carousel-image rounded-2xl w-20 h-20" />
-          <Image alt='oboticario' src={oboticarioImg} className="carousel-image w-40" />
-          <Image alt='sicoob' src={sicoobImg} className="carousel-image w-40" />
-          <Image alt='transtermat' src={transtermatImg} className="carousel-image w-40" />
-          <Image alt='ttImg' src={ttImg} className="carousel-image rounded-2xl w-40" />
-          <Image alt='allRede' src={allRede} className="carousel-image w-40" />
-          <Image alt='atacadao' src={atacadaoImg} className="carousel-image w-40" />
-          <Image alt='boraAli' src={boraAli} className="carousel-image rounded-2xl w-20 h-20" />
-          <Image alt='oboticario' src={oboticarioImg} className="carousel-image w-40" />
-          <Image alt='sicoob' src={sicoobImg} className="carousel-image w-40" />
-          <Image alt='transtermat' src={transtermatImg} className="carousel-image w-40" />
-          <Image alt='ttImg' src={ttImg} className="carousel-image rounded-2xl w-40" />
+    <section className="py-16">
+      <div className="landing-container">
+        <div className="carousel-container">
+          <div className="carousel-wrapper flex items-center">
+            <div className="carousel-slide flex items-center gap-[150px]">
+              <Image alt='allRede' src={allRede} className="carousel-image w-40" />
+              <Image alt='atacadao' src={atacadaoImg} className="carousel-image w-40" />
+              <Image alt='boraAli' src={boraAli} className="carousel-image rounded-2xl w-20 h-20" />
+              <Image alt='oboticario' src={oboticarioImg} className="carousel-image w-40" />
+              <Image alt='sicoob' src={sicoobImg} className="carousel-image w-40" />
+              <Image alt='transtermat' src={transtermatImg} className="carousel-image w-40" />
+              <Image alt='ttImg' src={ttImg} className="carousel-image rounded-2xl w-40" />
+              <Image alt='allRede' src={allRede} className="carousel-image w-40" />
+              <Image alt='atacadao' src={atacadaoImg} className="carousel-image w-40" />
+              <Image alt='boraAli' src={boraAli} className="carousel-image rounded-2xl w-20 h-20" />
+              <Image alt='oboticario' src={oboticarioImg} className="carousel-image w-40" />
+              <Image alt='sicoob' src={sicoobImg} className="carousel-image w-40" />
+              <Image alt='transtermat' src={transtermatImg} className="carousel-image w-40" />
+              <Image alt='ttImg' src={ttImg} className="carousel-image rounded-2xl w-40" />
+            </div>
+          </div>
         </div>
       </div>
       <style jsx>{`
@@ -93,7 +97,7 @@ const Testimonials = () => {
           }
         }
       `}</style>
-    </div>
+    </section>
   );
 };
 

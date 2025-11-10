@@ -45,26 +45,26 @@ export default function Plans() {
   }
 
   return (
-    <section className="px-2 md:px-6 lg:px-32 py-20 bg-white" id='locais'>
-      <div className="max-w-7xl mx-auto">
+    <section className="py-20 bg-white" id='locais'>
+      <div className="landing-container">
         {/* Título */}
         <div className="mb-10 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
             <p className="uppercase text-sm text-orange-600 font-bold tracking-wider">Planos</p>
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900">Locais mais Requisitados</h2>
+            <h2 className="text-3xl md:text-4xl xl:text-5xl font-bold text-gray-900 leading-tight">Locais mais Requisitados</h2>
           </div>
 
           {/* Navegação */}
           <div className="flex gap-3 mt-2">
             <button
-              className="w-12 h-12 md:w-16 md:h-16 rounded-full border border-gray-300 flex items-center justify-center text-xl hover:bg-gray-100"
+              className="w-12 h-12 md:w-14 md:h-14 xl:w-16 xl:h-16 rounded-full border border-gray-300 flex items-center justify-center text-lg md:text-xl hover:bg-gray-100 cursor-pointer transition"
               onClick={() => scroll('left')}
               aria-label="Rolar para esquerda"
             >
               ←
             </button>
             <button
-              className="w-12 h-12 md:w-16 md:h-16 rounded-full bg-black text-white flex items-center justify-center text-xl hover:scale-105 transition"
+              className="w-12 h-12 md:w-14 md:h-14 xl:w-16 xl:h-16 rounded-full bg-black text-white flex items-center justify-center text-lg md:text-xl hover:scale-105 transition cursor-pointer"
               onClick={() => scroll('right')}
               aria-label="Rolar para direita"
             >

@@ -35,9 +35,8 @@ export default function Header() {
             : "bg-transparent"
         }`}
       >
-        <div className={`container mx-auto px-4 sm:px-6 lg:px-24 transition-all duration-300
+        <div className={`landing-container transition-all duration-300
           ${scrolled ? "py-4" : "py-6"}
-          md:px-24
         `}>
           <div className={`flex items-center justify-between transition-all duration-300
             ${scrolled ? "h-12 lg:h-16" : "h-16 lg:h-20"}
