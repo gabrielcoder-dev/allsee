@@ -30,6 +30,7 @@ export default function Plans() {
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const [autoScrollActive, setAutoScrollActive] = useState(true)
   const [currentIndex, setCurrentIndex] = useState(0)
+  const [visiblePerView, setVisiblePerView] = useState(1)
 
   useEffect(() => {
     async function fetchAnuncios() {
@@ -45,7 +46,6 @@ export default function Plans() {
           console.error('Erro ao buscar anúncios:', error)
           setAnuncios([])
         } else if (Array.isArray(data)) {
-          console.log('Totens carregados:', data.length)
           setAnuncios(data)
         }
       } catch (err) {
@@ -78,6 +78,7 @@ export default function Plans() {
       const computedWidth = (width - GAP * (perView - 1)) / perView
 
       setCardWidth(Math.max(260, computedWidth))
+      setVisiblePerView(perView)
     }
 
     calculateCardMetrics()
@@ -93,34 +94,36 @@ export default function Plans() {
     const container = scrollRef.current
     const { clientWidth, scrollWidth } = container
 
-    const cardTotal = (cardWidth ?? clientWidth) + 24
-    const cardsPerView = Math.max(1, Math.floor((clientWidth + 24) / cardTotal))
-    const step = cardsPerView
-    const maxIndex = Math.max(0, anuncios.length - cardsPerView)
+    if (anuncios.length === 0) return
 
-    let nextIndex = currentIndex
+    const cardTotal = (cardWidth ?? clientWidth) + 24
+    const step = Math.max(1, visiblePerView)
+    const maxIndex = Math.max(0, anuncios.length - step)
+
+    let proposedIndex =
+      direction === 'right' ? currentIndex + step : currentIndex - step
 
     if (direction === 'right') {
-      nextIndex = currentIndex + step
-      if (nextIndex > maxIndex) {
-        // Loop back to start
-        container.scrollTo({ left: 0, behavior: 'smooth' })
-        setCurrentIndex(0)
-        return
+      if (proposedIndex > maxIndex) {
+        if (currentIndex < maxIndex) {
+          proposedIndex = maxIndex
+        } else {
+          proposedIndex = 0
+        }
       }
     } else {
-      nextIndex = currentIndex - step
-      if (nextIndex < 0) {
-        const targetLeft = scrollWidth - clientWidth
-        container.scrollTo({ left: targetLeft > 0 ? targetLeft : 0, behavior: 'smooth' })
-        setCurrentIndex(maxIndex)
-        return
+      if (proposedIndex < 0) {
+        if (currentIndex > 0) {
+          proposedIndex = 0
+        } else {
+          proposedIndex = maxIndex
+        }
       }
     }
 
-    setCurrentIndex(nextIndex)
+    setCurrentIndex(proposedIndex)
 
-    const targetLeft = nextIndex * cardTotal
+    const targetLeft = proposedIndex * cardTotal
     container.scrollTo({
       left: Math.max(0, Math.min(targetLeft, scrollWidth)),
       behavior: 'smooth',
@@ -160,7 +163,7 @@ export default function Plans() {
         intervalRef.current = null
       }
     }
-  }, [autoScrollActive, cardWidth, anuncios.length, currentIndex])
+  }, [autoScrollActive, cardWidth, anuncios.length, visiblePerView, currentIndex])
 
   useEffect(() => {
     setCurrentIndex(0)
