@@ -23,7 +23,12 @@ const logos = [
 const Testimonials = () => {
   return (
     <section className="py-16">
-      <div className="landing-container">
+      <div className="landing-container space-y-8">
+        <div className="text-center">
+          <h3 className="text-xl md:text-2xl font-semibold text-gray-800">
+            Alguns dos nossos clientes
+          </h3>
+        </div>
         <div className="carousel-container">
           <div className="carousel-track">
             {[...logos, ...logos].map((logo, index) => (
