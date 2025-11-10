@@ -4,7 +4,7 @@ import heroImg from "@/assets/hero-img.png"
 const Hero = () => {
   return (
     <section className="relative overflow-hidden pt-32 pb-16 lg:pt-40 lg:pb-24" id="home">
-      <div className="landing-container relative flex flex-col-reverse items-center gap-12 lg:flex-row lg:items-center lg:justify-between lg:gap-28">
+      <div className="landing-container relative flex flex-col items-center gap-12 lg:flex-row lg:items-center lg:justify-between lg:gap-28">
         <div className="pointer-events-none absolute -z-10 w-[380px] h-[380px] -top-32 -left-10 rounded-full bg-orange-200 blur-3xl opacity-60 sm:w-[420px] sm:h-[420px] sm:-top-36 sm:-left-12 lg:w-[500px] lg:h-[500px] lg:-top-40 lg:-left-16 xl:w-[540px] xl:h-[540px] xl:-top-44 xl:-left-12"></div>
 
         {/* Conteúdo esquerdo */}
