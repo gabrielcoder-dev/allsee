@@ -18,7 +18,7 @@ export default function Cta() {
 
         {/* Botão */}
         <a
-          href="https://wa.me/5566999999999"
+          href="https://wa.me/5566999769524?text=Olá%20gostaria%20de%20tirar%20algumas%20duvidas"
           target="_blank"
           rel="noopener noreferrer"
           className="bg-orange-600 w-full max-w-xs md:max-w-md lg:max-w-lg text-center text-xl hover:bg-orange-500 text-white font-semibold py-4 md:py-5 px-4 md:px-10 rounded-3xl transition duration-300 cursor-pointer"

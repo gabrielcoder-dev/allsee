@@ -141,7 +141,7 @@ export default function ModalMenu({ open, onClose }: ModalMenuProps) {
           {/* Indique e ganhe + busca */}
           <div className="flex flex-col gap-2 mt-12">
             <a
-              href="https://wa.me/?text=Preciso%20de%20ajuda"
+              href="https://wa.me/5566999769524?text=Olá,%20estou%20com%20problemas%20com%20o%20site"
               target="_blank"
               rel="noopener noreferrer"
               className="bg-green-500 hover:bg-green-600 text-white px-3 py-2 flex items-center justify-center rounded-lg"
