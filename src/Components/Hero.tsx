@@ -13,7 +13,7 @@ const Hero = () => {
             Anuncie com nossos Totens
           </button>
 
-          <h2 className="text-3xl sm:text-[2.4rem] lg:text-[2.9rem] xl:text-[3.1rem] font-semibold leading-tight text-gray-900">
+          <h2 className="text-2xl sm:text-[2.2rem] lg:text-[2.6rem] xl:text-[2.75rem] font-semibold leading-tight text-gray-900 max-w-[28rem]">
             Anuncie onde os seus clientes <span className="text-orange-600">moram, trabalham e passam</span> todos os dias.
           </h2>
 
