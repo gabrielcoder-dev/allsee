@@ -96,16 +96,15 @@ export default function Plans() {
           ref={scrollRef}
           className="
             flex gap-6 overflow-x-auto pb-4
-            scroll-smooth
-            lg:grid lg:grid-cols-3 lg:gap-8 lg:overflow-x-visible hide-scrollbar
-            "
+            scroll-smooth snap-x snap-mandatory hide-scrollbar
+          "
           style={{ scrollbarWidth: 'thin' }}
         >
           {loading ? (
             Array.from({ length: 3 }).map((_, index) => (
               <div
                 key={`skeleton-${index}`}
-                className="rounded-[24px] min-w-[270px] max-w-xs w-full h-[360px] bg-white border border-gray-100 shadow-sm animate-pulse flex-shrink-0"
+                className="rounded-[24px] min-w-[300px] max-w-[300px] h-[360px] bg-white border border-gray-100 shadow-sm animate-pulse flex-shrink-0 snap-start"
               >
                 <div className="h-48 bg-gray-200 rounded-t-[24px]" />
                 <div className="p-5 space-y-4">
@@ -124,7 +123,7 @@ export default function Plans() {
             anuncios.map((anuncio) => (
               <div
                 key={anuncio.id}
-                className="rounded-[24px] min-w-[280px] max-w-xs w-full overflow-hidden shadow-md bg-white flex flex-col flex-shrink-0 border border-gray-100 transition-transform hover:-translate-y-1 hover:shadow-xl"
+                className="rounded-[24px] min-w-[300px] max-w-[300px] overflow-hidden shadow-md bg-white flex flex-col flex-shrink-0 border border-gray-100 transition-transform hover:-translate-y-1 hover:shadow-xl snap-start"
               >
                 <div className="relative h-48 overflow-hidden">
                   <img
