@@ -2,7 +2,8 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { createClient } from '@supabase/supabase-js'
-import { Monitor, Printer, MapPin } from 'lucide-react'
+import { Monitor, Printer, MapPin, PlayIcon, User2 } from 'lucide-react'
+import Link from 'next/link'
 
 type Anuncio = {
   id: number
@@ -195,11 +196,17 @@ export default function Plans() {
                       <span>{anuncio.address ?? 'Local a confirmar'}</span>
                     </p>
                     <div className="flex gap-4 text-xs text-gray-600">
-                      {anuncio.screens !== null && anuncio.screens !== undefined && (
-                        <span className="font-semibold">Telas: {anuncio.screens}</span>
+                      {anuncio.display !== null && anuncio.display !== undefined && (
+                        <span className="font-semibold inline-flex items-center gap-1">
+                          <PlayIcon className="w-4 h-4 text-orange-600" />
+                          {formatarMilhar(Number(anuncio.display))}
+                        </span>
                       )}
                       {anuncio.views !== null && anuncio.views !== undefined && (
-                        <span className="font-semibold">Alcance: {anuncio.views.toLocaleString('pt-BR')}</span>
+                        <span className="font-semibold inline-flex items-center gap-1">
+                          <User2 className="w-4 h-4 text-orange-600" />
+                          {formatarMilhar(Number(anuncio.views))}
+                        </span>
                       )}
                     </div>
                   </div>
@@ -208,9 +215,12 @@ export default function Plans() {
                     <p className="text-2xl font-bold text-orange-600">
                       R$ {Number(anuncio.price ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                     </p>
-                    <button className="bg-orange-600 w-full hover:bg-orange-500 text-white text-sm font-semibold py-3 rounded-full transition">
+                    <Link
+                      href="/results"
+                      className="bg-orange-600 w-full hover:bg-orange-500 text-white text-sm font-semibold py-3 rounded-full transition text-center cursor-pointer block"
+                    >
                       QUERO ADQUIRIR
-                    </button>
+                    </Link>
                   </div>
                 </div>
               </div>
@@ -220,4 +230,15 @@ export default function Plans() {
       </div>
     </section>
   )
+}
+
+function formatarMilhar(valor?: number | null) {
+  if (!valor) return '—'
+  if (valor >= 1000) {
+    return `${(valor / 1000).toLocaleString('pt-BR', {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    })} mil`
+  }
+  return valor.toLocaleString('pt-BR')
 }
