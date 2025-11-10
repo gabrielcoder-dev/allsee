@@ -148,6 +148,14 @@
   @apply mx-auto w-full max-w-[1080px] lg:max-w-[1180px] xl:max-w-[1280px] 2xl:max-w-[1420px] px-4 sm:px-6 lg:px-24 xl:px-28 2xl:px-32;
 }
 
+.hide-scrollbar {
+  scrollbar-width: none;
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
 .custom-orange-marker {
   background: none !important;
   border: none !important;

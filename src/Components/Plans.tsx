@@ -25,6 +25,7 @@ export default function Plans() {
   const scrollRef = useRef<HTMLDivElement>(null)
   const [anuncios, setAnuncios] = useState<Anuncio[]>([])
   const [loading, setLoading] = useState(true)
+  const [cardWidth, setCardWidth] = useState<number | null>(null)
 
   useEffect(() => {
     async function fetchAnuncios() {
@@ -50,6 +51,35 @@ export default function Plans() {
     }
 
     fetchAnuncios()
+  }, [])
+
+  useEffect(() => {
+    const GAP = 24 // gap-6
+
+    const calculateCardMetrics = () => {
+      const container = scrollRef.current
+      if (!container) return
+
+      const width = container.clientWidth
+      if (width === 0) return
+
+      let perView = 1
+      if (width >= 560) perView = 2
+      if (width >= 920) perView = 3
+      if (width >= 1200) perView = 4
+      if (width >= 1500) perView = 5
+
+      const computedWidth = (width - GAP * (perView - 1)) / perView
+
+      setCardWidth(Math.max(260, computedWidth))
+    }
+
+    calculateCardMetrics()
+    window.addEventListener('resize', calculateCardMetrics)
+
+    return () => {
+      window.removeEventListener('resize', calculateCardMetrics)
+    }
   }, [])
 
   const scroll = (direction: 'left' | 'right') => {
@@ -98,13 +128,18 @@ export default function Plans() {
             flex gap-6 overflow-x-auto pb-4
             scroll-smooth snap-x snap-mandatory hide-scrollbar
           "
-          style={{ scrollbarWidth: 'thin' }}
+          style={{ scrollbarWidth: 'none' }}
         >
           {loading ? (
             Array.from({ length: 3 }).map((_, index) => (
               <div
                 key={`skeleton-${index}`}
-                className="rounded-[24px] min-w-[300px] max-w-[300px] h-[360px] bg-white border border-gray-100 shadow-sm animate-pulse flex-shrink-0 snap-start"
+                className="rounded-[24px] h-[360px] bg-white border border-gray-100 shadow-sm animate-pulse flex-shrink-0 snap-start"
+                style={
+                  cardWidth
+                    ? { minWidth: `${cardWidth}px`, maxWidth: `${cardWidth}px` }
+                    : undefined
+                }
               >
                 <div className="h-48 bg-gray-200 rounded-t-[24px]" />
                 <div className="p-5 space-y-4">
@@ -123,7 +158,12 @@ export default function Plans() {
             anuncios.map((anuncio) => (
               <div
                 key={anuncio.id}
-                className="rounded-[24px] min-w-[300px] max-w-[300px] overflow-hidden shadow-md bg-white flex flex-col flex-shrink-0 border border-gray-100 transition-transform hover:-translate-y-1 hover:shadow-xl snap-start"
+                className="rounded-[24px] overflow-hidden shadow-md bg-white flex flex-col flex-shrink-0 border border-gray-100 transition-transform hover:-translate-y-1 hover:shadow-xl snap-start"
+                style={
+                  cardWidth
+                    ? { minWidth: `${cardWidth}px`, maxWidth: `${cardWidth}px` }
+                    : undefined
+                }
               >
                 <div className="relative h-48 overflow-hidden">
                   <img
