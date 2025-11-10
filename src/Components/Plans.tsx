@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { createClient } from '@supabase/supabase-js'
-import { Monitor, Printer, MapPin, PlayIcon, User2 } from 'lucide-react'
+import { Monitor, Printer, MapPin, PlayIcon, User2, ChevronRight, ChevronLeft } from 'lucide-react'
 import Link from 'next/link'
 
 type Anuncio = {
@@ -27,6 +27,9 @@ export default function Plans() {
   const [anuncios, setAnuncios] = useState<Anuncio[]>([])
   const [loading, setLoading] = useState(true)
   const [cardWidth, setCardWidth] = useState<number | null>(null)
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const [autoScrollActive, setAutoScrollActive] = useState(true)
+  const [cardOffset, setCardOffset] = useState(0)
 
   useEffect(() => {
     async function fetchAnuncios() {
@@ -84,14 +87,84 @@ export default function Plans() {
   }, [])
 
   const scroll = (direction: 'left' | 'right') => {
-    if (scrollRef.current) {
-      const { clientWidth } = scrollRef.current
-      scrollRef.current.scrollBy({
-        left: direction === 'right' ? clientWidth * 0.8 : -clientWidth * 0.8,
-        behavior: 'smooth',
-      })
+    if (!scrollRef.current) return
+    const container = scrollRef.current
+    const { clientWidth, scrollWidth, scrollLeft } = container
+
+    const gap = 24
+    const effectiveCardWidth = cardWidth ?? (clientWidth - gap) / Math.max(1, Math.round(clientWidth / 320))
+    const cardsPerPage = Math.max(1, Math.round(clientWidth / (effectiveCardWidth || 1)))
+    const step = cardsPerPage
+    const maxOffset = Math.max(0, anuncios.length - step)
+
+    let nextOffset = cardOffset
+
+    if (direction === 'right') {
+      nextOffset = cardOffset + step
+      if (nextOffset > maxOffset) {
+        container.scrollTo({ left: 0, behavior: 'smooth' })
+        setCardOffset(0)
+        return
+      }
+    } else {
+      nextOffset = cardOffset - step
+      if (nextOffset < 0) {
+        const target = scrollWidth - clientWidth
+        container.scrollTo({ left: target >= 0 ? target : 0, behavior: 'smooth' })
+        setCardOffset(maxOffset)
+        return
+      }
+    }
+
+    setCardOffset(nextOffset)
+
+    container.scrollTo({
+      left: direction === 'right' ? Math.min(scrollWidth, scrollLeft + clientWidth) : Math.max(0, scrollLeft - clientWidth),
+      behavior: 'smooth',
+    })
+  }
+
+  const stopAutoScroll = () => {
+    setAutoScrollActive(false)
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current)
+      intervalRef.current = null
     }
   }
+
+  useEffect(() => {
+    if (!scrollRef.current || !autoScrollActive) {
+      if (!autoScrollActive) {
+        if (intervalRef.current) {
+          clearInterval(intervalRef.current)
+          intervalRef.current = null
+        }
+      }
+      return
+    }
+
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current)
+    }
+
+    intervalRef.current = setInterval(() => {
+      scroll('right')
+    }, 2000)
+
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current)
+        intervalRef.current = null
+      }
+    }
+  }, [autoScrollActive, cardWidth, anuncios.length])
+
+  useEffect(() => {
+    setCardOffset(0)
+    if (scrollRef.current) {
+      scrollRef.current.scrollTo({ left: 0 })
+    }
+  }, [anuncios.length])
 
   return (
     <section className="py-20 bg-white" id='locais'>
@@ -107,17 +180,23 @@ export default function Plans() {
           <div className="flex gap-3 mt-2">
             <button
               className="w-12 h-12 md:w-14 md:h-14 xl:w-16 xl:h-16 rounded-full border border-gray-300 flex items-center justify-center text-lg md:text-xl hover:bg-gray-100 cursor-pointer transition"
-              onClick={() => scroll('left')}
+              onClick={() => {
+                stopAutoScroll()
+                scroll('left')
+              }}
               aria-label="Rolar para esquerda"
             >
-              ←
+              <ChevronLeft className="w-6 h-6" />
             </button>
             <button
               className="w-12 h-12 md:w-14 md:h-14 xl:w-16 xl:h-16 rounded-full bg-black text-white flex items-center justify-center text-lg md:text-xl hover:scale-105 transition cursor-pointer"
-              onClick={() => scroll('right')}
+              onClick={() => {
+                stopAutoScroll()
+                scroll('right')
+              }}
               aria-label="Rolar para direita"
             >
-              →
+              <ChevronRight className="w-6 h-6" />
             </button>
           </div>
         </div>
@@ -130,6 +209,9 @@ export default function Plans() {
             scroll-smooth snap-x snap-mandatory hide-scrollbar
           "
           style={{ scrollbarWidth: 'none' }}
+          onWheel={stopAutoScroll}
+          onTouchStart={stopAutoScroll}
+          onMouseDown={stopAutoScroll}
         >
           {loading ? (
             Array.from({ length: 3 }).map((_, index) => (
