@@ -294,12 +294,12 @@ const AproveitionAdmin = () => {
               </div>
               <div className="flex items-center gap-2 md:gap-3 flex-shrink-0">
                 <button
-                  className="bg-red-500 hover:bg-red-600 text-white rounded-lg md:rounded-xl px-3 py-2 font-medium text-xs md:text-sm min-w-[70px] cursor-pointer transition-colors flex items-center gap-2"
+                  className="bg-red-500 hover:bg-red-600 text-white rounded-lg md:rounded-xl px-3 py-1.5 font-medium text-xs md:text-sm min-w-[70px] cursor-pointer transition-colors flex items-center gap-2"
                   onClick={() => setOrderToDelete(group.orderId)}
                   title="Excluir pedido"
                 >
                   <span className="font-semibold text-base">×</span>
-                  Excluir pedido
+                  Excluir campanha
                 </button>
               </div>
             </div>
