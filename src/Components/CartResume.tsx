@@ -719,7 +719,7 @@ export default function CartResume({
             {/* Performance projetada */}
             <div>
               <h2 className="text-lg font-bold mb-2">Performance projetada</h2>
-              <div className="grid grid-cols-3 gap-2 text-center">
+              <div className="grid grid-cols-4 gap-2 text-center">
                 <div>
                   <span className="block text-xs text-gray-500">exibições</span>
                   <span className="font-bold">
@@ -782,6 +782,35 @@ export default function CartResume({
                           if (duration === "24") views = views * 12;
                         }
                         total += views;
+                      });
+                      return total >= 1000
+                        ? (total / 1000).toLocaleString("pt-BR", {
+                            minimumFractionDigits: 1,
+                            maximumFractionDigits: 1,
+                          }) + " mil"
+                        : total.toLocaleString("pt-BR");
+                    })()}
+                  </span>
+                </div>
+                <div>
+                  <span className="block text-xs text-gray-500">impacto</span>
+                  <span className="font-bold">
+                    {(() => {
+                      let total = 0;
+                      produtos.forEach((p) => {
+                        let views = Number(p.views) || 0;
+                        const durationsTrue = [
+                          p.duration_2,
+                          p.duration_4,
+                          p.duration_12,
+                          p.duration_24,
+                        ].filter(Boolean).length;
+                        if (durationsTrue > 1) {
+                          if (duration === "4") views = views * 2;
+                          if (duration === "12") views = views * 6;
+                          if (duration === "24") views = views * 12;
+                        }
+                        total += views * 3;
                       });
                       return total >= 1000
                         ? (total / 1000).toLocaleString("pt-BR", {
