@@ -325,7 +325,7 @@ const Page = () => {
           </div>
 
           {/* Mapa - Desktop */}
-          <div className={`${isMapFullscreen ? 'w-full h-full' : 'hidden xl:block w-[400px]'} relative z-10`}>
+          <div className={`${isMapFullscreen ? 'w-full h-full' : 'hidden xl:block w-[400px]'} relative ${isMapFullscreen ? 'z-0' : 'z-10'}`}>
             <Mapbox 
               anunciosFiltrados={anunciosFiltrados} 
               onCityFound={handleCityFound} 
