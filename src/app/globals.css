@@ -120,6 +120,9 @@
   body {
     @apply bg-background text-foreground;
   }
+  html {
+    font-size: clamp(15px, 0.9vw + 10px, 18px);
+  }
 }
 
 /* Line clamp utilities */
@@ -146,6 +149,18 @@
 
 .landing-container {
   @apply mx-auto w-full max-w-[1080px] lg:max-w-[1180px] xl:max-w-[1280px] 2xl:max-w-[1420px] px-4 sm:px-6 lg:px-24 xl:px-28 2xl:px-32;
+}
+
+@media (min-width: 1600px) {
+  .landing-container {
+    max-width: min(88vw, 1550px);
+  }
+}
+
+@media (min-width: 1920px) {
+  .landing-container {
+    max-width: min(82vw, 1750px);
+  }
 }
 
 .hide-scrollbar {

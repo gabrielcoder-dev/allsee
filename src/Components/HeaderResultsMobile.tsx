@@ -21,7 +21,7 @@ type MobileHeaderProps = {
   onDurationChange?: (value: string) => void;
   selectedDuration?: string;
   onSearch?: (location: string, duration: string, startDate: Date | undefined) => void;
-  onTipoMidiaChange?: (tipo: string | null, bairros: string[]) => void;
+  onTipoMidiaChange?: (tipo: string | null, bairros?: string[]) => void;
   orderBy?: string;
   onOrderChange?: (order: string) => void;
   onToggleMapView?: () => void;

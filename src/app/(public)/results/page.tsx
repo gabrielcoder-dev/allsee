@@ -276,7 +276,7 @@ const Page = () => {
         <HeaderResultsDesktop 
           onDurationChange={setSelectedDurationGlobal} 
           selectedDuration={selectedDurationGlobal}
-          onTipoMidiaChange={(tipo, bairros) => { 
+          onTipoMidiaChange={(tipo, bairros = []) => { 
             setTipoMidia(tipo); 
             setBairros(bairros); 
           }}
@@ -292,7 +292,7 @@ const Page = () => {
             onDurationChange={setSelectedDurationGlobal} 
             selectedDuration={selectedDurationGlobal}
             onSearch={handleSearch}
-            onTipoMidiaChange={(tipo, bairros) => { 
+            onTipoMidiaChange={(tipo, bairros = []) => { 
               setTipoMidia(tipo); 
               setBairros(bairros); 
             }}
@@ -387,7 +387,7 @@ const Page = () => {
       <HeaderResultsDesktop 
         onDurationChange={setSelectedDurationGlobal} 
         selectedDuration={selectedDurationGlobal}
-        onTipoMidiaChange={(tipo, bairros) => { 
+          onTipoMidiaChange={(tipo, bairros = []) => { 
           setTipoMidia(tipo); 
           setBairros(bairros); 
         }}
@@ -403,7 +403,7 @@ const Page = () => {
           onDurationChange={setSelectedDurationGlobal} 
           selectedDuration={selectedDurationGlobal}
           onSearch={handleSearch}
-          onTipoMidiaChange={(tipo, bairros) => { 
+            onTipoMidiaChange={(tipo, bairros = []) => { 
             setTipoMidia(tipo); 
             setBairros(bairros); 
           }}

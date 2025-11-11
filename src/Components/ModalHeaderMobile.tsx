@@ -22,7 +22,7 @@ type ModalHeaderMobileProps = {
   onDurationChange?: (value: string) => void;
   selectedDuration?: string;
   onSearch?: (location: string, duration: string, startDate: Date | undefined) => void;
-  onTipoMidiaChange?: (tipo: string | null, bairros: string[]) => void;
+  onTipoMidiaChange?: (tipo: string | null, bairros?: string[]) => void;
   onCityFound?: (coords: { lat: number; lng: number; totemId?: number; cityName?: string }) => void;
   onSpecificTotemFound?: (totemId: number) => void;
 }
