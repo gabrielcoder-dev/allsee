@@ -602,7 +602,7 @@ export default function GetAnunciosResults({
                   )}
                 </div>
                 <h3 className="font-bold text-lg">{anuncio.name}</h3>
-                <div className="text-gray-500 text-xs 2xl:text-[15px] mb-1 line-clamp-2">
+                <div className="text-gray-500 text-xs 2xl:text-[15px] mb-1 leading-snug">
                   {anuncio.address}
                 </div>
                 <div className="flex gap-4 mb-1">
