@@ -261,7 +261,7 @@ const AproveitionAdmin = () => {
               className="relative flex flex-col md:flex-row md:items-center gap-3 md:gap-4 justify-between bg-white border border-gray-200 rounded-xl md:rounded-2xl p-3 md:p-4 shadow-sm hover:shadow-md transition-shadow"
             >
               {hasPendingArt && (
-                <span className="absolute -top-1 left-2 inline-flex h-4 w-4 rounded-full bg-orange-500 border-2 border-white"></span>
+                <span className="absolute -top-1 -left-1 inline-flex h-4 w-4 rounded-full bg-orange-500 border-2 border-white"></span>
               )}
               <div className="flex flex-col sm:flex-row sm:items-center gap-3 md:gap-4 min-w-0 flex-1">
                 <div className="flex flex-col gap-1 min-w-0">
