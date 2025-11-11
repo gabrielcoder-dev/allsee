@@ -593,16 +593,16 @@ export default function GetAnunciosResults({
                 <div className="flex gap-2 mb-2">
                   {anuncio.type_screen?.toLowerCase() === "impresso" ? (
                     <span className="bg-green-600 text-white text-xs xl:text-sm 2xl:text-base px-2 py-1 rounded font-medium flex items-center gap-1">
-                      <Printer className="w-4 h-4 xl:w-5 xl:h-5 2xl:w-6 2xl:h-6 mr-1 inline" /> impresso
+                      <Printer className="w-4 h-4 xl:w-5 xl:h-5 2xl:w-5.5 2xl:h-5.5 mr-1 inline" /> impresso
                     </span>
                   ) : (
                     <span className="bg-purple-600 text-white text-xs xl:text-sm 2xl:text-base px-2 py-1 rounded font-medium flex items-center gap-1">
-                      <Monitor className="w-4 h-4 xl:w-5 xl:h-5 2xl:w-6 2xl:h-6 mr-1 inline" /> digital
+                      <Monitor className="w-4 h-4 xl:w-5 xl:h-5 2xl:w-5.5 2xl:h-5.5 mr-1 inline" /> digital
                     </span>
                   )}
                 </div>
                 <h3 className="font-bold text-lg">{anuncio.name}</h3>
-                <div className="text-gray-500 text-xs xl:text-sm 2xl:text-base mb-1">
+                <div className="text-gray-500 text-xs xl:text-sm 2xl:text-[15px] mb-1">
                   {anuncio.address}
                 </div>
                 <div className="flex gap-4 mb-1">
@@ -610,10 +610,10 @@ export default function GetAnunciosResults({
                     <span className="text-[9px] xl:text-xs 2xl:text-sm text-gray-500 font-medium lowercase flex items-center gap-1">
                       exibições{" "}
                       <span className="text-[9px] xl:text-sm 2xl:text-base">
-                        <PlayIcon className="w-2.5 xl:w-3.5 2xl:w-4" />
+                        <PlayIcon className="w-2.5 xl:w-3.5 2xl:w-3.75" />
                       </span>
                     </span>
-                    <span className="font-bold text-sm xl:text-lg 2xl:text-xl">
+                    <span className="font-bold text-sm xl:text-lg 2xl:text-[1.2rem]">
                       {String(anuncio.display) === "fixo"
                         ? "fixo"
                         : anuncio.type_screen === "digital"
@@ -630,10 +630,10 @@ export default function GetAnunciosResults({
                     <span className="text-[9px] xl:text-xs 2xl:text-sm text-gray-500 font-medium lowercase flex items-center gap-1">
                       alcance{" "}
                       <span className="text-[9px] xl:text-sm 2xl:text-base">
-                        <User2 className="w-2.5 xl:w-3.5 2xl:w-4" />
+                        <User2 className="w-2.5 xl:w-3.5 2xl:w-3.75" />
                       </span>
                     </span>
-                    <span className="font-bold text-sm xl:text-lg 2xl:text-xl">
+                    <span className="font-bold text-sm xl:text-lg 2xl:text-[1.2rem]">
                       {formatarMilhar(viewsCalculado)}
                     </span>
                   </div>
@@ -641,10 +641,10 @@ export default function GetAnunciosResults({
                     <span className="text-[9px] xl:text-xs 2xl:text-sm text-gray-500 font-medium lowercase flex items-center gap-1">
                       impacto{" "}
                       <span className="text-[9px] xl:text-sm 2xl:text-base">
-                        <Zap className="w-2.5 xl:w-3.5 2xl:w-4" />
+                        <Zap className="w-2.5 xl:w-3.5 2xl:w-3.75" />
                       </span>
                     </span>
-                    <span className="font-bold text-sm xl:text-lg 2xl:text-xl">
+                    <span className="font-bold text-sm xl:text-lg 2xl:text-[1.2rem]">
                       {formatarMilhar(viewsCalculado * 3)}
                     </span>
                   </div>
