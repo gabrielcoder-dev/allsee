@@ -501,7 +501,7 @@ export default function GetAnunciosResults({
         />
       )}
       <div className="flex-1 min-h-0 overflow-y-auto pr-2">
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6 2xl:gap-7 p-4 pb-32 md:pb-12">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6 p-4 pb-32 md:pb-12">
           {anuncios.map((anuncio) => {
             const estaNoCarrinho = produtos.some(
               (p) => p.id === anuncio.id.toString()
@@ -551,8 +551,8 @@ export default function GetAnunciosResults({
               <div
                 key={anuncio.id}
                 className="
-                  bg-white rounded-2xl shadow-lg border border-gray-100 p-3 2xl:p-4 flex flex-col gap-1
-                  w-full max-w-xl 2xl:max-w-none h-[440px] 2xl:h-[470px]
+                  bg-white rounded-2xl shadow-lg border border-gray-100 p-3 flex flex-col gap-1
+                  w-full max-w-xl h-[440px]
                   transition-all
                   hover:shadow-xl
                 "

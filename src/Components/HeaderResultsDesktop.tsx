@@ -137,19 +137,19 @@ const HeaderResultsDesktop = ({ onDurationChange, selectedDuration, onTipoMidiaC
 
   return (
     <>
-      <div className="w-full border-b border-gray-200 hidden px-8 lg:px-12 2xl:px-20 py-3 lg:flex top-0 left-0 right-0 z-40 justify-between items-center gap-4 ">
+      <div className="w-full border-b border-gray-200 hidden px-12 py-3 lg:flex top-0 left-0 right-0 z-40 justify-between items-center gap-4 ">
 
         <Image
         src={logoImg}
         alt="Logo"
-        className='w-[70px] lg:w-20 2xl:w-24'
+        className='w-20'
         />
 
         {/* Pesquisa de localização */}
-        <div className=' flex flex-col gap-4 md:flex-col lg:flex-row lg:items-center justify-center'>
+        <div className=' flex flex-col gap-4  md:flex-col lg:flex-row lg:items-center justify-center'>
 
-          <div className='flex items-center gap-4 2xl:gap-6 shadow-sm rounded-xl p-3 2xl:p-4'>
-            <div className='flex items-center gap-6 lg:gap-8 bg-gray-50 rounded-lg px-3 py-2 2xl:px-4 2xl:py-3'>
+          <div className='flex items-center gap-4 shadow-sm rounded-xl p-3'>
+            <div className='flex items-center gap-8 bg-gray-50 rounded-lg px-3 py-2'>
               <AddressAutocomplete
                 query={query}
                 setQuery={setQuery}
@@ -241,7 +241,7 @@ const HeaderResultsDesktop = ({ onDurationChange, selectedDuration, onTipoMidiaC
             <div className='flex-col hidden md:flex'>
               <span className="text-gray-500 mb-1 font-semibold">Duração</span>
               <Select value={selectedDurationGlobal} onValueChange={setSelectedDurationGlobal}>
-                <SelectTrigger className="w-32 2xl:w-40 bg-gray-50 rounded-lg px-3 py-2 2xl:px-4 2xl:py-3">
+                <SelectTrigger className="w-32 bg-gray-50 rounded-lg px-3 py-2">
                   <SelectValue placeholder="duração" />
                 </SelectTrigger>
                 <SelectContent>
@@ -254,10 +254,10 @@ const HeaderResultsDesktop = ({ onDurationChange, selectedDuration, onTipoMidiaC
 
             {/* Data de início */}
              <div className='flex-col hidden md:flex'>
-              <span className="text-gray-500 mb-1 font-semibold">Início</span>
+              <span className="text-gray-500 mb-1 font-semibold">Inicio</span>
             <Popover>
               <PopoverTrigger asChild>
-                <Button variant="outline" className="bg-gray-50 rounded-lg px-3 py-2 2xl:px-4 2xl:py-3 flex items-center gap-2">
+                <Button variant="outline" className="bg-gray-50 rounded-lg px-3 py-2 flex items-center gap-2">
                   <CalendarIcon className="w-4 h-4 text-orange-500" />
                   <span>
                     {formData.startDate && /^\d{4}-\d{2}-\d{2}$/.test(formData.startDate)
