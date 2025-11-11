@@ -72,6 +72,14 @@ const AproveitionAdmin = () => {
             ? originalOrderId
             : item.id;
 
+          let statusLocal: ArteCampanhaItem['statusLocal'];
+          if (typeof window !== 'undefined') {
+            const storedStatus = localStorage.getItem(`replacement_order_${item.id}`);
+            if (storedStatus === 'aceita' || storedStatus === 'não aceita') {
+              statusLocal = storedStatus;
+            }
+          }
+
           return {
             id: item.id,
             caminho_imagem: item.caminho_imagem,
@@ -80,6 +88,7 @@ const AproveitionAdmin = () => {
             anuncio_id: item.id_anuncio ?? null,
             mime_type: item.mime_type ?? null,
             screen_type: item.screen_type ?? null,
+            statusLocal,
           };
         });
         setArteCampanhas(adaptedOrders);
@@ -347,20 +356,36 @@ const AproveitionAdmin = () => {
                           <p className="text-sm text-gray-600">{anuncioName}</p>
                         </div>
                         <div className="flex items-center gap-2">
-                          <button
-                            className="p-2 rounded-md bg-emerald-500 hover:bg-emerald-600 text-white transition-colors cursor-pointer"
-                            onClick={() => handleApproveArte(arte)}
-                            aria-label="Aprovar arte"
-                          >
-                            <Check className="w-4 h-4" />
-                          </button>
-                          <button
-                            className="p-2 rounded-md bg-red-500 hover:bg-red-600 text-white transition-colors cursor-pointer"
-                            onClick={() => handleRejectArte(arte)}
-                            aria-label="Reprovar arte"
-                          >
-                            <X className="w-4 h-4" />
-                          </button>
+                          {arte.statusLocal ? (
+                            <span
+                              className={`text-sm font-semibold ${
+                                arte.statusLocal === 'aceita'
+                                  ? 'text-emerald-600'
+                                  : 'text-red-500'
+                              }`}
+                            >
+                              {arte.statusLocal === 'aceita'
+                                ? 'Arte aceita'
+                                : 'Arte recusada'}
+                            </span>
+                          ) : (
+                            <>
+                              <button
+                                className="p-2 rounded-md bg-emerald-500 hover:bg-emerald-600 text-white transition-colors cursor-pointer"
+                                onClick={() => handleApproveArte(arte)}
+                                aria-label="Aprovar arte"
+                              >
+                                <Check className="w-4 h-4" />
+                              </button>
+                              <button
+                                className="p-2 rounded-md bg-red-500 hover:bg-red-600 text-white transition-colors cursor-pointer"
+                                onClick={() => handleRejectArte(arte)}
+                                aria-label="Reprovar arte"
+                              >
+                                <X className="w-4 h-4" />
+                              </button>
+                            </>
+                          )}
                         </div>
                       </div>
                       <div className="flex gap-2">
