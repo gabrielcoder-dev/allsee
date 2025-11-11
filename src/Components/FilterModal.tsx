@@ -3,18 +3,13 @@
 import { useState } from 'react'
 import { Monitor, Printer, X } from 'lucide-react'
 
-const ambientes = [
-  'Centro', 'Jardim Itália', 'Centro Leste', 'Jardim Riva 2'
-]
-
 const tiposMidia = [
   { label: 'Digital', value: 'digital', icon: <Monitor className="w-5 h-5" /> },
   { label: 'Impresso', value: 'impresso', icon: <Printer className="w-5 h-5" /> },
 ]
 
-export default function FilterModal({ open, onClose, onFilter }: { open: boolean, onClose: () => void, onFilter?: (tipo: string | null, bairros: string[]) => void }) {
+export default function FilterModal({ open, onClose, onFilter }: { open: boolean, onClose: () => void, onFilter?: (tipo: string | null) => void }) {
   const [selectedTipo, setSelectedTipo] = useState<string[]>([])
-  const [selectedAmbientes, setSelectedAmbientes] = useState<string[]>([])
 
   if (!open) return null
 
@@ -25,23 +20,8 @@ export default function FilterModal({ open, onClose, onFilter }: { open: boolean
     })
   }
 
-  const toggleAmbiente = (amb: string) => {
-    setSelectedAmbientes(prev =>
-      prev.includes(amb) ? prev.filter(a => a !== amb) : [...prev, amb]
-    )
-  }
-
-  const marcarTodos = () => {
-    if (selectedAmbientes.length === ambientes.length) {
-      setSelectedAmbientes([])
-    } else {
-      setSelectedAmbientes(ambientes)
-    }
-  }
-
   const limparFiltro = () => {
     setSelectedTipo([])
-    setSelectedAmbientes([])
   }
 
   return (
@@ -59,7 +39,7 @@ export default function FilterModal({ open, onClose, onFilter }: { open: boolean
       ">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-5">
-          <span className="text-2xl font-semibold">filtro <span className="text-base font-normal text-gray-500">{selectedTipo.length + selectedAmbientes.length > 0 ? `(${selectedTipo.length + selectedAmbientes.length})` : ''}</span></span>
+          <span className="text-2xl font-semibold">filtro <span className="text-base font-normal text-gray-500">{selectedTipo.length > 0 ? `(${selectedTipo.length})` : ''}</span></span>
           <button onClick={onClose} className="p-2 rounded hover:bg-gray-100">
             <X className="w-6 h-6" />
           </button>
@@ -87,33 +67,6 @@ export default function FilterModal({ open, onClose, onFilter }: { open: boolean
             </div>
           </div>
 
-          {/* Ambientes */}
-          <div className="mb-2 font-semibold">Selecione bairros para anunciar</div>
-          <div className="flex items-center mb-3">
-            <input
-              type="checkbox"
-              checked={selectedAmbientes.length === ambientes.length}
-              onChange={marcarTodos}
-              id="marcar-todos"
-              className="mr-2 accent-orange-500"
-            />
-            <label htmlFor="marcar-todos" className="text-gray-700 text-sm">Marcar todos</label>
-          </div>
-          <div className="flex flex-wrap gap-3">
-            {ambientes.map(amb => (
-              <button
-                key={amb}
-                className={`flex items-center px-4 py-2 rounded-full border text-sm
-                  ${selectedAmbientes.includes(amb) ? 'bg-gray-100 border-orange-400 text-orange-600' : 'bg-white border-gray-300 text-gray-900'}
-                `}
-                onClick={() => toggleAmbiente(amb)}
-                type="button"
-              >
-                {/* Aqui você pode colocar o ícone de cada ambiente, se quiser */}
-                {amb}
-              </button>
-            ))}
-          </div>
         </div>
 
         {/* Rodapé */}
@@ -128,7 +81,7 @@ export default function FilterModal({ open, onClose, onFilter }: { open: boolean
           <button
             className="flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white font-semibold rounded-lg px-6 py-2 text-base"
             onClick={() => {
-              if (onFilter) onFilter(selectedTipo[0] || null, selectedAmbientes);
+              if (onFilter) onFilter(selectedTipo[0] || null);
               onClose();
             }}
             type="button"

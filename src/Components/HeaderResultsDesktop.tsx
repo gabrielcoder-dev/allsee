@@ -357,9 +357,9 @@ const HeaderResultsDesktop = ({ onDurationChange, selectedDuration, onTipoMidiaC
         </div>
 
         {/* Modal de filtro */}
-        <FilterModal open={showFilter} onClose={() => setShowFilter(false)} onFilter={(tipo, bairros) => {
+        <FilterModal open={showFilter} onClose={() => setShowFilter(false)} onFilter={(tipo) => {
           setTipoMidia(tipo);
-          if (onTipoMidiaChange) onTipoMidiaChange(tipo, bairros);
+          if (onTipoMidiaChange) onTipoMidiaChange(tipo, []);
         }} />
         <ModalMenu open={showMenuModal} onClose={() => setShowMenuModal(false)} />
 
