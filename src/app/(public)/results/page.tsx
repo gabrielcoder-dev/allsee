@@ -325,7 +325,7 @@ const Page = () => {
           </div>
 
           {/* Mapa - Desktop */}
-          <div className={`${isMapFullscreen ? 'w-full h-full' : 'hidden xl:block w-[400px]'}`}>
+          <div className={`${isMapFullscreen ? 'w-full h-full' : 'hidden xl:block w-[400px]'} relative z-10`}>
             <Mapbox 
               anunciosFiltrados={anunciosFiltrados} 
               onCityFound={handleCityFound} 
@@ -357,7 +357,7 @@ const Page = () => {
             
             {/* Mapa sobreposto quando ativo */}
             {isMobileMapView && (
-              <div className="absolute inset-0 z-50">
+              <div className="absolute inset-0 z-40">
                 <Mapbox 
                   anunciosFiltrados={anunciosFiltrados} 
                   onCityFound={handleCityFound} 
@@ -469,7 +469,7 @@ const Page = () => {
           
           {/* Mapa sobreposto quando ativo */}
           {isMobileMapView && (
-            <div className="absolute inset-0 z-50">
+            <div className="absolute inset-0 z-40">
               <Mapbox 
                 anunciosFiltrados={anunciosFiltrados} 
                 onCityFound={handleCityFound} 
