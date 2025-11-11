@@ -42,16 +42,17 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
 
       if (!data) return 0;
 
-      // Filtrar apenas as que não foram aprovadas/rejeitadas
-      let pendingCount = 0;
+      const pendingOrders = new Set<string>();
+
       for (const item of data) {
-        const status = localStorage.getItem(`order_${item.order_id}`) || "pendente";
+        const orderId = item.order_id ?? item.id;
+        const status = localStorage.getItem(`order_${orderId}`) || "pendente";
         if (status !== 'aprovado' && status !== 'rejeitado') {
-          pendingCount++;
+          pendingOrders.add(String(orderId));
         }
       }
 
-      return pendingCount;
+      return pendingOrders.size;
     } catch (error) {
       console.error('Erro ao contar aprovações:', error);
       return 0;

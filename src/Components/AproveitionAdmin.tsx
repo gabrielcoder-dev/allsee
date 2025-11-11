@@ -165,6 +165,13 @@ const AproveitionAdmin = () => {
         chave: arteKey,
       },
     }));
+    window.dispatchEvent(new CustomEvent('approvalStatusChanged', {
+      detail: {
+        id_campanha: arte.id,
+        status,
+        orderId: arte.id_order,
+      },
+    }));
 
     setArteCampanhas((prev) =>
       prev.map((item) =>
@@ -247,6 +254,7 @@ const AproveitionAdmin = () => {
       <div className="space-y-3 md:space-y-4">
         {groupedOrders.map((group) => {
           const status = getOrderStatus(group.orderId);
+          const hasPendingArt = status !== 'aprovado' && status !== 'rejeitado';
           return (
             <div
               key={group.orderId}
@@ -259,7 +267,14 @@ const AproveitionAdmin = () => {
                     {orderInfoMap[group.orderId]?.nome_campanha || `Pedido #${group.orderId}`}
                   </span>
                   <span className="text-xs text-gray-500">{group.artes.length} arquivo(s)</span>
-                  <span className="text-xs text-gray-500">Status atual: {status}</span>
+                  <span className="text-xs text-gray-500 flex items-center gap-2">
+                    Status atual: {status}
+                    {hasPendingArt && (
+                      <span className="inline-flex items-center px-2 py-0.5 text-[10px] font-semibold text-orange-600 bg-orange-50 border border-orange-200 rounded-full uppercase tracking-wide">
+                        Nova arte
+                      </span>
+                    )}
+                  </span>
                 </div>
                 <div className="flex items-center gap-2 md:gap-3 flex-wrap sm:ml-auto">
                   <button
