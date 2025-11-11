@@ -592,12 +592,12 @@ export default function GetAnunciosResults({
                 </div>
                 <div className="flex gap-2 mb-2">
                   {anuncio.type_screen?.toLowerCase() === "impresso" ? (
-                    <span className="bg-green-600 text-white text-xs px-2 py-1 rounded font-medium flex items-center gap-1">
-                      <Printer className="w-4 h-4 mr-1 inline" /> impresso
+                    <span className="bg-green-600 text-white text-xs lg:text-sm px-2 py-1 rounded font-medium flex items-center gap-1">
+                      <Printer className="w-4 h-4 lg:w-5 lg:h-5 mr-1 inline" /> impresso
                     </span>
                   ) : (
-                    <span className="bg-purple-600 text-white text-xs px-2 py-1 rounded font-medium flex items-center gap-1">
-                      <Monitor className="w-4 h-4 mr-1 inline" /> digital
+                    <span className="bg-purple-600 text-white text-xs lg:text-sm px-2 py-1 rounded font-medium flex items-center gap-1">
+                      <Monitor className="w-4 h-4 lg:w-5 lg:h-5 mr-1 inline" /> digital
                     </span>
                   )}
                 </div>
@@ -607,13 +607,13 @@ export default function GetAnunciosResults({
                 </div>
                 <div className="flex gap-4 mb-1">
                   <div className="flex flex-col items-start">
-                    <span className="text-[9px] lg:text-[10px] text-gray-500 font-medium lowercase flex items-center gap-1">
+                    <span className="text-[9px] lg:text-xs text-gray-500 font-medium lowercase flex items-center gap-1">
                       exibições{" "}
-                      <span className="text-[9px] lg:text-xs">
-                        <PlayIcon className="w-2.5 lg:w-3" />
+                      <span className="text-[9px] lg:text-sm">
+                        <PlayIcon className="w-2.5 lg:w-3.5" />
                       </span>
                     </span>
-                    <span className="font-bold text-sm lg:text-base">
+                    <span className="font-bold text-sm lg:text-lg">
                       {String(anuncio.display) === "fixo"
                         ? "fixo"
                         : anuncio.type_screen === "digital"
@@ -627,24 +627,24 @@ export default function GetAnunciosResults({
                     </span>
                   </div>
                   <div className="flex flex-col items-start">
-                    <span className="text-[9px] lg:text-[10px] text-gray-500 font-medium lowercase flex items-center gap-1">
+                    <span className="text-[9px] lg:text-xs text-gray-500 font-medium lowercase flex items-center gap-1">
                       alcance{" "}
-                      <span className="text-[9px] lg:text-xs">
-                        <User2 className="w-2.5 lg:w-3" />
+                      <span className="text-[9px] lg:text-sm">
+                        <User2 className="w-2.5 lg:w-3.5" />
                       </span>
                     </span>
-                    <span className="font-bold text-sm lg:text-base">
+                    <span className="font-bold text-sm lg:text-lg">
                       {formatarMilhar(viewsCalculado)}
                     </span>
                   </div>
                   <div className="flex flex-col items-start">
-                    <span className="text-[9px] lg:text-[10px] text-gray-500 font-medium lowercase flex items-center gap-1">
+                    <span className="text-[9px] lg:text-xs text-gray-500 font-medium lowercase flex items-center gap-1">
                       impacto{" "}
-                      <span className="text-[9px] lg:text-xs">
-                        <Zap className="w-2.5 lg:w-3" />
+                      <span className="text-[9px] lg:text-sm">
+                        <Zap className="w-2.5 lg:w-3.5" />
                       </span>
                     </span>
-                    <span className="font-bold text-sm lg:text-base">
+                    <span className="font-bold text-sm lg:text-lg">
                       {formatarMilhar(viewsCalculado * 3)}
                     </span>
                   </div>
