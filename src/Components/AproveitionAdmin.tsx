@@ -258,8 +258,11 @@ const AproveitionAdmin = () => {
           return (
             <div
               key={group.orderId}
-              className="flex flex-col md:flex-row md:items-center gap-3 md:gap-4 justify-between bg-white border border-gray-200 rounded-xl md:rounded-2xl p-3 md:p-4 shadow-sm hover:shadow-md transition-shadow"
+              className="relative flex flex-col md:flex-row md:items-center gap-3 md:gap-4 justify-between bg-white border border-gray-200 rounded-xl md:rounded-2xl p-3 md:p-4 shadow-sm hover:shadow-md transition-shadow"
             >
+              {hasPendingArt && (
+                <span className="absolute -top-1.5 -left-1.5 inline-flex h-3.5 w-3.5 rounded-full bg-orange-500 border-2 border-white"></span>
+              )}
               <div className="flex flex-col sm:flex-row sm:items-center gap-3 md:gap-4 min-w-0 flex-1">
                 <div className="flex flex-col gap-1 min-w-0">
                   <span className="text-xs md:text-sm uppercase tracking-wide text-gray-400">Campanha</span>
@@ -267,14 +270,7 @@ const AproveitionAdmin = () => {
                     {orderInfoMap[group.orderId]?.nome_campanha || `Pedido #${group.orderId}`}
                   </span>
                   <span className="text-xs text-gray-500">{group.artes.length} arquivo(s)</span>
-                  <span className="text-xs text-gray-500 flex items-center gap-2">
-                    Status atual: {status}
-                    {hasPendingArt && (
-                      <span className="inline-flex items-center px-2 py-0.5 text-[10px] font-semibold text-orange-600 bg-orange-50 border border-orange-200 rounded-full uppercase tracking-wide">
-                        Nova arte
-                      </span>
-                    )}
-                  </span>
+                  <span className="text-xs text-gray-500">Status atual: {status}</span>
                 </div>
                 <div className="flex items-center gap-2 md:gap-3 flex-wrap sm:ml-auto">
                   <button
