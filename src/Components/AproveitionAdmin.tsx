@@ -254,7 +254,9 @@ const AproveitionAdmin = () => {
       <div className="space-y-3 md:space-y-4">
         {groupedOrders.map((group) => {
           const status = getOrderStatus(group.orderId);
-          const hasPendingArt = status !== 'aprovado' && status !== 'rejeitado';
+          const hasPendingArt = group.artes.some(
+            (arte) => arte.statusLocal !== 'aceita' && arte.statusLocal !== 'não aceita'
+          );
           return (
             <div
               key={group.orderId}
