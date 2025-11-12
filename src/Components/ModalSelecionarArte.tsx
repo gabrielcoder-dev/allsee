@@ -58,8 +58,6 @@ export default function ModalSelecionarArte({
     }
   }, [open]);
 
-  if (!open) return null;
-
   const groupedByTypeAndOrientation = useMemo(() => {
     const base = {
       digital: { portrait: [] as any[], landscape: [] as any[] },
@@ -74,6 +72,8 @@ export default function ModalSelecionarArte({
 
     return base;
   }, [produtos]);
+
+  if (!open) return null;
 
   const handleMonitorClick = (orientation: OrientationKey) => {
     if (!orientationHasProducts(produtos, orientation)) return;
