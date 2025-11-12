@@ -219,8 +219,8 @@ export default function ModalSelecionarArte({
           borderRadius: "16px",
         }
       : {
-          top: "8%",
-          bottom: "20%",
+          top: "10%",
+          bottom: "25%",
           left: "6%",
           right: "6%",
           borderRadius: "16px",
