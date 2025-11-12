@@ -932,12 +932,6 @@ export default function CartResume({
                   );
                 })()}
               </div>
-              <a
-                href="#"
-                className="text-xs text-blue-600 underline mb-2 block"
-              >
-                Possui um cupom de desconto?
-              </a>
               <div className="flex justify-between items-center text-lg font-bold border-t pt-2">
                 <span>Total</span>
                 <span>

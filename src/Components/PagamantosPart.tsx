@@ -425,9 +425,6 @@ export const PagamantosPart = () => {
                 <span className="font-medium text-black">R$ {precoComDesconto.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</span>
               </span>
             </div>
-            <a href="#" className="text-sm text-gray-700 underline">
-              Possui um cupom de desconto?
-            </a>
           </div>
           <div className="border-b border-gray-200 my-2"></div>
           <div className="flex justify-between items-center text-lg font-bold">
