@@ -214,15 +214,15 @@ export default function ModalSelecionarArte({
       ? {
           top: "10%",
           bottom: "10%",
-          left: "22%",
-          right: "22%",
+          left: "26%",
+          right: "26%",
           borderRadius: "16px",
         }
       : {
           top: "18%",
           bottom: "20%",
-          left: "8%",
-          right: "8%",
+          left: "6%",
+          right: "6%",
           borderRadius: "16px",
         };
 
