@@ -212,18 +212,18 @@ export default function ModalSelecionarArte({
   const renderScreenStyle = (orientation: OrientationKey) =>
     orientation === "portrait"
       ? {
-          left: "16%",
-          top: "11%",
-          width: "68%",
-          height: "82%",
-          borderRadius: "14px",
+          left: "15%",
+          top: "12%",
+          width: "70%",
+          height: "78%",
+          borderRadius: "16px",
         }
       : {
-          left: "7%",
-          top: "16%",
-          width: "86%",
-          height: "66%",
-          borderRadius: "14px",
+          left: "8%",
+          top: "18%",
+          width: "84%",
+          height: "64%",
+          borderRadius: "16px",
         };
 
   const renderOrientationPreview = (orientation: OrientationKey) => {
@@ -266,7 +266,7 @@ export default function ModalSelecionarArte({
 
         <div className="relative flex flex-col items-center">
           <div
-            className={`w-full ${orientation === "portrait" ? "max-w-[260px]" : "max-w-[520px]"}`}
+            className={`w-full ${orientation === "portrait" ? "max-w-[280px]" : "max-w-[540px]"}`}
             onClick={() => handleMonitorClick(orientation)}
           >
             {renderMonitorFrame(orientation)}
