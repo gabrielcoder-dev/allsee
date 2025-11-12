@@ -212,17 +212,17 @@ export default function ModalSelecionarArte({
   const renderScreenStyle = (orientation: OrientationKey) =>
     orientation === "portrait"
       ? {
-          left: "15%",
-          top: "12%",
-          width: "70%",
-          height: "78%",
+          top: "10%",
+          bottom: "10%",
+          left: "22%",
+          right: "22%",
           borderRadius: "16px",
         }
       : {
-          left: "8%",
           top: "18%",
-          width: "84%",
-          height: "64%",
+          bottom: "20%",
+          left: "8%",
+          right: "8%",
           borderRadius: "16px",
         };
 
@@ -277,17 +277,19 @@ export default function ModalSelecionarArte({
               style={{
                 ...renderScreenStyle(orientation),
                 overflow: "hidden",
-                background: art
-                  ? "transparent"
-                  : "linear-gradient(135deg, #f97316 0%, #ea580c 100%)",
+                background: art ? "#000" : "linear-gradient(135deg, #f97316 0%, #ea580c 100%)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
               }}
             >
               {art ? (
-                <div className="relative w-full h-full">
+                <div className="relative w-full h-full bg-black">
                   <img
                     src={art.previewUrl}
                     alt={`Arte ${ORIENTATION_LABEL[orientation]}`}
                     className="w-full h-full object-cover block pointer-events-none"
+                    style={{ objectFit: "contain", backgroundColor: "#000" }}
                   />
                   <button
                     onClick={(event) => {
