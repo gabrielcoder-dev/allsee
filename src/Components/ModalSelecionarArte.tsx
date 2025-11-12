@@ -212,18 +212,18 @@ export default function ModalSelecionarArte({
   const renderScreenStyle = (orientation: OrientationKey) =>
     orientation === "portrait"
       ? {
-          top: "15%",
-          bottom: "10%",
-          left: "26%",
-          right: "26%",
-          borderRadius: "16px",
+          top: "9%",
+          bottom: "11%",
+          left: "24%",
+          right: "24%",
+          borderRadius: "14px",
         }
       : {
-          top: "10%",
-          bottom: "25%",
+          top: "16%",
+          bottom: "18%",
           left: "6%",
           right: "6%",
-          borderRadius: "16px",
+          borderRadius: "14px",
         };
 
   const renderOrientationPreview = (orientation: OrientationKey) => {
