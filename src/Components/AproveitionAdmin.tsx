@@ -50,6 +50,7 @@ const AproveitionAdmin = () => {
   const [activeTab, setActiveTab] = useState<'atuais' | 'trocas'>('atuais');
   const [arteTrocas, setArteTrocas] = useState<any[]>([]);
   const [loadingTrocas, setLoadingTrocas] = useState(false);
+  const [ordersWithTrocas, setOrdersWithTrocas] = useState<Set<OrderIdentifier>>(new Set());
   
   const getOrderStatus = (orderId: OrderIdentifier) => {
     if (typeof window === 'undefined') return 'pendente';
@@ -145,6 +146,43 @@ const AproveitionAdmin = () => {
     }
     fetchOrders();
   }, []);
+
+  // Buscar pedidos de troca para sinalizar campanhas
+  useEffect(() => {
+    if (arteCampanhas.length === 0) return;
+
+    const fetchTrocasForAllOrders = async () => {
+      try {
+        const arteIds = arteCampanhas.map(arte => arte.id);
+        
+        const { data: trocasData, error } = await supabase
+          .from('arte_troca_campanha')
+          .select('id, id_campanha')
+          .in('id_campanha', arteIds);
+
+        if (error) {
+          console.error('Erro ao buscar pedidos de troca:', error);
+          return;
+        }
+
+        // Mapear quais orders têm trocas pendentes
+        const ordersComTrocas = new Set<OrderIdentifier>();
+        
+        (trocasData || []).forEach((troca) => {
+          const arte = arteCampanhas.find(a => a.id === troca.id_campanha);
+          if (arte) {
+            ordersComTrocas.add(arte.id_order);
+          }
+        });
+
+        setOrdersWithTrocas(ordersComTrocas);
+      } catch (error) {
+        console.error('Erro ao buscar pedidos de troca:', error);
+      }
+    };
+
+    fetchTrocasForAllOrders();
+  }, [arteCampanhas]);
 
   const handleDownload = (url: string, filenameHint: string | number) => {
     if (!url) return;
@@ -302,7 +340,24 @@ const AproveitionAdmin = () => {
       // 3. Atualizar estado local
       setArteTrocas(prev => prev.filter(t => t.id !== troca.id));
       
-      // 4. Recarregar artes atuais
+      // 4. Atualizar estado de pedidos com trocas
+      const arte = arteCampanhas.find(a => a.id === troca.id_campanha);
+      if (arte) {
+        // Verificar se ainda há outras trocas para este pedido
+        const outrasTrocas = arteTrocas.filter(t => 
+          t.id !== troca.id && 
+          arteCampanhas.find(a => a.id === t.id_campanha)?.id_order === arte.id_order
+        );
+        if (outrasTrocas.length === 0) {
+          setOrdersWithTrocas(prev => {
+            const newSet = new Set(prev);
+            newSet.delete(arte.id_order);
+            return newSet;
+          });
+        }
+      }
+      
+      // 5. Recarregar artes atuais
       const { data, error: refetchError } = await supabase
         .from("arte_campanha")
         .select("id, caminho_imagem, id_order, id_anuncio, mime_type, screen_type")
@@ -338,6 +393,23 @@ const AproveitionAdmin = () => {
 
       // Atualizar estado local
       setArteTrocas(prev => prev.filter(t => t.id !== troca.id));
+
+      // Atualizar estado de pedidos com trocas
+      const arte = arteCampanhas.find(a => a.id === troca.id_campanha);
+      if (arte) {
+        // Verificar se ainda há outras trocas para este pedido
+        const outrasTrocas = arteTrocas.filter(t => 
+          t.id !== troca.id && 
+          arteCampanhas.find(a => a.id === t.id_campanha)?.id_order === arte.id_order
+        );
+        if (outrasTrocas.length === 0) {
+          setOrdersWithTrocas(prev => {
+            const newSet = new Set(prev);
+            newSet.delete(arte.id_order);
+            return newSet;
+          });
+        }
+      }
 
       console.log('✅ Troca rejeitada e excluída');
     } catch (error: any) {
@@ -385,12 +457,14 @@ const AproveitionAdmin = () => {
           const hasPendingArt = group.artes.some(
             (arte) => arte.statusLocal !== 'aceita' && arte.statusLocal !== 'não aceita'
           );
+          const hasTroca = ordersWithTrocas.has(group.orderId);
+          const shouldShowDot = hasPendingArt || hasTroca;
           return (
             <div
               key={group.orderId}
               className="relative flex flex-col md:flex-row md:items-center gap-3 md:gap-4 justify-between bg-white border border-gray-200 rounded-xl md:rounded-2xl p-3 md:p-4 shadow-sm hover:shadow-md transition-shadow"
             >
-              {hasPendingArt && (
+              {shouldShowDot && (
                 <span className="absolute -top-1 -left-1 inline-flex h-4 w-4 rounded-full bg-orange-500 border-2 border-white"></span>
               )}
               <div className="flex flex-col sm:flex-row sm:items-center gap-3 md:gap-4 min-w-0 flex-1">
