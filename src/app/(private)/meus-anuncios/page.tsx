@@ -8,10 +8,21 @@ import { supabase } from "@/lib/supabase";
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { useDirectStorageUpload } from '@/hooks/useDirectStorageUpload';
+import { Monitor } from 'lucide-react';
 
 // Função para detectar se é vídeo
 const isVideo = (url: string) => {
   return url.match(/\.(mp4|webm|ogg)$/i) || url.startsWith("data:video");
+};
+
+// Função para determinar orientação baseado em screen_type
+const getOrientation = (screenType: string | null | undefined): 'portrait' | 'landscape' => {
+  return screenType === 'down' ? 'landscape' : 'portrait';
+};
+
+// Função para obter label da orientação
+const getOrientationLabel = (orientation: 'portrait' | 'landscape'): string => {
+  return orientation === 'portrait' ? 'Em pé' : 'Deitado';
 };
 
 interface ArteCampanha {
@@ -36,6 +47,7 @@ interface ArteResumo {
   id: number;
   caminho_imagem: string;
   status: ArteStatus;
+  screen_type?: string | null;
 }
 
 interface AnuncioGroup {
@@ -73,6 +85,10 @@ const MeusAnuncios = () => {
   const [isArtModalOpen, setIsArtModalOpen] = useState(false);
   const [selectedOrderForArts, setSelectedOrderForArts] = useState<AnuncioGroup | null>(null);
   const [selectedOrderIdForTroca, setSelectedOrderIdForTroca] = useState<number | null>(null);
+  const [isTrocaModalOpen, setIsTrocaModalOpen] = useState(false);
+  const [selectedScreenTypeForTroca, setSelectedScreenTypeForTroca] = useState<'portrait' | 'landscape' | null>(null);
+  const [isViewArtsModalOpen, setIsViewArtsModalOpen] = useState(false);
+  const [selectedScreenTypeForView, setSelectedScreenTypeForView] = useState<'portrait' | 'landscape' | null>(null);
 
   // Hook para upload direto para storage
   const { uploadFile, progress: uploadProgress, isUploading, error: uploadError } = useDirectStorageUpload({
@@ -170,7 +186,7 @@ const MeusAnuncios = () => {
         // SEGUNDO: Filtrar apenas as do usuário atual
         const { data: arteCampanhas, error: arteError } = await supabase
           .from("arte_campanha")
-          .select(`id, caminho_imagem, order_id:id_order`)
+          .select(`id, caminho_imagem, order_id:id_order, screen_type`)
           .eq('id_user', userId);
 
         if (arteError) {
@@ -287,6 +303,7 @@ const MeusAnuncios = () => {
             id: arte.id,
             caminho_imagem: arte.caminho_imagem,
             status: arte.status,
+            screen_type: arteCampanhas.find(ac => ac.id === arte.id)?.screen_type || null,
           });
           return acc;
         }, {} as Record<string, ArteResumo[]>);
@@ -912,25 +929,231 @@ const summarizeArteStatuses = (artes: ArteResumo[]) => {
         </div>
         )}
       </div>
-      {isArtModalOpen && selectedOrderForArts && (
+      {isArtModalOpen && selectedOrderForArts && (() => {
+        // Agrupar artes por tipo
+        const artesPortrait = selectedOrderForArts.artes.filter(arte => getOrientation(arte.screen_type) === 'portrait');
+        const artesLandscape = selectedOrderForArts.artes.filter(arte => getOrientation(arte.screen_type) === 'landscape');
+        
+        return (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={() => {
+            setIsArtModalOpen(false);
+            setSelectedOrderForArts(null);
+            setSelectedOrderIdForTroca(null);
+          }}>
+            <div className="bg-white rounded-2xl w-full max-w-4xl mx-auto shadow-2xl" onClick={(e) => e.stopPropagation()}>
+              <div className="p-6 border-b border-gray-100 flex items-center justify-between">
+                <div>
+                  <h2 className="text-lg font-semibold text-gray-900">Artes do pedido</h2>
+                  <p className="text-sm text-gray-500 mt-1">
+                    {selectedOrderForArts.nome_campanha}
+                  </p>
+                </div>
+                <button
+                  onClick={() => {
+                    setIsArtModalOpen(false);
+                    setSelectedOrderForArts(null);
+                    setSelectedOrderIdForTroca(null);
+                  }}
+                  className="p-1 hover:bg-gray-100 rounded-full transition-colors cursor-pointer"
+                >
+                  <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              <div className="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
+                {/* Container Em pé */}
+                {artesPortrait.length > 0 && (
+                  <div className="border-2 border-gray-200 rounded-xl p-4 bg-gradient-to-br from-orange-50 to-white">
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center">
+                        <Monitor className="w-5 h-5 text-orange-600" />
+                      </div>
+                      <div>
+                        <h3 className="font-semibold text-gray-900">Em pé</h3>
+                        <p className="text-xs text-gray-500">{artesPortrait.length} arte{artesPortrait.length > 1 ? 's' : ''}</p>
+                      </div>
+                    </div>
+                    <div className="flex gap-3">
+                      <button
+                        className="flex-1 py-2.5 px-4 rounded-lg border border-gray-300 text-gray-700 font-medium hover:bg-gray-50 transition-colors cursor-pointer text-sm"
+                        onClick={() => {
+                          setSelectedScreenTypeForView('portrait');
+                          setIsViewArtsModalOpen(true);
+                        }}
+                      >
+                        Ver artes
+                      </button>
+                      <button
+                        className="flex-1 py-2.5 px-4 rounded-lg bg-orange-600 text-white font-medium hover:bg-orange-700 transition-colors cursor-pointer text-sm"
+                        onClick={() => {
+                          setSelectedScreenTypeForTroca('portrait');
+                          setSelectedOrderIdForTroca(selectedOrderForArts.order_id);
+                          setIsTrocaModalOpen(true);
+                        }}
+                      >
+                        Trocar arte
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Container Deitado */}
+                {artesLandscape.length > 0 && (
+                  <div className="border-2 border-gray-200 rounded-xl p-4 bg-gradient-to-br from-blue-50 to-white">
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                        <Monitor className="w-5 h-5 text-blue-600 -rotate-90" />
+                      </div>
+                      <div>
+                        <h3 className="font-semibold text-gray-900">Deitado</h3>
+                        <p className="text-xs text-gray-500">{artesLandscape.length} arte{artesLandscape.length > 1 ? 's' : ''}</p>
+                      </div>
+                    </div>
+                    <div className="flex gap-3">
+                      <button
+                        className="flex-1 py-2.5 px-4 rounded-lg border border-gray-300 text-gray-700 font-medium hover:bg-gray-50 transition-colors cursor-pointer text-sm"
+                        onClick={() => {
+                          setSelectedScreenTypeForView('landscape');
+                          setIsViewArtsModalOpen(true);
+                        }}
+                      >
+                        Ver artes
+                      </button>
+                      <button
+                        className="flex-1 py-2.5 px-4 rounded-lg bg-orange-600 text-white font-medium hover:bg-orange-700 transition-colors cursor-pointer text-sm"
+                        onClick={() => {
+                          setSelectedScreenTypeForTroca('landscape');
+                          setSelectedOrderIdForTroca(selectedOrderForArts.order_id);
+                          setIsTrocaModalOpen(true);
+                        }}
+                      >
+                        Trocar arte
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {artesPortrait.length === 0 && artesLandscape.length === 0 && (
+                  <div className="text-center text-gray-500 py-12">
+                    Nenhuma arte encontrada para este pedido.
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+      
+      {/* Modal Ver Artes */}
+      {isViewArtsModalOpen && selectedOrderForArts && selectedScreenTypeForView && (() => {
+        const artesFiltradas = selectedOrderForArts.artes.filter(arte => 
+          getOrientation(arte.screen_type) === selectedScreenTypeForView
+        );
+        
+        return (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={() => {
+            setIsViewArtsModalOpen(false);
+            setSelectedScreenTypeForView(null);
+          }}>
+            <div className="bg-white rounded-2xl w-full max-w-3xl mx-auto shadow-2xl max-h-[90vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+              <div className="p-6 border-b border-gray-100 flex items-center justify-between flex-shrink-0">
+                <div>
+                  <h2 className="text-lg font-semibold text-gray-900">
+                    Artes {getOrientationLabel(selectedScreenTypeForView)}
+                  </h2>
+                  <p className="text-sm text-gray-500 mt-1">
+                    {selectedOrderForArts.nome_campanha}
+                  </p>
+                </div>
+                <button
+                  onClick={() => {
+                    setIsViewArtsModalOpen(false);
+                    setSelectedScreenTypeForView(null);
+                  }}
+                  className="p-1 hover:bg-gray-100 rounded-full transition-colors cursor-pointer"
+                >
+                  <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              <div className="p-6 space-y-4 overflow-y-auto flex-1">
+                {artesFiltradas.length === 0 ? (
+                  <div className="text-center text-gray-500 py-12">
+                    Nenhuma arte encontrada para este tipo.
+                  </div>
+                ) : (
+                  artesFiltradas.map((arte) => {
+                    const statusInfo = getStatusDisplay(arte.status);
+                    const isVideoArte = arte.caminho_imagem ? isVideo(arte.caminho_imagem) : false;
+
+                    return (
+                      <div key={arte.id} className="flex flex-col sm:flex-row sm:items-center gap-4 p-4 border border-gray-200 rounded-xl">
+                        <div className="w-full sm:w-32 h-32 bg-gray-100 rounded-lg flex items-center justify-center overflow-hidden">
+                          {arte.caminho_imagem ? (
+                            isVideoArte ? (
+                              <video
+                                src={arte.caminho_imagem}
+                                className="w-full h-full object-cover"
+                                controls={false}
+                                preload="metadata"
+                                muted
+                              />
+                            ) : (
+                              <Image
+                                src={arte.caminho_imagem}
+                                alt={`Arte ${arte.id}`}
+                                width={128}
+                                height={128}
+                                className="w-full h-full object-cover"
+                              />
+                            )
+                          ) : (
+                            <span className="text-xs text-gray-500 uppercase">Sem arte</span>
+                          )}
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-sm font-semibold text-gray-900 mb-2">Arte #{arte.id}</p>
+                          <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium ${statusInfo.badgeClass}`}>
+                            <div className={`w-2 h-2 rounded-full ${statusInfo.dotClass}`}></div>
+                            {statusInfo.text}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* Modal Trocar Arte Simplificado */}
+      {isTrocaModalOpen && selectedScreenTypeForTroca && selectedOrderIdForTroca && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={() => {
-          setIsArtModalOpen(false);
-          setSelectedOrderForArts(null);
+          setIsTrocaModalOpen(false);
+          setSelectedScreenTypeForTroca(null);
           setSelectedOrderIdForTroca(null);
+          setSelectedFile(null);
         }}>
-          <div className="bg-white rounded-2xl w-full max-w-3xl mx-auto shadow-2xl" onClick={(e) => e.stopPropagation()}>
+          <div className="bg-white rounded-2xl w-full max-w-2xl mx-auto shadow-2xl" onClick={(e) => e.stopPropagation()}>
             <div className="p-6 border-b border-gray-100 flex items-center justify-between">
               <div>
-                <h2 className="text-lg font-semibold text-gray-900">Artes do pedido</h2>
+                <h2 className="text-lg font-semibold text-gray-900">
+                  Trocar Arte - {getOrientationLabel(selectedScreenTypeForTroca)}
+                </h2>
                 <p className="text-sm text-gray-500 mt-1">
-                  {selectedOrderForArts.nome_campanha}
+                  Selecione uma nova arte para todos os totens {getOrientationLabel(selectedScreenTypeForTroca).toLowerCase()}
                 </p>
               </div>
               <button
                 onClick={() => {
-                  setIsArtModalOpen(false);
-                  setSelectedOrderForArts(null);
+                  setIsTrocaModalOpen(false);
+                  setSelectedScreenTypeForTroca(null);
                   setSelectedOrderIdForTroca(null);
+                  setSelectedFile(null);
                 }}
                 className="p-1 hover:bg-gray-100 rounded-full transition-colors cursor-pointer"
               >
@@ -939,79 +1162,226 @@ const summarizeArteStatuses = (artes: ArteResumo[]) => {
                 </svg>
               </button>
             </div>
-            <div className="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
-              {selectedOrderForArts.artes.length === 0 ? (
-                <div className="text-center text-gray-500 py-12">
-                  Nenhuma arte encontrada para este pedido.
-                </div>
-              ) : (
-                selectedOrderForArts.artes.map((arte) => {
-                  const statusInfo = getStatusDisplay(arte.status);
-                  const isVideoArte = arte.caminho_imagem ? isVideo(arte.caminho_imagem) : false;
-
-                  return (
-                    <div key={arte.id} className="flex flex-col sm:flex-row sm:items-center gap-4 p-4 border border-gray-200 rounded-xl">
-                      <div className="w-full sm:w-32 h-32 bg-gray-100 rounded-lg flex items-center justify-center overflow-hidden">
-                        {arte.caminho_imagem ? (
-                          isVideoArte ? (
-                            <video
-                              src={arte.caminho_imagem}
-                              className="w-full h-full object-cover"
-                              controls={false}
-                              preload="metadata"
-                              muted
-                            />
-                          ) : (
-                            <Image
-                              src={arte.caminho_imagem}
-                              alt={`Arte ${arte.id}`}
-                              width={128}
-                              height={128}
-                              className="w-full h-full object-cover"
-                            />
-                          )
-                        ) : (
-                          <span className="text-xs text-gray-500 uppercase">Sem arte</span>
-                        )}
-                      </div>
-                      <div className="flex-1 flex flex-col gap-2">
-                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                          <div>
-                            <p className="text-sm font-semibold text-gray-900">Arte #{arte.id}</p>
-                            <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium ${statusInfo.badgeClass}`}>
-                              <div className={`w-2 h-2 rounded-full ${statusInfo.dotClass}`}></div>
-                              {statusInfo.text}
-                            </div>
-                          </div>
-                          <button
-                            className={`text-xs font-medium py-2 px-4 rounded-lg border transition-colors ${
-                              statusInfo.canRequestSwap
-                                ? "border-orange-200 text-orange-600 hover:bg-orange-50 cursor-pointer"
-                                : "border-gray-200 text-gray-400 cursor-not-allowed"
-                            }`}
-                            disabled={!statusInfo.canRequestSwap}
-                            onClick={() => {
-                              if (!statusInfo.canRequestSwap) return;
-                              setIsArtModalOpen(false);
-                              setSelectedOrderForArts(null);
-                              setSelectedFile(null);
-                              setSelectedAnuncioId(arte.id);
-                              setSelectedOrderIdForTroca(selectedOrderForArts.order_id);
-                              setIsModalOpen(true);
-                            }}
-                          >
-                            Trocar arte
-                          </button>
-                        </div>
-                      </div>
+            <div className="p-6">
+              {/* Preview do Monitor */}
+              <div className="mb-6 flex justify-center">
+                <div
+                  className="relative w-full"
+                  style={{
+                    maxWidth: selectedScreenTypeForTroca === "portrait" 
+                      ? "clamp(200px, 25vw, 320px)" 
+                      : "clamp(380px, 48vw, 640px)"
+                  }}
+                >
+                  {selectedScreenTypeForTroca === "landscape" ? (
+                    <svg
+                      viewBox="0 0 800 470"
+                      className="w-full h-auto"
+                      style={{ filter: "drop-shadow(0 30px 60px rgba(0,0,0,0.4))" }}
+                    >
+                      <ellipse cx="400" cy="460" rx="280" ry="15" fill="rgba(0,0,0,0.3)" />
+                      <g transform="translate(50, 20)">
+                        <rect x="0" y="0" width="700" height="410" rx="25" fill="#2d2d2d" />
+                        <rect x="0" y="0" width="700" height="410" rx="25" fill="url(#gloss-gradient-landscape-troca)" />
+                        <rect x="20" y="20" width="660" height="370" rx="18" fill="#1a1a1a" />
+                        <rect x="50" y="50" width="600" height="310" rx="8" fill="#000000" />
+                      </g>
+                      <defs>
+                        <linearGradient id="gloss-gradient-landscape-troca" x1="0%" y1="0%" x2="100%" y2="0%">
+                          <stop offset="0%" stopColor="rgba(255,255,255,0.2)" stopOpacity="0.2" />
+                          <stop offset="50%" stopColor="rgba(255,255,255,0)" stopOpacity="0" />
+                          <stop offset="100%" stopColor="rgba(255,255,255,0.2)" stopOpacity="0.2" />
+                        </linearGradient>
+                      </defs>
+                    </svg>
+                  ) : (
+                    <svg
+                      viewBox="0 0 600 650"
+                      className="w-full h-auto"
+                      style={{ filter: "drop-shadow(0 30px 60px rgba(0,0,0,0.4))" }}
+                    >
+                      <ellipse cx="300" cy="630" rx="200" ry="20" fill="rgba(0,0,0,0.3)" />
+                      <g transform="translate(80, 40)">
+                        <rect x="0" y="0" width="440" height="600" rx="25" fill="#2d2d2d" />
+                        <rect x="0" y="0" width="440" height="600" rx="25" fill="url(#gloss-gradient-portrait-troca)" />
+                        <rect x="15" y="15" width="410" height="570" rx="20" fill="#1a1a1a" />
+                        <rect x="40" y="50" width="360" height="500" rx="12" fill="#000000" />
+                      </g>
+                      <defs>
+                        <linearGradient id="gloss-gradient-portrait-troca" x1="0%" y1="0%" x2="0%" y2="30%">
+                          <stop offset="0%" stopColor="rgba(255,255,255,0.3)" stopOpacity="0.3" />
+                          <stop offset="100%" stopColor="rgba(255,255,255,0)" stopOpacity="0" />
+                        </linearGradient>
+                      </defs>
+                    </svg>
+                  )}
+                  {selectedFile && (
+                    <div
+                      className="absolute transition-all"
+                      style={{
+                        ...(selectedScreenTypeForTroca === "portrait" ? {
+                          top: "13.8%",
+                          left: "20%",
+                          width: "60%",
+                          height: "76.9%",
+                          borderRadius: "12px",
+                        } : {
+                          top: "14.9%",
+                          left: "12.5%",
+                          width: "75%",
+                          height: "65.9%",
+                          borderRadius: "8px",
+                        }),
+                        position: "absolute",
+                        overflow: "hidden",
+                        background: "#000",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
+                    >
+                      {isVideo(URL.createObjectURL(selectedFile)) ? (
+                        <video
+                          src={URL.createObjectURL(selectedFile)}
+                          className="w-full h-full object-contain"
+                          controls={false}
+                          muted
+                        />
+                      ) : (
+                        <img
+                          src={URL.createObjectURL(selectedFile)}
+                          alt="Preview"
+                          className="w-full h-full object-contain"
+                        />
+                      )}
                     </div>
-                  );
-                })
-              )}
+                  )}
+                </div>
+              </div>
+
+              {/* Input de arquivo */}
+              <div className="mb-6">
+                <label htmlFor="upload-art-troca" className="block text-sm font-medium text-gray-700 mb-3">
+                  Selecionar nova arte
+                </label>
+                <div className="relative">
+                  <input
+                    type="file"
+                    accept="image/*,video/*"
+                    id="upload-art-troca"
+                    className="w-full border-2 border-dashed border-gray-300 rounded-xl p-4 text-sm focus:outline-none focus:border-orange-500 focus:bg-orange-50 transition-colors file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-orange-100 file:text-orange-700 hover:file:bg-orange-200"
+                    onChange={(e) => {
+                      const file = e.target.files && e.target.files[0];
+                      setSelectedFile(file || null);
+                    }}
+                  />
+                </div>
+                {selectedFile && (
+                  <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-lg">
+                    <div className="flex items-center gap-2">
+                      <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      <p className="text-xs text-green-700 font-medium">
+                        {selectedFile.name}
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Botões */}
+              <div className="flex gap-3">
+                <button
+                  className="flex-1 py-3 px-4 rounded-xl border border-gray-200 text-gray-600 font-medium hover:bg-gray-50 transition-colors cursor-pointer"
+                  onClick={() => {
+                    setIsTrocaModalOpen(false);
+                    setSelectedScreenTypeForTroca(null);
+                    setSelectedOrderIdForTroca(null);
+                    setSelectedFile(null);
+                  }}
+                >
+                  Cancelar
+                </button>
+                <button
+                  className="flex-1 py-3 px-4 rounded-xl bg-orange-600 text-white font-medium hover:bg-orange-700 transition-colors cursor-pointer disabled:bg-gray-300 disabled:cursor-not-allowed"
+                  onClick={async () => {
+                    if (!selectedFile || !selectedOrderIdForTroca || !selectedScreenTypeForTroca) return;
+                    
+                    // Buscar todas as artes do tipo selecionado para este pedido
+                    const grupo = anuncios.find((anuncio) => anuncio.order_id === selectedOrderIdForTroca);
+                    if (!grupo) return;
+
+                    const artesDoTipo = grupo.artes.filter(arte => 
+                      getOrientation(arte.screen_type) === selectedScreenTypeForTroca
+                    );
+
+                    // Para cada arte do tipo, fazer upload e criar registro de troca
+                    try {
+                      const uploadResult = await uploadFile(selectedFile, 'arte-campanhas');
+                      if (!uploadResult) {
+                        throw new Error(uploadError || 'Erro ao fazer upload do arquivo de troca');
+                      }
+
+                      // Criar registro de troca para cada arte do tipo
+                      for (const arte of artesDoTipo) {
+                        const createResponse = await fetch('/api/admin/criar-arte-troca-campanha', {
+                          method: 'POST',
+                          headers: { 
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json'
+                          },
+                          body: JSON.stringify({
+                            id_campanha: arte.id,
+                            caminho_imagem: uploadResult.public_url
+                          })
+                        });
+
+                        if (!createResponse.ok) {
+                          const errorData = await createResponse.json();
+                          throw new Error(errorData.error || 'Erro ao criar registro de troca');
+                        }
+                      }
+
+                      // Remover status do localStorage
+                      artesDoTipo.forEach(arte => {
+                        localStorage.removeItem(`replacement_order_${arte.id}`);
+                      });
+                      localStorage.removeItem(`order_${selectedOrderIdForTroca}`);
+
+                      toast.success('Arte de troca enviada com sucesso!', {
+                        position: "top-right",
+                        autoClose: 5000,
+                        hideProgressBar: false,
+                        closeOnClick: true,
+                        pauseOnHover: true,
+                        draggable: true,
+                        progress: undefined,
+                      });
+
+                      setIsTrocaModalOpen(false);
+                      setSelectedScreenTypeForTroca(null);
+                      setSelectedOrderIdForTroca(null);
+                      setSelectedFile(null);
+                      setRefresh(!refresh);
+                    } catch (err: any) {
+                      console.error("Erro ao trocar a arte:", err);
+                      toast.error(err.message || 'Erro ao trocar arte', {
+                        position: "top-right",
+                        autoClose: 5000,
+                      });
+                    }
+                  }}
+                  disabled={!selectedFile}
+                >
+                  Trocar Arte
+                </button>
+              </div>
             </div>
           </div>
         </div>
       )}
+
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={() => {
           setIsModalOpen(false);
