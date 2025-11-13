@@ -47,6 +47,9 @@ const AproveitionAdmin = () => {
   const [orderInfoMap, setOrderInfoMap] = useState<Record<string, { nome_campanha?: string | null }>>({});
   const [orderToDelete, setOrderToDelete] = useState<OrderIdentifier | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [activeTab, setActiveTab] = useState<'atuais' | 'trocas'>('atuais');
+  const [arteTrocas, setArteTrocas] = useState<any[]>([]);
+  const [loadingTrocas, setLoadingTrocas] = useState(false);
   
   const getOrderStatus = (orderId: OrderIdentifier) => {
     if (typeof window === 'undefined') return 'pendente';
@@ -218,6 +221,131 @@ const AproveitionAdmin = () => {
     }
   };
 
+  // Buscar artes de troca quando o modal abrir
+  useEffect(() => {
+    if (imagesModalOrderId && arteCampanhas.length > 0) {
+      fetchArteTrocas();
+      setActiveTab('atuais'); // Reset para aba de artes atuais quando abrir
+    }
+  }, [imagesModalOrderId, arteCampanhas.length]);
+
+  const fetchArteTrocas = async () => {
+    if (!imagesModalOrderId) return;
+    
+    setLoadingTrocas(true);
+    try {
+      // Buscar arte_troca_campanha relacionadas às artes deste pedido
+      const artesDoPedido = arteCampanhas.filter(arte => String(arte.id_order) === String(imagesModalOrderId));
+      if (artesDoPedido.length === 0) {
+        setArteTrocas([]);
+        setLoadingTrocas(false);
+        return;
+      }
+
+      const arteIds = artesDoPedido.map(arte => arte.id);
+      
+      const { data: trocasData, error } = await supabase
+        .from('arte_troca_campanha')
+        .select('id, id_campanha, caminho_imagem')
+        .in('id_campanha', arteIds);
+
+      if (error) {
+        console.error('Erro ao buscar artes de troca:', error);
+        setArteTrocas([]);
+      } else {
+        // Enriquecer com dados da arte_campanha e anuncios
+        const enrichedTrocas = await Promise.all(
+          (trocasData || []).map(async (troca) => {
+            const arteOriginal = artesDoPedido.find(a => a.id === troca.id_campanha);
+            const anuncioKey = arteOriginal?.anuncio_id ? String(arteOriginal.anuncio_id) : null;
+            const anuncioName = anuncioKey ? anunciosMap[anuncioKey] || `Anúncio ${anuncioKey}` : 'Anúncio não informado';
+            
+            return {
+              ...troca,
+              anuncio_id: arteOriginal?.anuncio_id || null,
+              anuncioName,
+            };
+          })
+        );
+        setArteTrocas(enrichedTrocas);
+      }
+    } catch (error) {
+      console.error('Erro ao buscar artes de troca:', error);
+      setArteTrocas([]);
+    } finally {
+      setLoadingTrocas(false);
+    }
+  };
+
+  const handleApproveTroca = async (troca: any) => {
+    try {
+      // 1. Atualizar caminho_imagem na arte_campanha
+      const { error: updateError } = await supabase
+        .from('arte_campanha')
+        .update({ caminho_imagem: troca.caminho_imagem })
+        .eq('id', troca.id_campanha);
+
+      if (updateError) {
+        throw new Error('Erro ao atualizar arte: ' + updateError.message);
+      }
+
+      // 2. Excluir registro de arte_troca_campanha
+      const { error: deleteError } = await supabase
+        .from('arte_troca_campanha')
+        .delete()
+        .eq('id', troca.id);
+
+      if (deleteError) {
+        throw new Error('Erro ao excluir troca: ' + deleteError.message);
+      }
+
+      // 3. Atualizar estado local
+      setArteTrocas(prev => prev.filter(t => t.id !== troca.id));
+      
+      // 4. Recarregar artes atuais
+      const { data, error: refetchError } = await supabase
+        .from("arte_campanha")
+        .select("id, caminho_imagem, id_order, id_anuncio, mime_type, screen_type")
+        .eq("id", troca.id_campanha)
+        .single();
+
+      if (!refetchError && data) {
+        setArteCampanhas(prev => prev.map(arte => 
+          arte.id === troca.id_campanha 
+            ? { ...arte, caminho_imagem: data.caminho_imagem }
+            : arte
+        ));
+      }
+
+      console.log('✅ Troca aprovada com sucesso');
+    } catch (error: any) {
+      console.error('❌ Erro ao aprovar troca:', error);
+      alert(error?.message || 'Erro ao aprovar troca');
+    }
+  };
+
+  const handleRejectTroca = async (troca: any) => {
+    try {
+      // Excluir registro de arte_troca_campanha
+      const { error: deleteError } = await supabase
+        .from('arte_troca_campanha')
+        .delete()
+        .eq('id', troca.id);
+
+      if (deleteError) {
+        throw new Error('Erro ao excluir troca: ' + deleteError.message);
+      }
+
+      // Atualizar estado local
+      setArteTrocas(prev => prev.filter(t => t.id !== troca.id));
+
+      console.log('✅ Troca rejeitada e excluída');
+    } catch (error: any) {
+      console.error('❌ Erro ao rejeitar troca:', error);
+      alert(error?.message || 'Erro ao rejeitar troca');
+    }
+  };
+
   const groupedOrders: GroupedOrder[] = useMemo(() => {
     const groups = new Map<OrderIdentifier, ArteCampanhaItem[]>();
     arteCampanhas.forEach((item) => {
@@ -311,8 +439,8 @@ const AproveitionAdmin = () => {
       {imagesModalOrderId && (
         <div className="fixed inset-0 z-[9998] flex items-end justify-center md:items-center md:justify-center p-4">
           <div className="absolute inset-0 bg-black/40" onClick={() => setImagesModalOrderId(null)}></div>
-          <div className="relative bg-white rounded-xl md:rounded-2xl shadow-xl border border-gray-200 p-4 md:p-6 max-w-3xl w-full max-h-[90vh] overflow-y-auto z-10" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between mb-4">
+          <div className="relative bg-white rounded-xl md:rounded-2xl shadow-xl border border-gray-200 max-w-3xl w-full max-h-[90vh] overflow-hidden flex flex-col z-10" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between p-4 md:p-6 border-b border-gray-200 flex-shrink-0">
               <div>
                 <h3 className="text-lg md:text-xl font-semibold text-gray-800">Artes do pedido #{imagesModalOrderId}</h3>
                 <p className="text-sm text-gray-500">Visualize e aprove as artes enviadas para este pedido.</p>
@@ -326,7 +454,34 @@ const AproveitionAdmin = () => {
               </button>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {/* Tabs */}
+            <div className="flex border-b border-gray-200 flex-shrink-0">
+              <button
+                onClick={() => setActiveTab('atuais')}
+                className={`px-4 md:px-6 py-3 font-medium text-sm transition-colors ${
+                  activeTab === 'atuais'
+                    ? 'text-orange-600 border-b-2 border-orange-600'
+                    : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                Artes atuais
+              </button>
+              <button
+                onClick={() => setActiveTab('trocas')}
+                className={`px-4 md:px-6 py-3 font-medium text-sm transition-colors ${
+                  activeTab === 'trocas'
+                    ? 'text-orange-600 border-b-2 border-orange-600'
+                    : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                Pedidos de troca
+              </button>
+            </div>
+
+            {/* Content */}
+            <div className="p-4 md:p-6 overflow-y-auto flex-1">
+              {activeTab === 'atuais' ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {groupedOrders.find((group) => group.orderId === imagesModalOrderId)?.artes.map((arte) => {
                 const anuncioKey = arte.anuncio_id ? String(arte.anuncio_id) : null;
                 const anuncioName = anuncioKey ? anunciosMap[anuncioKey] || `Anúncio ${anuncioKey}` : 'Anúncio não informado';
@@ -426,6 +581,102 @@ const AproveitionAdmin = () => {
                   </div>
                 );
               })}
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {loadingTrocas ? (
+                    <div className="col-span-2 text-center py-8 text-gray-500">
+                      Carregando pedidos de troca...
+                    </div>
+                  ) : arteTrocas.length === 0 ? (
+                    <div className="col-span-2 text-center py-8 text-gray-500">
+                      Nenhum pedido de troca encontrado.
+                    </div>
+                  ) : (
+                    arteTrocas.map((troca) => {
+                      const isTrocaVideo = troca.caminho_imagem ? isVideo(troca.caminho_imagem) : false;
+
+                      return (
+                        <div key={troca.id} className="border border-gray-200 rounded-lg p-3 flex flex-col gap-3 bg-gray-50">
+                          <div className="w-full h-40 bg-white border border-gray-200 rounded-lg flex items-center justify-center overflow-hidden">
+                            {troca.caminho_imagem ? (
+                              troca.caminho_imagem.startsWith("data:image") || troca.caminho_imagem.match(/\.(jpg|jpeg|png|gif|bmp|webp)$/i) ? (
+                                <img
+                                  src={troca.caminho_imagem}
+                                  alt={`Troca ${troca.id}`}
+                                  className="object-cover w-full h-full"
+                                />
+                              ) : isTrocaVideo ? (
+                                <video
+                                  src={troca.caminho_imagem}
+                                  className="object-cover w-full h-full"
+                                  controls={false}
+                                  preload="metadata"
+                                />
+                              ) : (
+                                <Image
+                                  src={troca.caminho_imagem}
+                                  alt={`Troca ${troca.id}`}
+                                  width={320}
+                                  height={180}
+                                  className="object-cover w-full h-full"
+                                />
+                              )
+                            ) : (
+                              <span className="text-gray-400 text-sm">Sem preview disponível</span>
+                            )}
+                          </div>
+                          <div className="flex flex-col gap-2">
+                            <div className="flex items-center justify-between gap-3">
+                              <div>
+                                <p className="text-sm font-semibold text-gray-700">Anúncio:</p>
+                                <p className="text-sm text-gray-600">{troca.anuncioName || 'Anúncio não informado'}</p>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <button
+                                  className="p-2 rounded-md bg-emerald-500 hover:bg-emerald-600 text-white transition-colors cursor-pointer"
+                                  onClick={() => handleApproveTroca(troca)}
+                                  aria-label="Aprovar troca"
+                                >
+                                  <Check className="w-4 h-4" />
+                                </button>
+                                <button
+                                  className="p-2 rounded-md bg-red-500 hover:bg-red-600 text-white transition-colors cursor-pointer"
+                                  onClick={() => handleRejectTroca(troca)}
+                                  aria-label="Rejeitar troca"
+                                >
+                                  <X className="w-4 h-4" />
+                                </button>
+                              </div>
+                            </div>
+                            <div className="flex gap-2">
+                              <button
+                                className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium px-3 py-2 rounded-lg transition-colors cursor-pointer disabled:cursor-not-allowed"
+                                onClick={() => troca.caminho_imagem && setModalFile({
+                                  url: troca.caminho_imagem,
+                                  id: troca.id,
+                                  orderId: imagesModalOrderId,
+                                  anuncioName: troca.anuncioName,
+                                })}
+                                disabled={!troca.caminho_imagem}
+                              >
+                                Assistir
+                              </button>
+                              <button
+                                className="flex-1 bg-orange-500 hover:bg-orange-600 text-white text-sm font-medium px-3 py-2 rounded-lg transition-colors cursor-pointer disabled:cursor-not-allowed"
+                                onClick={() => troca.caminho_imagem && handleDownload(troca.caminho_imagem, `troca-${troca.id}_anuncio-${troca.anuncio_id ?? troca.id}`)}
+                                disabled={!troca.caminho_imagem}
+                              >
+                                Baixar
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+              )}
             </div>
           </div>
         </div>

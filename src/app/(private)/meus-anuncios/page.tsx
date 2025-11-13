@@ -940,11 +940,11 @@ const summarizeArteStatuses = (artes: ArteResumo[]) => {
             setSelectedOrderForArts(null);
             setSelectedOrderIdForTroca(null);
           }}>
-            <div className="bg-white rounded-2xl w-full max-w-4xl mx-auto shadow-2xl" onClick={(e) => e.stopPropagation()}>
-              <div className="p-6 border-b border-gray-100 flex items-center justify-between">
+            <div className="bg-white rounded-2xl w-full max-w-xl mx-auto shadow-2xl max-h-[90vh] overflow-hidden flex flex-col" onClick={(e) => e.stopPropagation()}>
+              <div className="p-4 sm:p-6 border-b border-gray-100 flex items-center justify-between flex-shrink-0">
                 <div>
-                  <h2 className="text-lg font-semibold text-gray-900">Artes do pedido</h2>
-                  <p className="text-sm text-gray-500 mt-1">
+                  <h2 className="text-base sm:text-lg font-semibold text-gray-900">Artes do pedido</h2>
+                  <p className="text-xs sm:text-sm text-gray-500 mt-1">
                     {selectedOrderForArts.nome_campanha}
                   </p>
                 </div>
@@ -961,7 +961,7 @@ const summarizeArteStatuses = (artes: ArteResumo[]) => {
                   </svg>
                 </button>
               </div>
-              <div className="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
+              <div className="p-4 sm:p-6 space-y-4 overflow-y-auto flex-1">
                 {/* Container Em pé */}
                 {artesPortrait.length > 0 && (
                   <div className="border-2 border-gray-200 rounded-xl p-4 bg-gradient-to-br from-orange-50 to-white">
@@ -1000,10 +1000,10 @@ const summarizeArteStatuses = (artes: ArteResumo[]) => {
 
                 {/* Container Deitado */}
                 {artesLandscape.length > 0 && (
-                  <div className="border-2 border-gray-200 rounded-xl p-4 bg-gradient-to-br from-blue-50 to-white">
+                  <div className="border-2 border-gray-200 rounded-xl p-4 bg-gradient-to-br from-orange-50 to-white">
                     <div className="flex items-center gap-3 mb-4">
-                      <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                        <Monitor className="w-5 h-5 text-blue-600 -rotate-90" />
+                      <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center">
+                        <Monitor className="w-5 h-5 text-orange-600 rotate-90" />
                       </div>
                       <div>
                         <h3 className="font-semibold text-gray-900">Deitado</h3>
@@ -1056,13 +1056,13 @@ const summarizeArteStatuses = (artes: ArteResumo[]) => {
             setIsViewArtsModalOpen(false);
             setSelectedScreenTypeForView(null);
           }}>
-            <div className="bg-white rounded-2xl w-full max-w-3xl mx-auto shadow-2xl max-h-[90vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
-              <div className="p-6 border-b border-gray-100 flex items-center justify-between flex-shrink-0">
+            <div className="bg-white rounded-2xl w-full max-w-xl mx-auto shadow-2xl max-h-[90vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+              <div className="p-4 sm:p-6 border-b border-gray-100 flex items-center justify-between flex-shrink-0">
                 <div>
-                  <h2 className="text-lg font-semibold text-gray-900">
+                  <h2 className="text-base sm:text-lg font-semibold text-gray-900">
                     Artes {getOrientationLabel(selectedScreenTypeForView)}
                   </h2>
-                  <p className="text-sm text-gray-500 mt-1">
+                  <p className="text-xs sm:text-sm text-gray-500 mt-1">
                     {selectedOrderForArts.nome_campanha}
                   </p>
                 </div>
@@ -1078,7 +1078,7 @@ const summarizeArteStatuses = (artes: ArteResumo[]) => {
                   </svg>
                 </button>
               </div>
-              <div className="p-6 space-y-4 overflow-y-auto flex-1">
+              <div className="p-4 sm:p-6 space-y-4 overflow-y-auto flex-1">
                 {artesFiltradas.length === 0 ? (
                   <div className="text-center text-gray-500 py-12">
                     Nenhuma arte encontrada para este tipo.
@@ -1138,13 +1138,13 @@ const summarizeArteStatuses = (artes: ArteResumo[]) => {
           setSelectedOrderIdForTroca(null);
           setSelectedFile(null);
         }}>
-          <div className="bg-white rounded-2xl w-full max-w-2xl mx-auto shadow-2xl" onClick={(e) => e.stopPropagation()}>
-            <div className="p-6 border-b border-gray-100 flex items-center justify-between">
+          <div className="bg-white rounded-2xl w-full max-w-lg mx-auto shadow-2xl max-h-[90vh] overflow-hidden flex flex-col" onClick={(e) => e.stopPropagation()}>
+            <div className="p-4 sm:p-6 border-b border-gray-100 flex items-center justify-between flex-shrink-0">
               <div>
-                <h2 className="text-lg font-semibold text-gray-900">
+                <h2 className="text-base sm:text-lg font-semibold text-gray-900">
                   Trocar Arte - {getOrientationLabel(selectedScreenTypeForTroca)}
                 </h2>
-                <p className="text-sm text-gray-500 mt-1">
+                <p className="text-xs sm:text-sm text-gray-500 mt-1">
                   Selecione uma nova arte para todos os totens {getOrientationLabel(selectedScreenTypeForTroca).toLowerCase()}
                 </p>
               </div>
@@ -1162,9 +1162,9 @@ const summarizeArteStatuses = (artes: ArteResumo[]) => {
                 </svg>
               </button>
             </div>
-            <div className="p-6">
+            <div className="p-4 sm:p-6 overflow-y-auto flex-1">
               {/* Preview do Monitor */}
-              <div className="mb-6 flex justify-center">
+              <div className="mb-4 sm:mb-6 flex justify-center">
                 <div
                   className="relative w-full"
                   style={{
@@ -1260,7 +1260,7 @@ const summarizeArteStatuses = (artes: ArteResumo[]) => {
               </div>
 
               {/* Input de arquivo */}
-              <div className="mb-6">
+              <div className="mb-4 sm:mb-6">
                 <label htmlFor="upload-art-troca" className="block text-sm font-medium text-gray-700 mb-3">
                   Selecionar nova arte
                 </label>
