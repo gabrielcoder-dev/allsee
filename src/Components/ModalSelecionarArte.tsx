@@ -466,8 +466,36 @@ export default function ModalSelecionarArte({
 
             <div className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
               <div className="grid gap-6 lg:grid-cols-2">
-                {ORIENTATION_KEYS.map((orientation) =>
-                  renderOrientationPreview(orientation)
+                {/* No mobile: mostra apenas o monitor selecionado */}
+                {/* No desktop (lg+): mostra todos os monitores */}
+                {selectedOrientation ? (
+                  <>
+                    {/* Mobile: apenas o selecionado */}
+                    <div className="lg:hidden flex justify-center">
+                      {renderOrientationPreview(selectedOrientation)}
+                    </div>
+                    {/* Desktop: todos os monitores */}
+                    <div className="hidden lg:contents">
+                      {ORIENTATION_KEYS.map((orientation) =>
+                        renderOrientationPreview(orientation)
+                      )}
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    {/* Desktop: todos os monitores mesmo sem seleção */}
+                    <div className="hidden lg:contents">
+                      {ORIENTATION_KEYS.map((orientation) =>
+                        renderOrientationPreview(orientation)
+                      )}
+                    </div>
+                    {/* Mobile: mensagem quando nenhum está selecionado */}
+                    <div className="lg:hidden flex items-center justify-center min-h-[400px]">
+                      <p className="text-gray-500 text-center px-4">
+                        Selecione um totem acima para visualizar o monitor
+                      </p>
+                    </div>
+                  </>
                 )}
               </div>
             </div>
