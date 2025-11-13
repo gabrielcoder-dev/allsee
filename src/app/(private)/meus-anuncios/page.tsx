@@ -89,6 +89,7 @@ const MeusAnuncios = () => {
   const [selectedScreenTypeForTroca, setSelectedScreenTypeForTroca] = useState<'portrait' | 'landscape' | null>(null);
   const [isViewArtsModalOpen, setIsViewArtsModalOpen] = useState(false);
   const [selectedScreenTypeForView, setSelectedScreenTypeForView] = useState<'portrait' | 'landscape' | null>(null);
+  const [isTrocaLoading, setIsTrocaLoading] = useState(false);
 
   // Hook para upload direto para storage
   const { uploadFile, progress: uploadProgress, isUploading, error: uploadError } = useDirectStorageUpload({
@@ -1293,24 +1294,32 @@ const summarizeArteStatuses = (artes: ArteResumo[]) => {
               {/* Botões */}
               <div className="flex gap-3">
                 <button
-                  className="flex-1 py-3 px-4 rounded-xl border border-gray-200 text-gray-600 font-medium hover:bg-gray-50 transition-colors cursor-pointer"
+                  className="flex-1 py-3 px-4 rounded-xl border border-gray-200 text-gray-600 font-medium hover:bg-gray-50 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                   onClick={() => {
+                    if (isTrocaLoading) return;
                     setIsTrocaModalOpen(false);
                     setSelectedScreenTypeForTroca(null);
                     setSelectedOrderIdForTroca(null);
                     setSelectedFile(null);
+                    setIsTrocaLoading(false);
                   }}
+                  disabled={isTrocaLoading}
                 >
                   Cancelar
                 </button>
                 <button
-                  className="flex-1 py-3 px-4 rounded-xl bg-orange-600 text-white font-medium hover:bg-orange-700 transition-colors cursor-pointer disabled:bg-gray-300 disabled:cursor-not-allowed"
+                  className="flex-1 py-3 px-4 rounded-xl bg-orange-600 text-white font-medium hover:bg-orange-700 transition-colors cursor-pointer disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                   onClick={async () => {
-                    if (!selectedFile || !selectedOrderIdForTroca || !selectedScreenTypeForTroca) return;
+                    if (!selectedFile || !selectedOrderIdForTroca || !selectedScreenTypeForTroca || isTrocaLoading) return;
+                    
+                    setIsTrocaLoading(true);
                     
                     // Buscar todas as artes do tipo selecionado para este pedido
                     const grupo = anuncios.find((anuncio) => anuncio.order_id === selectedOrderIdForTroca);
-                    if (!grupo) return;
+                    if (!grupo) {
+                      setIsTrocaLoading(false);
+                      return;
+                    }
 
                     const artesDoTipo = grupo.artes.filter(arte => 
                       getOrientation(arte.screen_type) === selectedScreenTypeForTroca
@@ -1370,11 +1379,20 @@ const summarizeArteStatuses = (artes: ArteResumo[]) => {
                         position: "top-right",
                         autoClose: 5000,
                       });
+                    } finally {
+                      setIsTrocaLoading(false);
                     }
                   }}
-                  disabled={!selectedFile}
+                  disabled={!selectedFile || isTrocaLoading}
                 >
-                  Trocar Arte
+                  {isTrocaLoading ? (
+                    <>
+                      <span className="animate-spin">⏳</span>
+                      Carregando...
+                    </>
+                  ) : (
+                    'Trocar Arte'
+                  )}
                 </button>
               </div>
             </div>
