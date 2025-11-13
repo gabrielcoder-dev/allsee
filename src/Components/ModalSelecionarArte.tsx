@@ -209,22 +209,33 @@ export default function ModalSelecionarArte({
     );
   };
 
-  const renderScreenStyle = (orientation: OrientationKey) =>
-    orientation === "portrait"
-      ? {
-          top: "9%",
-          bottom: "11%",
-          left: "24%",
-          right: "24%",
-          borderRadius: "14px",
-        }
-      : {
-          top: "16%",
-          bottom: "18%",
-          left: "6%",
-          right: "6%",
-          borderRadius: "14px",
-        };
+  const renderScreenStyle = (orientation: OrientationKey) => {
+    // Tamanhos fixos responsivos usando clamp
+    const portraitWidth = "clamp(180px, 22vw, 240px)";
+    const portraitHeight = "clamp(320px, 39vw, 427px)";
+    const landscapeWidth = "clamp(340px, 42vw, 480px)";
+    const landscapeHeight = "clamp(191px, 23.6vw, 270px)";
+
+    if (orientation === "portrait") {
+      return {
+        width: portraitWidth,
+        height: portraitHeight,
+        top: "50%",
+        left: "50%",
+        transform: "translate(-50%, -50%)",
+        borderRadius: "14px",
+      };
+    } else {
+      return {
+        width: landscapeWidth,
+        height: landscapeHeight,
+        top: "50%",
+        left: "50%",
+        transform: "translate(-50%, -50%)",
+        borderRadius: "14px",
+      };
+    }
+  };
 
   const renderOrientationPreview = (orientation: OrientationKey) => {
     const hasTotems = orientationHasProducts(produtos, orientation);
