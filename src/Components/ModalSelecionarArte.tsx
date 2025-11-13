@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useMemo, useEffect } from "react";
-import { X, Monitor, Printer } from "lucide-react";
+import { X, Monitor, Printer, ChevronDown, ChevronUp } from "lucide-react";
 import { useCart } from "@/context/CartContext";
 import { toast } from "sonner";
 
@@ -37,6 +37,7 @@ export default function ModalSelecionarArte({
   const [selectedOrientation, setSelectedOrientation] = useState<OrientationKey | null>(null);
   const [orientationsSemArte, setOrientationsSemArte] = useState<OrientationKey[]>([]);
   const [isSaving, setIsSaving] = useState(false);
+  const [openSelects, setOpenSelects] = useState<Record<string, boolean>>({});
   const fileInputRef = useRef<HTMLInputElement>(null);
   const pendingOrientationRef = useRef<OrientationKey | null>(null);
 
@@ -55,8 +56,16 @@ export default function ModalSelecionarArte({
       setOrientationArts({});
       setOrientationsSemArte([]);
       setSelectedOrientation(null);
+      setOpenSelects({});
     }
   }, [open]);
+
+  const toggleSelect = (key: string) => {
+    setOpenSelects((prev) => ({
+      ...prev,
+      [key]: !prev[key],
+    }));
+  };
 
   const groupedByTypeAndOrientation = useMemo(() => {
     const base = {
@@ -345,52 +354,69 @@ export default function ModalSelecionarArte({
     );
   };
 
-  const renderOrientationGroup = (tipo: "digital" | "impresso", orientation: OrientationKey) => {
+  const renderSelect = (tipo: "digital" | "impresso", orientation: OrientationKey) => {
     const itens = groupedByTypeAndOrientation[tipo][orientation];
     if (itens.length === 0) return null;
 
+    const selectKey = `${tipo}-${orientation}`;
+    const isOpen = openSelects[selectKey] || false;
     const hasArt = Boolean(orientationArts[orientation]);
     const needsArt = orientationsSemArte.includes(orientation);
     const isSelected = selectedOrientation === orientation;
 
     return (
       <div
-        key={`${tipo}-${orientation}`}
-        className={`p-3 border-2 rounded-lg transition-all cursor-pointer ${
+        key={selectKey}
+        className={`border-2 rounded-lg transition-all overflow-hidden ${
           needsArt
-            ? "border-red-500 bg-red-50 animate-pulse"
+            ? "border-red-500 bg-red-50"
             : isSelected
             ? "border-orange-500 bg-orange-50"
             : hasArt
             ? "border-green-500 bg-green-50"
-            : "border-gray-200 bg-white hover:bg-gray-50"
+            : "border-gray-200 bg-white"
         }`}
-        onClick={() => setSelectedOrientation(orientation)}
       >
-        <div className="flex items-center justify-between mb-2">
+        <button
+          type="button"
+          className="w-full flex items-center justify-between p-3 hover:bg-gray-50 transition-colors"
+          onClick={(e) => {
+            e.stopPropagation();
+            toggleSelect(selectKey);
+            setSelectedOrientation(orientation);
+          }}
+        >
           <div className="flex items-center gap-2">
             <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-orange-100 text-orange-600">
               <Monitor className={`w-4 h-4 ${orientation === "landscape" ? "-rotate-90" : ""}`} />
             </span>
-            <div>
+            <div className="text-left">
               <p className="text-sm font-semibold text-gray-800">
-                {ORIENTATION_LABEL[orientation]} ({itens.length} totem{itens.length > 1 ? "s" : ""})
+                {tipo === "digital" ? "Digital" : "Impresso"} {ORIENTATION_LABEL[orientation]} ({itens.length} totem{itens.length > 1 ? "s" : ""})
               </p>
-              <p className="text-xs text-gray-500 capitalize">{tipo}</p>
             </div>
           </div>
-          {hasArt && !needsArt && (
-            <span className="text-xs font-semibold text-green-600">Arte adicionada</span>
-          )}
-        </div>
-        <div className="space-y-1">
-          {itens.map((produto) => (
-            <div key={produto.id} className="text-xs text-gray-600">
-              <span className="font-medium text-gray-700">{produto.nome}</span>
-              <span className="block text-[11px] text-gray-500">{produto.endereco}</span>
-            </div>
-          ))}
-        </div>
+          <div className="flex items-center gap-2">
+            {hasArt && !needsArt && (
+              <span className="text-xs font-semibold text-green-600">Arte adicionada</span>
+            )}
+            {isOpen ? (
+              <ChevronUp className="w-5 h-5 text-gray-500" />
+            ) : (
+              <ChevronDown className="w-5 h-5 text-gray-500" />
+            )}
+          </div>
+        </button>
+        {isOpen && (
+          <div className="border-t border-gray-200 bg-white p-3 space-y-1">
+            {itens.map((produto) => (
+              <div key={produto.id} className="text-xs text-gray-600">
+                <span className="font-medium text-gray-700">{produto.nome}</span>
+                <span className="block text-[11px] text-gray-500">{produto.endereco}</span>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     );
   };
@@ -416,33 +442,17 @@ export default function ModalSelecionarArte({
           <div className="w-full lg:w-1/3 border-b lg:border-b-0 lg:border-r border-gray-200 overflow-y-auto p-4 lg:p-6">
             <h3 className="text-lg font-semibold text-gray-800 mb-4">Totens</h3>
             <div className="space-y-3">
-              {(["digital", "impresso"] as ("digital" | "impresso")[]).map((tipo) => {
-                const totalTipo = groupedByTypeAndOrientation[tipo].portrait.length + groupedByTypeAndOrientation[tipo].landscape.length;
-                if (totalTipo === 0) return null;
-
-                const pontosLabel = totalTipo === 1 ? "Ponto" : "Pontos";
-
-                return (
-                  <div key={tipo} className="rounded-xl border bg-white shadow-sm">
-                    <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
-                      <div className="flex items-center gap-2">
-                        {tipo === "digital" ? (
-                          <Monitor className="w-4 h-4 text-orange-500" />
-                        ) : (
-                          <Printer className="w-4 h-4 text-orange-500" />
-                        )}
-                        <span className="text-sm font-semibold text-gray-800 capitalize">
-                          {tipo} ({totalTipo} {pontosLabel})
-                        </span>
-                      </div>
-                    </div>
-                    <div className="p-3 space-y-3 bg-gray-50">
-                      {renderOrientationGroup(tipo, "portrait")}
-                      {renderOrientationGroup(tipo, "landscape")}
-                    </div>
-                  </div>
-                );
-              })}
+              {/* Select Digital Em pé */}
+              {renderSelect("digital", "portrait")}
+              
+              {/* Select Digital Deitado */}
+              {renderSelect("digital", "landscape")}
+              
+              {/* Select Impresso Em pé */}
+              {renderSelect("impresso", "portrait")}
+              
+              {/* Select Impresso Deitado */}
+              {renderSelect("impresso", "landscape")}
             </div>
           </div>
 
