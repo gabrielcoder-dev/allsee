@@ -210,29 +210,31 @@ export default function ModalSelecionarArte({
   };
 
   const renderScreenStyle = (orientation: OrientationKey) => {
-    // Tamanhos fixos responsivos usando clamp
-    const portraitWidth = "clamp(180px, 22vw, 240px)";
-    const portraitHeight = "clamp(320px, 39vw, 427px)";
-    const landscapeWidth = "clamp(340px, 42vw, 480px)";
-    const landscapeHeight = "clamp(191px, 23.6vw, 270px)";
-
+    // Posicionamento baseado na área da tela dentro do SVG do monitor
+    // Usando porcentagens para se adaptar ao tamanho do monitor
     if (orientation === "portrait") {
+      // No SVG portrait: retângulo da tela está em x="40" y="50" width="360" height="500"
+      // Dentro do grupo transformado em translate(80, 40), então a tela real está em (120, 90)
+      // O SVG tem viewBox="0 0 600 650", então a tela ocupa aproximadamente:
+      // left: 120/600 = 20%, top: 90/650 = 13.8%, width: 360/600 = 60%, height: 500/650 = 76.9%
       return {
-        width: portraitWidth,
-        height: portraitHeight,
-        top: "50%",
-        left: "50%",
-        transform: "translate(-50%, -50%)",
-        borderRadius: "14px",
+        top: "13.8%",
+        left: "20%",
+        width: "60%",
+        height: "76.9%",
+        borderRadius: "12px",
       };
     } else {
+      // No SVG landscape: retângulo da tela está em x="50" y="50" width="600" height="310"
+      // Dentro do grupo transformado em translate(50, 20), então a tela real está em (100, 70)
+      // O SVG tem viewBox="0 0 800 470", então a tela ocupa aproximadamente:
+      // left: 100/800 = 12.5%, top: 70/470 = 14.9%, width: 600/800 = 75%, height: 310/470 = 65.9%
       return {
-        width: landscapeWidth,
-        height: landscapeHeight,
-        top: "50%",
-        left: "50%",
-        transform: "translate(-50%, -50%)",
-        borderRadius: "14px",
+        top: "14.9%",
+        left: "12.5%",
+        width: "75%",
+        height: "65.9%",
+        borderRadius: "8px",
       };
     }
   };
@@ -277,7 +279,12 @@ export default function ModalSelecionarArte({
 
         <div className="relative flex flex-col items-center">
           <div
-            className={`w-full ${orientation === "portrait" ? "max-w-[280px]" : "max-w-[540px]"}`}
+            className="relative w-full"
+            style={{
+              maxWidth: orientation === "portrait" 
+                ? "clamp(200px, 25vw, 320px)" 
+                : "clamp(380px, 48vw, 640px)"
+            }}
             onClick={() => handleMonitorClick(orientation)}
           >
             {renderMonitorFrame(orientation)}
@@ -287,6 +294,7 @@ export default function ModalSelecionarArte({
               }`}
               style={{
                 ...renderScreenStyle(orientation),
+                position: "absolute",
                 overflow: "hidden",
                 background: art ? "#000" : "linear-gradient(135deg, #f97316 0%, #ea580c 100%)",
                 display: "flex",
