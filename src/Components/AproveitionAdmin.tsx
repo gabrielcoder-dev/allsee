@@ -494,18 +494,16 @@ const AproveitionAdmin = () => {
                   >
                     Ver Detalhes
                   </button>
+                  <button
+                    className="bg-red-500 hover:bg-red-600 text-white rounded-md sm:rounded-lg md:rounded-xl px-2 sm:px-3 py-1 sm:py-1.5 font-medium text-[10px] sm:text-xs md:text-sm cursor-pointer transition-colors flex items-center gap-1 sm:gap-2 whitespace-nowrap"
+                    onClick={() => setOrderToDelete(group.orderId)}
+                    title="Excluir pedido"
+                  >
+                    <span className="font-semibold text-sm sm:text-base">×</span>
+                    <span className="hidden sm:inline">Excluir campanha</span>
+                    <span className="sm:hidden">Excluir</span>
+                  </button>
                 </div>
-              </div>
-              <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0 border-t sm:border-t-0 pt-2 sm:pt-0">
-                <button
-                  className="bg-red-500 hover:bg-red-600 text-white rounded-md sm:rounded-lg md:rounded-xl px-2 sm:px-3 py-1 sm:py-1.5 font-medium text-[10px] sm:text-xs md:text-sm cursor-pointer transition-colors flex items-center gap-1 sm:gap-2 w-full sm:w-auto justify-center"
-                  onClick={() => setOrderToDelete(group.orderId)}
-                  title="Excluir pedido"
-                >
-                  <span className="font-semibold text-sm sm:text-base">×</span>
-                  <span className="hidden sm:inline">Excluir campanha</span>
-                  <span className="sm:hidden">Excluir</span>
-                </button>
               </div>
             </div>
           );
