@@ -517,8 +517,10 @@ const AproveitionAdmin = () => {
           <div className="relative bg-white rounded-t-xl md:rounded-xl lg:rounded-2xl shadow-xl border border-gray-200 max-w-3xl w-full max-h-[95vh] md:max-h-[90vh] overflow-hidden flex flex-col z-10" onClick={(e) => e.stopPropagation()}>
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-4 p-3 sm:p-4 md:p-6 border-b border-gray-200 flex-shrink-0">
               <div className="flex-1 min-w-0">
-                <h3 className="text-base sm:text-lg md:text-xl font-semibold text-gray-800">Artes do pedido #{imagesModalOrderId}</h3>
-                <p className="text-xs sm:text-sm text-gray-500 mt-1">Visualize e aprove as artes enviadas para este pedido.</p>
+                <h3 className="text-base sm:text-lg md:text-xl font-semibold text-gray-800">
+                  Artes da Campanha {orderInfoMap[imagesModalOrderId]?.nome_campanha || `#${imagesModalOrderId}`}
+                </h3>
+                <p className="text-xs sm:text-sm text-gray-500 mt-1">Visualize e aprove as artes enviadas para esta campanha.</p>
               </div>
               <button
                 className="text-gray-400 hover:text-gray-600 text-lg font-bold p-2 bg-gray-100 hover:bg-gray-200 rounded-full transition-colors cursor-pointer flex-shrink-0"
