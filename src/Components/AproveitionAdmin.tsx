@@ -825,10 +825,11 @@ const AproveitionAdmin = () => {
         <div className="fixed inset-0 z-[10000] flex items-center justify-center p-3 sm:p-4">
           <div className="absolute inset-0 bg-black/50" onClick={() => !isDeleting && setOrderToDelete(null)}></div>
           <div className="relative bg-white rounded-lg sm:rounded-xl shadow-xl border border-gray-200 p-4 sm:p-5 md:p-7 max-w-md w-full z-10">
-            <h3 className="text-base sm:text-lg md:text-xl font-semibold text-gray-800 mb-2 sm:mb-3">Excluir pedido #{orderToDelete}</h3>
+            <h3 className="text-base sm:text-lg md:text-xl font-semibold text-gray-800 mb-2 sm:mb-3">
+              Excluir Campanha {orderInfoMap[orderToDelete]?.nome_campanha || `#${orderToDelete}`}
+            </h3>
             <p className="text-xs sm:text-sm md:text-base text-gray-600 mb-4">
-              Tem certeza que deseja excluir este pedido e todas as artes relacionadas?
-              Esta ação não pode ser desfeita.
+              Tem certeza que deseja excluir esta campanha?
             </p>
             <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 justify-end">
               <button
