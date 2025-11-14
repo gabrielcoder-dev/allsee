@@ -6,7 +6,6 @@ import NavBarAdmin from '@/Components/NavBarAdmin';
 import AnunciosAdminView from '@/Components/AnunciosAdminView';
 import dynamic from 'next/dynamic';
 import ProgressAdmin from '@/Components/ProgressAdmin';
-import ReplacementAdmin from '@/Components/ReplacementAdmin';
 import AproveitionAdmin from '@/Components/AproveitionAdmin';
 import { NotificationProvider } from '@/context/NotificationContext';
 
@@ -36,9 +35,6 @@ const DashboardPage = () => {
       break;
     case 'andamento':
       ContentComponent = <ProgressAdmin />;
-      break;
-    case 'substituicao':
-      ContentComponent = <ReplacementAdmin />;
       break;
     default:
       ContentComponent = <AnunciosAdminView />;

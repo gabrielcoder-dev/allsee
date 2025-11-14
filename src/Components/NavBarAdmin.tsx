@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { FiLogOut, FiMap, FiList } from 'react-icons/fi'
-import { ChevronLeft, ChevronRight, CheckCircle, RefreshCw, Repeat, ArrowLeft } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Megaphone, RefreshCw, ArrowLeft } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -194,11 +194,11 @@ export default function NavBarAdmin({ onLogout, mobileOpen, setMobileOpen, selec
               >
                 <div className={`absolute inset-0 rounded-xl ${selectedMenu === 'aprovacao' ? 'bg-gradient-to-r from-orange-500 to-orange-600' : 'bg-transparent group-hover:bg-gradient-to-r group-hover:from-orange-50 group-hover:to-orange-100'} transition-all duration-200`}></div>
                 <div className="relative z-10 flex items-center">
-                  <CheckCircle size={20} />
+                  <Megaphone size={20} />
                 </div>
                 {isExpanded && (
                   <span className="text-sm md:text-base relative z-10">
-                    Aprovação
+                    Campanhas
                     {counts.approvals > 0 && (
                       <span className="absolute -top-1 right-[-24px] bg-red-500 text-white text-xs rounded-full px-1 min-w-[18px] h-[18px] flex items-center justify-center">
                         {counts.approvals > 99 ? '99+' : counts.approvals}
@@ -224,35 +224,6 @@ export default function NavBarAdmin({ onLogout, mobileOpen, setMobileOpen, selec
                 <div className={`absolute inset-0 rounded-xl ${selectedMenu === 'andamento' ? 'bg-gradient-to-r from-orange-500 to-orange-600' : 'bg-transparent group-hover:bg-gradient-to-r group-hover:from-orange-50 group-hover:to-orange-100'} transition-all duration-200`}></div>
                 <RefreshCw size={20} className="relative z-10" />
                 {isExpanded && <span className="text-sm md:text-base relative z-10">Andamento</span>}
-              </a>
-            </li>
-            <li>
-              <a 
-                href="#" 
-                onClick={() => {
-                  setSelectedMenu('substituicao')
-                  if (isMobile) setMobileOpen(false)
-                }} 
-                className={`flex items-center gap-3 font-semibold px-3 md:px-4 py-2.5 md:py-3 rounded-xl transition-all duration-200 relative group ${
-                  selectedMenu === 'substituicao' 
-                    ? 'bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-lg shadow-orange-500/25' 
-                    : 'text-orange-600 hover:bg-gradient-to-r hover:from-orange-50 hover:to-orange-100 hover:shadow-md'
-                }`}
-              >
-                <div className={`absolute inset-0 rounded-xl ${selectedMenu === 'substituicao' ? 'bg-gradient-to-r from-orange-500 to-orange-600' : 'bg-transparent group-hover:bg-gradient-to-r group-hover:from-orange-50 group-hover:to-orange-100'} transition-all duration-200`}></div>
-                <div className="relative z-10 flex items-center">
-                  <Repeat size={20} />
-                </div>
-                {isExpanded && (
-                  <span className="text-sm md:text-base relative z-10">
-                    Substituição
-                    {counts.replacements > 0 && (
-                      <span className="absolute -top-1 right-[-24px] bg-red-500 text-white text-xs rounded-full px-1 min-w-[18px] h-[18px] flex items-center justify-center">
-                        {counts.replacements > 99 ? '99+' : counts.replacements}
-                      </span>
-                    )}
-                  </span>
-                )}
               </a>
             </li>
           </ul>
