@@ -259,25 +259,25 @@ export default function ModalSelecionarArte({
     return (
       <div
         key={orientation}
-        className={`relative flex flex-col gap-4 bg-white border rounded-2xl p-4 shadow-sm transition-all ${
+        className={`relative flex flex-col gap-3 sm:gap-4 bg-white border rounded-xl sm:rounded-2xl p-3 sm:p-4 shadow-sm transition-all ${
           isSelected ? "border-orange-500" : "border-transparent"
         } ${needsArt ? "ring-2 ring-red-400" : ""}`}
       >
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-orange-100 text-orange-600">
-              <Monitor className={`w-4 h-4 ${orientation === "landscape" ? "-rotate-90" : ""}`} />
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 min-w-0 flex-1">
+            <span className="inline-flex items-center justify-center w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-orange-100 text-orange-600 flex-shrink-0">
+              <Monitor className={`w-3 h-3 sm:w-4 sm:h-4 ${orientation === "landscape" ? "-rotate-90" : ""}`} />
             </span>
-            <div className="flex flex-col">
-              <span className="text-sm font-semibold text-gray-700">{ORIENTATION_LABEL[orientation]}</span>
-              <span className="text-xs text-gray-500">
+            <div className="flex flex-col min-w-0">
+              <span className="text-xs sm:text-sm font-semibold text-gray-700 truncate">{ORIENTATION_LABEL[orientation]}</span>
+              <span className="text-[10px] sm:text-xs text-gray-500">
                 {groupedByTypeAndOrientation.digital[orientation].length +
                   groupedByTypeAndOrientation.impresso[orientation].length} totem(s)
               </span>
             </div>
           </div>
           <button
-            className={`text-xs font-semibold px-3 py-1 rounded-full transition-colors ${
+            className={`text-[10px] sm:text-xs font-semibold px-2 sm:px-3 py-1 rounded-full transition-colors whitespace-nowrap flex-shrink-0 ${
               isSelected ? "bg-orange-500 text-white" : "bg-gray-100 text-gray-600"
             }`}
             onClick={() => setSelectedOrientation(orientation)}
@@ -379,40 +379,40 @@ export default function ModalSelecionarArte({
       >
         <button
           type="button"
-          className="w-full flex items-center justify-between p-3 hover:bg-gray-50 transition-colors"
+          className="w-full flex items-center justify-between p-2 sm:p-3 hover:bg-gray-50 transition-colors gap-2"
           onClick={(e) => {
             e.stopPropagation();
             toggleSelect(selectKey);
             setSelectedOrientation(orientation);
           }}
         >
-          <div className="flex items-center gap-2">
-            <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-orange-100 text-orange-600">
-              <Monitor className={`w-4 h-4 ${orientation === "landscape" ? "-rotate-90" : ""}`} />
+          <div className="flex items-center gap-2 min-w-0 flex-1">
+            <span className="inline-flex items-center justify-center w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-orange-100 text-orange-600 flex-shrink-0">
+              <Monitor className={`w-3 h-3 sm:w-4 sm:h-4 ${orientation === "landscape" ? "-rotate-90" : ""}`} />
             </span>
-            <div className="text-left">
-              <p className="text-sm font-semibold text-gray-800">
+            <div className="text-left min-w-0">
+              <p className="text-xs sm:text-sm font-semibold text-gray-800 truncate">
                 {tipo === "digital" ? "Digital" : "Impresso"} {ORIENTATION_LABEL[orientation]} ({itens.length} totem{itens.length > 1 ? "s" : ""})
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
             {hasArt && !needsArt && (
-              <span className="text-xs font-semibold text-green-600">Arte adicionada</span>
+              <span className="text-[10px] sm:text-xs font-semibold text-green-600 whitespace-nowrap hidden sm:inline">Arte adicionada</span>
             )}
             {isOpen ? (
-              <ChevronUp className="w-5 h-5 text-gray-500" />
+              <ChevronUp className="w-4 h-4 sm:w-5 sm:h-5 text-gray-500 flex-shrink-0" />
             ) : (
-              <ChevronDown className="w-5 h-5 text-gray-500" />
+              <ChevronDown className="w-4 h-4 sm:w-5 sm:h-5 text-gray-500 flex-shrink-0" />
             )}
           </div>
         </button>
         {isOpen && (
-          <div className="border-t border-gray-200 bg-white p-3 space-y-1">
+          <div className="border-t border-gray-200 bg-white p-2 sm:p-3 space-y-1 max-h-40 overflow-y-auto">
             {itens.map((produto) => (
               <div key={produto.id} className="text-xs text-gray-600">
-                <span className="font-medium text-gray-700">{produto.nome}</span>
-                <span className="block text-[11px] text-gray-500">{produto.endereco}</span>
+                <span className="font-medium text-gray-700 block truncate">{produto.nome}</span>
+                <span className="block text-[10px] sm:text-[11px] text-gray-500 truncate">{produto.endereco}</span>
               </div>
             ))}
           </div>
@@ -424,14 +424,14 @@ export default function ModalSelecionarArte({
   return (
     <div className="fixed inset-0 z-[9999] bg-white overflow-hidden">
       <div className="w-full h-full flex flex-col">
-        <div className="flex items-center justify-between px-4 sm:px-6 py-3 border-b border-gray-200">
-          <div>
-            <h2 className="text-lg sm:text-xl font-bold text-gray-800">Selecionar artes para os totens</h2>
-            <p className="text-sm text-gray-500">Faça upload de uma arte para totens em pé e outra para totens deitados.</p>
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 px-4 sm:px-6 py-3 border-b border-gray-200 flex-shrink-0">
+          <div className="flex-1 min-w-0">
+            <h2 className="text-base sm:text-lg md:text-xl font-bold text-gray-800">Selecionar artes para os totens</h2>
+            <p className="text-xs sm:text-sm text-gray-500 mt-1">Faça upload de uma arte para totens em pé e outra para totens deitados.</p>
           </div>
           <button
             onClick={onClose}
-            className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors"
+            className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors flex-shrink-0"
             aria-label="Fechar"
           >
             <X className="w-5 h-5 text-gray-500" />
@@ -439,9 +439,9 @@ export default function ModalSelecionarArte({
         </div>
 
         <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
-          <div className="w-full lg:w-1/3 border-b lg:border-b-0 lg:border-r border-gray-200 overflow-y-auto p-4 lg:p-6">
-            <h3 className="text-lg font-semibold text-gray-800 mb-4">Totens</h3>
-            <div className="space-y-3">
+          <div className="w-full lg:w-1/3 border-b lg:border-b-0 lg:border-r border-gray-200 overflow-y-auto p-3 sm:p-4 lg:p-6 flex-shrink-0">
+            <h3 className="text-base sm:text-lg font-semibold text-gray-800 mb-3 sm:mb-4">Totens</h3>
+            <div className="space-y-2 sm:space-y-3">
               {/* Select Digital Em pé */}
               {renderSelect("digital", "portrait")}
               
@@ -456,16 +456,16 @@ export default function ModalSelecionarArte({
             </div>
           </div>
 
-          <div className="flex-1 flex flex-col bg-gray-50">
-            <div className="px-4 sm:px-6 py-3 border-b border-gray-200 bg-white flex-shrink-0">
-              <div className="flex items-center justify-between">
-                <h3 className="text-sm font-semibold text-gray-700">Personalize seu anúncio</h3>
-                <span className="text-xs text-gray-500">{produtos.length} totens</span>
+          <div className="flex-1 flex flex-col bg-gray-50 min-w-0">
+            <div className="px-3 sm:px-4 md:px-6 py-2 sm:py-3 border-b border-gray-200 bg-white flex-shrink-0">
+              <div className="flex items-center justify-between gap-2">
+                <h3 className="text-xs sm:text-sm font-semibold text-gray-700">Personalize seu anúncio</h3>
+                <span className="text-xs text-gray-500 whitespace-nowrap">{produtos.length} totens</span>
               </div>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
-              <div className="grid gap-6 lg:grid-cols-2">
+            <div className="flex-1 overflow-y-auto p-3 sm:p-4 md:p-6 lg:p-8">
+              <div className="grid gap-4 sm:gap-6 lg:grid-cols-2 max-w-full">
                 {/* No mobile: mostra apenas o monitor selecionado */}
                 {/* No desktop (lg+): mostra todos os monitores */}
                 {selectedOrientation ? (
@@ -502,22 +502,22 @@ export default function ModalSelecionarArte({
           </div>
         </div>
 
-        <div className="border-t border-gray-200 px-4 sm:px-6 py-3 sm:py-4 flex flex-col sm:flex-row justify-end gap-2 sm:gap-3 bg-white">
+        <div className="border-t border-gray-200 px-3 sm:px-4 md:px-6 py-2 sm:py-3 md:py-4 flex flex-col sm:flex-row justify-end gap-2 sm:gap-3 bg-white flex-shrink-0">
           <button
             onClick={onClose}
-            className="px-4 sm:px-6 py-2 rounded-lg font-semibold border border-gray-300 hover:bg-gray-50 transition-colors text-sm sm:text-base"
+            className="px-4 sm:px-6 py-2 rounded-lg font-semibold border border-gray-300 hover:bg-gray-50 transition-colors text-xs sm:text-sm md:text-base w-full sm:w-auto"
           >
             Cancelar
           </button>
           <button
             onClick={handleConcluir}
             disabled={isSaving}
-            className="bg-orange-500 hover:bg-orange-600 text-white px-4 sm:px-6 py-2 rounded-lg font-semibold transition-colors text-sm sm:text-base disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            className="bg-orange-500 hover:bg-orange-600 text-white px-4 sm:px-6 py-2 rounded-lg font-semibold transition-colors text-xs sm:text-sm md:text-base disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 w-full sm:w-auto"
           >
             {isSaving ? (
               <>
                 <span className="animate-spin">⏳</span>
-                Salvando...
+                <span>Salvando...</span>
               </>
             ) : (
               "Concluir"

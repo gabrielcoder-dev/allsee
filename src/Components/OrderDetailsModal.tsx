@@ -115,24 +115,24 @@ export default function OrderDetailsModal({ isOpen, onClose, orderId }: OrderDet
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 p-2 md:p-4">
-      <div className="bg-white rounded-lg md:rounded-2xl shadow-xl w-full max-w-4xl max-h-[95vh] md:max-h-[90vh] overflow-hidden">
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 p-2 sm:p-3 md:p-4">
+      <div className="bg-white rounded-lg sm:rounded-xl md:rounded-2xl shadow-xl w-full max-w-4xl max-h-[95vh] md:max-h-[90vh] overflow-hidden flex flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between p-3 md:p-6 border-b border-gray-200">
-          <h2 className="text-lg md:text-2xl font-bold text-gray-800">Campanha</h2>
+        <div className="flex items-center justify-between p-3 sm:p-4 md:p-6 border-b border-gray-200 flex-shrink-0">
+          <h2 className="text-base sm:text-lg md:text-2xl font-bold text-gray-800">Campanha</h2>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+            className="p-2 hover:bg-gray-100 rounded-full transition-colors flex-shrink-0"
           >
-            <X className="w-5 h-5 text-gray-500" />
+            <X className="w-4 h-4 sm:w-5 sm:h-5 text-gray-500" />
           </button>
         </div>
 
         {/* Tabs */}
-        <div className="flex border-b border-gray-200">
+        <div className="flex border-b border-gray-200 flex-shrink-0">
           <button
             onClick={() => setActiveTab('dados')}
-            className={`px-3 md:px-6 py-2 md:py-3 font-medium text-xs md:text-sm transition-colors ${
+            className={`px-3 sm:px-4 md:px-6 py-2 sm:py-2.5 md:py-3 font-medium text-xs sm:text-sm transition-colors flex-1 sm:flex-none ${
               activeTab === 'dados'
                 ? 'text-orange-600 border-b-2 border-orange-600'
                 : 'text-gray-500 hover:text-gray-700'
@@ -142,7 +142,7 @@ export default function OrderDetailsModal({ isOpen, onClose, orderId }: OrderDet
           </button>
           <button
             onClick={() => setActiveTab('totens')}
-            className={`px-3 md:px-6 py-2 md:py-3 font-medium text-xs md:text-sm transition-colors ${
+            className={`px-3 sm:px-4 md:px-6 py-2 sm:py-2.5 md:py-3 font-medium text-xs sm:text-sm transition-colors flex-1 sm:flex-none ${
               activeTab === 'totens'
                 ? 'text-orange-600 border-b-2 border-orange-600'
                 : 'text-gray-500 hover:text-gray-700'
@@ -153,7 +153,7 @@ export default function OrderDetailsModal({ isOpen, onClose, orderId }: OrderDet
         </div>
 
         {/* Content */}
-        <div className="p-3 md:p-6 overflow-y-auto max-h-[65vh] md:max-h-[60vh]">
+        <div className="p-3 sm:p-4 md:p-6 overflow-y-auto flex-1">
           {loading ? (
             <div className="flex items-center justify-center py-8">
               <div className="text-gray-500">Carregando...</div>
@@ -161,19 +161,19 @@ export default function OrderDetailsModal({ isOpen, onClose, orderId }: OrderDet
           ) : (
             <>
               {activeTab === 'dados' && (
-                <div className="space-y-4 md:space-y-6">
+                <div className="space-y-3 sm:space-y-4 md:space-y-6">
                   {orderData ? (
                     <>
                       {/* Informações Pessoais */}
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 md:gap-6">
                         {/* Pessoa Física */}
                         {orderData.nome && (
-                          <div className="bg-gray-50 rounded-lg p-3 md:p-4">
-                            <h3 className="font-semibold text-gray-800 mb-2 md:mb-3 flex items-center gap-2">
-                              <User2 className="w-4 h-4 text-orange-600" />
+                          <div className="bg-gray-50 rounded-lg p-3 sm:p-4">
+                            <h3 className="font-semibold text-gray-800 mb-2 sm:mb-3 flex items-center gap-2 text-sm sm:text-base">
+                              <User2 className="w-4 h-4 text-orange-600 flex-shrink-0" />
                               Pessoa Física
                             </h3>
-                            <div className="space-y-2 text-xs md:text-sm">
+                            <div className="space-y-2 text-xs sm:text-sm">
                               <div className="flex items-center gap-2">
                                 <span className="text-gray-600">Nome:</span>
                                 <span className="font-medium">{orderData.nome || '-'}</span>
@@ -192,12 +192,12 @@ export default function OrderDetailsModal({ isOpen, onClose, orderId }: OrderDet
 
                         {/* Pessoa Jurídica */}
                         {orderData.cnpj && (
-                          <div className="bg-gray-50 rounded-lg p-3 md:p-4">
-                            <h3 className="font-semibold text-gray-800 mb-2 md:mb-3 flex items-center gap-2">
-                              <Building className="w-4 h-4 text-orange-600" />
+                          <div className="bg-gray-50 rounded-lg p-3 sm:p-4">
+                            <h3 className="font-semibold text-gray-800 mb-2 sm:mb-3 flex items-center gap-2 text-sm sm:text-base">
+                              <Building className="w-4 h-4 text-orange-600 flex-shrink-0" />
                               Pessoa Jurídica
                             </h3>
-                            <div className="space-y-2 text-xs md:text-sm">
+                            <div className="space-y-2 text-xs sm:text-sm">
                               <div className="flex items-center gap-2">
                                 <span className="text-gray-600">CNPJ:</span>
                                 <span className="font-medium">{orderData.cnpj || '-'}</span>
@@ -220,12 +220,12 @@ export default function OrderDetailsModal({ isOpen, onClose, orderId }: OrderDet
                       </div>
 
                       {/* Endereço */}
-                      <div className="bg-gray-50 rounded-lg p-3 md:p-4">
-                        <h3 className="font-semibold text-gray-800 mb-2 md:mb-3 flex items-center gap-2">
-                          <MapPin className="w-4 h-4 text-orange-600" />
+                      <div className="bg-gray-50 rounded-lg p-3 sm:p-4">
+                        <h3 className="font-semibold text-gray-800 mb-2 sm:mb-3 flex items-center gap-2 text-sm sm:text-base">
+                          <MapPin className="w-4 h-4 text-orange-600 flex-shrink-0" />
                           Endereço
                         </h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs md:text-sm">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs sm:text-sm">
                           <div className="flex items-center gap-2">
                             <span className="text-gray-600">CEP:</span>
                             <span className="font-medium">{orderData.cep || '-'}</span>
@@ -258,12 +258,12 @@ export default function OrderDetailsModal({ isOpen, onClose, orderId }: OrderDet
                       </div>
 
                       {/* Informações da Campanha */}
-                      <div className="bg-gray-50 rounded-lg p-3 md:p-4">
-                        <h3 className="font-semibold text-gray-800 mb-2 md:mb-3 flex items-center gap-2">
-                          <CreditCard className="w-4 h-4 text-orange-600" />
+                      <div className="bg-gray-50 rounded-lg p-3 sm:p-4">
+                        <h3 className="font-semibold text-gray-800 mb-2 sm:mb-3 flex items-center gap-2 text-sm sm:text-base">
+                          <CreditCard className="w-4 h-4 text-orange-600 flex-shrink-0" />
                           Campanha
                         </h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs md:text-sm">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs sm:text-sm">
                           <div className="flex items-center gap-2">
                             <span className="text-gray-600">Nome:</span>
                             <span className="font-medium">{orderData.nome_campanha || '-'}</span>
@@ -296,11 +296,11 @@ export default function OrderDetailsModal({ isOpen, onClose, orderId }: OrderDet
               {activeTab === 'totens' && (
                 <div>
                   {totems.length > 0 ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
                       {totems.map((totem) => (
                         <div
                           key={totem.id}
-                          className="bg-white border border-gray-200 rounded-lg p-3 md:p-4 shadow-sm"
+                          className="bg-white border border-gray-200 rounded-lg p-3 sm:p-4 shadow-sm"
                         >
                           <div className="aspect-video bg-gray-100 rounded-lg mb-3 overflow-hidden">
                             <img

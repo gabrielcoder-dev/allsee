@@ -445,13 +445,13 @@ const AproveitionAdmin = () => {
   if (!groupedOrders.length) return <div className="p-4">Nenhuma arte encontrada.</div>;
 
   return (
-    <div className="w-full h-full p-3 md:p-6 overflow-auto bg-gray-50 min-h-screen">
-      <div className="mb-6 md:mb-8">
-        <h2 className="text-2xl md:text-3xl font-bold text-orange-600 mb-4 md:mb-6">
+    <div className="w-full h-full p-2 sm:p-3 md:p-4 lg:p-6 overflow-auto bg-gray-50 min-h-screen">
+      <div className="mb-4 sm:mb-6 md:mb-8">
+        <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-orange-600 mb-3 sm:mb-4 md:mb-6">
           Aprovação de Artes
         </h2>
       </div>
-      <div className="space-y-3 md:space-y-4">
+      <div className="space-y-2 sm:space-y-3 md:space-y-4">
         {groupedOrders.map((group) => {
           const status = getOrderStatus(group.orderId);
           const hasPendingArt = group.artes.some(
@@ -462,29 +462,31 @@ const AproveitionAdmin = () => {
           return (
             <div
               key={group.orderId}
-              className="relative flex flex-col md:flex-row md:items-center gap-3 md:gap-4 justify-between bg-white border border-gray-200 rounded-xl md:rounded-2xl p-3 md:p-4 shadow-sm hover:shadow-md transition-shadow"
+              className="relative flex flex-col gap-2 sm:gap-3 md:gap-4 justify-between bg-white border border-gray-200 rounded-lg sm:rounded-xl md:rounded-2xl p-2 sm:p-3 md:p-4 shadow-sm hover:shadow-md transition-shadow"
             >
               {shouldShowDot && (
-                <span className="absolute -top-1 -left-1 inline-flex h-4 w-4 rounded-full bg-orange-500 border-2 border-white"></span>
+                <span className="absolute -top-1 -left-1 inline-flex h-3 w-3 sm:h-4 sm:w-4 rounded-full bg-orange-500 border-2 border-white"></span>
               )}
-              <div className="flex flex-col sm:flex-row sm:items-center gap-3 md:gap-4 min-w-0 flex-1">
-                <div className="flex flex-col gap-1 min-w-0">
-                  <span className="text-xs md:text-sm uppercase tracking-wide text-gray-400">Campanha</span>
-                  <span className="text-base md:text-lg font-semibold text-gray-800 truncate max-w-full">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 md:gap-4 min-w-0 flex-1">
+                <div className="flex flex-col gap-1 min-w-0 flex-1">
+                  <span className="text-[10px] sm:text-xs md:text-sm uppercase tracking-wide text-gray-400">Campanha</span>
+                  <span className="text-sm sm:text-base md:text-lg font-semibold text-gray-800 truncate max-w-full">
                     {orderInfoMap[group.orderId]?.nome_campanha || `Pedido #${group.orderId}`}
                   </span>
-                  <span className="text-xs text-gray-500">{group.artes.length} arquivo(s)</span>
-                  <span className="text-xs text-gray-500">Status atual: {status}</span>
+                  <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+                    <span className="text-[10px] sm:text-xs text-gray-500">{group.artes.length} arquivo(s)</span>
+                    <span className="text-[10px] sm:text-xs text-gray-500">Status: {status}</span>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2 md:gap-3 flex-wrap sm:ml-auto">
+                <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
                   <button
-                    className="text-white bg-orange-500 hover:bg-orange-600 text-xs md:text-sm font-medium px-3 py-1.5 rounded-lg cursor-pointer transition-colors"
+                    className="text-white bg-orange-500 hover:bg-orange-600 text-[10px] sm:text-xs md:text-sm font-medium px-2 sm:px-3 py-1 sm:py-1.5 rounded-md sm:rounded-lg cursor-pointer transition-colors whitespace-nowrap"
                     onClick={() => setImagesModalOrderId(group.orderId)}
                   >
                     Ver imagens
                   </button>
                   <button
-                    className="text-gray-600 hover:text-gray-700 text-xs md:text-sm font-medium bg-gray-100 hover:bg-gray-200 px-3 py-1.5 rounded-lg cursor-pointer transition-colors"
+                    className="text-gray-600 hover:text-gray-700 text-[10px] sm:text-xs md:text-sm font-medium bg-gray-100 hover:bg-gray-200 px-2 sm:px-3 py-1 sm:py-1.5 rounded-md sm:rounded-lg cursor-pointer transition-colors whitespace-nowrap"
                     onClick={() => {
                       setSelectedOrderId(group.orderIdValue);
                       setShowOrderDetails(true);
@@ -494,14 +496,15 @@ const AproveitionAdmin = () => {
                   </button>
                 </div>
               </div>
-              <div className="flex items-center gap-2 md:gap-3 flex-shrink-0">
+              <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0 border-t sm:border-t-0 pt-2 sm:pt-0">
                 <button
-                  className="bg-red-500 hover:bg-red-600 text-white rounded-lg md:rounded-xl px-3 py-1.5 font-medium text-xs md:text-sm min-w-[70px] cursor-pointer transition-colors flex items-center gap-2"
+                  className="bg-red-500 hover:bg-red-600 text-white rounded-md sm:rounded-lg md:rounded-xl px-2 sm:px-3 py-1 sm:py-1.5 font-medium text-[10px] sm:text-xs md:text-sm cursor-pointer transition-colors flex items-center gap-1 sm:gap-2 w-full sm:w-auto justify-center"
                   onClick={() => setOrderToDelete(group.orderId)}
                   title="Excluir pedido"
                 >
-                  <span className="font-semibold text-base">×</span>
-                  Excluir campanha
+                  <span className="font-semibold text-sm sm:text-base">×</span>
+                  <span className="hidden sm:inline">Excluir campanha</span>
+                  <span className="sm:hidden">Excluir</span>
                 </button>
               </div>
             </div>
@@ -511,16 +514,16 @@ const AproveitionAdmin = () => {
 
       {/* Modal listar artes do pedido */}
       {imagesModalOrderId && (
-        <div className="fixed inset-0 z-[9998] flex items-end justify-center md:items-center md:justify-center p-4">
+        <div className="fixed inset-0 z-[9998] flex items-end justify-center md:items-center md:justify-center p-2 sm:p-4">
           <div className="absolute inset-0 bg-black/40" onClick={() => setImagesModalOrderId(null)}></div>
-          <div className="relative bg-white rounded-xl md:rounded-2xl shadow-xl border border-gray-200 max-w-3xl w-full max-h-[90vh] overflow-hidden flex flex-col z-10" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between p-4 md:p-6 border-b border-gray-200 flex-shrink-0">
-              <div>
-                <h3 className="text-lg md:text-xl font-semibold text-gray-800">Artes do pedido #{imagesModalOrderId}</h3>
-                <p className="text-sm text-gray-500">Visualize e aprove as artes enviadas para este pedido.</p>
+          <div className="relative bg-white rounded-t-xl md:rounded-xl lg:rounded-2xl shadow-xl border border-gray-200 max-w-3xl w-full max-h-[95vh] md:max-h-[90vh] overflow-hidden flex flex-col z-10" onClick={(e) => e.stopPropagation()}>
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-4 p-3 sm:p-4 md:p-6 border-b border-gray-200 flex-shrink-0">
+              <div className="flex-1 min-w-0">
+                <h3 className="text-base sm:text-lg md:text-xl font-semibold text-gray-800">Artes do pedido #{imagesModalOrderId}</h3>
+                <p className="text-xs sm:text-sm text-gray-500 mt-1">Visualize e aprove as artes enviadas para este pedido.</p>
               </div>
               <button
-                className="text-gray-400 hover:text-gray-600 text-lg font-bold p-2 bg-gray-100 hover:bg-gray-200 rounded-full transition-colors cursor-pointer"
+                className="text-gray-400 hover:text-gray-600 text-lg font-bold p-2 bg-gray-100 hover:bg-gray-200 rounded-full transition-colors cursor-pointer flex-shrink-0"
                 onClick={() => setImagesModalOrderId(null)}
                 aria-label="Fechar"
               >
@@ -532,7 +535,7 @@ const AproveitionAdmin = () => {
             <div className="flex border-b border-gray-200 flex-shrink-0">
               <button
                 onClick={() => setActiveTab('atuais')}
-                className={`px-4 md:px-6 py-3 font-medium text-sm transition-colors ${
+                className={`px-3 sm:px-4 md:px-6 py-2 sm:py-3 font-medium text-xs sm:text-sm transition-colors flex-1 sm:flex-none ${
                   activeTab === 'atuais'
                     ? 'text-orange-600 border-b-2 border-orange-600'
                     : 'text-gray-500 hover:text-gray-700'
@@ -542,7 +545,7 @@ const AproveitionAdmin = () => {
               </button>
               <button
                 onClick={() => setActiveTab('trocas')}
-                className={`px-4 md:px-6 py-3 font-medium text-sm transition-colors ${
+                className={`px-3 sm:px-4 md:px-6 py-2 sm:py-3 font-medium text-xs sm:text-sm transition-colors flex-1 sm:flex-none ${
                   activeTab === 'trocas'
                     ? 'text-orange-600 border-b-2 border-orange-600'
                     : 'text-gray-500 hover:text-gray-700'
@@ -553,17 +556,17 @@ const AproveitionAdmin = () => {
             </div>
 
             {/* Content */}
-            <div className="p-4 md:p-6 overflow-y-auto flex-1">
+            <div className="p-3 sm:p-4 md:p-6 overflow-y-auto flex-1">
               {activeTab === 'atuais' ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
               {groupedOrders.find((group) => group.orderId === imagesModalOrderId)?.artes.map((arte) => {
                 const anuncioKey = arte.anuncio_id ? String(arte.anuncio_id) : null;
                 const anuncioName = anuncioKey ? anunciosMap[anuncioKey] || `Anúncio ${anuncioKey}` : 'Anúncio não informado';
                 const isArteVideo = arte.caminho_imagem ? isVideo(arte.caminho_imagem) : false;
 
                 return (
-                  <div key={arte.id} className="border border-gray-200 rounded-lg p-3 flex flex-col gap-3 bg-gray-50">
-                    <div className="w-full h-40 bg-white border border-gray-200 rounded-lg flex items-center justify-center overflow-hidden">
+                  <div key={arte.id} className="border border-gray-200 rounded-lg p-2 sm:p-3 flex flex-col gap-2 sm:gap-3 bg-gray-50">
+                    <div className="w-full h-32 sm:h-40 bg-white border border-gray-200 rounded-lg flex items-center justify-center overflow-hidden">
                       {arte.caminho_imagem ? (
                         arte.caminho_imagem.startsWith("data:image") || arte.caminho_imagem.match(/\.(jpg|jpeg|png|gif|bmp|webp)$/i) ? (
                           <img
@@ -592,15 +595,15 @@ const AproveitionAdmin = () => {
                       )}
                     </div>
                     <div className="flex flex-col gap-2">
-                      <div className="flex items-center justify-between gap-3">
-                        <div>
-                          <p className="text-sm font-semibold text-gray-700">Anúncio:</p>
-                          <p className="text-sm text-gray-600">{anuncioName}</p>
+                      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-3">
+                        <div className="min-w-0 flex-1">
+                          <p className="text-xs sm:text-sm font-semibold text-gray-700">Anúncio:</p>
+                          <p className="text-xs sm:text-sm text-gray-600 truncate">{anuncioName}</p>
                         </div>
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 flex-shrink-0">
                           {arte.statusLocal ? (
                             <span
-                              className={`text-sm font-semibold ${
+                              className={`text-xs sm:text-sm font-semibold whitespace-nowrap ${
                                 arte.statusLocal === 'aceita'
                                   ? 'text-emerald-600'
                                   : 'text-red-500'
@@ -613,18 +616,18 @@ const AproveitionAdmin = () => {
                           ) : (
                             <>
                               <button
-                                className="p-2 rounded-md bg-emerald-500 hover:bg-emerald-600 text-white transition-colors cursor-pointer"
+                                className="p-1.5 sm:p-2 rounded-md bg-emerald-500 hover:bg-emerald-600 text-white transition-colors cursor-pointer"
                                 onClick={() => handleApproveArte(arte)}
                                 aria-label="Aprovar arte"
                               >
-                                <Check className="w-4 h-4" />
+                                <Check className="w-3 h-3 sm:w-4 sm:h-4" />
                               </button>
                               <button
-                                className="p-2 rounded-md bg-red-500 hover:bg-red-600 text-white transition-colors cursor-pointer"
+                                className="p-1.5 sm:p-2 rounded-md bg-red-500 hover:bg-red-600 text-white transition-colors cursor-pointer"
                                 onClick={() => handleRejectArte(arte)}
                                 aria-label="Reprovar arte"
                               >
-                                <X className="w-4 h-4" />
+                                <X className="w-3 h-3 sm:w-4 sm:h-4" />
                               </button>
                             </>
                           )}
@@ -632,7 +635,7 @@ const AproveitionAdmin = () => {
                       </div>
                       <div className="flex gap-2">
                         <button
-                          className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium px-3 py-2 rounded-lg transition-colors cursor-pointer disabled:cursor-not-allowed"
+                          className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs sm:text-sm font-medium px-2 sm:px-3 py-1.5 sm:py-2 rounded-md sm:rounded-lg transition-colors cursor-pointer disabled:cursor-not-allowed"
                           onClick={() => arte.caminho_imagem && setModalFile({
                             url: arte.caminho_imagem,
                             id: arte.id,
@@ -644,7 +647,7 @@ const AproveitionAdmin = () => {
                           Assistir
                         </button>
                         <button
-                          className="flex-1 bg-orange-500 hover:bg-orange-600 text-white text-sm font-medium px-3 py-2 rounded-lg transition-colors cursor-pointer disabled:cursor-not-allowed"
+                          className="flex-1 bg-orange-500 hover:bg-orange-600 text-white text-xs sm:text-sm font-medium px-2 sm:px-3 py-1.5 sm:py-2 rounded-md sm:rounded-lg transition-colors cursor-pointer disabled:cursor-not-allowed"
                           onClick={() => arte.caminho_imagem && handleDownload(arte.caminho_imagem, `pedido-${arte.id_order_value}_anuncio-${anuncioKey ?? arte.id}`)}
                           disabled={!arte.caminho_imagem}
                         >
@@ -657,13 +660,13 @@ const AproveitionAdmin = () => {
               })}
                 </div>
               ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                   {loadingTrocas ? (
-                    <div className="col-span-2 text-center py-8 text-gray-500">
+                    <div className="col-span-2 text-center py-8 text-gray-500 text-sm sm:text-base">
                       Carregando pedidos de troca...
                     </div>
                   ) : arteTrocas.length === 0 ? (
-                    <div className="col-span-2 text-center py-8 text-gray-500">
+                    <div className="col-span-2 text-center py-8 text-gray-500 text-sm sm:text-base">
                       Nenhum pedido de troca encontrado.
                     </div>
                   ) : (
@@ -671,8 +674,8 @@ const AproveitionAdmin = () => {
                       const isTrocaVideo = troca.caminho_imagem ? isVideo(troca.caminho_imagem) : false;
 
                       return (
-                        <div key={troca.id} className="border border-gray-200 rounded-lg p-3 flex flex-col gap-3 bg-gray-50">
-                          <div className="w-full h-40 bg-white border border-gray-200 rounded-lg flex items-center justify-center overflow-hidden">
+                        <div key={troca.id} className="border border-gray-200 rounded-lg p-2 sm:p-3 flex flex-col gap-2 sm:gap-3 bg-gray-50">
+                          <div className="w-full h-32 sm:h-40 bg-white border border-gray-200 rounded-lg flex items-center justify-center overflow-hidden">
                             {troca.caminho_imagem ? (
                               troca.caminho_imagem.startsWith("data:image") || troca.caminho_imagem.match(/\.(jpg|jpeg|png|gif|bmp|webp)$/i) ? (
                                 <img
@@ -701,31 +704,31 @@ const AproveitionAdmin = () => {
                             )}
                           </div>
                           <div className="flex flex-col gap-2">
-                            <div className="flex items-center justify-between gap-3">
-                              <div>
-                                <p className="text-sm font-semibold text-gray-700">Anúncio:</p>
-                                <p className="text-sm text-gray-600">{troca.anuncioName || 'Anúncio não informado'}</p>
+                            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-3">
+                              <div className="min-w-0 flex-1">
+                                <p className="text-xs sm:text-sm font-semibold text-gray-700">Anúncio:</p>
+                                <p className="text-xs sm:text-sm text-gray-600 truncate">{troca.anuncioName || 'Anúncio não informado'}</p>
                               </div>
-                              <div className="flex items-center gap-2">
+                              <div className="flex items-center gap-2 flex-shrink-0">
                                 <button
-                                  className="p-2 rounded-md bg-emerald-500 hover:bg-emerald-600 text-white transition-colors cursor-pointer"
+                                  className="p-1.5 sm:p-2 rounded-md bg-emerald-500 hover:bg-emerald-600 text-white transition-colors cursor-pointer"
                                   onClick={() => handleApproveTroca(troca)}
                                   aria-label="Aprovar troca"
                                 >
-                                  <Check className="w-4 h-4" />
+                                  <Check className="w-3 h-3 sm:w-4 sm:h-4" />
                                 </button>
                                 <button
-                                  className="p-2 rounded-md bg-red-500 hover:bg-red-600 text-white transition-colors cursor-pointer"
+                                  className="p-1.5 sm:p-2 rounded-md bg-red-500 hover:bg-red-600 text-white transition-colors cursor-pointer"
                                   onClick={() => handleRejectTroca(troca)}
                                   aria-label="Rejeitar troca"
                                 >
-                                  <X className="w-4 h-4" />
+                                  <X className="w-3 h-3 sm:w-4 sm:h-4" />
                                 </button>
                               </div>
                             </div>
                             <div className="flex gap-2">
                               <button
-                                className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium px-3 py-2 rounded-lg transition-colors cursor-pointer disabled:cursor-not-allowed"
+                                className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs sm:text-sm font-medium px-2 sm:px-3 py-1.5 sm:py-2 rounded-md sm:rounded-lg transition-colors cursor-pointer disabled:cursor-not-allowed"
                                 onClick={() => troca.caminho_imagem && setModalFile({
                                   url: troca.caminho_imagem,
                                   id: troca.id,
@@ -737,7 +740,7 @@ const AproveitionAdmin = () => {
                                 Assistir
                               </button>
                               <button
-                                className="flex-1 bg-orange-500 hover:bg-orange-600 text-white text-sm font-medium px-3 py-2 rounded-lg transition-colors cursor-pointer disabled:cursor-not-allowed"
+                                className="flex-1 bg-orange-500 hover:bg-orange-600 text-white text-xs sm:text-sm font-medium px-2 sm:px-3 py-1.5 sm:py-2 rounded-md sm:rounded-lg transition-colors cursor-pointer disabled:cursor-not-allowed"
                                 onClick={() => troca.caminho_imagem && handleDownload(troca.caminho_imagem, `troca-${troca.id}_anuncio-${troca.anuncio_id ?? troca.id}`)}
                                 disabled={!troca.caminho_imagem}
                               >
@@ -758,43 +761,45 @@ const AproveitionAdmin = () => {
 
       {/* Modal para assistir arquivo */}
       {modalFile && (
-        <div className="fixed inset-0 z-[9999] flex items-end justify-center md:items-center md:justify-center p-4">
+        <div className="fixed inset-0 z-[9999] flex items-end justify-center md:items-center md:justify-center p-2 sm:p-4">
           <div className="absolute inset-0 bg-black/50" onClick={() => setModalFile(null)}></div>
-          <div className="relative bg-white rounded-xl md:rounded-2xl shadow-xl border border-gray-200 p-4 md:p-7 max-w-2xl w-full flex flex-col items-center opacity-100 z-10" onClick={e => e.stopPropagation()}>
+          <div className="relative bg-white rounded-t-xl md:rounded-xl lg:rounded-2xl shadow-xl border border-gray-200 p-3 sm:p-4 md:p-7 max-w-2xl w-full flex flex-col items-center opacity-100 z-10 max-h-[95vh] md:max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
             <button
-              className="absolute top-2 right-2 cursor-pointer text-gray-400 hover:text-gray-600 text-xl font-bold p-2 bg-gray-100 hover:bg-gray-200 rounded-full transition-colors"
+              className="absolute top-2 right-2 cursor-pointer text-gray-400 hover:text-gray-600 text-xl font-bold p-2 bg-gray-100 hover:bg-gray-200 rounded-full transition-colors flex-shrink-0"
               onClick={() => setModalFile(null)}
               aria-label="Fechar"
             >
               ×
             </button>
             {modalFile.anuncioName && (
-              <p className="text-sm text-gray-500 mb-3">Anúncio: <span className="font-medium text-gray-700">{modalFile.anuncioName}</span></p>
+              <p className="text-xs sm:text-sm text-gray-500 mb-3 text-center w-full">Anúncio: <span className="font-medium text-gray-700">{modalFile.anuncioName}</span></p>
             )}
-            {modalFile.url.startsWith("data:image") || modalFile.url.match(/\.(jpg|jpeg|png|gif|bmp|webp)$/i) ? (
-              <img
-                src={modalFile.url}
-                alt={`Arquivo do pedido ${modalFile.id}`}
-                className="object-contain max-h-[300px] md:max-h-[400px] w-auto rounded mb-4 shadow-lg"
-              />
-            ) : isVideo(modalFile.url) ? (
-              <video
-                src={modalFile.url}
-                controls
-                className="object-contain max-h-[300px] md:max-h-[400px] w-auto rounded mb-4 shadow-lg"
-                autoPlay
-              />
-            ) : (
-              <Image
-                src={modalFile.url}
-                alt={`Arquivo do pedido ${modalFile.id}`}
-                width={400}
-                height={400}
-                className="object-contain max-h-[300px] md:max-h-[400px] w-auto rounded mb-4 shadow-lg"
-              />
-            )}
+            <div className="w-full flex justify-center mb-4">
+              {modalFile.url.startsWith("data:image") || modalFile.url.match(/\.(jpg|jpeg|png|gif|bmp|webp)$/i) ? (
+                <img
+                  src={modalFile.url}
+                  alt={`Arquivo do pedido ${modalFile.id}`}
+                  className="object-contain max-h-[250px] sm:max-h-[300px] md:max-h-[400px] w-auto rounded shadow-lg"
+                />
+              ) : isVideo(modalFile.url) ? (
+                <video
+                  src={modalFile.url}
+                  controls
+                  className="object-contain max-h-[250px] sm:max-h-[300px] md:max-h-[400px] w-full rounded shadow-lg"
+                  autoPlay
+                />
+              ) : (
+                <Image
+                  src={modalFile.url}
+                  alt={`Arquivo do pedido ${modalFile.id}`}
+                  width={400}
+                  height={400}
+                  className="object-contain max-h-[250px] sm:max-h-[300px] md:max-h-[400px] w-auto rounded shadow-lg"
+                />
+              )}
+            </div>
             <button
-              className="bg-orange-500 hover:bg-orange-600 text-white rounded-lg md:rounded-xl px-4 py-2 font-medium text-sm md:text-base mt-2 cursor-pointer transition-colors"
+              className="bg-orange-500 hover:bg-orange-600 text-white rounded-lg md:rounded-xl px-4 sm:px-6 py-2 font-medium text-xs sm:text-sm md:text-base mt-2 cursor-pointer transition-colors w-full sm:w-auto"
                 onClick={() => handleDownload(modalFile.url, modalFile.orderId ? `pedido-${modalFile.orderId}` : modalFile.id)}
             >
               Baixar arquivo
@@ -817,24 +822,24 @@ const AproveitionAdmin = () => {
 
       {/* Modal de confirmação de exclusão */}
       {orderToDelete && (
-        <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[10000] flex items-center justify-center p-3 sm:p-4">
           <div className="absolute inset-0 bg-black/50" onClick={() => !isDeleting && setOrderToDelete(null)}></div>
-          <div className="relative bg-white rounded-xl shadow-xl border border-gray-200 p-5 md:p-7 max-w-md w-full z-10">
-            <h3 className="text-lg md:text-xl font-semibold text-gray-800 mb-3">Excluir pedido #{orderToDelete}</h3>
-            <p className="text-sm md:text-base text-gray-600 mb-4">
+          <div className="relative bg-white rounded-lg sm:rounded-xl shadow-xl border border-gray-200 p-4 sm:p-5 md:p-7 max-w-md w-full z-10">
+            <h3 className="text-base sm:text-lg md:text-xl font-semibold text-gray-800 mb-2 sm:mb-3">Excluir pedido #{orderToDelete}</h3>
+            <p className="text-xs sm:text-sm md:text-base text-gray-600 mb-4">
               Tem certeza que deseja excluir este pedido e todas as artes relacionadas?
               Esta ação não pode ser desfeita.
             </p>
-            <div className="flex flex-col md:flex-row gap-2 md:gap-3 justify-end">
+            <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 justify-end">
               <button
-                className="px-4 py-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-100 transition-colors cursor-pointer disabled:cursor-not-allowed"
+                className="px-4 py-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-100 transition-colors cursor-pointer disabled:cursor-not-allowed text-sm sm:text-base w-full sm:w-auto"
                 onClick={() => !isDeleting && setOrderToDelete(null)}
                 disabled={isDeleting}
               >
                 Cancelar
               </button>
               <button
-                className="px-4 py-2 rounded-lg bg-red-500 hover:bg-red-600 text-white transition-colors cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
+                className="px-4 py-2 rounded-lg bg-red-500 hover:bg-red-600 text-white transition-colors cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed text-sm sm:text-base w-full sm:w-auto"
                 onClick={async () => {
                   if (!orderToDelete || isDeleting) return;
                   setIsDeleting(true);
