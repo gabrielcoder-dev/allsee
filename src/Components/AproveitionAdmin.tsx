@@ -53,6 +53,7 @@ const AproveitionAdmin = () => {
   const [ordersWithTrocas, setOrdersWithTrocas] = useState<Set<OrderIdentifier>>(new Set());
   const [totensMap, setTotensMap] = useState<Record<string, any>>({});
   const [artesComTrocaPendente, setArtesComTrocaPendente] = useState<Set<number>>(new Set());
+  const [totensTrocasMap, setTotensTrocasMap] = useState<Record<number, any[]>>({});
   
   const getOrderStatus = (orderId: OrderIdentifier) => {
     if (typeof window === 'undefined') return 'pendente';
@@ -315,6 +316,8 @@ const AproveitionAdmin = () => {
       const artesDoPedido = arteCampanhas.filter(arte => String(arte.id_order) === String(imagesModalOrderId));
       if (artesDoPedido.length === 0) {
         setArteTrocas([]);
+        setTotensTrocasMap({});
+        setArtesComTrocaPendente(new Set());
         setLoadingTrocas(false);
         return;
       }
@@ -329,23 +332,68 @@ const AproveitionAdmin = () => {
       if (error) {
         console.error('Erro ao buscar artes de troca:', error);
         setArteTrocas([]);
+        setTotensTrocasMap({});
       } else {
-        // Enriquecer com dados da arte_campanha e anuncios
+        // Enriquecer com dados da arte_campanha, order e totens
         const enrichedTrocas = await Promise.all(
           (trocasData || []).map(async (troca) => {
             const arteOriginal = artesDoPedido.find(a => a.id === troca.id_campanha);
             const anuncioKey = arteOriginal?.anuncio_id ? String(arteOriginal.anuncio_id) : null;
             const anuncioName = anuncioKey ? anunciosMap[anuncioKey] || `Anúncio ${anuncioKey}` : 'Anúncio não informado';
             
+            // Buscar a order relacionada para pegar os totens
+            let totensDaTroca: any[] = [];
+            if (arteOriginal?.id_order_value) {
+              try {
+                const orderId = arteOriginal.id_order_value;
+                const { data: orderData, error: orderError } = await supabase
+                  .from('order')
+                  .select('id_produto')
+                  .eq('id', orderId)
+                  .single();
+
+                if (!orderError && orderData?.id_produto) {
+                  // Parse dos IDs dos produtos (separados por vírgula)
+                  const productIdsRaw = orderData.id_produto.split(',').map((id: string) => id.trim());
+                  const productIds = productIdsRaw.map((id: string) => {
+                    const parsed = Number(id);
+                    return Number.isNaN(parsed) ? id : parsed;
+                  });
+
+                  // Buscar os totens
+                  const { data: totensData, error: totensError } = await supabase
+                    .from('anuncios')
+                    .select('id, name, address, type_screen, screens, price, image')
+                    .in('id', productIds);
+
+                  if (!totensError && totensData) {
+                    totensDaTroca = totensData;
+                  }
+                }
+              } catch (error) {
+                console.error('Erro ao buscar totens da troca:', error);
+              }
+            }
+            
             return {
               ...troca,
               anuncio_id: arteOriginal?.anuncio_id || null,
               anuncioName,
               screen_type: arteOriginal?.screen_type || null,
+              totens: totensDaTroca,
             };
           })
         );
         setArteTrocas(enrichedTrocas);
+        
+        // Criar um mapa de totens por troca
+        const totensMap: Record<number, any[]> = {};
+        enrichedTrocas.forEach((troca) => {
+          if (troca.id && troca.totens) {
+            totensMap[troca.id] = troca.totens;
+          }
+        });
+        setTotensTrocasMap(totensMap);
         
         // Criar um Set com os IDs das artes que têm troca pendente
         const artesComTroca = new Set<number>();
@@ -360,6 +408,7 @@ const AproveitionAdmin = () => {
       console.error('Erro ao buscar artes de troca:', error);
       setArteTrocas([]);
       setArtesComTrocaPendente(new Set());
+      setTotensTrocasMap({});
     } finally {
       setLoadingTrocas(false);
     }
@@ -839,42 +888,43 @@ const AproveitionAdmin = () => {
                               </div>
                             </div>
                             {/* Totens relacionados */}
-                            {troca.anuncio_id && totensMap[String(troca.anuncio_id)] && (
+                            {totensTrocasMap[troca.id] && totensTrocasMap[troca.id].length > 0 && (
                               <div className="bg-white border border-gray-200 rounded-md p-2 sm:p-3 mt-1">
-                                <p className="text-[10px] sm:text-xs font-semibold text-gray-700 mb-1.5">Totem relacionado:</p>
-                                <div className="flex items-start gap-2">
-                                  {totensMap[String(troca.anuncio_id)].image && (
-                                    <img
-                                      src={totensMap[String(troca.anuncio_id)].image}
-                                      alt={totensMap[String(troca.anuncio_id)].name}
-                                      className="w-12 h-12 sm:w-16 sm:h-16 rounded-md object-cover flex-shrink-0"
-                                    />
-                                  )}
-                                  <div className="flex-1 min-w-0">
-                                    <p className="text-xs sm:text-sm font-semibold text-gray-800 truncate">{totensMap[String(troca.anuncio_id)].name}</p>
-                                    <p className="text-[10px] sm:text-xs text-gray-600 truncate">{totensMap[String(troca.anuncio_id)].address}</p>
-                                    <div className="flex items-center gap-2 mt-1">
-                                      {totensMap[String(troca.anuncio_id)].type_screen && (
-                                        <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${
-                                          totensMap[String(troca.anuncio_id)].type_screen.toLowerCase() === 'impresso'
-                                            ? 'bg-green-100 text-green-700'
-                                            : 'bg-purple-100 text-purple-700'
-                                        }`}>
-                                          {totensMap[String(troca.anuncio_id)].type_screen.toLowerCase() === 'impresso' ? 'Impresso' : 'Digital'}
-                                        </span>
+                                <p className="text-[10px] sm:text-xs font-semibold text-gray-700 mb-1.5">
+                                  Totens da campanha ({totensTrocasMap[troca.id].length}):
+                                </p>
+                                <div className="space-y-2 max-h-48 overflow-y-auto">
+                                  {totensTrocasMap[troca.id].map((totem: any) => (
+                                    <div key={totem.id} className="flex items-start gap-2 pb-2 border-b border-gray-100 last:border-b-0 last:pb-0">
+                                      {totem.image && (
+                                        <img
+                                          src={totem.image}
+                                          alt={totem.name}
+                                          className="w-12 h-12 sm:w-16 sm:h-16 rounded-md object-cover flex-shrink-0"
+                                        />
                                       )}
-                                      {troca.screen_type && (
-                                        <span className="text-[10px] text-gray-500">
-                                          {troca.screen_type === 'down' ? 'Deitado' : 'Em pé'}
-                                        </span>
-                                      )}
-                                      {totensMap[String(troca.anuncio_id)].screens && (
-                                        <span className="text-[10px] text-gray-500">
-                                          {totensMap[String(troca.anuncio_id)].screens} tela(s)
-                                        </span>
-                                      )}
+                                      <div className="flex-1 min-w-0">
+                                        <p className="text-xs sm:text-sm font-semibold text-gray-800 truncate">{totem.name}</p>
+                                        <p className="text-[10px] sm:text-xs text-gray-600 truncate">{totem.address}</p>
+                                        <div className="flex items-center gap-2 mt-1 flex-wrap">
+                                          {totem.type_screen && (
+                                            <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${
+                                              totem.type_screen.toLowerCase() === 'impresso'
+                                                ? 'bg-green-100 text-green-700'
+                                                : 'bg-purple-100 text-purple-700'
+                                            }`}>
+                                              {totem.type_screen.toLowerCase() === 'impresso' ? 'Impresso' : 'Digital'}
+                                            </span>
+                                          )}
+                                          {totem.screens && (
+                                            <span className="text-[10px] text-gray-500">
+                                              {totem.screens} tela(s)
+                                            </span>
+                                          )}
+                                        </div>
+                                      </div>
                                     </div>
-                                  </div>
+                                  ))}
                                 </div>
                               </div>
                             )}
