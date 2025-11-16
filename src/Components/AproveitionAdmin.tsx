@@ -345,14 +345,22 @@ const AproveitionAdmin = () => {
             let totemRelacionado: any = null;
             if (arteOriginal?.anuncio_id) {
               try {
+                const anuncioId = arteOriginal.anuncio_id;
+                // Converter para número se necessário
+                const anuncioIdNum = typeof anuncioId === 'string' ? Number(anuncioId) : anuncioId;
+                
                 const { data: totemData, error: totemError } = await supabase
                   .from('anuncios')
                   .select('id, name, address, type_screen, screens, price, image')
-                  .eq('id', arteOriginal.anuncio_id)
-                  .single();
+                  .eq('id', isNaN(anuncioIdNum) ? anuncioId : anuncioIdNum)
+                  .maybeSingle();
 
-                if (!totemError && totemData) {
+                if (totemError) {
+                  console.error('Erro ao buscar totem da troca:', totemError, 'anuncio_id:', anuncioId);
+                } else if (totemData) {
                   totemRelacionado = totemData;
+                } else {
+                  console.log('Totem não encontrado para anuncio_id:', anuncioId);
                 }
               } catch (error) {
                 console.error('Erro ao buscar totem da troca:', error);
