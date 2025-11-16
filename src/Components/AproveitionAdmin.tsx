@@ -53,8 +53,7 @@ const AproveitionAdmin = () => {
   const [ordersWithTrocas, setOrdersWithTrocas] = useState<Set<OrderIdentifier>>(new Set());
   const [totensMap, setTotensMap] = useState<Record<string, any>>({});
   const [artesComTrocaPendente, setArtesComTrocaPendente] = useState<Set<number>>(new Set());
-  const [totensTrocasMap, setTotensTrocasMap] = useState<Record<number, any[]>>({});
-  const [totensDaOrder, setTotensDaOrder] = useState<any[]>([]);
+  const [totensTrocasMap, setTotensTrocasMap] = useState<Record<number, any>>({});
   
   const getOrderStatus = (orderId: OrderIdentifier) => {
     if (typeof window === 'undefined') return 'pendente';
@@ -276,58 +275,26 @@ const AproveitionAdmin = () => {
     if (!imagesModalOrderId) return;
     
     try {
-      // Buscar a order para pegar os id_produto
       const artesDoPedido = arteCampanhas.filter(arte => String(arte.id_order) === String(imagesModalOrderId));
-      if (artesDoPedido.length === 0) {
-        setTotensDaOrder([]);
+      const anuncioIds = artesDoPedido
+        .map(arte => arte.anuncio_id)
+        .filter((id): id is string | number => id !== null && id !== undefined)
+        .map(id => String(id));
+      
+      if (anuncioIds.length === 0) {
         setTotensMap({});
         return;
       }
 
-      // Pegar o id_order_value da primeira arte (todas têm o mesmo order)
-      const orderId = artesDoPedido[0]?.id_order_value;
-      if (!orderId) {
-        setTotensDaOrder([]);
-        setTotensMap({});
-        return;
-      }
-
-      // Buscar a order
-      const { data: orderData, error: orderError } = await supabase
-        .from('order')
-        .select('id_produto')
-        .eq('id', orderId)
-        .single();
-
-      if (orderError || !orderData?.id_produto) {
-        console.error('Erro ao buscar order:', orderError);
-        setTotensDaOrder([]);
-        setTotensMap({});
-        return;
-      }
-
-      // Parse dos IDs dos produtos (separados por vírgula)
-      const productIdsRaw = orderData.id_produto.split(',').map((id: string) => id.trim());
-      const productIds = productIdsRaw.map((id: string) => {
-        const parsed = Number(id);
-        return Number.isNaN(parsed) ? id : parsed;
-      });
-
-      // Buscar os totens
-      const { data: totensData, error: totensError } = await supabase
+      const { data: totensData, error } = await supabase
         .from('anuncios')
         .select('id, name, address, type_screen, screens, price, image')
-        .in('id', productIds);
+        .in('id', anuncioIds);
 
-      if (totensError) {
-        console.error('Erro ao buscar totens:', totensError);
-        setTotensDaOrder([]);
+      if (error) {
+        console.error('Erro ao buscar totens:', error);
         setTotensMap({});
       } else {
-        // Armazenar todos os totens da order
-        setTotensDaOrder(totensData || []);
-        
-        // Também manter o mapa para compatibilidade
         const map: Record<string, any> = {};
         (totensData || []).forEach((totem: any) => {
           map[String(totem.id)] = totem;
@@ -336,7 +303,6 @@ const AproveitionAdmin = () => {
       }
     } catch (error) {
       console.error('Erro ao buscar totens:', error);
-      setTotensDaOrder([]);
       setTotensMap({});
     }
   };
@@ -375,37 +341,21 @@ const AproveitionAdmin = () => {
             const anuncioKey = arteOriginal?.anuncio_id ? String(arteOriginal.anuncio_id) : null;
             const anuncioName = anuncioKey ? anunciosMap[anuncioKey] || `Anúncio ${anuncioKey}` : 'Anúncio não informado';
             
-            // Buscar a order relacionada para pegar os totens
-            let totensDaTroca: any[] = [];
-            if (arteOriginal?.id_order_value) {
+            // Buscar o totem relacionado à arte específica
+            let totemRelacionado: any = null;
+            if (arteOriginal?.anuncio_id) {
               try {
-                const orderId = arteOriginal.id_order_value;
-                const { data: orderData, error: orderError } = await supabase
-                  .from('order')
-                  .select('id_produto')
-                  .eq('id', orderId)
+                const { data: totemData, error: totemError } = await supabase
+                  .from('anuncios')
+                  .select('id, name, address, type_screen, screens, price, image')
+                  .eq('id', arteOriginal.anuncio_id)
                   .single();
 
-                if (!orderError && orderData?.id_produto) {
-                  // Parse dos IDs dos produtos (separados por vírgula)
-                  const productIdsRaw = orderData.id_produto.split(',').map((id: string) => id.trim());
-                  const productIds = productIdsRaw.map((id: string) => {
-                    const parsed = Number(id);
-                    return Number.isNaN(parsed) ? id : parsed;
-                  });
-
-                  // Buscar os totens
-                  const { data: totensData, error: totensError } = await supabase
-                    .from('anuncios')
-                    .select('id, name, address, type_screen, screens, price, image')
-                    .in('id', productIds);
-
-                  if (!totensError && totensData) {
-                    totensDaTroca = totensData;
-                  }
+                if (!totemError && totemData) {
+                  totemRelacionado = totemData;
                 }
               } catch (error) {
-                console.error('Erro ao buscar totens da troca:', error);
+                console.error('Erro ao buscar totem da troca:', error);
               }
             }
             
@@ -414,17 +364,17 @@ const AproveitionAdmin = () => {
               anuncio_id: arteOriginal?.anuncio_id || null,
               anuncioName,
               screen_type: arteOriginal?.screen_type || null,
-              totens: totensDaTroca,
+              totemRelacionado,
             };
           })
         );
         setArteTrocas(enrichedTrocas);
         
-        // Criar um mapa de totens por troca
-        const totensMap: Record<number, any[]> = {};
+        // Criar um mapa de totem por troca
+        const totensMap: Record<number, any> = {};
         enrichedTrocas.forEach((troca) => {
-          if (troca.id && troca.totens) {
-            totensMap[troca.id] = troca.totens;
+          if (troca.id && troca.totemRelacionado) {
+            totensMap[troca.id] = troca.totemRelacionado;
           }
         });
         setTotensTrocasMap(totensMap);
@@ -809,44 +759,43 @@ const AproveitionAdmin = () => {
                           Baixar
                         </button>
                       </div>
-                      {/* Totens da campanha */}
-                      {totensDaOrder.length > 0 && (
+                      {/* Totem relacionado */}
+                      {anuncioKey && totensMap[anuncioKey] && (
                         <div className="bg-white border border-gray-200 rounded-md p-2 sm:p-3 mt-1">
-                          <p className="text-[10px] sm:text-xs font-semibold text-gray-700 mb-1.5">
-                            Totens da campanha ({totensDaOrder.length}):
-                          </p>
-                          <div className="space-y-2 max-h-48 overflow-y-auto">
-                            {totensDaOrder.map((totem: any) => (
-                              <div key={totem.id} className="flex items-start gap-2 pb-2 border-b border-gray-100 last:border-b-0 last:pb-0">
-                                {totem.image && (
-                                  <img
-                                    src={totem.image}
-                                    alt={totem.name}
-                                    className="w-12 h-12 sm:w-16 sm:h-16 rounded-md object-cover flex-shrink-0"
-                                  />
+                          <p className="text-[10px] sm:text-xs font-semibold text-gray-700 mb-1.5">Totem relacionado:</p>
+                          <div className="flex items-start gap-2">
+                            {totensMap[anuncioKey].image && (
+                              <img
+                                src={totensMap[anuncioKey].image}
+                                alt={totensMap[anuncioKey].name}
+                                className="w-12 h-12 sm:w-16 sm:h-16 rounded-md object-cover flex-shrink-0"
+                              />
+                            )}
+                            <div className="flex-1 min-w-0">
+                              <p className="text-xs sm:text-sm font-semibold text-gray-800 truncate">{totensMap[anuncioKey].name}</p>
+                              <p className="text-[10px] sm:text-xs text-gray-600 truncate">{totensMap[anuncioKey].address}</p>
+                              <div className="flex items-center gap-2 mt-1">
+                                {totensMap[anuncioKey].type_screen && (
+                                  <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${
+                                    totensMap[anuncioKey].type_screen.toLowerCase() === 'impresso'
+                                      ? 'bg-green-100 text-green-700'
+                                      : 'bg-purple-100 text-purple-700'
+                                  }`}>
+                                    {totensMap[anuncioKey].type_screen.toLowerCase() === 'impresso' ? 'Impresso' : 'Digital'}
+                                  </span>
                                 )}
-                                <div className="flex-1 min-w-0">
-                                  <p className="text-xs sm:text-sm font-semibold text-gray-800 truncate">{totem.name}</p>
-                                  <p className="text-[10px] sm:text-xs text-gray-600 truncate">{totem.address}</p>
-                                  <div className="flex items-center gap-2 mt-1 flex-wrap">
-                                    {totem.type_screen && (
-                                      <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${
-                                        totem.type_screen.toLowerCase() === 'impresso'
-                                          ? 'bg-green-100 text-green-700'
-                                          : 'bg-purple-100 text-purple-700'
-                                      }`}>
-                                        {totem.type_screen.toLowerCase() === 'impresso' ? 'Impresso' : 'Digital'}
-                                      </span>
-                                    )}
-                                    {totem.screens && (
-                                      <span className="text-[10px] text-gray-500">
-                                        {totem.screens} tela(s)
-                                      </span>
-                                    )}
-                                  </div>
-                                </div>
+                                {arte.screen_type && (
+                                  <span className="text-[10px] text-gray-500">
+                                    {arte.screen_type === 'down' ? 'Deitado' : 'Em pé'}
+                                  </span>
+                                )}
+                                {totensMap[anuncioKey].screens && (
+                                  <span className="text-[10px] text-gray-500">
+                                    {totensMap[anuncioKey].screens} tela(s)
+                                  </span>
+                                )}
                               </div>
-                            ))}
+                            </div>
                           </div>
                         </div>
                       )}
@@ -943,44 +892,43 @@ const AproveitionAdmin = () => {
                                 Baixar
                               </button>
                             </div>
-                            {/* Totens da campanha */}
-                            {totensTrocasMap[troca.id] && totensTrocasMap[troca.id].length > 0 && (
+                            {/* Totem relacionado */}
+                            {totensTrocasMap[troca.id] && (
                               <div className="bg-white border border-gray-200 rounded-md p-2 sm:p-3 mt-1">
-                                <p className="text-[10px] sm:text-xs font-semibold text-gray-700 mb-1.5">
-                                  Totens da campanha ({totensTrocasMap[troca.id].length}):
-                                </p>
-                                <div className="space-y-2 max-h-48 overflow-y-auto">
-                                  {totensTrocasMap[troca.id].map((totem: any) => (
-                                    <div key={totem.id} className="flex items-start gap-2 pb-2 border-b border-gray-100 last:border-b-0 last:pb-0">
-                                      {totem.image && (
-                                        <img
-                                          src={totem.image}
-                                          alt={totem.name}
-                                          className="w-12 h-12 sm:w-16 sm:h-16 rounded-md object-cover flex-shrink-0"
-                                        />
+                                <p className="text-[10px] sm:text-xs font-semibold text-gray-700 mb-1.5">Totem relacionado:</p>
+                                <div className="flex items-start gap-2">
+                                  {totensTrocasMap[troca.id].image && (
+                                    <img
+                                      src={totensTrocasMap[troca.id].image}
+                                      alt={totensTrocasMap[troca.id].name}
+                                      className="w-12 h-12 sm:w-16 sm:h-16 rounded-md object-cover flex-shrink-0"
+                                    />
+                                  )}
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-xs sm:text-sm font-semibold text-gray-800 truncate">{totensTrocasMap[troca.id].name}</p>
+                                    <p className="text-[10px] sm:text-xs text-gray-600 truncate">{totensTrocasMap[troca.id].address}</p>
+                                    <div className="flex items-center gap-2 mt-1">
+                                      {totensTrocasMap[troca.id].type_screen && (
+                                        <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${
+                                          totensTrocasMap[troca.id].type_screen.toLowerCase() === 'impresso'
+                                            ? 'bg-green-100 text-green-700'
+                                            : 'bg-purple-100 text-purple-700'
+                                        }`}>
+                                          {totensTrocasMap[troca.id].type_screen.toLowerCase() === 'impresso' ? 'Impresso' : 'Digital'}
+                                        </span>
                                       )}
-                                      <div className="flex-1 min-w-0">
-                                        <p className="text-xs sm:text-sm font-semibold text-gray-800 truncate">{totem.name}</p>
-                                        <p className="text-[10px] sm:text-xs text-gray-600 truncate">{totem.address}</p>
-                                        <div className="flex items-center gap-2 mt-1 flex-wrap">
-                                          {totem.type_screen && (
-                                            <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${
-                                              totem.type_screen.toLowerCase() === 'impresso'
-                                                ? 'bg-green-100 text-green-700'
-                                                : 'bg-purple-100 text-purple-700'
-                                            }`}>
-                                              {totem.type_screen.toLowerCase() === 'impresso' ? 'Impresso' : 'Digital'}
-                                            </span>
-                                          )}
-                                          {totem.screens && (
-                                            <span className="text-[10px] text-gray-500">
-                                              {totem.screens} tela(s)
-                                            </span>
-                                          )}
-                                        </div>
-                                      </div>
+                                      {troca.screen_type && (
+                                        <span className="text-[10px] text-gray-500">
+                                          {troca.screen_type === 'down' ? 'Deitado' : 'Em pé'}
+                                        </span>
+                                      )}
+                                      {totensTrocasMap[troca.id].screens && (
+                                        <span className="text-[10px] text-gray-500">
+                                          {totensTrocasMap[troca.id].screens} tela(s)
+                                        </span>
+                                      )}
                                     </div>
-                                  ))}
+                                  </div>
                                 </div>
                               </div>
                             )}
