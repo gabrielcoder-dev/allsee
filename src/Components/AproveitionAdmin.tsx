@@ -51,6 +51,8 @@ const AproveitionAdmin = () => {
   const [arteTrocas, setArteTrocas] = useState<any[]>([]);
   const [loadingTrocas, setLoadingTrocas] = useState(false);
   const [ordersWithTrocas, setOrdersWithTrocas] = useState<Set<OrderIdentifier>>(new Set());
+  const [totensMap, setTotensMap] = useState<Record<string, any>>({});
+  const [artesComTrocaPendente, setArtesComTrocaPendente] = useState<Set<number>>(new Set());
   
   const getOrderStatus = (orderId: OrderIdentifier) => {
     if (typeof window === 'undefined') return 'pendente';
@@ -259,13 +261,50 @@ const AproveitionAdmin = () => {
     }
   };
 
-  // Buscar artes de troca quando o modal abrir
+  // Buscar artes de troca e totens quando o modal abrir
   useEffect(() => {
     if (imagesModalOrderId && arteCampanhas.length > 0) {
       fetchArteTrocas();
+      fetchTotensForOrder();
       setActiveTab('atuais'); // Reset para aba de artes atuais quando abrir
     }
   }, [imagesModalOrderId, arteCampanhas.length]);
+
+  const fetchTotensForOrder = async () => {
+    if (!imagesModalOrderId) return;
+    
+    try {
+      const artesDoPedido = arteCampanhas.filter(arte => String(arte.id_order) === String(imagesModalOrderId));
+      const anuncioIds = artesDoPedido
+        .map(arte => arte.anuncio_id)
+        .filter((id): id is string | number => id !== null && id !== undefined)
+        .map(id => String(id));
+      
+      if (anuncioIds.length === 0) {
+        setTotensMap({});
+        return;
+      }
+
+      const { data: totensData, error } = await supabase
+        .from('anuncios')
+        .select('id, name, address, type_screen, screens, price, image')
+        .in('id', anuncioIds);
+
+      if (error) {
+        console.error('Erro ao buscar totens:', error);
+        setTotensMap({});
+      } else {
+        const map: Record<string, any> = {};
+        (totensData || []).forEach((totem: any) => {
+          map[String(totem.id)] = totem;
+        });
+        setTotensMap(map);
+      }
+    } catch (error) {
+      console.error('Erro ao buscar totens:', error);
+      setTotensMap({});
+    }
+  };
 
   const fetchArteTrocas = async () => {
     if (!imagesModalOrderId) return;
@@ -302,14 +341,25 @@ const AproveitionAdmin = () => {
               ...troca,
               anuncio_id: arteOriginal?.anuncio_id || null,
               anuncioName,
+              screen_type: arteOriginal?.screen_type || null,
             };
           })
         );
         setArteTrocas(enrichedTrocas);
+        
+        // Criar um Set com os IDs das artes que têm troca pendente
+        const artesComTroca = new Set<number>();
+        enrichedTrocas.forEach((troca) => {
+          if (troca.id_campanha) {
+            artesComTroca.add(troca.id_campanha);
+          }
+        });
+        setArtesComTrocaPendente(artesComTroca);
       }
     } catch (error) {
       console.error('Erro ao buscar artes de troca:', error);
       setArteTrocas([]);
+      setArtesComTrocaPendente(new Set());
     } finally {
       setLoadingTrocas(false);
     }
@@ -339,6 +389,13 @@ const AproveitionAdmin = () => {
 
       // 3. Atualizar estado local
       setArteTrocas(prev => prev.filter(t => t.id !== troca.id));
+      
+      // 3.1. Remover arte do Set de artes com troca pendente
+      setArtesComTrocaPendente(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(troca.id_campanha);
+        return newSet;
+      });
       
       // 4. Atualizar estado de pedidos com trocas
       const arte = arteCampanhas.find(a => a.id === troca.id_campanha);
@@ -393,6 +450,13 @@ const AproveitionAdmin = () => {
 
       // Atualizar estado local
       setArteTrocas(prev => prev.filter(t => t.id !== troca.id));
+
+      // Remover arte do Set de artes com troca pendente
+      setArtesComTrocaPendente(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(troca.id_campanha);
+        return newSet;
+      });
 
       // Atualizar estado de pedidos com trocas
       const arte = arteCampanhas.find(a => a.id === troca.id_campanha);
@@ -545,13 +609,16 @@ const AproveitionAdmin = () => {
               </button>
               <button
                 onClick={() => setActiveTab('trocas')}
-                className={`px-3 sm:px-4 md:px-6 py-2 sm:py-3 font-medium text-xs sm:text-sm transition-colors flex-1 sm:flex-none ${
+                className={`px-3 sm:px-4 md:px-6 py-2 sm:py-3 font-medium text-xs sm:text-sm transition-colors flex-1 sm:flex-none relative ${
                   activeTab === 'trocas'
                     ? 'text-orange-600 border-b-2 border-orange-600'
                     : 'text-gray-500 hover:text-gray-700'
                 }`}
               >
                 Pedidos de troca
+                {arteTrocas.length > 0 && (
+                  <span className="absolute -top-1 -right-1 inline-flex h-3 w-3 sm:h-4 sm:w-4 rounded-full bg-orange-500 border-2 border-white"></span>
+                )}
               </button>
             </div>
 
@@ -563,6 +630,7 @@ const AproveitionAdmin = () => {
                 const anuncioKey = arte.anuncio_id ? String(arte.anuncio_id) : null;
                 const anuncioName = anuncioKey ? anunciosMap[anuncioKey] || `Anúncio ${anuncioKey}` : 'Anúncio não informado';
                 const isArteVideo = arte.caminho_imagem ? isVideo(arte.caminho_imagem) : false;
+                const temTrocaPendente = artesComTrocaPendente.has(arte.id);
 
                 return (
                   <div key={arte.id} className="border border-gray-200 rounded-lg p-2 sm:p-3 flex flex-col gap-2 sm:gap-3 bg-gray-50">
@@ -601,7 +669,11 @@ const AproveitionAdmin = () => {
                           <p className="text-xs sm:text-sm text-gray-600 truncate">{anuncioName}</p>
                         </div>
                         <div className="flex items-center gap-2 flex-shrink-0">
-                          {arte.statusLocal ? (
+                          {temTrocaPendente ? (
+                            <span className="text-xs sm:text-sm font-semibold text-orange-600 whitespace-nowrap">
+                              Troca pendente
+                            </span>
+                          ) : arte.statusLocal ? (
                             <span
                               className={`text-xs sm:text-sm font-semibold whitespace-nowrap ${
                                 arte.statusLocal === 'aceita'
@@ -633,6 +705,46 @@ const AproveitionAdmin = () => {
                           )}
                         </div>
                       </div>
+                      {/* Totens relacionados */}
+                      {anuncioKey && totensMap[anuncioKey] && (
+                        <div className="bg-white border border-gray-200 rounded-md p-2 sm:p-3 mt-1">
+                          <p className="text-[10px] sm:text-xs font-semibold text-gray-700 mb-1.5">Totem relacionado:</p>
+                          <div className="flex items-start gap-2">
+                            {totensMap[anuncioKey].image && (
+                              <img
+                                src={totensMap[anuncioKey].image}
+                                alt={totensMap[anuncioKey].name}
+                                className="w-12 h-12 sm:w-16 sm:h-16 rounded-md object-cover flex-shrink-0"
+                              />
+                            )}
+                            <div className="flex-1 min-w-0">
+                              <p className="text-xs sm:text-sm font-semibold text-gray-800 truncate">{totensMap[anuncioKey].name}</p>
+                              <p className="text-[10px] sm:text-xs text-gray-600 truncate">{totensMap[anuncioKey].address}</p>
+                              <div className="flex items-center gap-2 mt-1">
+                                {totensMap[anuncioKey].type_screen && (
+                                  <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${
+                                    totensMap[anuncioKey].type_screen.toLowerCase() === 'impresso'
+                                      ? 'bg-green-100 text-green-700'
+                                      : 'bg-purple-100 text-purple-700'
+                                  }`}>
+                                    {totensMap[anuncioKey].type_screen.toLowerCase() === 'impresso' ? 'Impresso' : 'Digital'}
+                                  </span>
+                                )}
+                                {arte.screen_type && (
+                                  <span className="text-[10px] text-gray-500">
+                                    {arte.screen_type === 'down' ? 'Deitado' : 'Em pé'}
+                                  </span>
+                                )}
+                                {totensMap[anuncioKey].screens && (
+                                  <span className="text-[10px] text-gray-500">
+                                    {totensMap[anuncioKey].screens} tela(s)
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
                       <div className="flex gap-2">
                         <button
                           className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs sm:text-sm font-medium px-2 sm:px-3 py-1.5 sm:py-2 rounded-md sm:rounded-lg transition-colors cursor-pointer disabled:cursor-not-allowed"
@@ -703,7 +815,7 @@ const AproveitionAdmin = () => {
                               <span className="text-gray-400 text-sm">Sem preview disponível</span>
                             )}
                           </div>
-                          <div className="flex flex-col gap-2">
+                            <div className="flex flex-col gap-2">
                             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-3">
                               <div className="min-w-0 flex-1">
                                 <p className="text-xs sm:text-sm font-semibold text-gray-700">Anúncio:</p>
@@ -726,6 +838,46 @@ const AproveitionAdmin = () => {
                                 </button>
                               </div>
                             </div>
+                            {/* Totens relacionados */}
+                            {troca.anuncio_id && totensMap[String(troca.anuncio_id)] && (
+                              <div className="bg-white border border-gray-200 rounded-md p-2 sm:p-3 mt-1">
+                                <p className="text-[10px] sm:text-xs font-semibold text-gray-700 mb-1.5">Totem relacionado:</p>
+                                <div className="flex items-start gap-2">
+                                  {totensMap[String(troca.anuncio_id)].image && (
+                                    <img
+                                      src={totensMap[String(troca.anuncio_id)].image}
+                                      alt={totensMap[String(troca.anuncio_id)].name}
+                                      className="w-12 h-12 sm:w-16 sm:h-16 rounded-md object-cover flex-shrink-0"
+                                    />
+                                  )}
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-xs sm:text-sm font-semibold text-gray-800 truncate">{totensMap[String(troca.anuncio_id)].name}</p>
+                                    <p className="text-[10px] sm:text-xs text-gray-600 truncate">{totensMap[String(troca.anuncio_id)].address}</p>
+                                    <div className="flex items-center gap-2 mt-1">
+                                      {totensMap[String(troca.anuncio_id)].type_screen && (
+                                        <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${
+                                          totensMap[String(troca.anuncio_id)].type_screen.toLowerCase() === 'impresso'
+                                            ? 'bg-green-100 text-green-700'
+                                            : 'bg-purple-100 text-purple-700'
+                                        }`}>
+                                          {totensMap[String(troca.anuncio_id)].type_screen.toLowerCase() === 'impresso' ? 'Impresso' : 'Digital'}
+                                        </span>
+                                      )}
+                                      {troca.screen_type && (
+                                        <span className="text-[10px] text-gray-500">
+                                          {troca.screen_type === 'down' ? 'Deitado' : 'Em pé'}
+                                        </span>
+                                      )}
+                                      {totensMap[String(troca.anuncio_id)].screens && (
+                                        <span className="text-[10px] text-gray-500">
+                                          {totensMap[String(troca.anuncio_id)].screens} tela(s)
+                                        </span>
+                                      )}
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            )}
                             <div className="flex gap-2">
                               <button
                                 className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs sm:text-sm font-medium px-2 sm:px-3 py-1.5 sm:py-2 rounded-md sm:rounded-lg transition-colors cursor-pointer disabled:cursor-not-allowed"
