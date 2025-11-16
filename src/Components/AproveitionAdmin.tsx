@@ -901,45 +901,95 @@ const AproveitionAdmin = () => {
                               </button>
                             </div>
                             {/* Totem relacionado */}
-                            {totensTrocasMap[troca.id] && (
-                              <div className="bg-white border border-gray-200 rounded-md p-2 sm:p-3 mt-1">
-                                <p className="text-[10px] sm:text-xs font-semibold text-gray-700 mb-1.5">Totem relacionado:</p>
-                                <div className="flex items-start gap-2">
-                                  {totensTrocasMap[troca.id].image && (
-                                    <img
-                                      src={totensTrocasMap[troca.id].image}
-                                      alt={totensTrocasMap[troca.id].name}
-                                      className="w-12 h-12 sm:w-16 sm:h-16 rounded-md object-cover flex-shrink-0"
-                                    />
-                                  )}
-                                  <div className="flex-1 min-w-0">
-                                    <p className="text-xs sm:text-sm font-semibold text-gray-800 truncate">{totensTrocasMap[troca.id].name}</p>
-                                    <p className="text-[10px] sm:text-xs text-gray-600 truncate">{totensTrocasMap[troca.id].address}</p>
-                                    <div className="flex items-center gap-2 mt-1">
-                                      {totensTrocasMap[troca.id].type_screen && (
-                                        <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${
-                                          totensTrocasMap[troca.id].type_screen.toLowerCase() === 'impresso'
-                                            ? 'bg-green-100 text-green-700'
-                                            : 'bg-purple-100 text-purple-700'
-                                        }`}>
-                                          {totensTrocasMap[troca.id].type_screen.toLowerCase() === 'impresso' ? 'Impresso' : 'Digital'}
-                                        </span>
-                                      )}
-                                      {troca.screen_type && (
-                                        <span className="text-[10px] text-gray-500">
-                                          {troca.screen_type === 'down' ? 'Deitado' : 'Em pé'}
-                                        </span>
-                                      )}
-                                      {totensTrocasMap[troca.id].screens && (
-                                        <span className="text-[10px] text-gray-500">
-                                          {totensTrocasMap[troca.id].screens} tela(s)
-                                        </span>
-                                      )}
+                            {(() => {
+                              const totem = totensTrocasMap[troca.id];
+                              console.log('Verificando totem para troca:', troca.id, 'totem:', totem, 'totensTrocasMap:', totensTrocasMap);
+                              if (!totem) {
+                                // Tentar buscar usando o anuncio_id da troca
+                                if (troca.anuncio_id && totensMap[String(troca.anuncio_id)]) {
+                                  const totemDoMapa = totensMap[String(troca.anuncio_id)];
+                                  return (
+                                    <div className="bg-white border border-gray-200 rounded-md p-2 sm:p-3 mt-1">
+                                      <p className="text-[10px] sm:text-xs font-semibold text-gray-700 mb-1.5">Totem relacionado:</p>
+                                      <div className="flex items-start gap-2">
+                                        {totemDoMapa.image && (
+                                          <img
+                                            src={totemDoMapa.image}
+                                            alt={totemDoMapa.name}
+                                            className="w-12 h-12 sm:w-16 sm:h-16 rounded-md object-cover flex-shrink-0"
+                                          />
+                                        )}
+                                        <div className="flex-1 min-w-0">
+                                          <p className="text-xs sm:text-sm font-semibold text-gray-800 truncate">{totemDoMapa.name}</p>
+                                          <p className="text-[10px] sm:text-xs text-gray-600 truncate">{totemDoMapa.address}</p>
+                                          <div className="flex items-center gap-2 mt-1">
+                                            {totemDoMapa.type_screen && (
+                                              <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${
+                                                totemDoMapa.type_screen.toLowerCase() === 'impresso'
+                                                  ? 'bg-green-100 text-green-700'
+                                                  : 'bg-purple-100 text-purple-700'
+                                              }`}>
+                                                {totemDoMapa.type_screen.toLowerCase() === 'impresso' ? 'Impresso' : 'Digital'}
+                                              </span>
+                                            )}
+                                            {troca.screen_type && (
+                                              <span className="text-[10px] text-gray-500">
+                                                {troca.screen_type === 'down' ? 'Deitado' : 'Em pé'}
+                                              </span>
+                                            )}
+                                            {totemDoMapa.screens && (
+                                              <span className="text-[10px] text-gray-500">
+                                                {totemDoMapa.screens} tela(s)
+                                              </span>
+                                            )}
+                                          </div>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  );
+                                }
+                                return null;
+                              }
+                              return (
+                                <div className="bg-white border border-gray-200 rounded-md p-2 sm:p-3 mt-1">
+                                  <p className="text-[10px] sm:text-xs font-semibold text-gray-700 mb-1.5">Totem relacionado:</p>
+                                  <div className="flex items-start gap-2">
+                                    {totem.image && (
+                                      <img
+                                        src={totem.image}
+                                        alt={totem.name}
+                                        className="w-12 h-12 sm:w-16 sm:h-16 rounded-md object-cover flex-shrink-0"
+                                      />
+                                    )}
+                                    <div className="flex-1 min-w-0">
+                                      <p className="text-xs sm:text-sm font-semibold text-gray-800 truncate">{totem.name}</p>
+                                      <p className="text-[10px] sm:text-xs text-gray-600 truncate">{totem.address}</p>
+                                      <div className="flex items-center gap-2 mt-1">
+                                        {totem.type_screen && (
+                                          <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${
+                                            totem.type_screen.toLowerCase() === 'impresso'
+                                              ? 'bg-green-100 text-green-700'
+                                              : 'bg-purple-100 text-purple-700'
+                                          }`}>
+                                            {totem.type_screen.toLowerCase() === 'impresso' ? 'Impresso' : 'Digital'}
+                                          </span>
+                                        )}
+                                        {troca.screen_type && (
+                                          <span className="text-[10px] text-gray-500">
+                                            {troca.screen_type === 'down' ? 'Deitado' : 'Em pé'}
+                                          </span>
+                                        )}
+                                        {totem.screens && (
+                                          <span className="text-[10px] text-gray-500">
+                                            {totem.screens} tela(s)
+                                          </span>
+                                        )}
+                                      </div>
                                     </div>
                                   </div>
                                 </div>
-                              </div>
-                            )}
+                              );
+                            })()}
                           </div>
                         </div>
                       );
