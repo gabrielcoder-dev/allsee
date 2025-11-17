@@ -427,8 +427,10 @@ const AproveitionAdmin = () => {
         enrichedTrocas.forEach((troca) => {
           if (troca.id_campanha) {
             artesComTroca.add(troca.id_campanha);
+            console.log('✅ Adicionando arte ao Set de trocas pendentes:', troca.id_campanha);
           }
         });
+        console.log('📊 Set de artes com troca pendente:', Array.from(artesComTroca));
         setArtesComTrocaPendente(artesComTroca);
       }
     } catch (error) {
@@ -788,7 +790,10 @@ const AproveitionAdmin = () => {
                 const anuncioKey = arte.anuncio_id ? String(arte.anuncio_id) : null;
                 const anuncioName = anuncioKey ? anunciosMap[anuncioKey] || `Anúncio ${anuncioKey}` : 'Anúncio não informado';
                 const isArteVideo = arte.caminho_imagem ? isVideo(arte.caminho_imagem) : false;
-                const temTrocaPendente = artesComTrocaPendente.has(arte.id);
+                // Verificar se há troca pendente (comparando tanto como number quanto como string)
+                const temTrocaPendente = artesComTrocaPendente.has(arte.id) || 
+                                         artesComTrocaPendente.has(Number(arte.id)) ||
+                                         Array.from(artesComTrocaPendente).some(id => String(id) === String(arte.id));
 
                 return (
                   <div key={arte.id} className="border border-gray-200 rounded-lg p-2 sm:p-3 flex flex-col gap-2 sm:gap-3 bg-gray-50">
