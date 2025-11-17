@@ -62,6 +62,7 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
   const fetchReplacementCount = async (): Promise<number> => {
     try {
       // Buscar artes de troca pendentes
+      // Se a troca foi deletada do banco, ela não existe mais, então não precisa verificar localStorage
       const { data: replacementData, error: replacementError } = await supabase
         .from("arte_troca_campanha")
         .select("id, id_campanha")
@@ -74,16 +75,9 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
 
       if (!replacementData) return 0;
 
-      // Filtrar apenas as que não foram aceitas/rejeitadas
-      let pendingCount = 0;
-      for (const item of replacementData) {
-        const status = localStorage.getItem(`replacement_order_${item.id_campanha}`) || "pendente";
-        if (status !== 'aceita' && status !== 'não aceita') {
-          pendingCount++;
-        }
-      }
-
-      return pendingCount;
+      // Simplesmente contar quantas trocas existem no banco
+      // Se foram deletadas, não aparecerão aqui
+      return replacementData.length;
     } catch (error) {
       console.error('Erro ao contar substituições:', error);
       return 0;

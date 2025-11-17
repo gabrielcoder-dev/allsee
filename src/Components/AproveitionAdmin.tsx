@@ -475,6 +475,9 @@ const AproveitionAdmin = () => {
         throw new Error('Erro ao excluir troca: ' + deleteError.message);
       }
 
+      // 2.1. Atualizar notificações IMEDIATAMENTE após deletar do banco
+      await refreshCounts();
+
       // 3. Atualizar estado local - remover a troca aprovada
       setArteTrocas(prev => prev.filter(t => t.id !== troca.id));
       
@@ -654,10 +657,7 @@ const AproveitionAdmin = () => {
         await fetchArteTrocas();
       }
 
-      // 12. Atualizar notificações da navbar
-      await refreshCounts();
-      
-      // 13. Disparar evento customizado para atualizar outros componentes
+      // 12. Disparar evento customizado para atualizar outros componentes
       if (typeof window !== 'undefined') {
         window.dispatchEvent(new CustomEvent('replacementStatusChanged', {
           detail: { id_campanha: troca.id_campanha, status: 'aceita' }
@@ -682,6 +682,9 @@ const AproveitionAdmin = () => {
       if (deleteError) {
         throw new Error('Erro ao excluir troca: ' + deleteError.message);
       }
+
+      // Atualizar notificações IMEDIATAMENTE após deletar do banco
+      await refreshCounts();
 
       // Atualizar estado local - remover a troca rejeitada
       setArteTrocas(prev => prev.filter(t => t.id !== troca.id));
@@ -783,9 +786,6 @@ const AproveitionAdmin = () => {
         await fetchArteTrocas();
       }
 
-      // Atualizar notificações da navbar
-      await refreshCounts();
-      
       // Disparar evento customizado para atualizar outros componentes
       if (typeof window !== 'undefined') {
         window.dispatchEvent(new CustomEvent('replacementStatusChanged', {
