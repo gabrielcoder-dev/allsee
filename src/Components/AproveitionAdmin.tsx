@@ -490,19 +490,101 @@ const AproveitionAdmin = () => {
         }
       }
       
-      // 5. Recarregar artes atuais
-      const { data, error: refetchError } = await supabase
+      // 5. Marcar arte como aceita no localStorage
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(`replacement_order_${troca.id_campanha}`, 'aceita');
+      }
+
+      // 6. Recarregar artes atuais do banco
+      const { data: arteAtualizada, error: refetchError } = await supabase
         .from("arte_campanha")
         .select("id, caminho_imagem, id_order, id_anuncio, mime_type, screen_type")
         .eq("id", troca.id_campanha)
         .single();
 
-      if (!refetchError && data) {
-        setArteCampanhas(prev => prev.map(arte => 
-          arte.id === troca.id_campanha 
-            ? { ...arte, caminho_imagem: data.caminho_imagem }
-            : arte
+      if (!refetchError && arteAtualizada) {
+        // Atualizar o estado local da arte com a nova imagem e status
+        setArteCampanhas(prev => prev.map(arte => {
+          if (arte.id === troca.id_campanha) {
+            return {
+              ...arte,
+              caminho_imagem: arteAtualizada.caminho_imagem,
+              statusLocal: 'aceita' as const,
+            };
+          }
+          return arte;
+        }));
+
+        // Disparar eventos para atualizar outros componentes
+        const arteAtualizadaObj = arteCampanhas.find(a => a.id === troca.id_campanha);
+        if (arteAtualizadaObj) {
+          updateArteStatus({
+            ...arteAtualizadaObj,
+            caminho_imagem: arteAtualizada.caminho_imagem,
+          }, 'aceita');
+        }
+      }
+
+      // 7. Recarregar todas as artes para garantir sincronização
+      const { data: todasArtes, error: reloadError } = await supabase
+        .from("arte_campanha")
+        .select("id, caminho_imagem, id_order, id_anuncio, mime_type, screen_type")
+        .order("id", { ascending: false });
+
+      if (!reloadError && todasArtes) {
+        const adaptedOrders: ArteCampanhaItem[] = todasArtes.map((item) => {
+          const originalOrderId = item.id_order ?? item.id;
+          const orderKey = originalOrderId !== undefined && originalOrderId !== null
+            ? String(originalOrderId)
+            : String(item.id);
+
+          const orderValue = originalOrderId !== undefined && originalOrderId !== null
+            ? originalOrderId
+            : item.id;
+
+          let statusLocal: ArteCampanhaItem['statusLocal'];
+          if (typeof window !== 'undefined') {
+            const storedStatus = localStorage.getItem(`replacement_order_${item.id}`);
+            if (storedStatus === 'aceita' || storedStatus === 'não aceita') {
+              statusLocal = storedStatus;
+            }
+          }
+
+          return {
+            id: item.id,
+            caminho_imagem: item.caminho_imagem,
+            id_order: orderKey,
+            id_order_value: orderValue,
+            anuncio_id: item.id_anuncio ?? null,
+            mime_type: item.mime_type ?? null,
+            screen_type: item.screen_type ?? null,
+            statusLocal,
+          };
+        });
+        setArteCampanhas(adaptedOrders);
+
+        // Atualizar mapas de anúncios se necessário
+        const anuncioIds = Array.from(new Set(
+          adaptedOrders
+            .map((item) => item.anuncio_id)
+            .filter((id): id is string | number => id !== null && id !== undefined)
+            .map((id) => String(id))
         ));
+
+        if (anuncioIds.length > 0) {
+          const { data: anunciosData, error: anunciosError } = await supabase
+            .from('anuncios')
+            .select('id, name')
+            .in('id', anuncioIds);
+
+          if (!anunciosError && anunciosData) {
+            const map: Record<string, string> = {};
+            anunciosData.forEach((anuncio: any) => {
+              map[String(anuncio.id)] = anuncio.name || `Anúncio ${anuncio.id}`;
+            });
+            setAnunciosMap(prev => ({ ...prev, ...map }));
+          }
+        }
       }
 
       console.log('✅ Troca aprovada com sucesso');
