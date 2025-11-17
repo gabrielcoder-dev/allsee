@@ -334,37 +334,52 @@ const AproveitionAdmin = () => {
         setArteTrocas([]);
         setTotensTrocasMap({});
       } else {
-        // Enriquecer com dados da arte_campanha, order e totens
+        // Enriquecer com dados da arte_campanha e totens
         const enrichedTrocas = await Promise.all(
           (trocasData || []).map(async (troca) => {
+            console.log('Processando troca:', troca.id, 'id_campanha:', troca.id_campanha);
             const arteOriginal = artesDoPedido.find(a => a.id === troca.id_campanha);
+            console.log('Arte original encontrada:', arteOriginal);
+            
+            if (!arteOriginal) {
+              console.error('Arte original não encontrada para id_campanha:', troca.id_campanha);
+            }
+            
             const anuncioKey = arteOriginal?.anuncio_id ? String(arteOriginal.anuncio_id) : null;
             const anuncioName = anuncioKey ? anunciosMap[anuncioKey] || `Anúncio ${anuncioKey}` : 'Anúncio não informado';
             
-            // Buscar o totem relacionado à arte específica
+            // Buscar o totem relacionado à arte específica usando o id_anuncio da arte_campanha
             let totemRelacionado: any = null;
             if (arteOriginal?.anuncio_id) {
               try {
                 const anuncioId = arteOriginal.anuncio_id;
+                console.log('Buscando totem para anuncio_id:', anuncioId, 'tipo:', typeof anuncioId);
+                
                 // Converter para número se necessário
                 const anuncioIdNum = typeof anuncioId === 'string' ? Number(anuncioId) : anuncioId;
+                const idParaBusca = !isNaN(anuncioIdNum) ? anuncioIdNum : anuncioId;
+                
+                console.log('ID para busca:', idParaBusca);
                 
                 const { data: totemData, error: totemError } = await supabase
                   .from('anuncios')
                   .select('id, name, address, type_screen, screens, price, image')
-                  .eq('id', isNaN(anuncioIdNum) ? anuncioId : anuncioIdNum)
+                  .eq('id', idParaBusca)
                   .maybeSingle();
 
                 if (totemError) {
                   console.error('Erro ao buscar totem da troca:', totemError, 'anuncio_id:', anuncioId);
                 } else if (totemData) {
                   totemRelacionado = totemData;
+                  console.log('✅ Totem encontrado:', totemData);
                 } else {
-                  console.log('Totem não encontrado para anuncio_id:', anuncioId);
+                  console.log('❌ Totem não encontrado para anuncio_id:', anuncioId);
                 }
               } catch (error) {
                 console.error('Erro ao buscar totem da troca:', error);
               }
+            } else {
+              console.log('⚠️ Arte original sem anuncio_id:', arteOriginal);
             }
             
             return {
@@ -381,10 +396,15 @@ const AproveitionAdmin = () => {
         // Criar um mapa de totem por troca
         const totensMap: Record<number, any> = {};
         enrichedTrocas.forEach((troca) => {
+          console.log('Processando troca para mapa:', troca.id, 'tem totemRelacionado:', !!troca.totemRelacionado);
           if (troca.id && troca.totemRelacionado) {
             totensMap[troca.id] = troca.totemRelacionado;
+            console.log('✅ Totem adicionado ao mapa para troca:', troca.id);
+          } else {
+            console.log('❌ Troca sem totem:', troca.id, 'totemRelacionado:', troca.totemRelacionado);
           }
         });
+        console.log('📊 TotensTrocasMap final:', totensMap);
         setTotensTrocasMap(totensMap);
         
         // Criar um Set com os IDs das artes que têm troca pendente
@@ -903,7 +923,6 @@ const AproveitionAdmin = () => {
                             {/* Totem relacionado */}
                             {(() => {
                               const totem = totensTrocasMap[troca.id];
-                              console.log('Verificando totem para troca:', troca.id, 'totem:', totem, 'totensTrocasMap:', totensTrocasMap);
                               if (!totem) {
                                 // Tentar buscar usando o anuncio_id da troca
                                 if (troca.anuncio_id && totensMap[String(troca.anuncio_id)]) {
