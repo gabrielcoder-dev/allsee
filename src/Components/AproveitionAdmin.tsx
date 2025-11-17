@@ -947,7 +947,7 @@ const AproveitionAdmin = () => {
       {imagesModalOrderId && (
         <div className="fixed inset-0 z-[9998] flex items-end justify-center md:items-center md:justify-center p-2 sm:p-4">
           <div className="absolute inset-0 bg-black/40" onClick={() => setImagesModalOrderId(null)}></div>
-          <div className="relative bg-white rounded-t-xl md:rounded-xl lg:rounded-2xl shadow-xl border border-gray-200 max-w-4xl w-full max-h-[85vh] md:max-h-[80vh] overflow-hidden flex flex-col z-10" onClick={(e) => e.stopPropagation()}>
+          <div className="relative bg-white rounded-t-xl md:rounded-xl lg:rounded-2xl shadow-xl border border-gray-200 max-w-2xl w-full max-h-[75vh] md:max-h-[70vh] overflow-hidden flex flex-col z-10" onClick={(e) => e.stopPropagation()}>
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-4 p-3 sm:p-4 md:p-6 border-b border-gray-200 flex-shrink-0">
               <div className="flex-1 min-w-0">
                 <h3 className="text-base sm:text-lg md:text-xl font-semibold text-gray-800">
@@ -1038,10 +1038,6 @@ const AproveitionAdmin = () => {
                       </div>
                       <div className="flex flex-col gap-2">
                         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-3">
-                          <div className="min-w-0 flex-1">
-                            <p className="text-xs sm:text-sm font-semibold text-gray-700">Anúncio:</p>
-                            <p className="text-xs sm:text-sm text-gray-600 truncate">{anuncioName}</p>
-                          </div>
                           <div className="flex items-center gap-2 flex-shrink-0">
                             {artesDoPedido.some(arte => {
                               const temTrocaPendente = artesComTrocaPendente.has(arte.id) || 
@@ -1194,10 +1190,6 @@ const AproveitionAdmin = () => {
                       </div>
                       <div className="flex flex-col gap-2">
                         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-3">
-                          <div className="min-w-0 flex-1">
-                            <p className="text-xs sm:text-sm font-semibold text-gray-700">Anúncio:</p>
-                            <p className="text-xs sm:text-sm text-gray-600 truncate">{primeiraTroca.anuncioName || 'Anúncio não informado'}</p>
-                          </div>
                           <div className="flex items-center gap-2 flex-shrink-0">
                             <button
                               className="p-1.5 sm:p-2 rounded-md bg-emerald-500 hover:bg-emerald-600 text-white transition-colors cursor-pointer"
