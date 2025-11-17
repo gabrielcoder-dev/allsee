@@ -5,6 +5,7 @@ import Image from "next/image";
 import { supabase } from "@/lib/supabase";
 import OrderDetailsModal from "./OrderDetailsModal";
 import { Check, X } from "lucide-react";
+import { useNotifications } from "@/context/NotificationContext";
 
 type OrderIdentifier = string;
 
@@ -37,6 +38,7 @@ const isVideo = (url: string) => {
 };
 
 const AproveitionAdmin = () => {
+  const { refreshCounts } = useNotifications();
   const [arteCampanhas, setArteCampanhas] = useState<ArteCampanhaItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [modalFile, setModalFile] = useState<ModalFileData | null>(null);
@@ -652,6 +654,16 @@ const AproveitionAdmin = () => {
         await fetchArteTrocas();
       }
 
+      // 12. Atualizar notificações da navbar
+      await refreshCounts();
+      
+      // 13. Disparar evento customizado para atualizar outros componentes
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('replacementStatusChanged', {
+          detail: { id_campanha: troca.id_campanha, status: 'aceita' }
+        }));
+      }
+
       console.log('✅ Troca aprovada com sucesso');
     } catch (error: any) {
       console.error('❌ Erro ao aprovar troca:', error);
@@ -769,6 +781,16 @@ const AproveitionAdmin = () => {
       // Recarregar as trocas completas para atualizar a lista na aba "Pedidos de troca"
       if (imagesModalOrderId) {
         await fetchArteTrocas();
+      }
+
+      // Atualizar notificações da navbar
+      await refreshCounts();
+      
+      // Disparar evento customizado para atualizar outros componentes
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('replacementStatusChanged', {
+          detail: { id_campanha: troca.id_campanha, status: 'não aceita' }
+        }));
       }
 
       console.log('✅ Troca rejeitada e excluída');
