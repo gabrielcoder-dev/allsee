@@ -518,35 +518,12 @@ const AproveitionAdmin = () => {
         }
       }
       
-      // 6. Atualizar ordersWithTrocas verificando todas as artes
-      const arteIds = arteCampanhas.map(arte => arte.id);
-      const { data: todasTrocas, error: todasTrocasError } = await supabase
-        .from('arte_troca_campanha')
-        .select('id, id_campanha')
-        .in('id_campanha', arteIds);
-
-      if (!todasTrocasError && todasTrocas) {
-        const ordersComTrocas = new Set<OrderIdentifier>();
-        todasTrocas.forEach((t) => {
-          const arteRelacionada = arteCampanhas.find(a => a.id === t.id_campanha);
-          if (arteRelacionada) {
-            ordersComTrocas.add(arteRelacionada.id_order);
-          }
-        });
-        setOrdersWithTrocas(ordersComTrocas);
-      }
-      
-      // 7. Marcar arte como aceita no localStorage
+      // 6. Marcar arte como aceita no localStorage
       if (typeof window !== 'undefined') {
         localStorage.setItem(`replacement_order_${troca.id_campanha}`, 'aceita');
       }
 
-      // 8. Recarregar as trocas completas para atualizar a lista na aba "Pedidos de troca"
-      if (imagesModalOrderId) {
-        await fetchArteTrocas();
-      }
-
-      // 9. Recarregar artes atuais do banco
+      // 7. Recarregar artes atuais do banco primeiro
       const { data: arteAtualizada, error: refetchError } = await supabase
         .from("arte_campanha")
         .select("id, caminho_imagem, id_order, id_anuncio, mime_type, screen_type")
@@ -638,6 +615,43 @@ const AproveitionAdmin = () => {
         }
       }
 
+      // 10. Atualizar ordersWithTrocas após recarregar tudo - garantir que notificação desapareça
+      // Buscar todas as trocas restantes no banco
+      const { data: todasTrocasRestantes, error: todasTrocasRestantesError } = await supabase
+        .from('arte_troca_campanha')
+        .select('id, id_campanha');
+
+      if (!todasTrocasRestantesError && todasTrocasRestantes) {
+        // Buscar todas as artes para mapear as trocas aos orders
+        const { data: todasArtesParaMapear, error: todasArtesError } = await supabase
+          .from('arte_campanha')
+          .select('id, id_order');
+
+        if (!todasArtesError && todasArtesParaMapear) {
+          const ordersComTrocasFinais = new Set<OrderIdentifier>();
+          todasTrocasRestantes.forEach((troca) => {
+            const arteRelacionada = todasArtesParaMapear.find(a => a.id === troca.id_campanha);
+            if (arteRelacionada && arteRelacionada.id_order) {
+              ordersComTrocasFinais.add(arteRelacionada.id_order);
+            }
+          });
+          console.log('🔔 Atualizando notificações após aprovar - Orders com trocas:', Array.from(ordersComTrocasFinais));
+          setOrdersWithTrocas(ordersComTrocasFinais);
+        } else {
+          // Se não conseguir buscar artes, limpar notificações
+          setOrdersWithTrocas(new Set());
+        }
+      } else {
+        // Se não houver trocas, limpar notificações
+        console.log('🔔 Nenhuma troca restante - limpando notificações');
+        setOrdersWithTrocas(new Set());
+      }
+
+      // 11. Recarregar as trocas completas para atualizar a lista na aba "Pedidos de troca"
+      if (imagesModalOrderId) {
+        await fetchArteTrocas();
+      }
+
       console.log('✅ Troca aprovada com sucesso');
     } catch (error: any) {
       console.error('❌ Erro ao aprovar troca:', error);
@@ -718,6 +732,38 @@ const AproveitionAdmin = () => {
           }
         });
         setOrdersWithTrocas(ordersComTrocas);
+      }
+
+      // Atualizar ordersWithTrocas após rejeitar - garantir que notificação desapareça
+      // Buscar todas as trocas restantes no banco
+      const { data: todasTrocasRestantes, error: todasTrocasRestantesError } = await supabase
+        .from('arte_troca_campanha')
+        .select('id, id_campanha');
+
+      if (!todasTrocasRestantesError && todasTrocasRestantes) {
+        // Buscar todas as artes para mapear as trocas aos orders
+        const { data: todasArtesParaMapear, error: todasArtesError } = await supabase
+          .from('arte_campanha')
+          .select('id, id_order');
+
+        if (!todasArtesError && todasArtesParaMapear) {
+          const ordersComTrocasFinais = new Set<OrderIdentifier>();
+          todasTrocasRestantes.forEach((troca) => {
+            const arteRelacionada = todasArtesParaMapear.find(a => a.id === troca.id_campanha);
+            if (arteRelacionada && arteRelacionada.id_order) {
+              ordersComTrocasFinais.add(arteRelacionada.id_order);
+            }
+          });
+          console.log('🔔 Atualizando notificações após rejeitar - Orders com trocas:', Array.from(ordersComTrocasFinais));
+          setOrdersWithTrocas(ordersComTrocasFinais);
+        } else {
+          // Se não conseguir buscar artes, limpar notificações
+          setOrdersWithTrocas(new Set());
+        }
+      } else {
+        // Se não houver trocas, limpar notificações
+        console.log('🔔 Nenhuma troca restante - limpando notificações');
+        setOrdersWithTrocas(new Set());
       }
 
       // Recarregar as trocas completas para atualizar a lista na aba "Pedidos de troca"
