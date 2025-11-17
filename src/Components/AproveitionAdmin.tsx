@@ -158,6 +158,11 @@ const AproveitionAdmin = () => {
       try {
         const arteIds = arteCampanhas.map(arte => arte.id);
         
+        if (arteIds.length === 0) {
+          setOrdersWithTrocas(new Set());
+          return;
+        }
+        
         const { data: trocasData, error } = await supabase
           .from('arte_troca_campanha')
           .select('id, id_campanha')
@@ -165,6 +170,7 @@ const AproveitionAdmin = () => {
 
         if (error) {
           console.error('Erro ao buscar pedidos de troca:', error);
+          setOrdersWithTrocas(new Set());
           return;
         }
 
@@ -178,9 +184,11 @@ const AproveitionAdmin = () => {
           }
         });
 
+        console.log('📊 Orders com trocas atualizados:', Array.from(ordersComTrocas));
         setOrdersWithTrocas(ordersComTrocas);
       } catch (error) {
         console.error('Erro ao buscar pedidos de troca:', error);
+        setOrdersWithTrocas(new Set());
       }
     };
 
@@ -465,7 +473,7 @@ const AproveitionAdmin = () => {
         throw new Error('Erro ao excluir troca: ' + deleteError.message);
       }
 
-      // 3. Atualizar estado local
+      // 3. Atualizar estado local - remover a troca aprovada
       setArteTrocas(prev => prev.filter(t => t.id !== troca.id));
       
       // 3.1. Remover arte do Set de artes com troca pendente
@@ -475,29 +483,70 @@ const AproveitionAdmin = () => {
         return newSet;
       });
       
-      // 4. Atualizar estado de pedidos com trocas
+      // 4. Buscar arte para verificar o order
       const arte = arteCampanhas.find(a => a.id === troca.id_campanha);
-      if (arte) {
-        // Verificar se ainda há outras trocas para este pedido
-        const outrasTrocas = arteTrocas.filter(t => 
-          t.id !== troca.id && 
-          arteCampanhas.find(a => a.id === t.id_campanha)?.id_order === arte.id_order
-        );
-        if (outrasTrocas.length === 0) {
-          setOrdersWithTrocas(prev => {
-            const newSet = new Set(prev);
-            newSet.delete(arte.id_order);
-            return newSet;
+      
+      // 5. Recarregar todas as trocas para atualizar o estado corretamente
+      if (imagesModalOrderId) {
+        // Buscar novamente as trocas para este pedido
+        const artesDoPedido = arteCampanhas.filter(arte => String(arte.id_order) === String(imagesModalOrderId));
+        const arteIds = artesDoPedido.map(arte => arte.id);
+        
+        const { data: trocasRestantes, error: trocasError } = await supabase
+          .from('arte_troca_campanha')
+          .select('id, id_campanha')
+          .in('id_campanha', arteIds);
+
+        if (!trocasError && trocasRestantes) {
+          // Atualizar o Set de artes com troca pendente
+          const novasArtesComTroca = new Set<number>();
+          trocasRestantes.forEach((t) => {
+            if (t.id_campanha) {
+              novasArtesComTroca.add(t.id_campanha);
+            }
           });
+          setArtesComTrocaPendente(novasArtesComTroca);
+          
+          // Verificar se ainda há trocas para este pedido
+          if (trocasRestantes.length === 0 && arte) {
+            setOrdersWithTrocas(prev => {
+              const newSet = new Set(prev);
+              newSet.delete(arte.id_order);
+              return newSet;
+            });
+          }
         }
       }
       
-      // 5. Marcar arte como aceita no localStorage
+      // 6. Atualizar ordersWithTrocas verificando todas as artes
+      const arteIds = arteCampanhas.map(arte => arte.id);
+      const { data: todasTrocas, error: todasTrocasError } = await supabase
+        .from('arte_troca_campanha')
+        .select('id, id_campanha')
+        .in('id_campanha', arteIds);
+
+      if (!todasTrocasError && todasTrocas) {
+        const ordersComTrocas = new Set<OrderIdentifier>();
+        todasTrocas.forEach((t) => {
+          const arteRelacionada = arteCampanhas.find(a => a.id === t.id_campanha);
+          if (arteRelacionada) {
+            ordersComTrocas.add(arteRelacionada.id_order);
+          }
+        });
+        setOrdersWithTrocas(ordersComTrocas);
+      }
+      
+      // 7. Marcar arte como aceita no localStorage
       if (typeof window !== 'undefined') {
         localStorage.setItem(`replacement_order_${troca.id_campanha}`, 'aceita');
       }
 
-      // 6. Recarregar artes atuais do banco
+      // 8. Recarregar as trocas completas para atualizar a lista na aba "Pedidos de troca"
+      if (imagesModalOrderId) {
+        await fetchArteTrocas();
+      }
+
+      // 9. Recarregar artes atuais do banco
       const { data: arteAtualizada, error: refetchError } = await supabase
         .from("arte_campanha")
         .select("id, caminho_imagem, id_order, id_anuncio, mime_type, screen_type")
@@ -608,7 +657,7 @@ const AproveitionAdmin = () => {
         throw new Error('Erro ao excluir troca: ' + deleteError.message);
       }
 
-      // Atualizar estado local
+      // Atualizar estado local - remover a troca rejeitada
       setArteTrocas(prev => prev.filter(t => t.id !== troca.id));
 
       // Remover arte do Set de artes com troca pendente
@@ -618,21 +667,62 @@ const AproveitionAdmin = () => {
         return newSet;
       });
 
-      // Atualizar estado de pedidos com trocas
+      // Buscar arte para verificar o order
       const arte = arteCampanhas.find(a => a.id === troca.id_campanha);
-      if (arte) {
-        // Verificar se ainda há outras trocas para este pedido
-        const outrasTrocas = arteTrocas.filter(t => 
-          t.id !== troca.id && 
-          arteCampanhas.find(a => a.id === t.id_campanha)?.id_order === arte.id_order
-        );
-        if (outrasTrocas.length === 0) {
-          setOrdersWithTrocas(prev => {
-            const newSet = new Set(prev);
-            newSet.delete(arte.id_order);
-            return newSet;
+      
+      // Recarregar todas as trocas para atualizar o estado corretamente
+      if (imagesModalOrderId) {
+        // Buscar novamente as trocas para este pedido
+        const artesDoPedido = arteCampanhas.filter(arte => String(arte.id_order) === String(imagesModalOrderId));
+        const arteIds = artesDoPedido.map(arte => arte.id);
+        
+        const { data: trocasRestantes, error: trocasError } = await supabase
+          .from('arte_troca_campanha')
+          .select('id, id_campanha')
+          .in('id_campanha', arteIds);
+
+        if (!trocasError && trocasRestantes) {
+          // Atualizar o Set de artes com troca pendente
+          const novasArtesComTroca = new Set<number>();
+          trocasRestantes.forEach((t) => {
+            if (t.id_campanha) {
+              novasArtesComTroca.add(t.id_campanha);
+            }
           });
+          setArtesComTrocaPendente(novasArtesComTroca);
+          
+          // Verificar se ainda há trocas para este pedido
+          if (trocasRestantes.length === 0 && arte) {
+            setOrdersWithTrocas(prev => {
+              const newSet = new Set(prev);
+              newSet.delete(arte.id_order);
+              return newSet;
+            });
+          }
         }
+      }
+      
+      // Atualizar ordersWithTrocas verificando todas as artes
+      const arteIds = arteCampanhas.map(arte => arte.id);
+      const { data: todasTrocas, error: todasTrocasError } = await supabase
+        .from('arte_troca_campanha')
+        .select('id, id_campanha')
+        .in('id_campanha', arteIds);
+
+      if (!todasTrocasError && todasTrocas) {
+        const ordersComTrocas = new Set<OrderIdentifier>();
+        todasTrocas.forEach((t) => {
+          const arteRelacionada = arteCampanhas.find(a => a.id === t.id_campanha);
+          if (arteRelacionada) {
+            ordersComTrocas.add(arteRelacionada.id_order);
+          }
+        });
+        setOrdersWithTrocas(ordersComTrocas);
+      }
+
+      // Recarregar as trocas completas para atualizar a lista na aba "Pedidos de troca"
+      if (imagesModalOrderId) {
+        await fetchArteTrocas();
       }
 
       console.log('✅ Troca rejeitada e excluída');
