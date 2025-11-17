@@ -475,8 +475,13 @@ const AproveitionAdmin = () => {
         throw new Error('Erro ao excluir troca: ' + deleteError.message);
       }
 
-      // 2.1. Atualizar notificações IMEDIATAMENTE após deletar do banco
+      // 2.1. Aguardar um pouco para garantir que a deleção foi processada no banco
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      // 2.2. Atualizar notificações IMEDIATAMENTE após deletar do banco
+      console.log('🔄 Atualizando notificações após aprovar troca...');
       await refreshCounts();
+      console.log('✅ Notificações atualizadas');
 
       // 3. Atualizar estado local - remover a troca aprovada
       setArteTrocas(prev => prev.filter(t => t.id !== troca.id));
@@ -683,8 +688,13 @@ const AproveitionAdmin = () => {
         throw new Error('Erro ao excluir troca: ' + deleteError.message);
       }
 
+      // Aguardar um pouco para garantir que a deleção foi processada no banco
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
       // Atualizar notificações IMEDIATAMENTE após deletar do banco
+      console.log('🔄 Atualizando notificações após rejeitar troca...');
       await refreshCounts();
+      console.log('✅ Notificações atualizadas');
 
       // Atualizar estado local - remover a troca rejeitada
       setArteTrocas(prev => prev.filter(t => t.id !== troca.id));
