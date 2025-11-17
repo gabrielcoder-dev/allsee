@@ -56,6 +56,8 @@ const AproveitionAdmin = () => {
   const [totensMap, setTotensMap] = useState<Record<string, any>>({});
   const [artesComTrocaPendente, setArtesComTrocaPendente] = useState<Set<number>>(new Set());
   const [totensTrocasMap, setTotensTrocasMap] = useState<Record<number, any>>({});
+  const [selectedArteId, setSelectedArteId] = useState<number | null>(null);
+  const [selectedTrocaId, setSelectedTrocaId] = useState<number | null>(null);
   
   const getOrderStatus = (orderId: OrderIdentifier) => {
     if (typeof window === 'undefined') return 'pendente';
@@ -278,8 +280,17 @@ const AproveitionAdmin = () => {
       fetchArteTrocas();
       fetchTotensForOrder();
       setActiveTab('atuais'); // Reset para aba de artes atuais quando abrir
+      // Resetar seleção quando abrir o modal
+      setSelectedArteId(null);
+      setSelectedTrocaId(null);
     }
   }, [imagesModalOrderId, arteCampanhas.length]);
+
+  // Resetar seleção quando mudar de tab
+  useEffect(() => {
+    setSelectedArteId(null);
+    setSelectedTrocaId(null);
+  }, [activeTab]);
 
   const fetchTotensForOrder = async () => {
     if (!imagesModalOrderId) return;
@@ -952,9 +963,78 @@ const AproveitionAdmin = () => {
 
             {/* Content */}
             <div className="p-3 sm:p-4 md:p-6 overflow-y-auto flex-1">
-              {activeTab === 'atuais' ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-              {groupedOrders.find((group) => group.orderId === imagesModalOrderId)?.artes.map((arte) => {
+              {activeTab === 'atuais' ? (() => {
+                const artesDoPedido = groupedOrders.find((group) => group.orderId === imagesModalOrderId)?.artes || [];
+                const arteSelecionada = artesDoPedido.find(a => a.id === (selectedArteId || artesDoPedido[0]?.id)) || artesDoPedido[0];
+                
+                return (
+                  <div className="flex flex-col gap-4">
+                    {/* Imagem principal */}
+                    {arteSelecionada && (
+                      <div className="w-full bg-white border border-gray-200 rounded-lg overflow-hidden">
+                        <div className="w-full h-64 sm:h-80 md:h-96 bg-gray-100 flex items-center justify-center">
+                          {arteSelecionada.caminho_imagem ? (
+                            arteSelecionada.caminho_imagem.startsWith("data:image") || arteSelecionada.caminho_imagem.match(/\.(jpg|jpeg|png|gif|bmp|webp)$/i) ? (
+                              <img
+                                src={arteSelecionada.caminho_imagem}
+                                alt={`Arte ${arteSelecionada.id}`}
+                                className="object-contain w-full h-full"
+                              />
+                            ) : isVideo(arteSelecionada.caminho_imagem) ? (
+                              <video
+                                src={arteSelecionada.caminho_imagem}
+                                className="object-contain w-full h-full"
+                                controls
+                                preload="metadata"
+                              />
+                            ) : (
+                              <Image
+                                src={arteSelecionada.caminho_imagem}
+                                alt={`Arte ${arteSelecionada.id}`}
+                                width={800}
+                                height={600}
+                                className="object-contain w-full h-full"
+                              />
+                            )
+                          ) : (
+                            <span className="text-gray-400 text-sm">Sem preview disponível</span>
+                          )}
+                        </div>
+                        <div className="p-4 border-t border-gray-200">
+                          <div className="flex items-center justify-between mb-2">
+                            <div>
+                              <p className="text-sm font-semibold text-gray-700">Anúncio: {anunciosMap[String(arteSelecionada.anuncio_id || '')] || 'Anúncio não informado'}</p>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <button
+                                className="bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium px-3 py-1.5 rounded-md transition-colors cursor-pointer"
+                                onClick={() => arteSelecionada.caminho_imagem && setModalFile({
+                                  url: arteSelecionada.caminho_imagem,
+                                  id: arteSelecionada.id,
+                                  orderId: arteSelecionada.id_order_value,
+                                  anuncioName: anunciosMap[String(arteSelecionada.anuncio_id || '')],
+                                })}
+                                disabled={!arteSelecionada.caminho_imagem}
+                              >
+                                Assistir
+                              </button>
+                              <button
+                                className="bg-orange-500 hover:bg-orange-600 text-white text-sm font-medium px-3 py-1.5 rounded-md transition-colors cursor-pointer"
+                                onClick={() => arteSelecionada.caminho_imagem && handleDownload(arteSelecionada.caminho_imagem, `pedido-${arteSelecionada.id_order_value}_anuncio-${arteSelecionada.anuncio_id ?? arteSelecionada.id}`)}
+                                disabled={!arteSelecionada.caminho_imagem}
+                              >
+                                Baixar
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* Lista de artes relacionadas */}
+                    <div className="space-y-2">
+                      <h4 className="text-sm font-semibold text-gray-700 mb-2">Artes relacionadas:</h4>
+                      {artesDoPedido.map((arte) => {
                 const anuncioKey = arte.anuncio_id ? String(arte.anuncio_id) : null;
                 const anuncioName = anuncioKey ? anunciosMap[anuncioKey] || `Anúncio ${anuncioKey}` : 'Anúncio não informado';
                 const isArteVideo = arte.caminho_imagem ? isVideo(arte.caminho_imagem) : false;
@@ -964,328 +1044,215 @@ const AproveitionAdmin = () => {
                                          Array.from(artesComTrocaPendente).some(id => String(id) === String(arte.id));
 
                 return (
-                  <div key={arte.id} className="border border-gray-200 rounded-lg p-2 sm:p-3 flex flex-col gap-2 sm:gap-3 bg-gray-50">
-                    <div className="w-full h-32 sm:h-40 bg-white border border-gray-200 rounded-lg flex items-center justify-center overflow-hidden">
-                      {arte.caminho_imagem ? (
-                        arte.caminho_imagem.startsWith("data:image") || arte.caminho_imagem.match(/\.(jpg|jpeg|png|gif|bmp|webp)$/i) ? (
-                          <img
-                            src={arte.caminho_imagem}
-                            alt={`Arte ${arte.id}`}
-                            className="object-cover w-full h-full"
-                          />
-                        ) : isArteVideo ? (
-                          <video
-                            src={arte.caminho_imagem}
-                            className="object-cover w-full h-full"
-                            controls={false}
-                            preload="metadata"
-                          />
+                  <div 
+                    key={arte.id} 
+                    onClick={() => setSelectedArteId(arte.id)}
+                    className={`border rounded-lg p-3 cursor-pointer transition-all ${
+                      selectedArteId === arte.id || (!selectedArteId && arte.id === artesDoPedido[0]?.id)
+                        ? 'border-orange-500 bg-orange-50'
+                        : 'border-gray-200 bg-white hover:border-gray-300'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-gray-800 truncate">{anuncioName}</p>
+                        {anuncioKey && totensMap[anuncioKey] && (
+                          <p className="text-xs text-gray-600 truncate">{totensMap[anuncioKey].name}</p>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2 ml-3">
+                        {temTrocaPendente ? (
+                          <span className="text-xs font-semibold text-orange-600 whitespace-nowrap">
+                            Troca pendente
+                          </span>
+                        ) : arte.statusLocal ? (
+                          <span
+                            className={`text-xs font-semibold whitespace-nowrap ${
+                              arte.statusLocal === 'aceita'
+                                ? 'text-emerald-600'
+                                : 'text-red-500'
+                            }`}
+                          >
+                            {arte.statusLocal === 'aceita' ? 'Arte aceita' : 'Arte recusada'}
+                          </span>
                         ) : (
-                          <Image
-                            src={arte.caminho_imagem}
-                            alt={`Arte ${arte.id}`}
-                            width={320}
-                            height={180}
-                            className="object-cover w-full h-full"
-                          />
-                        )
-                      ) : (
-                        <span className="text-gray-400 text-sm">Sem preview disponível</span>
-                      )}
-                    </div>
-                    <div className="flex flex-col gap-2">
-                      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-3">
-                        <div className="min-w-0 flex-1">
-                          <p className="text-xs sm:text-sm font-semibold text-gray-700">Anúncio:</p>
-                          <p className="text-xs sm:text-sm text-gray-600 truncate">{anuncioName}</p>
-                        </div>
-                        <div className="flex items-center gap-2 flex-shrink-0">
-                          {temTrocaPendente ? (
-                            <span className="text-xs sm:text-sm font-semibold text-orange-600 whitespace-nowrap">
-                              Troca pendente
-                            </span>
-                          ) : arte.statusLocal ? (
-                            <span
-                              className={`text-xs sm:text-sm font-semibold whitespace-nowrap ${
-                                arte.statusLocal === 'aceita'
-                                  ? 'text-emerald-600'
-                                  : 'text-red-500'
-                              }`}
+                          <div className="flex items-center gap-1">
+                            <button
+                              className="p-1.5 rounded-md bg-emerald-500 hover:bg-emerald-600 text-white transition-colors cursor-pointer"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleApproveArte(arte);
+                              }}
+                              aria-label="Aprovar arte"
                             >
-                              {arte.statusLocal === 'aceita'
-                                ? 'Arte aceita'
-                                : 'Arte recusada'}
-                            </span>
-                          ) : (
-                            <>
-                              <button
-                                className="p-1.5 sm:p-2 rounded-md bg-emerald-500 hover:bg-emerald-600 text-white transition-colors cursor-pointer"
-                                onClick={() => handleApproveArte(arte)}
-                                aria-label="Aprovar arte"
-                              >
-                                <Check className="w-3 h-3 sm:w-4 sm:h-4" />
-                              </button>
-                              <button
-                                className="p-1.5 sm:p-2 rounded-md bg-red-500 hover:bg-red-600 text-white transition-colors cursor-pointer"
-                                onClick={() => handleRejectArte(arte)}
-                                aria-label="Reprovar arte"
-                              >
-                                <X className="w-3 h-3 sm:w-4 sm:h-4" />
-                              </button>
-                            </>
-                          )}
-                        </div>
-                      </div>
-                      <div className="flex gap-2">
-                        <button
-                          className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs sm:text-sm font-medium px-2 sm:px-3 py-1.5 sm:py-2 rounded-md sm:rounded-lg transition-colors cursor-pointer disabled:cursor-not-allowed"
-                          onClick={() => arte.caminho_imagem && setModalFile({
-                            url: arte.caminho_imagem,
-                            id: arte.id,
-                            orderId: arte.id_order_value,
-                            anuncioName,
-                          })}
-                          disabled={!arte.caminho_imagem}
-                        >
-                          Assistir
-                        </button>
-                        <button
-                          className="flex-1 bg-orange-500 hover:bg-orange-600 text-white text-xs sm:text-sm font-medium px-2 sm:px-3 py-1.5 sm:py-2 rounded-md sm:rounded-lg transition-colors cursor-pointer disabled:cursor-not-allowed"
-                          onClick={() => arte.caminho_imagem && handleDownload(arte.caminho_imagem, `pedido-${arte.id_order_value}_anuncio-${anuncioKey ?? arte.id}`)}
-                          disabled={!arte.caminho_imagem}
-                        >
-                          Baixar
-                        </button>
-                      </div>
-                      {/* Totem relacionado */}
-                      {anuncioKey && totensMap[anuncioKey] && (
-                        <div className="bg-white border border-gray-200 rounded-md p-2 sm:p-3 mt-1">
-                          <p className="text-[10px] sm:text-xs font-semibold text-gray-700 mb-1.5">Totem relacionado:</p>
-                          <div className="flex items-start gap-2">
-                            {totensMap[anuncioKey].image && (
-                              <img
-                                src={totensMap[anuncioKey].image}
-                                alt={totensMap[anuncioKey].name}
-                                className="w-12 h-12 sm:w-16 sm:h-16 rounded-md object-cover flex-shrink-0"
-                              />
-                            )}
-                            <div className="flex-1 min-w-0">
-                              <p className="text-xs sm:text-sm font-semibold text-gray-800 truncate">{totensMap[anuncioKey].name}</p>
-                              <p className="text-[10px] sm:text-xs text-gray-600 truncate">{totensMap[anuncioKey].address}</p>
-                              <div className="flex items-center gap-2 mt-1">
-                                {totensMap[anuncioKey].type_screen && (
-                                  <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${
-                                    totensMap[anuncioKey].type_screen.toLowerCase() === 'impresso'
-                                      ? 'bg-green-100 text-green-700'
-                                      : 'bg-purple-100 text-purple-700'
-                                  }`}>
-                                    {totensMap[anuncioKey].type_screen.toLowerCase() === 'impresso' ? 'Impresso' : 'Digital'}
-                                  </span>
-                                )}
-                                {arte.screen_type && (
-                                  <span className="text-[10px] text-gray-500">
-                                    {arte.screen_type === 'down' ? 'Deitado' : 'Em pé'}
-                                  </span>
-                                )}
-                                {totensMap[anuncioKey].screens && (
-                                  <span className="text-[10px] text-gray-500">
-                                    {totensMap[anuncioKey].screens} tela(s)
-                                  </span>
-                                )}
-                              </div>
-                            </div>
+                              <Check className="w-3 h-3" />
+                            </button>
+                            <button
+                              className="p-1.5 rounded-md bg-red-500 hover:bg-red-600 text-white transition-colors cursor-pointer"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleRejectArte(arte);
+                              }}
+                              aria-label="Reprovar arte"
+                            >
+                              <X className="w-3 h-3" />
+                            </button>
                           </div>
-                        </div>
-                      )}
+                        )}
+                      </div>
                     </div>
                   </div>
                 );
               })}
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                  {loadingTrocas ? (
-                    <div className="col-span-2 text-center py-8 text-gray-500 text-sm sm:text-base">
-                      Carregando pedidos de troca...
                     </div>
-                  ) : arteTrocas.length === 0 ? (
-                    <div className="col-span-2 text-center py-8 text-gray-500 text-sm sm:text-base">
-                      Nenhum pedido de troca encontrado.
-                    </div>
-                  ) : (
-                    arteTrocas.map((troca) => {
-                      const isTrocaVideo = troca.caminho_imagem ? isVideo(troca.caminho_imagem) : false;
-
-                      return (
-                        <div key={troca.id} className="border border-gray-200 rounded-lg p-2 sm:p-3 flex flex-col gap-2 sm:gap-3 bg-gray-50">
-                          <div className="w-full h-32 sm:h-40 bg-white border border-gray-200 rounded-lg flex items-center justify-center overflow-hidden">
-                            {troca.caminho_imagem ? (
-                              troca.caminho_imagem.startsWith("data:image") || troca.caminho_imagem.match(/\.(jpg|jpeg|png|gif|bmp|webp)$/i) ? (
-                                <img
-                                  src={troca.caminho_imagem}
-                                  alt={`Troca ${troca.id}`}
-                                  className="object-cover w-full h-full"
-                                />
-                              ) : isTrocaVideo ? (
-                                <video
-                                  src={troca.caminho_imagem}
-                                  className="object-cover w-full h-full"
-                                  controls={false}
-                                  preload="metadata"
-                                />
+                  </div>
+                );
+              })() : (() => {
+                const trocaSelecionada = arteTrocas.find(t => t.id === (selectedTrocaId || arteTrocas[0]?.id)) || arteTrocas[0];
+                
+                return (
+                  <div className="flex flex-col gap-4">
+                    {loadingTrocas ? (
+                      <div className="text-center py-8 text-gray-500 text-sm sm:text-base">
+                        Carregando pedidos de troca...
+                      </div>
+                    ) : arteTrocas.length === 0 ? (
+                      <div className="text-center py-8 text-gray-500 text-sm sm:text-base">
+                        Nenhum pedido de troca encontrado.
+                      </div>
+                    ) : (
+                      <>
+                        {/* Imagem principal */}
+                        {trocaSelecionada && (
+                          <div className="w-full bg-white border border-gray-200 rounded-lg overflow-hidden">
+                            <div className="w-full h-64 sm:h-80 md:h-96 bg-gray-100 flex items-center justify-center">
+                              {trocaSelecionada.caminho_imagem ? (
+                                trocaSelecionada.caminho_imagem.startsWith("data:image") || trocaSelecionada.caminho_imagem.match(/\.(jpg|jpeg|png|gif|bmp|webp)$/i) ? (
+                                  <img
+                                    src={trocaSelecionada.caminho_imagem}
+                                    alt={`Troca ${trocaSelecionada.id}`}
+                                    className="object-contain w-full h-full"
+                                  />
+                                ) : isVideo(trocaSelecionada.caminho_imagem) ? (
+                                  <video
+                                    src={trocaSelecionada.caminho_imagem}
+                                    className="object-contain w-full h-full"
+                                    controls
+                                    preload="metadata"
+                                  />
+                                ) : (
+                                  <Image
+                                    src={trocaSelecionada.caminho_imagem}
+                                    alt={`Troca ${trocaSelecionada.id}`}
+                                    width={800}
+                                    height={600}
+                                    className="object-contain w-full h-full"
+                                  />
+                                )
                               ) : (
-                                <Image
-                                  src={troca.caminho_imagem}
-                                  alt={`Troca ${troca.id}`}
-                                  width={320}
-                                  height={180}
-                                  className="object-cover w-full h-full"
-                                />
-                              )
-                            ) : (
-                              <span className="text-gray-400 text-sm">Sem preview disponível</span>
-                            )}
+                                <span className="text-gray-400 text-sm">Sem preview disponível</span>
+                              )}
+                            </div>
+                            <div className="p-4 border-t border-gray-200">
+                              <div className="flex items-center justify-between mb-2">
+                                <div>
+                                  <p className="text-sm font-semibold text-gray-700">Anúncio: {trocaSelecionada.anuncioName || 'Anúncio não informado'}</p>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <button
+                                    className="bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium px-3 py-1.5 rounded-md transition-colors cursor-pointer"
+                                    onClick={() => trocaSelecionada.caminho_imagem && setModalFile({
+                                      url: trocaSelecionada.caminho_imagem,
+                                      id: trocaSelecionada.id,
+                                      orderId: imagesModalOrderId,
+                                      anuncioName: trocaSelecionada.anuncioName,
+                                    })}
+                                    disabled={!trocaSelecionada.caminho_imagem}
+                                  >
+                                    Assistir
+                                  </button>
+                                  <button
+                                    className="bg-orange-500 hover:bg-orange-600 text-white text-sm font-medium px-3 py-1.5 rounded-md transition-colors cursor-pointer"
+                                    onClick={() => trocaSelecionada.caminho_imagem && handleDownload(trocaSelecionada.caminho_imagem, `troca-${trocaSelecionada.id}_anuncio-${trocaSelecionada.anuncio_id ?? trocaSelecionada.id}`)}
+                                    disabled={!trocaSelecionada.caminho_imagem}
+                                  >
+                                    Baixar
+                                  </button>
+                                  <button
+                                    className="p-1.5 rounded-md bg-emerald-500 hover:bg-emerald-600 text-white transition-colors cursor-pointer"
+                                    onClick={() => handleApproveTroca(trocaSelecionada)}
+                                    aria-label="Aprovar troca"
+                                  >
+                                    <Check className="w-4 h-4" />
+                                  </button>
+                                  <button
+                                    className="p-1.5 rounded-md bg-red-500 hover:bg-red-600 text-white transition-colors cursor-pointer"
+                                    onClick={() => handleRejectTroca(trocaSelecionada)}
+                                    aria-label="Rejeitar troca"
+                                  >
+                                    <X className="w-4 h-4" />
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
                           </div>
-                            <div className="flex flex-col gap-2">
-                            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-3">
-                              <div className="min-w-0 flex-1">
-                                <p className="text-xs sm:text-sm font-semibold text-gray-700">Anúncio:</p>
-                                <p className="text-xs sm:text-sm text-gray-600 truncate">{troca.anuncioName || 'Anúncio não informado'}</p>
-                              </div>
-                              <div className="flex items-center gap-2 flex-shrink-0">
-                                <button
-                                  className="p-1.5 sm:p-2 rounded-md bg-emerald-500 hover:bg-emerald-600 text-white transition-colors cursor-pointer"
-                                  onClick={() => handleApproveTroca(troca)}
-                                  aria-label="Aprovar troca"
-                                >
-                                  <Check className="w-3 h-3 sm:w-4 sm:h-4" />
-                                </button>
-                                <button
-                                  className="p-1.5 sm:p-2 rounded-md bg-red-500 hover:bg-red-600 text-white transition-colors cursor-pointer"
-                                  onClick={() => handleRejectTroca(troca)}
-                                  aria-label="Rejeitar troca"
-                                >
-                                  <X className="w-3 h-3 sm:w-4 sm:h-4" />
-                                </button>
-                              </div>
-                            </div>
-                            <div className="flex gap-2">
-                              <button
-                                className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs sm:text-sm font-medium px-2 sm:px-3 py-1.5 sm:py-2 rounded-md sm:rounded-lg transition-colors cursor-pointer disabled:cursor-not-allowed"
-                                onClick={() => troca.caminho_imagem && setModalFile({
-                                  url: troca.caminho_imagem,
-                                  id: troca.id,
-                                  orderId: imagesModalOrderId,
-                                  anuncioName: troca.anuncioName,
-                                })}
-                                disabled={!troca.caminho_imagem}
+                        )}
+                        
+                        {/* Lista de trocas relacionadas */}
+                        <div className="space-y-2">
+                          <h4 className="text-sm font-semibold text-gray-700 mb-2">Pedidos de troca relacionados:</h4>
+                          {arteTrocas.map((troca) => {
+                            const totem = totensTrocasMap[troca.id] || (troca.anuncio_id && totensMap[String(troca.anuncio_id)]);
+                            
+                            return (
+                              <div 
+                                key={troca.id} 
+                                onClick={() => setSelectedTrocaId(troca.id)}
+                                className={`border rounded-lg p-3 cursor-pointer transition-all ${
+                                  selectedTrocaId === troca.id || (!selectedTrocaId && troca.id === arteTrocas[0]?.id)
+                                    ? 'border-orange-500 bg-orange-50'
+                                    : 'border-gray-200 bg-white hover:border-gray-300'
+                                }`}
                               >
-                                Assistir
-                              </button>
-                              <button
-                                className="flex-1 bg-orange-500 hover:bg-orange-600 text-white text-xs sm:text-sm font-medium px-2 sm:px-3 py-1.5 sm:py-2 rounded-md sm:rounded-lg transition-colors cursor-pointer disabled:cursor-not-allowed"
-                                onClick={() => troca.caminho_imagem && handleDownload(troca.caminho_imagem, `troca-${troca.id}_anuncio-${troca.anuncio_id ?? troca.id}`)}
-                                disabled={!troca.caminho_imagem}
-                              >
-                                Baixar
-                              </button>
-                            </div>
-                            {/* Totem relacionado */}
-                            {(() => {
-                              const totem = totensTrocasMap[troca.id];
-                              if (!totem) {
-                                // Tentar buscar usando o anuncio_id da troca
-                                if (troca.anuncio_id && totensMap[String(troca.anuncio_id)]) {
-                                  const totemDoMapa = totensMap[String(troca.anuncio_id)];
-                                  return (
-                                    <div className="bg-white border border-gray-200 rounded-md p-2 sm:p-3 mt-1">
-                                      <p className="text-[10px] sm:text-xs font-semibold text-gray-700 mb-1.5">Totem relacionado:</p>
-                                      <div className="flex items-start gap-2">
-                                        {totemDoMapa.image && (
-                                          <img
-                                            src={totemDoMapa.image}
-                                            alt={totemDoMapa.name}
-                                            className="w-12 h-12 sm:w-16 sm:h-16 rounded-md object-cover flex-shrink-0"
-                                          />
-                                        )}
-                                        <div className="flex-1 min-w-0">
-                                          <p className="text-xs sm:text-sm font-semibold text-gray-800 truncate">{totemDoMapa.name}</p>
-                                          <p className="text-[10px] sm:text-xs text-gray-600 truncate">{totemDoMapa.address}</p>
-                                          <div className="flex items-center gap-2 mt-1">
-                                            {totemDoMapa.type_screen && (
-                                              <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${
-                                                totemDoMapa.type_screen.toLowerCase() === 'impresso'
-                                                  ? 'bg-green-100 text-green-700'
-                                                  : 'bg-purple-100 text-purple-700'
-                                              }`}>
-                                                {totemDoMapa.type_screen.toLowerCase() === 'impresso' ? 'Impresso' : 'Digital'}
-                                              </span>
-                                            )}
-                                            {troca.screen_type && (
-                                              <span className="text-[10px] text-gray-500">
-                                                {troca.screen_type === 'down' ? 'Deitado' : 'Em pé'}
-                                              </span>
-                                            )}
-                                            {totemDoMapa.screens && (
-                                              <span className="text-[10px] text-gray-500">
-                                                {totemDoMapa.screens} tela(s)
-                                              </span>
-                                            )}
-                                          </div>
-                                        </div>
-                                      </div>
-                                    </div>
-                                  );
-                                }
-                                return null;
-                              }
-                              return (
-                                <div className="bg-white border border-gray-200 rounded-md p-2 sm:p-3 mt-1">
-                                  <p className="text-[10px] sm:text-xs font-semibold text-gray-700 mb-1.5">Totem relacionado:</p>
-                                  <div className="flex items-start gap-2">
-                                    {totem.image && (
-                                      <img
-                                        src={totem.image}
-                                        alt={totem.name}
-                                        className="w-12 h-12 sm:w-16 sm:h-16 rounded-md object-cover flex-shrink-0"
-                                      />
+                                <div className="flex items-center justify-between">
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-sm font-semibold text-gray-800 truncate">{troca.anuncioName || 'Anúncio não informado'}</p>
+                                    {totem && (
+                                      <p className="text-xs text-gray-600 truncate">{totem.name}</p>
                                     )}
-                                    <div className="flex-1 min-w-0">
-                                      <p className="text-xs sm:text-sm font-semibold text-gray-800 truncate">{totem.name}</p>
-                                      <p className="text-[10px] sm:text-xs text-gray-600 truncate">{totem.address}</p>
-                                      <div className="flex items-center gap-2 mt-1">
-                                        {totem.type_screen && (
-                                          <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${
-                                            totem.type_screen.toLowerCase() === 'impresso'
-                                              ? 'bg-green-100 text-green-700'
-                                              : 'bg-purple-100 text-purple-700'
-                                          }`}>
-                                            {totem.type_screen.toLowerCase() === 'impresso' ? 'Impresso' : 'Digital'}
-                                          </span>
-                                        )}
-                                        {troca.screen_type && (
-                                          <span className="text-[10px] text-gray-500">
-                                            {troca.screen_type === 'down' ? 'Deitado' : 'Em pé'}
-                                          </span>
-                                        )}
-                                        {totem.screens && (
-                                          <span className="text-[10px] text-gray-500">
-                                            {totem.screens} tela(s)
-                                          </span>
-                                        )}
-                                      </div>
-                                    </div>
+                                  </div>
+                                  <div className="flex items-center gap-2 ml-3">
+                                    <button
+                                      className="p-1.5 rounded-md bg-emerald-500 hover:bg-emerald-600 text-white transition-colors cursor-pointer"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleApproveTroca(troca);
+                                      }}
+                                      aria-label="Aprovar troca"
+                                    >
+                                      <Check className="w-3 h-3" />
+                                    </button>
+                                    <button
+                                      className="p-1.5 rounded-md bg-red-500 hover:bg-red-600 text-white transition-colors cursor-pointer"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleRejectTroca(troca);
+                                      }}
+                                      aria-label="Rejeitar troca"
+                                    >
+                                      <X className="w-3 h-3" />
+                                    </button>
                                   </div>
                                 </div>
-                              );
-                            })()}
-                          </div>
+                              </div>
+                            );
+                          })}
                         </div>
-                      );
-                    })
-                  )}
-                </div>
-              )}
+                      </>
+                    )}
+                  </div>
+                );
+              })()}
             </div>
           </div>
         </div>
