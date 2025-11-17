@@ -337,51 +337,65 @@ const AproveitionAdmin = () => {
         // Enriquecer com dados da arte_campanha e totens
         const enrichedTrocas = await Promise.all(
           (trocasData || []).map(async (troca) => {
-            console.log('Processando troca:', troca.id, 'id_campanha:', troca.id_campanha);
-            // Buscar a arte original em todas as artes, não apenas nas do pedido
-            const arteOriginal = arteCampanhas.find(a => a.id === troca.id_campanha);
-            console.log('Arte original encontrada:', arteOriginal);
+            console.log('🔄 Processando troca:', troca.id, 'id_campanha:', troca.id_campanha);
             
-            if (!arteOriginal) {
-              console.error('Arte original não encontrada para id_campanha:', troca.id_campanha, 'arteCampanhas length:', arteCampanhas.length);
+            // Buscar a arte_campanha diretamente do banco para garantir que temos os dados atualizados
+            let arteOriginal: ArteCampanhaItem | null = null;
+            let totemRelacionado: any = null;
+            
+            try {
+              // Buscar arte_campanha pelo id_campanha
+              const { data: arteData, error: arteError } = await supabase
+                .from('arte_campanha')
+                .select('id, id_anuncio, id_order, screen_type')
+                .eq('id', troca.id_campanha)
+                .maybeSingle();
+
+              if (arteError) {
+                console.error('❌ Erro ao buscar arte_campanha:', arteError, 'id_campanha:', troca.id_campanha);
+              } else if (arteData) {
+                arteOriginal = {
+                  id: arteData.id,
+                  caminho_imagem: null,
+                  id_order: String(arteData.id_order || arteData.id),
+                  id_order_value: arteData.id_order || arteData.id,
+                  anuncio_id: arteData.id_anuncio ?? null,
+                  mime_type: null,
+                  screen_type: arteData.screen_type ?? null,
+                };
+                console.log('✅ Arte encontrada:', arteOriginal);
+                
+                // Buscar o totem usando o id_anuncio
+                if (arteData.id_anuncio) {
+                  const anuncioId = arteData.id_anuncio;
+                  console.log('🔍 Buscando totem para anuncio_id:', anuncioId);
+                  
+                  const { data: totemData, error: totemError } = await supabase
+                    .from('anuncios')
+                    .select('id, name, address, type_screen, screens, price, image')
+                    .eq('id', anuncioId)
+                    .maybeSingle();
+
+                  if (totemError) {
+                    console.error('❌ Erro ao buscar totem:', totemError, 'anuncio_id:', anuncioId);
+                  } else if (totemData) {
+                    totemRelacionado = totemData;
+                    console.log('✅ Totem encontrado:', totemData);
+                  } else {
+                    console.log('⚠️ Totem não encontrado para anuncio_id:', anuncioId);
+                  }
+                } else {
+                  console.log('⚠️ Arte sem id_anuncio');
+                }
+              } else {
+                console.log('⚠️ Arte não encontrada para id_campanha:', troca.id_campanha);
+              }
+            } catch (error) {
+              console.error('❌ Erro ao processar troca:', error);
             }
             
             const anuncioKey = arteOriginal?.anuncio_id ? String(arteOriginal.anuncio_id) : null;
             const anuncioName = anuncioKey ? anunciosMap[anuncioKey] || `Anúncio ${anuncioKey}` : 'Anúncio não informado';
-            
-            // Buscar o totem relacionado à arte específica usando o id_anuncio da arte_campanha
-            let totemRelacionado: any = null;
-            if (arteOriginal?.anuncio_id) {
-              try {
-                const anuncioId = arteOriginal.anuncio_id;
-                console.log('Buscando totem para anuncio_id:', anuncioId, 'tipo:', typeof anuncioId);
-                
-                // Converter para número se necessário
-                const anuncioIdNum = typeof anuncioId === 'string' ? Number(anuncioId) : anuncioId;
-                const idParaBusca = !isNaN(anuncioIdNum) ? anuncioIdNum : anuncioId;
-                
-                console.log('ID para busca:', idParaBusca);
-                
-                const { data: totemData, error: totemError } = await supabase
-                  .from('anuncios')
-                  .select('id, name, address, type_screen, screens, price, image')
-                  .eq('id', idParaBusca)
-                  .maybeSingle();
-
-                if (totemError) {
-                  console.error('Erro ao buscar totem da troca:', totemError, 'anuncio_id:', anuncioId);
-                } else if (totemData) {
-                  totemRelacionado = totemData;
-                  console.log('✅ Totem encontrado:', totemData);
-                } else {
-                  console.log('❌ Totem não encontrado para anuncio_id:', anuncioId);
-                }
-              } catch (error) {
-                console.error('Erro ao buscar totem da troca:', error);
-              }
-            } else {
-              console.log('⚠️ Arte original sem anuncio_id:', arteOriginal);
-            }
             
             return {
               ...troca,
