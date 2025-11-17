@@ -994,8 +994,14 @@ const AproveitionAdmin = () => {
             {/* Content */}
             <div className="p-3 sm:p-4 md:p-6 overflow-y-auto flex-1">
               {activeTab === 'atuais' ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-              {groupedOrders.find((group) => group.orderId === imagesModalOrderId)?.artes.map((arte) => {
+                <div className="space-y-4">
+              {(() => {
+                const artesDoPedido = groupedOrders.find((group) => group.orderId === imagesModalOrderId)?.artes || [];
+                if (artesDoPedido.length === 0) {
+                  return <div className="text-center py-8 text-gray-500">Nenhuma arte encontrada.</div>;
+                }
+
+                return artesDoPedido.map((arte) => {
                 const anuncioKey = arte.anuncio_id ? String(arte.anuncio_id) : null;
                 const anuncioName = anuncioKey ? anunciosMap[anuncioKey] || `Anúncio ${anuncioKey}` : 'Anúncio não informado';
                 const isArteVideo = arte.caminho_imagem ? isVideo(arte.caminho_imagem) : false;
@@ -1005,19 +1011,19 @@ const AproveitionAdmin = () => {
                                          Array.from(artesComTrocaPendente).some(id => String(id) === String(arte.id));
 
                 return (
-                  <div key={arte.id} className="border border-gray-200 rounded-lg p-2 sm:p-3 flex flex-col gap-2 sm:gap-3 bg-gray-50">
-                    <div className="w-full h-32 sm:h-40 bg-white border border-gray-200 rounded-lg flex items-center justify-center overflow-hidden">
+                  <div key={arte.id} className="border border-gray-200 rounded-lg p-3 sm:p-4 flex flex-col gap-3 sm:gap-4 bg-white">
+                    <div className="w-full h-48 sm:h-64 md:h-80 bg-gray-100 border border-gray-200 rounded-lg flex items-center justify-center overflow-hidden">
                       {arte.caminho_imagem ? (
                         arte.caminho_imagem.startsWith("data:image") || arte.caminho_imagem.match(/\.(jpg|jpeg|png|gif|bmp|webp)$/i) ? (
                           <img
                             src={arte.caminho_imagem}
                             alt={`Arte ${arte.id}`}
-                            className="object-cover w-full h-full"
+                            className="object-contain w-full h-full"
                           />
                         ) : isArteVideo ? (
                           <video
                             src={arte.caminho_imagem}
-                            className="object-cover w-full h-full"
+                            className="object-contain w-full h-full"
                             controls={false}
                             preload="metadata"
                           />
@@ -1027,7 +1033,7 @@ const AproveitionAdmin = () => {
                             alt={`Arte ${arte.id}`}
                             width={320}
                             height={180}
-                            className="object-cover w-full h-full"
+                            className="object-contain w-full h-full"
                           />
                         )
                       ) : (
@@ -1140,16 +1146,17 @@ const AproveitionAdmin = () => {
                     </div>
                   </div>
                 );
-              })}
+                });
+              })()}
                 </div>
               ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                <div className="space-y-4">
                   {loadingTrocas ? (
-                    <div className="col-span-2 text-center py-8 text-gray-500 text-sm sm:text-base">
+                    <div className="text-center py-8 text-gray-500 text-sm sm:text-base">
                       Carregando pedidos de troca...
                     </div>
                   ) : arteTrocas.length === 0 ? (
-                    <div className="col-span-2 text-center py-8 text-gray-500 text-sm sm:text-base">
+                    <div className="text-center py-8 text-gray-500 text-sm sm:text-base">
                       Nenhum pedido de troca encontrado.
                     </div>
                   ) : (
@@ -1158,19 +1165,19 @@ const AproveitionAdmin = () => {
                       const totem = totensTrocasMap[troca.id] || (troca.anuncio_id && totensMap[String(troca.anuncio_id)]);
 
                       return (
-                        <div key={troca.id} className="border border-gray-200 rounded-lg p-2 sm:p-3 flex flex-col gap-2 sm:gap-3 bg-gray-50">
-                          <div className="w-full h-32 sm:h-40 bg-white border border-gray-200 rounded-lg flex items-center justify-center overflow-hidden">
+                        <div key={troca.id} className="border border-gray-200 rounded-lg p-3 sm:p-4 flex flex-col gap-3 sm:gap-4 bg-white">
+                          <div className="w-full h-48 sm:h-64 md:h-80 bg-gray-100 border border-gray-200 rounded-lg flex items-center justify-center overflow-hidden">
                             {troca.caminho_imagem ? (
                               troca.caminho_imagem.startsWith("data:image") || troca.caminho_imagem.match(/\.(jpg|jpeg|png|gif|bmp|webp)$/i) ? (
                                 <img
                                   src={troca.caminho_imagem}
                                   alt={`Troca ${troca.id}`}
-                                  className="object-cover w-full h-full"
+                                  className="object-contain w-full h-full"
                                 />
                               ) : isTrocaVideo ? (
                                 <video
                                   src={troca.caminho_imagem}
-                                  className="object-cover w-full h-full"
+                                  className="object-contain w-full h-full"
                                   controls={false}
                                   preload="metadata"
                                 />
@@ -1180,7 +1187,7 @@ const AproveitionAdmin = () => {
                                   alt={`Troca ${troca.id}`}
                                   width={320}
                                   height={180}
-                                  className="object-cover w-full h-full"
+                                  className="object-contain w-full h-full"
                                 />
                               )
                             ) : (
