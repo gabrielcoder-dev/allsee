@@ -1000,147 +1000,153 @@ const AproveitionAdmin = () => {
                     return <div className="text-center py-8 text-gray-500">Nenhuma arte encontrada.</div>;
                   }
 
-                  // Pegar a primeira arte para mostrar a imagem
-                  const primeiraArte = artesDoPedido[0];
-                  const anuncioKey = primeiraArte.anuncio_id ? String(primeiraArte.anuncio_id) : null;
-                  const anuncioName = anuncioKey ? anunciosMap[anuncioKey] || `Anúncio ${anuncioKey}` : 'Anúncio não informado';
-                  const isArteVideo = primeiraArte.caminho_imagem ? isVideo(primeiraArte.caminho_imagem) : false;
-
                   return (
-                    <div className="border border-gray-200 rounded-lg p-2 sm:p-3 flex flex-col gap-2 sm:gap-3 bg-gray-50">
-                      <div className="w-full h-32 sm:h-40 bg-white border border-gray-200 rounded-lg flex items-center justify-center overflow-hidden">
-                        {primeiraArte.caminho_imagem ? (
-                          primeiraArte.caminho_imagem.startsWith("data:image") || primeiraArte.caminho_imagem.match(/\.(jpg|jpeg|png|gif|bmp|webp)$/i) ? (
-                            <img
-                              src={primeiraArte.caminho_imagem}
-                              alt={`Arte ${primeiraArte.id}`}
-                              className="object-cover w-full h-full"
-                            />
-                          ) : isArteVideo ? (
-                            <video
-                              src={primeiraArte.caminho_imagem}
-                              className="object-cover w-full h-full"
-                              controls={false}
-                              preload="metadata"
-                            />
-                          ) : (
-                            <Image
-                              src={primeiraArte.caminho_imagem}
-                              alt={`Arte ${primeiraArte.id}`}
-                              width={320}
-                              height={180}
-                              className="object-cover w-full h-full"
-                            />
-                          )
-                        ) : (
-                          <span className="text-gray-400 text-sm">Sem preview disponível</span>
-                        )}
-                      </div>
-                      <div className="flex flex-col gap-2">
-                        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-3">
-                          <div className="flex items-center gap-2 flex-shrink-0">
-                            {artesDoPedido.some(arte => {
-                              const temTrocaPendente = artesComTrocaPendente.has(arte.id) || 
-                                                       artesComTrocaPendente.has(Number(arte.id)) ||
-                                                       Array.from(artesComTrocaPendente).some(id => String(id) === String(arte.id));
-                              return temTrocaPendente;
-                            }) ? (
-                              <span className="text-xs sm:text-sm font-semibold text-orange-600 whitespace-nowrap">
-                                Troca pendente
-                              </span>
-                            ) : primeiraArte.statusLocal ? (
-                              <span
-                                className={`text-xs sm:text-sm font-semibold whitespace-nowrap ${
-                                  primeiraArte.statusLocal === 'aceita'
-                                    ? 'text-emerald-600'
-                                    : 'text-red-500'
-                                }`}
-                              >
-                                {primeiraArte.statusLocal === 'aceita'
-                                  ? 'Arte aceita'
-                                  : 'Arte recusada'}
-                              </span>
-                            ) : (
-                              <>
-                                <button
-                                  className="p-1.5 sm:p-2 rounded-md bg-emerald-500 hover:bg-emerald-600 text-white transition-colors cursor-pointer"
-                                  onClick={() => handleApproveArte(primeiraArte)}
-                                  aria-label="Aprovar arte"
-                                >
-                                  <Check className="w-3 h-3 sm:w-4 sm:h-4" />
-                                </button>
-                                <button
-                                  className="p-1.5 sm:p-2 rounded-md bg-red-500 hover:bg-red-600 text-white transition-colors cursor-pointer"
-                                  onClick={() => handleRejectArte(primeiraArte)}
-                                  aria-label="Reprovar arte"
-                                >
-                                  <X className="w-3 h-3 sm:w-4 sm:h-4" />
-                                </button>
-                              </>
-                            )}
-                          </div>
-                        </div>
-                        <div className="flex gap-2">
-                          <button
-                            className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs sm:text-sm font-medium px-2 sm:px-3 py-1.5 sm:py-2 rounded-md sm:rounded-lg transition-colors cursor-pointer disabled:cursor-not-allowed"
-                            onClick={() => primeiraArte.caminho_imagem && setModalFile({
-                              url: primeiraArte.caminho_imagem,
-                              id: primeiraArte.id,
-                              orderId: primeiraArte.id_order_value,
-                              anuncioName,
-                            })}
-                            disabled={!primeiraArte.caminho_imagem}
-                          >
-                            Assistir
-                          </button>
-                          <button
-                            className="flex-1 bg-orange-500 hover:bg-orange-600 text-white text-xs sm:text-sm font-medium px-2 sm:px-3 py-1.5 sm:py-2 rounded-md sm:rounded-lg transition-colors cursor-pointer disabled:cursor-not-allowed"
-                            onClick={() => primeiraArte.caminho_imagem && handleDownload(primeiraArte.caminho_imagem, `pedido-${primeiraArte.id_order_value}_anuncio-${anuncioKey ?? primeiraArte.id}`)}
-                            disabled={!primeiraArte.caminho_imagem}
-                          >
-                            Baixar
-                          </button>
-                        </div>
-                        {/* Todos os totens relacionados */}
-                        {totensDoPedido.length > 0 && (
-                          <div className="bg-white border border-gray-200 rounded-md p-2 sm:p-3 mt-1">
-                            <p className="text-[10px] sm:text-xs font-semibold text-gray-700 mb-1.5">Totens relacionados:</p>
-                            <div className="space-y-2">
-                              {totensDoPedido.map((totem) => (
-                                <div key={totem.id} className="flex items-start gap-2">
-                                  {totem.image && (
+                    <div className="space-y-4">
+                      {/* Grid de imagens */}
+                      <div className={`grid gap-3 sm:gap-4 ${artesDoPedido.length === 1 ? 'grid-cols-1' : 'grid-cols-2'}`}>
+                        {artesDoPedido.map((arte) => {
+                          const anuncioKey = arte.anuncio_id ? String(arte.anuncio_id) : null;
+                          const anuncioName = anuncioKey ? anunciosMap[anuncioKey] || `Anúncio ${anuncioKey}` : 'Anúncio não informado';
+                          const isArteVideo = arte.caminho_imagem ? isVideo(arte.caminho_imagem) : false;
+                          const temTrocaPendente = artesComTrocaPendente.has(arte.id) || 
+                                                   artesComTrocaPendente.has(Number(arte.id)) ||
+                                                   Array.from(artesComTrocaPendente).some(id => String(id) === String(arte.id));
+
+                          return (
+                            <div key={arte.id} className="border border-gray-200 rounded-lg p-2 sm:p-3 flex flex-col gap-2 sm:gap-3 bg-gray-50">
+                              <div className="w-full h-32 sm:h-40 bg-white border border-gray-200 rounded-lg flex items-center justify-center overflow-hidden">
+                                {arte.caminho_imagem ? (
+                                  arte.caminho_imagem.startsWith("data:image") || arte.caminho_imagem.match(/\.(jpg|jpeg|png|gif|bmp|webp)$/i) ? (
                                     <img
-                                      src={totem.image}
-                                      alt={totem.name}
-                                      className="w-10 h-10 sm:w-12 sm:h-12 rounded-md object-cover flex-shrink-0"
+                                      src={arte.caminho_imagem}
+                                      alt={`Arte ${arte.id}`}
+                                      className="object-cover w-full h-full"
                                     />
-                                  )}
-                                  <div className="flex-1 min-w-0">
-                                    <p className="text-xs sm:text-sm font-semibold text-gray-800 truncate">{totem.name}</p>
-                                    <p className="text-[10px] sm:text-xs text-gray-600 truncate">{totem.address}</p>
-                                    <div className="flex items-center gap-2 mt-1">
-                                      {totem.type_screen && (
-                                        <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${
-                                          totem.type_screen.toLowerCase() === 'impresso'
-                                            ? 'bg-green-100 text-green-700'
-                                            : 'bg-purple-100 text-purple-700'
-                                        }`}>
-                                          {totem.type_screen.toLowerCase() === 'impresso' ? 'Impresso' : 'Digital'}
-                                        </span>
-                                      )}
-                                      {totem.screens && (
-                                        <span className="text-[10px] text-gray-500">
-                                          {totem.screens} tela(s)
-                                        </span>
-                                      )}
-                                    </div>
+                                  ) : isArteVideo ? (
+                                    <video
+                                      src={arte.caminho_imagem}
+                                      className="object-cover w-full h-full"
+                                      controls={false}
+                                      preload="metadata"
+                                    />
+                                  ) : (
+                                    <Image
+                                      src={arte.caminho_imagem}
+                                      alt={`Arte ${arte.id}`}
+                                      width={320}
+                                      height={180}
+                                      className="object-cover w-full h-full"
+                                    />
+                                  )
+                                ) : (
+                                  <span className="text-gray-400 text-sm">Sem preview disponível</span>
+                                )}
+                              </div>
+                              <div className="flex flex-col gap-2">
+                                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-3">
+                                  <div className="flex items-center gap-2 flex-shrink-0">
+                                    {temTrocaPendente ? (
+                                      <span className="text-xs sm:text-sm font-semibold text-orange-600 whitespace-nowrap">
+                                        Troca pendente
+                                      </span>
+                                    ) : arte.statusLocal ? (
+                                      <span
+                                        className={`text-xs sm:text-sm font-semibold whitespace-nowrap ${
+                                          arte.statusLocal === 'aceita'
+                                            ? 'text-emerald-600'
+                                            : 'text-red-500'
+                                        }`}
+                                      >
+                                        {arte.statusLocal === 'aceita'
+                                          ? 'Arte aceita'
+                                          : 'Arte recusada'}
+                                      </span>
+                                    ) : (
+                                      <>
+                                        <button
+                                          className="p-1.5 sm:p-2 rounded-md bg-emerald-500 hover:bg-emerald-600 text-white transition-colors cursor-pointer"
+                                          onClick={() => handleApproveArte(arte)}
+                                          aria-label="Aprovar arte"
+                                        >
+                                          <Check className="w-3 h-3 sm:w-4 sm:h-4" />
+                                        </button>
+                                        <button
+                                          className="p-1.5 sm:p-2 rounded-md bg-red-500 hover:bg-red-600 text-white transition-colors cursor-pointer"
+                                          onClick={() => handleRejectArte(arte)}
+                                          aria-label="Reprovar arte"
+                                        >
+                                          <X className="w-3 h-3 sm:w-4 sm:h-4" />
+                                        </button>
+                                      </>
+                                    )}
                                   </div>
                                 </div>
-                              ))}
+                                <div className="flex gap-2">
+                                  <button
+                                    className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs sm:text-sm font-medium px-2 sm:px-3 py-1.5 sm:py-2 rounded-md sm:rounded-lg transition-colors cursor-pointer disabled:cursor-not-allowed"
+                                    onClick={() => arte.caminho_imagem && setModalFile({
+                                      url: arte.caminho_imagem,
+                                      id: arte.id,
+                                      orderId: arte.id_order_value,
+                                      anuncioName,
+                                    })}
+                                    disabled={!arte.caminho_imagem}
+                                  >
+                                    Assistir
+                                  </button>
+                                  <button
+                                    className="flex-1 bg-orange-500 hover:bg-orange-600 text-white text-xs sm:text-sm font-medium px-2 sm:px-3 py-1.5 sm:py-2 rounded-md sm:rounded-lg transition-colors cursor-pointer disabled:cursor-not-allowed"
+                                    onClick={() => arte.caminho_imagem && handleDownload(arte.caminho_imagem, `pedido-${arte.id_order_value}_anuncio-${anuncioKey ?? arte.id}`)}
+                                    disabled={!arte.caminho_imagem}
+                                  >
+                                    Baixar
+                                  </button>
+                                </div>
+                              </div>
                             </div>
-                          </div>
-                        )}
+                          );
+                        })}
                       </div>
+                      
+                      {/* Todos os totens relacionados - aparece apenas uma vez abaixo do grid */}
+                      {totensDoPedido.length > 0 && (
+                        <div className="bg-white border border-gray-200 rounded-md p-2 sm:p-3">
+                          <p className="text-[10px] sm:text-xs font-semibold text-gray-700 mb-1.5">Totens relacionados:</p>
+                          <div className="space-y-2">
+                            {totensDoPedido.map((totem) => (
+                              <div key={totem.id} className="flex items-start gap-2">
+                                {totem.image && (
+                                  <img
+                                    src={totem.image}
+                                    alt={totem.name}
+                                    className="w-10 h-10 sm:w-12 sm:h-12 rounded-md object-cover flex-shrink-0"
+                                  />
+                                )}
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-xs sm:text-sm font-semibold text-gray-800 truncate">{totem.name}</p>
+                                  <p className="text-[10px] sm:text-xs text-gray-600 truncate">{totem.address}</p>
+                                  <div className="flex items-center gap-2 mt-1">
+                                    {totem.type_screen && (
+                                      <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${
+                                        totem.type_screen.toLowerCase() === 'impresso'
+                                          ? 'bg-green-100 text-green-700'
+                                          : 'bg-purple-100 text-purple-700'
+                                      }`}>
+                                        {totem.type_screen.toLowerCase() === 'impresso' ? 'Impresso' : 'Digital'}
+                                      </span>
+                                    )}
+                                    {totem.screens && (
+                                      <span className="text-[10px] text-gray-500">
+                                        {totem.screens} tela(s)
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   );
                 })()
@@ -1153,121 +1159,128 @@ const AproveitionAdmin = () => {
                     return <div className="text-center py-8 text-gray-500 text-sm sm:text-base">Nenhum pedido de troca encontrado.</div>;
                   }
 
-                  // Pegar a primeira troca para mostrar a imagem
-                  const primeiraTroca = arteTrocas[0];
-                  const isTrocaVideo = primeiraTroca.caminho_imagem ? isVideo(primeiraTroca.caminho_imagem) : false;
-                  const totem = totensTrocasMap[primeiraTroca.id] || (primeiraTroca.anuncio_id && totensMap[String(primeiraTroca.anuncio_id)]);
-
                   return (
-                    <div className="border border-gray-200 rounded-lg p-2 sm:p-3 flex flex-col gap-2 sm:gap-3 bg-gray-50">
-                      <div className="w-full h-32 sm:h-40 bg-white border border-gray-200 rounded-lg flex items-center justify-center overflow-hidden">
-                        {primeiraTroca.caminho_imagem ? (
-                          primeiraTroca.caminho_imagem.startsWith("data:image") || primeiraTroca.caminho_imagem.match(/\.(jpg|jpeg|png|gif|bmp|webp)$/i) ? (
-                            <img
-                              src={primeiraTroca.caminho_imagem}
-                              alt={`Troca ${primeiraTroca.id}`}
-                              className="object-cover w-full h-full"
-                            />
-                          ) : isTrocaVideo ? (
-                            <video
-                              src={primeiraTroca.caminho_imagem}
-                              className="object-cover w-full h-full"
-                              controls={false}
-                              preload="metadata"
-                            />
-                          ) : (
-                            <Image
-                              src={primeiraTroca.caminho_imagem}
-                              alt={`Troca ${primeiraTroca.id}`}
-                              width={320}
-                              height={180}
-                              className="object-cover w-full h-full"
-                            />
-                          )
-                        ) : (
-                          <span className="text-gray-400 text-sm">Sem preview disponível</span>
-                        )}
-                      </div>
-                      <div className="flex flex-col gap-2">
-                        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-3">
-                          <div className="flex items-center gap-2 flex-shrink-0">
-                            <button
-                              className="p-1.5 sm:p-2 rounded-md bg-emerald-500 hover:bg-emerald-600 text-white transition-colors cursor-pointer"
-                              onClick={() => handleApproveTroca(primeiraTroca)}
-                              aria-label="Aprovar troca"
-                            >
-                              <Check className="w-3 h-3 sm:w-4 sm:h-4" />
-                            </button>
-                            <button
-                              className="p-1.5 sm:p-2 rounded-md bg-red-500 hover:bg-red-600 text-white transition-colors cursor-pointer"
-                              onClick={() => handleRejectTroca(primeiraTroca)}
-                              aria-label="Rejeitar troca"
-                            >
-                              <X className="w-3 h-3 sm:w-4 sm:h-4" />
-                            </button>
-                          </div>
-                        </div>
-                        <div className="flex gap-2">
-                          <button
-                            className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs sm:text-sm font-medium px-2 sm:px-3 py-1.5 sm:py-2 rounded-md sm:rounded-lg transition-colors cursor-pointer disabled:cursor-not-allowed"
-                            onClick={() => primeiraTroca.caminho_imagem && setModalFile({
-                              url: primeiraTroca.caminho_imagem,
-                              id: primeiraTroca.id,
-                              orderId: imagesModalOrderId,
-                              anuncioName: primeiraTroca.anuncioName,
-                            })}
-                            disabled={!primeiraTroca.caminho_imagem}
-                          >
-                            Assistir
-                          </button>
-                          <button
-                            className="flex-1 bg-orange-500 hover:bg-orange-600 text-white text-xs sm:text-sm font-medium px-2 sm:px-3 py-1.5 sm:py-2 rounded-md sm:rounded-lg transition-colors cursor-pointer disabled:cursor-not-allowed"
-                            onClick={() => primeiraTroca.caminho_imagem && handleDownload(primeiraTroca.caminho_imagem, `troca-${primeiraTroca.id}_anuncio-${primeiraTroca.anuncio_id ?? primeiraTroca.id}`)}
-                            disabled={!primeiraTroca.caminho_imagem}
-                          >
-                            Baixar
-                          </button>
-                        </div>
-                        {/* Totens relacionados */}
-                        {totem && (
-                          <div className="bg-white border border-gray-200 rounded-md p-2 sm:p-3 mt-1">
-                            <p className="text-[10px] sm:text-xs font-semibold text-gray-700 mb-1.5">Totem relacionado:</p>
-                            <div className="flex items-start gap-2">
-                              {totem.image && (
-                                <img
-                                  src={totem.image}
-                                  alt={totem.name}
-                                  className="w-12 h-12 sm:w-16 sm:h-16 rounded-md object-cover flex-shrink-0"
-                                />
-                              )}
-                              <div className="flex-1 min-w-0">
-                                <p className="text-xs sm:text-sm font-semibold text-gray-800 truncate">{totem.name}</p>
-                                <p className="text-[10px] sm:text-xs text-gray-600 truncate">{totem.address}</p>
-                                <div className="flex items-center gap-2 mt-1">
-                                  {totem.type_screen && (
-                                    <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${
-                                      totem.type_screen.toLowerCase() === 'impresso'
-                                        ? 'bg-green-100 text-green-700'
-                                        : 'bg-purple-100 text-purple-700'
-                                    }`}>
-                                      {totem.type_screen.toLowerCase() === 'impresso' ? 'Impresso' : 'Digital'}
-                                    </span>
-                                  )}
-                                  {primeiraTroca.screen_type && (
-                                    <span className="text-[10px] text-gray-500">
-                                      {primeiraTroca.screen_type === 'down' ? 'Deitado' : 'Em pé'}
-                                    </span>
-                                  )}
-                                  {totem.screens && (
-                                    <span className="text-[10px] text-gray-500">
-                                      {totem.screens} tela(s)
-                                    </span>
-                                  )}
+                    <div className="space-y-4">
+                      {/* Grid de trocas */}
+                      <div className={`grid gap-3 sm:gap-4 ${arteTrocas.length === 1 ? 'grid-cols-1' : 'grid-cols-2'}`}>
+                        {arteTrocas.map((troca) => {
+                          const isTrocaVideo = troca.caminho_imagem ? isVideo(troca.caminho_imagem) : false;
+                          const totem = totensTrocasMap[troca.id] || (troca.anuncio_id && totensMap[String(troca.anuncio_id)]);
+
+                          return (
+                            <div key={troca.id} className="border border-gray-200 rounded-lg p-2 sm:p-3 flex flex-col gap-2 sm:gap-3 bg-gray-50">
+                              <div className="w-full h-32 sm:h-40 bg-white border border-gray-200 rounded-lg flex items-center justify-center overflow-hidden">
+                                {troca.caminho_imagem ? (
+                                  troca.caminho_imagem.startsWith("data:image") || troca.caminho_imagem.match(/\.(jpg|jpeg|png|gif|bmp|webp)$/i) ? (
+                                    <img
+                                      src={troca.caminho_imagem}
+                                      alt={`Troca ${troca.id}`}
+                                      className="object-cover w-full h-full"
+                                    />
+                                  ) : isTrocaVideo ? (
+                                    <video
+                                      src={troca.caminho_imagem}
+                                      className="object-cover w-full h-full"
+                                      controls={false}
+                                      preload="metadata"
+                                    />
+                                  ) : (
+                                    <Image
+                                      src={troca.caminho_imagem}
+                                      alt={`Troca ${troca.id}`}
+                                      width={320}
+                                      height={180}
+                                      className="object-cover w-full h-full"
+                                    />
+                                  )
+                                ) : (
+                                  <span className="text-gray-400 text-sm">Sem preview disponível</span>
+                                )}
+                              </div>
+                              <div className="flex flex-col gap-2">
+                                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-3">
+                                  <div className="flex items-center gap-2 flex-shrink-0">
+                                    <button
+                                      className="p-1.5 sm:p-2 rounded-md bg-emerald-500 hover:bg-emerald-600 text-white transition-colors cursor-pointer"
+                                      onClick={() => handleApproveTroca(troca)}
+                                      aria-label="Aprovar troca"
+                                    >
+                                      <Check className="w-3 h-3 sm:w-4 sm:h-4" />
+                                    </button>
+                                    <button
+                                      className="p-1.5 sm:p-2 rounded-md bg-red-500 hover:bg-red-600 text-white transition-colors cursor-pointer"
+                                      onClick={() => handleRejectTroca(troca)}
+                                      aria-label="Rejeitar troca"
+                                    >
+                                      <X className="w-3 h-3 sm:w-4 sm:h-4" />
+                                    </button>
+                                  </div>
                                 </div>
+                                <div className="flex gap-2">
+                                  <button
+                                    className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs sm:text-sm font-medium px-2 sm:px-3 py-1.5 sm:py-2 rounded-md sm:rounded-lg transition-colors cursor-pointer disabled:cursor-not-allowed"
+                                    onClick={() => troca.caminho_imagem && setModalFile({
+                                      url: troca.caminho_imagem,
+                                      id: troca.id,
+                                      orderId: imagesModalOrderId,
+                                      anuncioName: troca.anuncioName,
+                                    })}
+                                    disabled={!troca.caminho_imagem}
+                                  >
+                                    Assistir
+                                  </button>
+                                  <button
+                                    className="flex-1 bg-orange-500 hover:bg-orange-600 text-white text-xs sm:text-sm font-medium px-2 sm:px-3 py-1.5 sm:py-2 rounded-md sm:rounded-lg transition-colors cursor-pointer disabled:cursor-not-allowed"
+                                    onClick={() => troca.caminho_imagem && handleDownload(troca.caminho_imagem, `troca-${troca.id}_anuncio-${troca.anuncio_id ?? troca.id}`)}
+                                    disabled={!troca.caminho_imagem}
+                                  >
+                                    Baixar
+                                  </button>
+                                </div>
+                                {/* Totem relacionado */}
+                                {totem && (
+                                  <div className="bg-white border border-gray-200 rounded-md p-2 sm:p-3 mt-1">
+                                    <p className="text-[10px] sm:text-xs font-semibold text-gray-700 mb-1.5">Totem relacionado:</p>
+                                    <div className="flex items-start gap-2">
+                                      {totem.image && (
+                                        <img
+                                          src={totem.image}
+                                          alt={totem.name}
+                                          className="w-12 h-12 sm:w-16 sm:h-16 rounded-md object-cover flex-shrink-0"
+                                        />
+                                      )}
+                                      <div className="flex-1 min-w-0">
+                                        <p className="text-xs sm:text-sm font-semibold text-gray-800 truncate">{totem.name}</p>
+                                        <p className="text-[10px] sm:text-xs text-gray-600 truncate">{totem.address}</p>
+                                        <div className="flex items-center gap-2 mt-1">
+                                          {totem.type_screen && (
+                                            <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${
+                                              totem.type_screen.toLowerCase() === 'impresso'
+                                                ? 'bg-green-100 text-green-700'
+                                                : 'bg-purple-100 text-purple-700'
+                                            }`}>
+                                              {totem.type_screen.toLowerCase() === 'impresso' ? 'Impresso' : 'Digital'}
+                                            </span>
+                                          )}
+                                          {troca.screen_type && (
+                                            <span className="text-[10px] text-gray-500">
+                                              {troca.screen_type === 'down' ? 'Deitado' : 'Em pé'}
+                                            </span>
+                                          )}
+                                          {totem.screens && (
+                                            <span className="text-[10px] text-gray-500">
+                                              {totem.screens} tela(s)
+                                            </span>
+                                          )}
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </div>
+                                )}
                               </div>
                             </div>
-                          </div>
-                        )}
+                          );
+                        })}
                       </div>
                     </div>
                   );
