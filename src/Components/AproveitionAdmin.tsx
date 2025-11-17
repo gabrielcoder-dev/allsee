@@ -338,11 +338,12 @@ const AproveitionAdmin = () => {
         const enrichedTrocas = await Promise.all(
           (trocasData || []).map(async (troca) => {
             console.log('Processando troca:', troca.id, 'id_campanha:', troca.id_campanha);
-            const arteOriginal = artesDoPedido.find(a => a.id === troca.id_campanha);
+            // Buscar a arte original em todas as artes, não apenas nas do pedido
+            const arteOriginal = arteCampanhas.find(a => a.id === troca.id_campanha);
             console.log('Arte original encontrada:', arteOriginal);
             
             if (!arteOriginal) {
-              console.error('Arte original não encontrada para id_campanha:', troca.id_campanha);
+              console.error('Arte original não encontrada para id_campanha:', troca.id_campanha, 'arteCampanhas length:', arteCampanhas.length);
             }
             
             const anuncioKey = arteOriginal?.anuncio_id ? String(arteOriginal.anuncio_id) : null;
