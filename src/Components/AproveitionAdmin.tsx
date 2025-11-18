@@ -1218,16 +1218,16 @@ const AproveitionAdmin = () => {
                                     Baixar
                                   </button>
                                 </div>
-                                {/* Totem relacionado */}
+                                {/* Totens relacionados a esta troca específica */}
                                 {totem && (
                                   <div className="bg-white border border-gray-200 rounded-md p-2 sm:p-3 mt-1">
-                                    <p className="text-[10px] sm:text-xs font-semibold text-gray-700 mb-1.5">Totem relacionado:</p>
+                                    <p className="text-[10px] sm:text-xs font-semibold text-gray-700 mb-1.5">Totens relacionados:</p>
                                     <div className="flex items-start gap-2">
                                       {totem.image && (
                                         <img
                                           src={totem.image}
                                           alt={totem.name}
-                                          className="w-12 h-12 sm:w-16 sm:h-16 rounded-md object-cover flex-shrink-0"
+                                          className="w-10 h-10 sm:w-12 sm:h-12 rounded-md object-cover flex-shrink-0"
                                         />
                                       )}
                                       <div className="flex-1 min-w-0">
