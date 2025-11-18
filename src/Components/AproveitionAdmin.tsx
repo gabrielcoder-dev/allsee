@@ -56,7 +56,7 @@ const AproveitionAdmin = () => {
   const [totensMap, setTotensMap] = useState<Record<string, any>>({});
   const [artesComTrocaPendente, setArtesComTrocaPendente] = useState<Set<number>>(new Set());
   const [totensTrocasMap, setTotensTrocasMap] = useState<Record<number, any>>({});
-  const [totensDoPedido, setTotensDoPedido] = useState<any[]>([]);
+  const [totensPorArteMap, setTotensPorArteMap] = useState<Record<number, any>>({});
   
   const getOrderStatus = (orderId: OrderIdentifier) => {
     if (typeof window === 'undefined') return 'pendente';
@@ -286,75 +286,55 @@ const AproveitionAdmin = () => {
     if (!imagesModalOrderId) return;
     
     try {
-      // Buscar a order para pegar todos os id_produto (totens)
-      const { data: orderData, error: orderError } = await supabase
-        .from('order')
-        .select('id_produto')
-        .eq('id', imagesModalOrderId)
-        .single();
-
-      if (orderError || !orderData) {
-        console.error('Erro ao buscar order:', orderError);
-        setTotensMap({});
-        setTotensDoPedido([]);
-        return;
-      }
-
-      // Buscar todos os totens do pedido através do id_produto
-      if (orderData.id_produto) {
-        const productIds = orderData.id_produto.split(',').map((id: string) => id.trim()).filter(Boolean);
-        const productIdsNum = productIds.map((id: string) => {
-          const parsed = Number(id);
-          return Number.isNaN(parsed) ? id : parsed;
-        });
-
-        const { data: totensData, error } = await supabase
-          .from('anuncios')
-          .select('id, name, address, type_screen, screens, price, image')
-          .in('id', productIdsNum);
-
-        if (error) {
-          console.error('Erro ao buscar totens:', error);
-          setTotensMap({});
-          setTotensDoPedido([]);
-        } else {
-          const map: Record<string, any> = {};
-          (totensData || []).forEach((totem: any) => {
-            map[String(totem.id)] = totem;
-          });
-          setTotensMap(map);
-          setTotensDoPedido(totensData || []);
-        }
-      } else {
-        setTotensMap({});
-        setTotensDoPedido([]);
-      }
-
-      // Também buscar totens individuais por anuncio_id para compatibilidade
+      // Buscar totens individuais por anuncio_id de cada arte
       const artesDoPedido = arteCampanhas.filter(arte => String(arte.id_order) === String(imagesModalOrderId));
+      
+      // Buscar todos os anuncio_ids únicos
       const anuncioIds = artesDoPedido
         .map(arte => arte.anuncio_id)
         .filter((id): id is string | number => id !== null && id !== undefined)
         .map(id => String(id));
       
-      if (anuncioIds.length > 0) {
-        const { data: totensIndividuais, error: errorIndividuais } = await supabase
-          .from('anuncios')
-          .select('id, name, address, type_screen, screens, price, image')
-          .in('id', anuncioIds);
-
-        if (!errorIndividuais && totensIndividuais) {
-          const map: Record<string, any> = {};
-          totensIndividuais.forEach((totem: any) => {
-            map[String(totem.id)] = totem;
-          });
-          setTotensMap(prev => ({ ...prev, ...map }));
-        }
+      if (anuncioIds.length === 0) {
+        setTotensMap({});
+        setTotensPorArteMap({});
+        return;
       }
+
+      // Buscar totens para todos os anuncio_ids
+      const { data: totensData, error } = await supabase
+        .from('anuncios')
+        .select('id, name, address, type_screen, screens, price, image')
+        .in('id', anuncioIds);
+
+      if (error) {
+        console.error('Erro ao buscar totens:', error);
+        setTotensMap({});
+        setTotensPorArteMap({});
+        return;
+      }
+
+      // Criar mapas: um geral e um mapeando arte.id -> totem
+      const mapGeral: Record<string, any> = {};
+      const mapPorArte: Record<number, any> = {};
+      
+      (totensData || []).forEach((totem: any) => {
+        mapGeral[String(totem.id)] = totem;
+        
+        // Mapear cada arte para seu totem relacionado
+        artesDoPedido.forEach((arte) => {
+          if (arte.anuncio_id && String(arte.anuncio_id) === String(totem.id)) {
+            mapPorArte[arte.id] = totem;
+          }
+        });
+      });
+      
+      setTotensMap(mapGeral);
+      setTotensPorArteMap(mapPorArte);
     } catch (error) {
       console.error('Erro ao buscar totens:', error);
       setTotensMap({});
-      setTotensDoPedido([]);
+      setTotensPorArteMap({});
     }
   };
 
@@ -1011,6 +991,7 @@ const AproveitionAdmin = () => {
                           const temTrocaPendente = artesComTrocaPendente.has(arte.id) || 
                                                    artesComTrocaPendente.has(Number(arte.id)) ||
                                                    Array.from(artesComTrocaPendente).some(id => String(id) === String(arte.id));
+                          const totemRelacionado = totensPorArteMap[arte.id];
 
                           return (
                             <div key={arte.id} className="border border-gray-200 rounded-lg p-2 sm:p-3 flex flex-col gap-2 sm:gap-3 bg-gray-50">
@@ -1102,51 +1083,51 @@ const AproveitionAdmin = () => {
                                     Baixar
                                   </button>
                                 </div>
+                                {/* Totens relacionados a esta arte específica */}
+                                {totemRelacionado && (
+                                  <div className="bg-white border border-gray-200 rounded-md p-2 sm:p-3 mt-1">
+                                    <p className="text-[10px] sm:text-xs font-semibold text-gray-700 mb-1.5">Totens relacionados:</p>
+                                    <div className="flex items-start gap-2">
+                                      {totemRelacionado.image && (
+                                        <img
+                                          src={totemRelacionado.image}
+                                          alt={totemRelacionado.name}
+                                          className="w-10 h-10 sm:w-12 sm:h-12 rounded-md object-cover flex-shrink-0"
+                                        />
+                                      )}
+                                      <div className="flex-1 min-w-0">
+                                        <p className="text-xs sm:text-sm font-semibold text-gray-800 truncate">{totemRelacionado.name}</p>
+                                        <p className="text-[10px] sm:text-xs text-gray-600 truncate">{totemRelacionado.address}</p>
+                                        <div className="flex items-center gap-2 mt-1">
+                                          {totemRelacionado.type_screen && (
+                                            <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${
+                                              totemRelacionado.type_screen.toLowerCase() === 'impresso'
+                                                ? 'bg-green-100 text-green-700'
+                                                : 'bg-purple-100 text-purple-700'
+                                            }`}>
+                                              {totemRelacionado.type_screen.toLowerCase() === 'impresso' ? 'Impresso' : 'Digital'}
+                                            </span>
+                                          )}
+                                          {arte.screen_type && (
+                                            <span className="text-[10px] text-gray-500">
+                                              {arte.screen_type === 'down' ? 'Deitado' : 'Em pé'}
+                                            </span>
+                                          )}
+                                          {totemRelacionado.screens && (
+                                            <span className="text-[10px] text-gray-500">
+                                              {totemRelacionado.screens} tela(s)
+                                            </span>
+                                          )}
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </div>
+                                )}
                               </div>
                             </div>
                           );
                         })}
                       </div>
-                      
-                      {/* Todos os totens relacionados - aparece apenas uma vez abaixo do grid */}
-                      {totensDoPedido.length > 0 && (
-                        <div className="bg-white border border-gray-200 rounded-md p-2 sm:p-3">
-                          <p className="text-[10px] sm:text-xs font-semibold text-gray-700 mb-1.5">Totens relacionados:</p>
-                          <div className="space-y-2">
-                            {totensDoPedido.map((totem) => (
-                              <div key={totem.id} className="flex items-start gap-2">
-                                {totem.image && (
-                                  <img
-                                    src={totem.image}
-                                    alt={totem.name}
-                                    className="w-10 h-10 sm:w-12 sm:h-12 rounded-md object-cover flex-shrink-0"
-                                  />
-                                )}
-                                <div className="flex-1 min-w-0">
-                                  <p className="text-xs sm:text-sm font-semibold text-gray-800 truncate">{totem.name}</p>
-                                  <p className="text-[10px] sm:text-xs text-gray-600 truncate">{totem.address}</p>
-                                  <div className="flex items-center gap-2 mt-1">
-                                    {totem.type_screen && (
-                                      <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${
-                                        totem.type_screen.toLowerCase() === 'impresso'
-                                          ? 'bg-green-100 text-green-700'
-                                          : 'bg-purple-100 text-purple-700'
-                                      }`}>
-                                        {totem.type_screen.toLowerCase() === 'impresso' ? 'Impresso' : 'Digital'}
-                                      </span>
-                                    )}
-                                    {totem.screens && (
-                                      <span className="text-[10px] text-gray-500">
-                                        {totem.screens} tela(s)
-                                      </span>
-                                    )}
-                                  </div>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
                     </div>
                   );
                 })()
