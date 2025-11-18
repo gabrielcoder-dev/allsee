@@ -514,7 +514,7 @@ const AproveitionAdmin = () => {
         return newSet;
       });
       
-      // 4. Buscar arte para verificar o order
+      // 4. Buscar arte para verificar o order (ANTES de marcar no localStorage)
       const arte = arteCampanhas.find(a => a.id === troca.id_campanha);
       
       // 5. Recarregar todas as trocas para atualizar o estado corretamente
@@ -549,9 +549,16 @@ const AproveitionAdmin = () => {
         }
       }
       
-      // 6. Marcar arte como aceita no localStorage
+      // 6. Marcar arte como aceita no localStorage E marcar o order como aprovado
       if (typeof window !== 'undefined') {
         localStorage.setItem(`replacement_order_${troca.id_campanha}`, 'aceita');
+        
+        // Marcar o order como aprovado para que a notificação desapareça
+        if (arte && arte.id_order) {
+          const orderKey = String(arte.id_order_value ?? arte.id_order);
+          localStorage.setItem(`order_${orderKey}`, 'aprovado');
+          console.log('✅ Order marcado como aprovado no localStorage:', orderKey);
+        }
       }
 
       // 7. Recarregar artes atuais do banco primeiro
@@ -683,11 +690,22 @@ const AproveitionAdmin = () => {
         await fetchArteTrocas();
       }
 
-      // 12. Disparar evento customizado para atualizar outros componentes
+      // 12. Disparar eventos customizados para atualizar outros componentes
       if (typeof window !== 'undefined') {
         window.dispatchEvent(new CustomEvent('replacementStatusChanged', {
           detail: { id_campanha: troca.id_campanha, status: 'aceita' }
         }));
+        
+        // Disparar evento de aprovação para atualizar notificações
+        if (arte && arte.id_order) {
+          window.dispatchEvent(new CustomEvent('approvalStatusChanged', {
+            detail: {
+              orderId: arte.id_order,
+              status: 'aprovado',
+              id_campanha: troca.id_campanha
+            }
+          }));
+        }
       }
 
       console.log('✅ Troca aprovada com sucesso');
