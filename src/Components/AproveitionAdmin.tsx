@@ -998,154 +998,186 @@ const AproveitionAdmin = () => {
                     return <div className="text-center py-8 text-gray-500">Nenhuma arte encontrada.</div>;
                   }
 
-                  return (
-                    <div className="space-y-4">
-                      {/* Grid de imagens */}
-                      <div className={`grid gap-3 sm:gap-4 ${artesDoPedido.length === 1 ? 'grid-cols-1' : 'grid-cols-2'}`}>
-                        {artesDoPedido.map((arte) => {
-                          const anuncioKey = arte.anuncio_id ? String(arte.anuncio_id) : null;
-                          const anuncioName = anuncioKey ? anunciosMap[anuncioKey] || `Anúncio ${anuncioKey}` : 'Anúncio não informado';
-                          const isArteVideo = arte.caminho_imagem ? isVideo(arte.caminho_imagem) : false;
-                          const temTrocaPendente = artesComTrocaPendente.has(arte.id) || 
-                                                   artesComTrocaPendente.has(Number(arte.id)) ||
-                                                   Array.from(artesComTrocaPendente).some(id => String(id) === String(arte.id));
-                          const totemRelacionado = totensPorArteMap[arte.id];
+                  // Agrupar artes por tipo de tela (screen_type)
+                  const artesEmPe = artesDoPedido.filter(arte => !arte.screen_type || arte.screen_type === 'standing' || arte.screen_type === 'up');
+                  const artesDeitadas = artesDoPedido.filter(arte => arte.screen_type === 'down');
 
-                          return (
-                            <div key={arte.id} className="border border-gray-200 rounded-lg p-2 sm:p-3 flex flex-col gap-2 sm:gap-3 bg-gray-50">
-                              <div className="w-full h-32 sm:h-40 bg-white border border-gray-200 rounded-lg flex items-center justify-center overflow-hidden">
-                                {arte.caminho_imagem ? (
-                                  arte.caminho_imagem.startsWith("data:image") || arte.caminho_imagem.match(/\.(jpg|jpeg|png|gif|bmp|webp)$/i) ? (
-                                    <img
-                                      src={arte.caminho_imagem}
-                                      alt={`Arte ${arte.id}`}
-                                      className="object-cover w-full h-full"
-                                    />
-                                  ) : isArteVideo ? (
-                                    <video
-                                      src={arte.caminho_imagem}
-                                      className="object-cover w-full h-full"
-                                      controls={false}
-                                      preload="metadata"
-                                    />
-                                  ) : (
-                                    <Image
-                                      src={arte.caminho_imagem}
-                                      alt={`Arte ${arte.id}`}
-                                      width={320}
-                                      height={180}
-                                      className="object-cover w-full h-full"
-                                    />
-                                  )
-                                ) : (
-                                  <span className="text-gray-400 text-sm">Sem preview disponível</span>
-                                )}
-                              </div>
-                              <div className="flex flex-col gap-2">
-                                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-3">
-                                  <div className="flex items-center gap-2 flex-shrink-0">
-                                    {temTrocaPendente ? (
-                                      <span className="text-xs sm:text-sm font-semibold text-orange-600 whitespace-nowrap">
-                                        Troca pendente
-                                      </span>
-                                    ) : arte.statusLocal ? (
-                                      <span
-                                        className={`text-xs sm:text-sm font-semibold whitespace-nowrap ${
-                                          arte.statusLocal === 'aceita'
-                                            ? 'text-emerald-600'
-                                            : 'text-red-500'
-                                        }`}
-                                      >
-                                        {arte.statusLocal === 'aceita'
-                                          ? 'Arte aceita'
-                                          : 'Arte recusada'}
-                                      </span>
+                  // Função para renderizar um grupo de artes
+                  const renderArtesGroup = (artes: ArteCampanhaItem[], tipoLabel: string) => {
+                    if (artes.length === 0) return null;
+
+                    // Coletar todos os totens relacionados a essas artes
+                    const totensRelacionados = artes
+                      .map(arte => totensPorArteMap[arte.id])
+                      .filter((totem): totem is any => totem != null)
+                      // Remover duplicatas baseado no ID do totem
+                      .filter((totem, index, self) => 
+                        index === self.findIndex(t => t.id === totem.id)
+                      );
+
+                    return (
+                      <div key={tipoLabel} className="border border-gray-200 rounded-lg p-3 sm:p-4 bg-gray-50 space-y-4">
+                        {/* Título do tipo */}
+                        <div className="flex items-center gap-2">
+                          <h4 className="text-sm sm:text-base font-semibold text-gray-800">
+                            {tipoLabel}
+                          </h4>
+                          <span className="text-xs text-gray-500">({artes.length} arte{artes.length !== 1 ? 's' : ''})</span>
+                        </div>
+
+                        {/* Grid de artes */}
+                        <div className={`grid gap-3 sm:gap-4 ${artes.length === 1 ? 'grid-cols-1' : 'grid-cols-2'}`}>
+                          {artes.map((arte) => {
+                            const anuncioKey = arte.anuncio_id ? String(arte.anuncio_id) : null;
+                            const anuncioName = anuncioKey ? anunciosMap[anuncioKey] || `Anúncio ${anuncioKey}` : 'Anúncio não informado';
+                            const isArteVideo = arte.caminho_imagem ? isVideo(arte.caminho_imagem) : false;
+                            const temTrocaPendente = artesComTrocaPendente.has(arte.id) || 
+                                                     artesComTrocaPendente.has(Number(arte.id)) ||
+                                                     Array.from(artesComTrocaPendente).some(id => String(id) === String(arte.id));
+
+                            return (
+                              <div key={arte.id} className="border border-gray-200 rounded-lg p-2 sm:p-3 flex flex-col gap-2 sm:gap-3 bg-white">
+                                <div className="w-full h-32 sm:h-40 bg-white border border-gray-200 rounded-lg flex items-center justify-center overflow-hidden">
+                                  {arte.caminho_imagem ? (
+                                    arte.caminho_imagem.startsWith("data:image") || arte.caminho_imagem.match(/\.(jpg|jpeg|png|gif|bmp|webp)$/i) ? (
+                                      <img
+                                        src={arte.caminho_imagem}
+                                        alt={`Arte ${arte.id}`}
+                                        className="object-cover w-full h-full"
+                                      />
+                                    ) : isArteVideo ? (
+                                      <video
+                                        src={arte.caminho_imagem}
+                                        className="object-cover w-full h-full"
+                                        controls={false}
+                                        preload="metadata"
+                                      />
                                     ) : (
-                                      <>
-                                        <button
-                                          className="p-1.5 sm:p-2 rounded-md bg-emerald-500 hover:bg-emerald-600 text-white transition-colors cursor-pointer"
-                                          onClick={() => handleApproveArte(arte)}
-                                          aria-label="Aprovar arte"
-                                        >
-                                          <Check className="w-3 h-3 sm:w-4 sm:h-4" />
-                                        </button>
-                                        <button
-                                          className="p-1.5 sm:p-2 rounded-md bg-red-500 hover:bg-red-600 text-white transition-colors cursor-pointer"
-                                          onClick={() => handleRejectArte(arte)}
-                                          aria-label="Reprovar arte"
-                                        >
-                                          <X className="w-3 h-3 sm:w-4 sm:h-4" />
-                                        </button>
-                                      </>
-                                    )}
-                                  </div>
+                                      <Image
+                                        src={arte.caminho_imagem}
+                                        alt={`Arte ${arte.id}`}
+                                        width={320}
+                                        height={180}
+                                        className="object-cover w-full h-full"
+                                      />
+                                    )
+                                  ) : (
+                                    <span className="text-gray-400 text-sm">Sem preview disponível</span>
+                                  )}
                                 </div>
-                                <div className="flex gap-2">
-                                  <button
-                                    className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs sm:text-sm font-medium px-2 sm:px-3 py-1.5 sm:py-2 rounded-md sm:rounded-lg transition-colors cursor-pointer disabled:cursor-not-allowed"
-                                    onClick={() => arte.caminho_imagem && setModalFile({
-                                      url: arte.caminho_imagem,
-                                      id: arte.id,
-                                      orderId: arte.id_order_value,
-                                      anuncioName,
-                                    })}
-                                    disabled={!arte.caminho_imagem}
-                                  >
-                                    Assistir
-                                  </button>
-                                  <button
-                                    className="flex-1 bg-orange-500 hover:bg-orange-600 text-white text-xs sm:text-sm font-medium px-2 sm:px-3 py-1.5 sm:py-2 rounded-md sm:rounded-lg transition-colors cursor-pointer disabled:cursor-not-allowed"
-                                    onClick={() => arte.caminho_imagem && handleDownload(arte.caminho_imagem, `pedido-${arte.id_order_value}_anuncio-${anuncioKey ?? arte.id}`)}
-                                    disabled={!arte.caminho_imagem}
-                                  >
-                                    Baixar
-                                  </button>
-                                </div>
-                                {/* Totens relacionados a esta arte específica */}
-                                {totemRelacionado && (
-                                  <div className="bg-white border border-gray-200 rounded-md p-2 sm:p-3 mt-1">
-                                    <p className="text-[10px] sm:text-xs font-semibold text-gray-700 mb-1.5">Totens relacionados:</p>
-                                    <div className="flex items-start gap-2">
-                                      {totemRelacionado.image && (
-                                        <img
-                                          src={totemRelacionado.image}
-                                          alt={totemRelacionado.name}
-                                          className="w-10 h-10 sm:w-12 sm:h-12 rounded-md object-cover flex-shrink-0"
-                                        />
+                                <div className="flex flex-col gap-2">
+                                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-3">
+                                    <div className="flex items-center gap-2 flex-shrink-0">
+                                      {temTrocaPendente ? (
+                                        <span className="text-xs sm:text-sm font-semibold text-orange-600 whitespace-nowrap">
+                                          Troca pendente
+                                        </span>
+                                      ) : arte.statusLocal ? (
+                                        <span
+                                          className={`text-xs sm:text-sm font-semibold whitespace-nowrap ${
+                                            arte.statusLocal === 'aceita'
+                                              ? 'text-emerald-600'
+                                              : 'text-red-500'
+                                          }`}
+                                        >
+                                          {arte.statusLocal === 'aceita'
+                                            ? 'Arte aceita'
+                                            : 'Arte recusada'}
+                                        </span>
+                                      ) : (
+                                        <>
+                                          <button
+                                            className="p-1.5 sm:p-2 rounded-md bg-emerald-500 hover:bg-emerald-600 text-white transition-colors cursor-pointer"
+                                            onClick={() => handleApproveArte(arte)}
+                                            aria-label="Aprovar arte"
+                                          >
+                                            <Check className="w-3 h-3 sm:w-4 sm:h-4" />
+                                          </button>
+                                          <button
+                                            className="p-1.5 sm:p-2 rounded-md bg-red-500 hover:bg-red-600 text-white transition-colors cursor-pointer"
+                                            onClick={() => handleRejectArte(arte)}
+                                            aria-label="Reprovar arte"
+                                          >
+                                            <X className="w-3 h-3 sm:w-4 sm:h-4" />
+                                          </button>
+                                        </>
                                       )}
-                                      <div className="flex-1 min-w-0">
-                                        <p className="text-xs sm:text-sm font-semibold text-gray-800 truncate">{totemRelacionado.name}</p>
-                                        <p className="text-[10px] sm:text-xs text-gray-600 truncate">{totemRelacionado.address}</p>
-                                        <div className="flex items-center gap-2 mt-1">
-                                          {totemRelacionado.type_screen && (
-                                            <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${
-                                              totemRelacionado.type_screen.toLowerCase() === 'impresso'
-                                                ? 'bg-green-100 text-green-700'
-                                                : 'bg-purple-100 text-purple-700'
-                                            }`}>
-                                              {totemRelacionado.type_screen.toLowerCase() === 'impresso' ? 'Impresso' : 'Digital'}
-                                            </span>
-                                          )}
-                                          {arte.screen_type && (
-                                            <span className="text-[10px] text-gray-500">
-                                              {arte.screen_type === 'down' ? 'Deitado' : 'Em pé'}
-                                            </span>
-                                          )}
-                                          {totemRelacionado.screens && (
-                                            <span className="text-[10px] text-gray-500">
-                                              {totemRelacionado.screens} tela(s)
-                                            </span>
-                                          )}
-                                        </div>
-                                      </div>
                                     </div>
                                   </div>
-                                )}
+                                  <div className="flex gap-2">
+                                    <button
+                                      className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs sm:text-sm font-medium px-2 sm:px-3 py-1.5 sm:py-2 rounded-md sm:rounded-lg transition-colors cursor-pointer disabled:cursor-not-allowed"
+                                      onClick={() => arte.caminho_imagem && setModalFile({
+                                        url: arte.caminho_imagem,
+                                        id: arte.id,
+                                        orderId: arte.id_order_value,
+                                        anuncioName,
+                                      })}
+                                      disabled={!arte.caminho_imagem}
+                                    >
+                                      Assistir
+                                    </button>
+                                    <button
+                                      className="flex-1 bg-orange-500 hover:bg-orange-600 text-white text-xs sm:text-sm font-medium px-2 sm:px-3 py-1.5 sm:py-2 rounded-md sm:rounded-lg transition-colors cursor-pointer disabled:cursor-not-allowed"
+                                      onClick={() => arte.caminho_imagem && handleDownload(arte.caminho_imagem, `pedido-${arte.id_order_value}_anuncio-${anuncioKey ?? arte.id}`)}
+                                      disabled={!arte.caminho_imagem}
+                                    >
+                                      Baixar
+                                    </button>
+                                  </div>
+                                </div>
                               </div>
+                            );
+                          })}
+                        </div>
+
+                        {/* Totens relacionados embaixo do container */}
+                        {totensRelacionados.length > 0 && (
+                          <div className="bg-white border border-gray-200 rounded-md p-2 sm:p-3 mt-2">
+                            <p className="text-[10px] sm:text-xs font-semibold text-gray-700 mb-2">Totens relacionados:</p>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
+                              {totensRelacionados.map((totem) => (
+                                <div key={totem.id} className="flex items-start gap-2">
+                                  {totem.image && (
+                                    <img
+                                      src={totem.image}
+                                      alt={totem.name}
+                                      className="w-10 h-10 sm:w-12 sm:h-12 rounded-md object-cover flex-shrink-0"
+                                    />
+                                  )}
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-xs sm:text-sm font-semibold text-gray-800 truncate">{totem.name}</p>
+                                    <p className="text-[10px] sm:text-xs text-gray-600 truncate">{totem.address}</p>
+                                    <div className="flex items-center gap-2 mt-1">
+                                      {totem.type_screen && (
+                                        <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${
+                                          totem.type_screen.toLowerCase() === 'impresso'
+                                            ? 'bg-green-100 text-green-700'
+                                            : 'bg-purple-100 text-purple-700'
+                                        }`}>
+                                          {totem.type_screen.toLowerCase() === 'impresso' ? 'Impresso' : 'Digital'}
+                                        </span>
+                                      )}
+                                      {totem.screens && (
+                                        <span className="text-[10px] text-gray-500">
+                                          {totem.screens} tela(s)
+                                        </span>
+                                      )}
+                                    </div>
+                                  </div>
+                                </div>
+                              ))}
                             </div>
-                          );
-                        })}
+                          </div>
+                        )}
                       </div>
+                    );
+                  };
+
+                  return (
+                    <div className="space-y-4">
+                      {renderArtesGroup(artesEmPe, 'Em pé')}
+                      {renderArtesGroup(artesDeitadas, 'Deitado')}
                     </div>
                   );
                 })()
