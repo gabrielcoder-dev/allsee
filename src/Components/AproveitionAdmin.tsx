@@ -1192,129 +1192,157 @@ const AproveitionAdmin = () => {
                     return <div className="text-center py-8 text-gray-500 text-sm sm:text-base">Nenhum pedido de troca encontrado.</div>;
                   }
 
-                  return (
-                    <div className="space-y-4">
-                      {/* Grid de trocas */}
-                      <div className={`grid gap-3 sm:gap-4 ${arteTrocas.length === 1 ? 'grid-cols-1' : 'grid-cols-2'}`}>
-                        {arteTrocas.map((troca) => {
-                          const isTrocaVideo = troca.caminho_imagem ? isVideo(troca.caminho_imagem) : false;
-                          const totem = totensTrocasMap[troca.id] || (troca.anuncio_id && totensMap[String(troca.anuncio_id)]);
+                  // Agrupar trocas por tipo de tela (screen_type)
+                  const trocasEmPe = arteTrocas.filter(troca => !troca.screen_type || troca.screen_type === 'standing' || troca.screen_type === 'up');
+                  const trocasDeitadas = arteTrocas.filter(troca => troca.screen_type === 'down');
 
-                          return (
-                            <div key={troca.id} className="border border-gray-200 rounded-lg p-2 sm:p-3 flex flex-col gap-2 sm:gap-3 bg-gray-50">
-                              <div className="w-full h-32 sm:h-40 bg-white border border-gray-200 rounded-lg flex items-center justify-center overflow-hidden">
-                                {troca.caminho_imagem ? (
-                                  troca.caminho_imagem.startsWith("data:image") || troca.caminho_imagem.match(/\.(jpg|jpeg|png|gif|bmp|webp)$/i) ? (
-                                    <img
-                                      src={troca.caminho_imagem}
-                                      alt={`Troca ${troca.id}`}
-                                      className="object-cover w-full h-full"
-                                    />
-                                  ) : isTrocaVideo ? (
-                                    <video
-                                      src={troca.caminho_imagem}
-                                      className="object-cover w-full h-full"
-                                      controls={false}
-                                      preload="metadata"
-                                    />
-                                  ) : (
-                                    <Image
-                                      src={troca.caminho_imagem}
-                                      alt={`Troca ${troca.id}`}
-                                      width={320}
-                                      height={180}
-                                      className="object-cover w-full h-full"
-                                    />
-                                  )
-                                ) : (
-                                  <span className="text-gray-400 text-sm">Sem preview disponível</span>
-                                )}
-                              </div>
-                              <div className="flex flex-col gap-2">
-                                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-3">
-                                  <div className="flex items-center gap-2 flex-shrink-0">
-                                    <button
-                                      className="p-1.5 sm:p-2 rounded-md bg-emerald-500 hover:bg-emerald-600 text-white transition-colors cursor-pointer"
-                                      onClick={() => handleApproveTroca(troca)}
-                                      aria-label="Aprovar troca"
-                                    >
-                                      <Check className="w-3 h-3 sm:w-4 sm:h-4" />
-                                    </button>
-                                    <button
-                                      className="p-1.5 sm:p-2 rounded-md bg-red-500 hover:bg-red-600 text-white transition-colors cursor-pointer"
-                                      onClick={() => handleRejectTroca(troca)}
-                                      aria-label="Rejeitar troca"
-                                    >
-                                      <X className="w-3 h-3 sm:w-4 sm:h-4" />
-                                    </button>
-                                  </div>
-                                </div>
-                                <div className="flex gap-2">
-                                  <button
-                                    className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs sm:text-sm font-medium px-2 sm:px-3 py-1.5 sm:py-2 rounded-md sm:rounded-lg transition-colors cursor-pointer disabled:cursor-not-allowed"
-                                    onClick={() => troca.caminho_imagem && setModalFile({
-                                      url: troca.caminho_imagem,
-                                      id: troca.id,
-                                      orderId: imagesModalOrderId,
-                                      anuncioName: troca.anuncioName,
-                                    })}
-                                    disabled={!troca.caminho_imagem}
-                                  >
-                                    Assistir
-                                  </button>
-                                  <button
-                                    className="flex-1 bg-orange-500 hover:bg-orange-600 text-white text-xs sm:text-sm font-medium px-2 sm:px-3 py-1.5 sm:py-2 rounded-md sm:rounded-lg transition-colors cursor-pointer disabled:cursor-not-allowed"
-                                    onClick={() => troca.caminho_imagem && handleDownload(troca.caminho_imagem, `troca-${troca.id}_anuncio-${troca.anuncio_id ?? troca.id}`)}
-                                    disabled={!troca.caminho_imagem}
-                                  >
-                                    Baixar
-                                  </button>
-                                </div>
-                                {/* Totens relacionados a esta troca específica */}
-                                {totem && (
-                                  <div className="bg-white border border-gray-200 rounded-md p-2 sm:p-3 mt-1">
-                                    <p className="text-[10px] sm:text-xs font-semibold text-gray-700 mb-1.5">Totens relacionados:</p>
-                                    <div className="flex items-start gap-2">
-                                      {totem.image && (
-                                        <img
-                                          src={totem.image}
-                                          alt={totem.name}
-                                          className="w-10 h-10 sm:w-12 sm:h-12 rounded-md object-cover flex-shrink-0"
-                                        />
-                                      )}
-                                      <div className="flex-1 min-w-0">
-                                        <p className="text-xs sm:text-sm font-semibold text-gray-800 truncate">{totem.name}</p>
-                                        <p className="text-[10px] sm:text-xs text-gray-600 truncate">{totem.address}</p>
-                                        <div className="flex items-center gap-2 mt-1">
-                                          {totem.type_screen && (
-                                            <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${
-                                              totem.type_screen.toLowerCase() === 'impresso'
-                                                ? 'bg-green-100 text-green-700'
-                                                : 'bg-purple-100 text-purple-700'
-                                            }`}>
-                                              {totem.type_screen.toLowerCase() === 'impresso' ? 'Impresso' : 'Digital'}
-                                            </span>
-                                          )}
-                                          {troca.screen_type && (
-                                            <span className="text-[10px] text-gray-500">
-                                              {troca.screen_type === 'down' ? 'Deitado' : 'Em pé'}
-                                            </span>
-                                          )}
-                                          {totem.screens && (
-                                            <span className="text-[10px] text-gray-500">
-                                              {totem.screens} tela(s)
-                                            </span>
-                                          )}
-                                        </div>
-                                      </div>
-                                    </div>
-                                  </div>
-                                )}
+                  // Função para renderizar um grupo de trocas
+                  const renderTrocasGroup = (trocas: any[], tipoLabel: string) => {
+                    if (trocas.length === 0) return null;
+
+                    // Usar a primeira troca como representativa do tipo
+                    const trocaRepresentativa = trocas[0];
+                    const isTrocaVideo = trocaRepresentativa.caminho_imagem ? isVideo(trocaRepresentativa.caminho_imagem) : false;
+
+                    // Coletar todos os totens relacionados a essas trocas
+                    const totensRelacionados = trocas
+                      .map(troca => totensTrocasMap[troca.id] || (troca.anuncio_id && totensMap[String(troca.anuncio_id)]))
+                      .filter((totem): totem is any => totem != null)
+                      // Remover duplicatas baseado no ID do totem
+                      .filter((totem, index, self) => 
+                        index === self.findIndex(t => t.id === totem.id)
+                      );
+
+                    return (
+                      <div key={tipoLabel} className="border border-gray-200 rounded-lg p-3 sm:p-4 bg-gray-50 space-y-4">
+                        {/* Título do tipo */}
+                        <div className="flex items-center gap-2">
+                          <h4 className="text-sm sm:text-base font-semibold text-gray-800">
+                            {tipoLabel}
+                          </h4>
+                          <span className="text-xs text-gray-500">({trocas.length} pedido{trocas.length !== 1 ? 's' : ''} de troca)</span>
+                        </div>
+
+                        {/* Imagem representativa única */}
+                        <div className="border border-gray-200 rounded-lg p-2 sm:p-3 flex flex-col gap-2 sm:gap-3 bg-white">
+                          <div className="w-full h-48 sm:h-64 bg-white border border-gray-200 rounded-lg flex items-center justify-center overflow-hidden">
+                            {trocaRepresentativa.caminho_imagem ? (
+                              trocaRepresentativa.caminho_imagem.startsWith("data:image") || trocaRepresentativa.caminho_imagem.match(/\.(jpg|jpeg|png|gif|bmp|webp)$/i) ? (
+                                <img
+                                  src={trocaRepresentativa.caminho_imagem}
+                                  alt={`Troca ${tipoLabel}`}
+                                  className="object-contain w-full h-full"
+                                />
+                              ) : isTrocaVideo ? (
+                                <video
+                                  src={trocaRepresentativa.caminho_imagem}
+                                  className="object-contain w-full h-full"
+                                  controls={false}
+                                  preload="metadata"
+                                />
+                              ) : (
+                                <Image
+                                  src={trocaRepresentativa.caminho_imagem}
+                                  alt={`Troca ${tipoLabel}`}
+                                  width={640}
+                                  height={360}
+                                  className="object-contain w-full h-full"
+                                />
+                              )
+                            ) : (
+                              <span className="text-gray-400 text-sm">Sem preview disponível</span>
+                            )}
+                          </div>
+                          <div className="flex flex-col gap-2">
+                            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-3">
+                              <div className="flex items-center gap-2 flex-shrink-0">
+                                <button
+                                  className="p-1.5 sm:p-2 rounded-md bg-emerald-500 hover:bg-emerald-600 text-white transition-colors cursor-pointer"
+                                  onClick={() => trocas.forEach(troca => handleApproveTroca(troca))}
+                                  aria-label="Aprovar trocas"
+                                >
+                                  <Check className="w-3 h-3 sm:w-4 sm:h-4" />
+                                </button>
+                                <button
+                                  className="p-1.5 sm:p-2 rounded-md bg-red-500 hover:bg-red-600 text-white transition-colors cursor-pointer"
+                                  onClick={() => trocas.forEach(troca => handleRejectTroca(troca))}
+                                  aria-label="Rejeitar trocas"
+                                >
+                                  <X className="w-3 h-3 sm:w-4 sm:h-4" />
+                                </button>
                               </div>
                             </div>
-                          );
-                        })}
+                            <div className="flex gap-2">
+                              <button
+                                className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs sm:text-sm font-medium px-2 sm:px-3 py-1.5 sm:py-2 rounded-md sm:rounded-lg transition-colors cursor-pointer disabled:cursor-not-allowed"
+                                onClick={() => trocaRepresentativa.caminho_imagem && setModalFile({
+                                  url: trocaRepresentativa.caminho_imagem,
+                                  id: trocaRepresentativa.id,
+                                  orderId: imagesModalOrderId,
+                                  anuncioName: trocaRepresentativa.anuncioName,
+                                })}
+                                disabled={!trocaRepresentativa.caminho_imagem}
+                              >
+                                Assistir
+                              </button>
+                              <button
+                                className="flex-1 bg-orange-500 hover:bg-orange-600 text-white text-xs sm:text-sm font-medium px-2 sm:px-3 py-1.5 sm:py-2 rounded-md sm:rounded-lg transition-colors cursor-pointer disabled:cursor-not-allowed"
+                                onClick={() => trocaRepresentativa.caminho_imagem && handleDownload(trocaRepresentativa.caminho_imagem, `troca-${trocaRepresentativa.id}_tipo-${tipoLabel.toLowerCase().replace(' ', '-')}`)}
+                                disabled={!trocaRepresentativa.caminho_imagem}
+                              >
+                                Baixar
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Totens relacionados embaixo do container */}
+                        {totensRelacionados.length > 0 && (
+                          <div className="bg-white border border-gray-200 rounded-md p-2 sm:p-3 mt-2">
+                            <p className="text-[10px] sm:text-xs font-semibold text-gray-700 mb-2">Totens relacionados:</p>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
+                              {totensRelacionados.map((totem) => (
+                                <div key={totem.id} className="flex items-start gap-2">
+                                  {totem.image && (
+                                    <img
+                                      src={totem.image}
+                                      alt={totem.name}
+                                      className="w-10 h-10 sm:w-12 sm:h-12 rounded-md object-cover flex-shrink-0"
+                                    />
+                                  )}
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-xs sm:text-sm font-semibold text-gray-800 truncate">{totem.name}</p>
+                                    <p className="text-[10px] sm:text-xs text-gray-600 truncate">{totem.address}</p>
+                                    <div className="flex items-center gap-2 mt-1">
+                                      {totem.type_screen && (
+                                        <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${
+                                          totem.type_screen.toLowerCase() === 'impresso'
+                                            ? 'bg-green-100 text-green-700'
+                                            : 'bg-purple-100 text-purple-700'
+                                        }`}>
+                                          {totem.type_screen.toLowerCase() === 'impresso' ? 'Impresso' : 'Digital'}
+                                        </span>
+                                      )}
+                                      {totem.screens && (
+                                        <span className="text-[10px] text-gray-500">
+                                          {totem.screens} tela(s)
+                                        </span>
+                                      )}
+                                    </div>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
                       </div>
+                    );
+                  };
+
+                  return (
+                    <div className="space-y-4">
+                      {renderTrocasGroup(trocasEmPe, 'Em pé')}
+                      {renderTrocasGroup(trocasDeitadas, 'Deitado')}
                     </div>
                   );
                 })()
