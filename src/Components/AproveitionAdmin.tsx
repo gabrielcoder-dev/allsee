@@ -1040,98 +1040,207 @@ const AproveitionAdmin = () => {
                           <span className="text-xs text-gray-500">({artes.length} arte{artes.length !== 1 ? 's' : ''})</span>
                         </div>
 
-                        {/* Imagem representativa única */}
-                        <div className="border border-gray-200 rounded-lg p-2 sm:p-3 flex flex-col gap-2 sm:gap-3 bg-white">
-                          <div className="w-full h-48 sm:h-64 bg-white border border-gray-200 rounded-lg flex items-center justify-center overflow-hidden">
-                            {arteRepresentativa.caminho_imagem ? (
-                              arteRepresentativa.caminho_imagem.startsWith("data:image") || arteRepresentativa.caminho_imagem.match(/\.(jpg|jpeg|png|gif|bmp|webp)$/i) ? (
-                                <img
-                                  src={arteRepresentativa.caminho_imagem}
-                                  alt={`Arte ${tipoLabel}`}
-                                  className="object-contain w-full h-full"
-                                />
-                              ) : isArteVideo ? (
-                                <video
-                                  src={arteRepresentativa.caminho_imagem}
-                                  className="object-contain w-full h-full"
-                                  controls={false}
-                                  preload="metadata"
-                                />
-                              ) : (
-                                <Image
-                                  src={arteRepresentativa.caminho_imagem}
-                                  alt={`Arte ${tipoLabel}`}
-                                  width={640}
-                                  height={360}
-                                  className="object-contain w-full h-full"
-                                />
-                              )
-                            ) : (
-                              <span className="text-gray-400 text-sm">Sem preview disponível</span>
-                            )}
-                          </div>
-                          <div className="flex flex-col gap-2">
-                            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-3">
-                              <div className="flex items-center gap-2 flex-shrink-0">
-                                {temTrocaPendente ? (
-                                  <span className="text-xs sm:text-sm font-semibold text-orange-600 whitespace-nowrap">
-                                    Troca pendente
-                                  </span>
-                                ) : statusGeral ? (
-                                  <span
-                                    className={`text-xs sm:text-sm font-semibold whitespace-nowrap ${
-                                      statusGeral === 'aceita'
-                                        ? 'text-emerald-600'
-                                        : 'text-red-500'
-                                    }`}
-                                  >
-                                    {statusGeral === 'aceita'
-                                      ? 'Arte aceita'
-                                      : 'Arte recusada'}
-                                  </span>
+                        {/* Grid de artes - 2 colunas no desktop, 1 no mobile se houver mais de uma */}
+                        {artes.length === 1 ? (
+                          /* Se houver apenas 1 arte, mostrar como única */
+                          <div className="border border-gray-200 rounded-lg p-2 sm:p-3 flex flex-col gap-2 sm:gap-3 bg-white">
+                            <div className="w-full h-48 sm:h-64 bg-white border border-gray-200 rounded-lg flex items-center justify-center overflow-hidden">
+                              {arteRepresentativa.caminho_imagem ? (
+                                arteRepresentativa.caminho_imagem.startsWith("data:image") || arteRepresentativa.caminho_imagem.match(/\.(jpg|jpeg|png|gif|bmp|webp)$/i) ? (
+                                  <img
+                                    src={arteRepresentativa.caminho_imagem}
+                                    alt={`Arte ${tipoLabel}`}
+                                    className="object-contain w-full h-full"
+                                  />
+                                ) : isArteVideo ? (
+                                  <video
+                                    src={arteRepresentativa.caminho_imagem}
+                                    className="object-contain w-full h-full"
+                                    controls={false}
+                                    preload="metadata"
+                                  />
                                 ) : (
-                                  <>
-                                    <button
-                                      className="p-1.5 sm:p-2 rounded-md bg-emerald-500 hover:bg-emerald-600 text-white transition-colors cursor-pointer"
-                                      onClick={() => artes.forEach(arte => handleApproveArte(arte))}
-                                      aria-label="Aprovar arte"
+                                  <Image
+                                    src={arteRepresentativa.caminho_imagem}
+                                    alt={`Arte ${tipoLabel}`}
+                                    width={640}
+                                    height={360}
+                                    className="object-contain w-full h-full"
+                                  />
+                                )
+                              ) : (
+                                <span className="text-gray-400 text-sm">Sem preview disponível</span>
+                              )}
+                            </div>
+                            <div className="flex flex-col gap-2">
+                              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-3">
+                                <div className="flex items-center gap-2 flex-shrink-0">
+                                  {temTrocaPendente ? (
+                                    <span className="text-xs sm:text-sm font-semibold text-orange-600 whitespace-nowrap">
+                                      Troca pendente
+                                    </span>
+                                  ) : statusGeral ? (
+                                    <span
+                                      className={`text-xs sm:text-sm font-semibold whitespace-nowrap ${
+                                        statusGeral === 'aceita'
+                                          ? 'text-emerald-600'
+                                          : 'text-red-500'
+                                      }`}
                                     >
-                                      <Check className="w-3 h-3 sm:w-4 sm:h-4" />
-                                    </button>
-                                    <button
-                                      className="p-1.5 sm:p-2 rounded-md bg-red-500 hover:bg-red-600 text-white transition-colors cursor-pointer"
-                                      onClick={() => artes.forEach(arte => handleRejectArte(arte))}
-                                      aria-label="Reprovar arte"
-                                    >
-                                      <X className="w-3 h-3 sm:w-4 sm:h-4" />
-                                    </button>
-                                  </>
-                                )}
+                                      {statusGeral === 'aceita'
+                                        ? 'Arte aceita'
+                                        : 'Arte recusada'}
+                                    </span>
+                                  ) : (
+                                    <>
+                                      <button
+                                        className="p-1.5 sm:p-2 rounded-md bg-emerald-500 hover:bg-emerald-600 text-white transition-colors cursor-pointer"
+                                        onClick={() => artes.forEach(arte => handleApproveArte(arte))}
+                                        aria-label="Aprovar arte"
+                                      >
+                                        <Check className="w-3 h-3 sm:w-4 sm:h-4" />
+                                      </button>
+                                      <button
+                                        className="p-1.5 sm:p-2 rounded-md bg-red-500 hover:bg-red-600 text-white transition-colors cursor-pointer"
+                                        onClick={() => artes.forEach(arte => handleRejectArte(arte))}
+                                        aria-label="Reprovar arte"
+                                      >
+                                        <X className="w-3 h-3 sm:w-4 sm:h-4" />
+                                      </button>
+                                    </>
+                                  )}
+                                </div>
+                              </div>
+                              <div className="flex gap-2">
+                                <button
+                                  className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs sm:text-sm font-medium px-2 sm:px-3 py-1.5 sm:py-2 rounded-md sm:rounded-lg transition-colors cursor-pointer disabled:cursor-not-allowed"
+                                  onClick={() => arteRepresentativa.caminho_imagem && setModalFile({
+                                    url: arteRepresentativa.caminho_imagem,
+                                    id: arteRepresentativa.id,
+                                    orderId: arteRepresentativa.id_order_value,
+                                    anuncioName,
+                                  })}
+                                  disabled={!arteRepresentativa.caminho_imagem}
+                                >
+                                  Assistir
+                                </button>
+                                <button
+                                  className="flex-1 bg-orange-500 hover:bg-orange-600 text-white text-xs sm:text-sm font-medium px-2 sm:px-3 py-1.5 sm:py-2 rounded-md sm:rounded-lg transition-colors cursor-pointer disabled:cursor-not-allowed"
+                                  onClick={() => arteRepresentativa.caminho_imagem && handleDownload(arteRepresentativa.caminho_imagem, `pedido-${arteRepresentativa.id_order_value}_tipo-${tipoLabel.toLowerCase().replace(' ', '-')}`)}
+                                  disabled={!arteRepresentativa.caminho_imagem}
+                                >
+                                  Baixar
+                                </button>
                               </div>
                             </div>
-                            <div className="flex gap-2">
-                              <button
-                                className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs sm:text-sm font-medium px-2 sm:px-3 py-1.5 sm:py-2 rounded-md sm:rounded-lg transition-colors cursor-pointer disabled:cursor-not-allowed"
-                                onClick={() => arteRepresentativa.caminho_imagem && setModalFile({
-                                  url: arteRepresentativa.caminho_imagem,
-                                  id: arteRepresentativa.id,
-                                  orderId: arteRepresentativa.id_order_value,
-                                  anuncioName,
-                                })}
-                                disabled={!arteRepresentativa.caminho_imagem}
-                              >
-                                Assistir
-                              </button>
-                              <button
-                                className="flex-1 bg-orange-500 hover:bg-orange-600 text-white text-xs sm:text-sm font-medium px-2 sm:px-3 py-1.5 sm:py-2 rounded-md sm:rounded-lg transition-colors cursor-pointer disabled:cursor-not-allowed"
-                                onClick={() => arteRepresentativa.caminho_imagem && handleDownload(arteRepresentativa.caminho_imagem, `pedido-${arteRepresentativa.id_order_value}_tipo-${tipoLabel.toLowerCase().replace(' ', '-')}`)}
-                                disabled={!arteRepresentativa.caminho_imagem}
-                              >
-                                Baixar
-                              </button>
-                            </div>
                           </div>
-                        </div>
+                        ) : (
+                          /* Se houver mais de 1 arte, mostrar em grid */
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                            {artes.map((arte) => {
+                              const arteAnuncioKey = arte.anuncio_id ? String(arte.anuncio_id) : null;
+                              const arteAnuncioName = arteAnuncioKey ? anunciosMap[arteAnuncioKey] || `Anúncio ${arteAnuncioKey}` : 'Anúncio não informado';
+                              const isArteVideo = arte.caminho_imagem ? isVideo(arte.caminho_imagem) : false;
+                              const arteTemTrocaPendente = artesComTrocaPendente.has(arte.id) || 
+                                                           artesComTrocaPendente.has(Number(arte.id)) ||
+                                                           Array.from(artesComTrocaPendente).some(id => String(id) === String(arte.id));
+
+                              return (
+                                <div key={arte.id} className="border border-gray-200 rounded-lg p-2 sm:p-3 flex flex-col gap-2 sm:gap-3 bg-white">
+                                  <div className="w-full h-48 sm:h-64 bg-white border border-gray-200 rounded-lg flex items-center justify-center overflow-hidden">
+                                    {arte.caminho_imagem ? (
+                                      arte.caminho_imagem.startsWith("data:image") || arte.caminho_imagem.match(/\.(jpg|jpeg|png|gif|bmp|webp)$/i) ? (
+                                        <img
+                                          src={arte.caminho_imagem}
+                                          alt={`Arte ${arte.id}`}
+                                          className="object-contain w-full h-full"
+                                        />
+                                      ) : isArteVideo ? (
+                                        <video
+                                          src={arte.caminho_imagem}
+                                          className="object-contain w-full h-full"
+                                          controls={false}
+                                          preload="metadata"
+                                        />
+                                      ) : (
+                                        <Image
+                                          src={arte.caminho_imagem}
+                                          alt={`Arte ${arte.id}`}
+                                          width={640}
+                                          height={360}
+                                          className="object-contain w-full h-full"
+                                        />
+                                      )
+                                    ) : (
+                                      <span className="text-gray-400 text-sm">Sem preview disponível</span>
+                                    )}
+                                  </div>
+                                  <div className="flex flex-col gap-2">
+                                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-3">
+                                      <div className="flex items-center gap-2 flex-shrink-0">
+                                        {arteTemTrocaPendente ? (
+                                          <span className="text-xs sm:text-sm font-semibold text-orange-600 whitespace-nowrap">
+                                            Troca pendente
+                                          </span>
+                                        ) : arte.statusLocal ? (
+                                          <span
+                                            className={`text-xs sm:text-sm font-semibold whitespace-nowrap ${
+                                              arte.statusLocal === 'aceita'
+                                                ? 'text-emerald-600'
+                                                : 'text-red-500'
+                                            }`}
+                                          >
+                                            {arte.statusLocal === 'aceita'
+                                              ? 'Arte aceita'
+                                              : 'Arte recusada'}
+                                          </span>
+                                        ) : (
+                                          <>
+                                            <button
+                                              className="p-1.5 sm:p-2 rounded-md bg-emerald-500 hover:bg-emerald-600 text-white transition-colors cursor-pointer"
+                                              onClick={() => handleApproveArte(arte)}
+                                              aria-label="Aprovar arte"
+                                            >
+                                              <Check className="w-3 h-3 sm:w-4 sm:h-4" />
+                                            </button>
+                                            <button
+                                              className="p-1.5 sm:p-2 rounded-md bg-red-500 hover:bg-red-600 text-white transition-colors cursor-pointer"
+                                              onClick={() => handleRejectArte(arte)}
+                                              aria-label="Reprovar arte"
+                                            >
+                                              <X className="w-3 h-3 sm:w-4 sm:h-4" />
+                                            </button>
+                                          </>
+                                        )}
+                                      </div>
+                                    </div>
+                                    <div className="flex gap-2">
+                                      <button
+                                        className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs sm:text-sm font-medium px-2 sm:px-3 py-1.5 sm:py-2 rounded-md sm:rounded-lg transition-colors cursor-pointer disabled:cursor-not-allowed"
+                                        onClick={() => arte.caminho_imagem && setModalFile({
+                                          url: arte.caminho_imagem,
+                                          id: arte.id,
+                                          orderId: arte.id_order_value,
+                                          anuncioName: arteAnuncioName,
+                                        })}
+                                        disabled={!arte.caminho_imagem}
+                                      >
+                                        Assistir
+                                      </button>
+                                      <button
+                                        className="flex-1 bg-orange-500 hover:bg-orange-600 text-white text-xs sm:text-sm font-medium px-2 sm:px-3 py-1.5 sm:py-2 rounded-md sm:rounded-lg transition-colors cursor-pointer disabled:cursor-not-allowed"
+                                        onClick={() => arte.caminho_imagem && handleDownload(arte.caminho_imagem, `pedido-${arte.id_order_value}_anuncio-${arteAnuncioKey ?? arte.id}`)}
+                                        disabled={!arte.caminho_imagem}
+                                      >
+                                        Baixar
+                                      </button>
+                                    </div>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
 
                         {/* Totens relacionados embaixo do container */}
                         {totensRelacionados.length > 0 && (
@@ -1223,78 +1332,162 @@ const AproveitionAdmin = () => {
                           <span className="text-xs text-gray-500">({trocas.length} pedido{trocas.length !== 1 ? 's' : ''} de troca)</span>
                         </div>
 
-                        {/* Imagem representativa única */}
-                        <div className="border border-gray-200 rounded-lg p-2 sm:p-3 flex flex-col gap-2 sm:gap-3 bg-white">
-                          <div className="w-full h-48 sm:h-64 bg-white border border-gray-200 rounded-lg flex items-center justify-center overflow-hidden">
-                            {trocaRepresentativa.caminho_imagem ? (
-                              trocaRepresentativa.caminho_imagem.startsWith("data:image") || trocaRepresentativa.caminho_imagem.match(/\.(jpg|jpeg|png|gif|bmp|webp)$/i) ? (
-                                <img
-                                  src={trocaRepresentativa.caminho_imagem}
-                                  alt={`Troca ${tipoLabel}`}
-                                  className="object-contain w-full h-full"
-                                />
-                              ) : isTrocaVideo ? (
-                                <video
-                                  src={trocaRepresentativa.caminho_imagem}
-                                  className="object-contain w-full h-full"
-                                  controls={false}
-                                  preload="metadata"
-                                />
+                        {/* Grid de trocas - 2 colunas no desktop, 1 no mobile se houver mais de uma */}
+                        {trocas.length === 1 ? (
+                          /* Se houver apenas 1 troca, mostrar como única */
+                          <div className="border border-gray-200 rounded-lg p-2 sm:p-3 flex flex-col gap-2 sm:gap-3 bg-white">
+                            <div className="w-full h-48 sm:h-64 bg-white border border-gray-200 rounded-lg flex items-center justify-center overflow-hidden">
+                              {trocaRepresentativa.caminho_imagem ? (
+                                trocaRepresentativa.caminho_imagem.startsWith("data:image") || trocaRepresentativa.caminho_imagem.match(/\.(jpg|jpeg|png|gif|bmp|webp)$/i) ? (
+                                  <img
+                                    src={trocaRepresentativa.caminho_imagem}
+                                    alt={`Troca ${tipoLabel}`}
+                                    className="object-contain w-full h-full"
+                                  />
+                                ) : isTrocaVideo ? (
+                                  <video
+                                    src={trocaRepresentativa.caminho_imagem}
+                                    className="object-contain w-full h-full"
+                                    controls={false}
+                                    preload="metadata"
+                                  />
+                                ) : (
+                                  <Image
+                                    src={trocaRepresentativa.caminho_imagem}
+                                    alt={`Troca ${tipoLabel}`}
+                                    width={640}
+                                    height={360}
+                                    className="object-contain w-full h-full"
+                                  />
+                                )
                               ) : (
-                                <Image
-                                  src={trocaRepresentativa.caminho_imagem}
-                                  alt={`Troca ${tipoLabel}`}
-                                  width={640}
-                                  height={360}
-                                  className="object-contain w-full h-full"
-                                />
-                              )
-                            ) : (
-                              <span className="text-gray-400 text-sm">Sem preview disponível</span>
-                            )}
-                          </div>
-                          <div className="flex flex-col gap-2">
-                            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-3">
-                              <div className="flex items-center gap-2 flex-shrink-0">
+                                <span className="text-gray-400 text-sm">Sem preview disponível</span>
+                              )}
+                            </div>
+                            <div className="flex flex-col gap-2">
+                              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-3">
+                                <div className="flex items-center gap-2 flex-shrink-0">
+                                  <button
+                                    className="p-1.5 sm:p-2 rounded-md bg-emerald-500 hover:bg-emerald-600 text-white transition-colors cursor-pointer"
+                                    onClick={() => trocas.forEach(troca => handleApproveTroca(troca))}
+                                    aria-label="Aprovar trocas"
+                                  >
+                                    <Check className="w-3 h-3 sm:w-4 sm:h-4" />
+                                  </button>
+                                  <button
+                                    className="p-1.5 sm:p-2 rounded-md bg-red-500 hover:bg-red-600 text-white transition-colors cursor-pointer"
+                                    onClick={() => trocas.forEach(troca => handleRejectTroca(troca))}
+                                    aria-label="Rejeitar trocas"
+                                  >
+                                    <X className="w-3 h-3 sm:w-4 sm:h-4" />
+                                  </button>
+                                </div>
+                              </div>
+                              <div className="flex gap-2">
                                 <button
-                                  className="p-1.5 sm:p-2 rounded-md bg-emerald-500 hover:bg-emerald-600 text-white transition-colors cursor-pointer"
-                                  onClick={() => trocas.forEach(troca => handleApproveTroca(troca))}
-                                  aria-label="Aprovar trocas"
+                                  className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs sm:text-sm font-medium px-2 sm:px-3 py-1.5 sm:py-2 rounded-md sm:rounded-lg transition-colors cursor-pointer disabled:cursor-not-allowed"
+                                  onClick={() => trocaRepresentativa.caminho_imagem && setModalFile({
+                                    url: trocaRepresentativa.caminho_imagem,
+                                    id: trocaRepresentativa.id,
+                                    orderId: imagesModalOrderId,
+                                    anuncioName: trocaRepresentativa.anuncioName,
+                                  })}
+                                  disabled={!trocaRepresentativa.caminho_imagem}
                                 >
-                                  <Check className="w-3 h-3 sm:w-4 sm:h-4" />
+                                  Assistir
                                 </button>
                                 <button
-                                  className="p-1.5 sm:p-2 rounded-md bg-red-500 hover:bg-red-600 text-white transition-colors cursor-pointer"
-                                  onClick={() => trocas.forEach(troca => handleRejectTroca(troca))}
-                                  aria-label="Rejeitar trocas"
+                                  className="flex-1 bg-orange-500 hover:bg-orange-600 text-white text-xs sm:text-sm font-medium px-2 sm:px-3 py-1.5 sm:py-2 rounded-md sm:rounded-lg transition-colors cursor-pointer disabled:cursor-not-allowed"
+                                  onClick={() => trocaRepresentativa.caminho_imagem && handleDownload(trocaRepresentativa.caminho_imagem, `troca-${trocaRepresentativa.id}_tipo-${tipoLabel.toLowerCase().replace(' ', '-')}`)}
+                                  disabled={!trocaRepresentativa.caminho_imagem}
                                 >
-                                  <X className="w-3 h-3 sm:w-4 sm:h-4" />
+                                  Baixar
                                 </button>
                               </div>
                             </div>
-                            <div className="flex gap-2">
-                              <button
-                                className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs sm:text-sm font-medium px-2 sm:px-3 py-1.5 sm:py-2 rounded-md sm:rounded-lg transition-colors cursor-pointer disabled:cursor-not-allowed"
-                                onClick={() => trocaRepresentativa.caminho_imagem && setModalFile({
-                                  url: trocaRepresentativa.caminho_imagem,
-                                  id: trocaRepresentativa.id,
-                                  orderId: imagesModalOrderId,
-                                  anuncioName: trocaRepresentativa.anuncioName,
-                                })}
-                                disabled={!trocaRepresentativa.caminho_imagem}
-                              >
-                                Assistir
-                              </button>
-                              <button
-                                className="flex-1 bg-orange-500 hover:bg-orange-600 text-white text-xs sm:text-sm font-medium px-2 sm:px-3 py-1.5 sm:py-2 rounded-md sm:rounded-lg transition-colors cursor-pointer disabled:cursor-not-allowed"
-                                onClick={() => trocaRepresentativa.caminho_imagem && handleDownload(trocaRepresentativa.caminho_imagem, `troca-${trocaRepresentativa.id}_tipo-${tipoLabel.toLowerCase().replace(' ', '-')}`)}
-                                disabled={!trocaRepresentativa.caminho_imagem}
-                              >
-                                Baixar
-                              </button>
-                            </div>
                           </div>
-                        </div>
+                        ) : (
+                          /* Se houver mais de 1 troca, mostrar em grid */
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                            {trocas.map((troca) => {
+                              const isTrocaVideo = troca.caminho_imagem ? isVideo(troca.caminho_imagem) : false;
+
+                              return (
+                                <div key={troca.id} className="border border-gray-200 rounded-lg p-2 sm:p-3 flex flex-col gap-2 sm:gap-3 bg-white">
+                                  <div className="w-full h-48 sm:h-64 bg-white border border-gray-200 rounded-lg flex items-center justify-center overflow-hidden">
+                                    {troca.caminho_imagem ? (
+                                      troca.caminho_imagem.startsWith("data:image") || troca.caminho_imagem.match(/\.(jpg|jpeg|png|gif|bmp|webp)$/i) ? (
+                                        <img
+                                          src={troca.caminho_imagem}
+                                          alt={`Troca ${troca.id}`}
+                                          className="object-contain w-full h-full"
+                                        />
+                                      ) : isTrocaVideo ? (
+                                        <video
+                                          src={troca.caminho_imagem}
+                                          className="object-contain w-full h-full"
+                                          controls={false}
+                                          preload="metadata"
+                                        />
+                                      ) : (
+                                        <Image
+                                          src={troca.caminho_imagem}
+                                          alt={`Troca ${troca.id}`}
+                                          width={640}
+                                          height={360}
+                                          className="object-contain w-full h-full"
+                                        />
+                                      )
+                                    ) : (
+                                      <span className="text-gray-400 text-sm">Sem preview disponível</span>
+                                    )}
+                                  </div>
+                                  <div className="flex flex-col gap-2">
+                                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-3">
+                                      <div className="flex items-center gap-2 flex-shrink-0">
+                                        <button
+                                          className="p-1.5 sm:p-2 rounded-md bg-emerald-500 hover:bg-emerald-600 text-white transition-colors cursor-pointer"
+                                          onClick={() => handleApproveTroca(troca)}
+                                          aria-label="Aprovar troca"
+                                        >
+                                          <Check className="w-3 h-3 sm:w-4 sm:h-4" />
+                                        </button>
+                                        <button
+                                          className="p-1.5 sm:p-2 rounded-md bg-red-500 hover:bg-red-600 text-white transition-colors cursor-pointer"
+                                          onClick={() => handleRejectTroca(troca)}
+                                          aria-label="Rejeitar troca"
+                                        >
+                                          <X className="w-3 h-3 sm:w-4 sm:h-4" />
+                                        </button>
+                                      </div>
+                                    </div>
+                                    <div className="flex gap-2">
+                                      <button
+                                        className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs sm:text-sm font-medium px-2 sm:px-3 py-1.5 sm:py-2 rounded-md sm:rounded-lg transition-colors cursor-pointer disabled:cursor-not-allowed"
+                                        onClick={() => troca.caminho_imagem && setModalFile({
+                                          url: troca.caminho_imagem,
+                                          id: troca.id,
+                                          orderId: imagesModalOrderId,
+                                          anuncioName: troca.anuncioName,
+                                        })}
+                                        disabled={!troca.caminho_imagem}
+                                      >
+                                        Assistir
+                                      </button>
+                                      <button
+                                        className="flex-1 bg-orange-500 hover:bg-orange-600 text-white text-xs sm:text-sm font-medium px-2 sm:px-3 py-1.5 sm:py-2 rounded-md sm:rounded-lg transition-colors cursor-pointer disabled:cursor-not-allowed"
+                                        onClick={() => troca.caminho_imagem && handleDownload(troca.caminho_imagem, `troca-${troca.id}_anuncio-${troca.anuncio_id ?? troca.id}`)}
+                                        disabled={!troca.caminho_imagem}
+                                      >
+                                        Baixar
+                                      </button>
+                                    </div>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
 
                         {/* Totens relacionados embaixo do container */}
                         {totensRelacionados.length > 0 && (
