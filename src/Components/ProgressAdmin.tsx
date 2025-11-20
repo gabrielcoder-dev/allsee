@@ -1,10 +1,9 @@
 "use client"
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import Image from "next/image";
 import { createClient } from '@supabase/supabase-js';
 import OrderDetailsModal from "./OrderDetailsModal";
-import { ZoomIn } from 'lucide-react';
 
 // Função para detectar se é vídeo
 const isVideo = (url: string) => {
@@ -18,8 +17,10 @@ const supabase = createClient(
 
 interface ArteCampanha {
   id: number;
-  caminho_imagem: string;
-  order_id: string;
+  caminho_imagem: string | null;
+  id_order: string | number;
+  screen_type?: string | null;
+  mime_type?: string | null;
 }
 
 interface OrderDetails {
@@ -31,19 +32,21 @@ interface OrderDetails {
   alcance_campanha: number;
 }
 
-interface CampanhaCompleta {
-  arte: ArteCampanha;
+interface CampanhaAgrupada {
+  orderId: string | number;
   order: OrderDetails;
+  artes: ArteCampanha[];
 }
 
 const ProgressAdmin = () => {
-  const [campanhas, setCampanhas] = useState<CampanhaCompleta[]>([]);
+  const [campanhasAgrupadas, setCampanhasAgrupadas] = useState<CampanhaAgrupada[]>([]);
   const [loading, setLoading] = useState(true);
-  const [exibicoesAtuais, setExibicoesAtuais] = useState<{ [key: number]: number }>({});
-  const [alcanceAtual, setAlcanceAtual] = useState<{ [key: number]: number }>({});
+  const [exibicoesAtuais, setExibicoesAtuais] = useState<{ [key: string | number]: number }>({});
+  const [alcanceAtual, setAlcanceAtual] = useState<{ [key: string | number]: number }>({});
   const [showOrderDetails, setShowOrderDetails] = useState(false);
   const [selectedOrderId, setSelectedOrderId] = useState<number | string | null>(null);
-  const [modalImage, setModalImage] = useState<{ url: string; name: string } | null>(null);
+  const [modalArtesOrderId, setModalArtesOrderId] = useState<string | number | null>(null);
+  const [modalFile, setModalFile] = useState<{ url: string; id: number | string; orderId?: string | number; anuncioName?: string | null } | null>(null);
 
   // Função para calcular dias restantes (mesma lógica do meus-anuncios)
   const calcularDiasRestantes = (inicioCampanha: string, duracaoSemanas: number) => {
@@ -211,10 +214,12 @@ const ProgressAdmin = () => {
   };
 
   // Função para download
-  const handleDownload = (url: string, name: string) => {
+  const handleDownload = (url: string, filenameHint: string | number) => {
+    if (!url) return;
+    const filename = typeof filenameHint === 'string' ? filenameHint : `arquivo-${filenameHint}`;
     const a = document.createElement("a");
     a.href = url;
-    a.download = `arte-${name.replace(/[^a-zA-Z0-9]/g, '-')}`;
+    a.download = filename;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -228,7 +233,8 @@ const ProgressAdmin = () => {
         // Buscar todas as artes de campanha
         const { data: artes, error: artesError } = await supabase
           .from('arte_campanha')
-          .select('id, caminho_imagem, order_id:id_order, id_user');
+          .select('id, caminho_imagem, id_order, screen_type, mime_type')
+          .order('id', { ascending: false });
 
         if (artesError) {
           console.error('Erro ao buscar artes:', artesError);
@@ -236,29 +242,54 @@ const ProgressAdmin = () => {
         }
 
         if (!artes || artes.length === 0) {
-          setCampanhas([]);
+          setCampanhasAgrupadas([]);
           return;
         }
 
-        // Para cada arte, buscar os detalhes da order correspondente
-        const campanhasCompletas: CampanhaCompleta[] = [];
-        
-        for (const arte of artes) {
-          const { data: order, error: orderError } = await supabase
-            .from('order')
-            .select('*')
-            .eq('id', arte.order_id)
-            .single();
-
-          if (!orderError && order) {
-            campanhasCompletas.push({
-              arte,
-              order
-            });
+        // Agrupar artes por order_id
+        const artesPorOrder = new Map<string | number, ArteCampanha[]>();
+        artes.forEach((arte) => {
+          const orderId = arte.id_order;
+          if (!artesPorOrder.has(orderId)) {
+            artesPorOrder.set(orderId, []);
           }
+          artesPorOrder.get(orderId)!.push(arte);
+        });
+
+        // Buscar detalhes das orders
+        const orderIds = Array.from(artesPorOrder.keys());
+        const orderIdsForQuery = orderIds.map((id) => {
+          if (typeof id === 'number') return id;
+          const numeric = Number(id);
+          return !Number.isNaN(numeric) && !String(id).includes('-') ? numeric : String(id);
+        });
+
+        const { data: orders, error: ordersError } = await supabase
+          .from('order')
+          .select('*')
+          .in('id', orderIdsForQuery);
+
+        if (ordersError) {
+          console.error('Erro ao buscar orders:', ordersError);
+          return;
         }
 
-        setCampanhas(campanhasCompletas);
+        // Criar campanhas agrupadas
+        const campanhas: CampanhaAgrupada[] = [];
+        orders?.forEach((order) => {
+          const orderId = String(order.id);
+          const artesDoOrder = artesPorOrder.get(order.id) || artesPorOrder.get(orderId) || [];
+          
+          if (artesDoOrder.length > 0) {
+            campanhas.push({
+              orderId: order.id,
+              order,
+              artes: artesDoOrder
+            });
+          }
+        });
+
+        setCampanhasAgrupadas(campanhas);
       } catch (error) {
         console.error('Erro ao buscar campanhas:', error);
       } finally {
@@ -272,22 +303,22 @@ const ProgressAdmin = () => {
   // Atualizar exibições e alcance a cada minuto
   useEffect(() => {
     const interval = setInterval(() => {
-      const novasExibicoes: { [key: number]: number } = {};
-      const novoAlcance: { [key: number]: number } = {};
+      const novasExibicoes: { [key: string | number]: number } = {};
+      const novoAlcance: { [key: string | number]: number } = {};
       
-      campanhas.forEach((campanha) => {
+      campanhasAgrupadas.forEach((campanha) => {
         const exibicoes = calcularExibicoesDinamicas(
           campanha.order.inicio_campanha,
           campanha.order.duracao_campanha
         );
-        novasExibicoes[campanha.arte.id] = exibicoes;
+        novasExibicoes[campanha.orderId] = exibicoes;
         
         const alcance = calcularAlcanceDinamico(
           campanha.order.alcance_campanha || 0,
           campanha.order.inicio_campanha,
           campanha.order.duracao_campanha
         );
-        novoAlcance[campanha.arte.id] = alcance;
+        novoAlcance[campanha.orderId] = alcance;
       });
       
       setExibicoesAtuais(novasExibicoes);
@@ -295,7 +326,7 @@ const ProgressAdmin = () => {
     }, 60000); // Atualiza a cada minuto
 
     return () => clearInterval(interval);
-  }, [campanhas]);
+  }, [campanhasAgrupadas]);
 
   if (loading) {
     return (
@@ -316,57 +347,48 @@ const ProgressAdmin = () => {
         </h2>
       </div>
       <div className="space-y-4 md:space-y-6">
-        {campanhas.length === 0 ? (
+        {campanhasAgrupadas.length === 0 ? (
           <div className="text-center py-12">
             <div className="bg-white rounded-xl p-8 shadow-sm border border-gray-200">
               <p className="text-gray-500 text-lg">Nenhuma campanha em andamento encontrada.</p>
             </div>
           </div>
         ) : (
-          campanhas.map((campanha) => {
+          campanhasAgrupadas.map((campanha) => {
             const diasRestantes = calcularDiasRestantes(
               campanha.order.inicio_campanha, 
               campanha.order.duracao_campanha
             );
             
+            // Usar a primeira arte como preview
+            const primeiraArte = campanha.artes[0];
+            
             return (
-              <div key={campanha.arte.id} className="flex flex-col md:flex-row items-start gap-3 md:gap-6 bg-white border border-gray-200 rounded-xl md:rounded-2xl p-3 md:p-6 shadow-sm hover:shadow-md transition-shadow">
+              <div key={campanha.orderId} className="flex flex-col md:flex-row items-start gap-3 md:gap-6 bg-white border border-gray-200 rounded-xl md:rounded-2xl p-3 md:p-6 shadow-sm hover:shadow-md transition-shadow">
                 {/* Imagem/Vídeo + Detalhes */}
                 <div className="flex items-start gap-3 md:gap-4 flex-shrink-0 w-full md:w-auto">
-                  {isVideo(campanha.arte.caminho_imagem) ? (
-                    <div 
-                      className="w-20 h-20 md:w-32 md:h-32 rounded-xl md:rounded-2xl overflow-hidden cursor-pointer relative group"
-                      onClick={() => setModalImage({ url: campanha.arte.caminho_imagem, name: campanha.order.nome_campanha || "Campanha" })}
-                    >
-                      <video
-                        src={campanha.arte.caminho_imagem}
-                        className="w-full h-full object-cover"
-                        controls={false}
-                        preload="metadata"
-                        muted
-                      />
-                      {/* Overlay de hover */}
-                      <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                        <ZoomIn className="text-white w-4 h-4 md:w-6 md:h-6" />
+                  {primeiraArte?.caminho_imagem && (
+                    isVideo(primeiraArte.caminho_imagem) ? (
+                      <div className="w-20 h-20 md:w-32 md:h-32 rounded-xl md:rounded-2xl overflow-hidden relative">
+                        <video
+                          src={primeiraArte.caminho_imagem}
+                          className="w-full h-full object-cover"
+                          controls={false}
+                          preload="metadata"
+                          muted
+                        />
                       </div>
-                    </div>
-                  ) : (
-                    <div 
-                      className="w-20 h-20 md:w-32 md:h-32 rounded-xl md:rounded-2xl overflow-hidden cursor-pointer relative group"
-                      onClick={() => setModalImage({ url: campanha.arte.caminho_imagem, name: campanha.order.nome_campanha || "Campanha" })}
-                    >
-                      <Image
-                        src={campanha.arte.caminho_imagem}
-                        alt={campanha.order.nome_campanha || "Campanha"}
-                        width={128}
-                        height={128}
-                        className="w-full h-full object-cover"
-                      />
-                      {/* Overlay de hover */}
-                      <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                        <ZoomIn className="text-white w-4 h-4 md:w-6 md:h-6" />
+                    ) : (
+                      <div className="w-20 h-20 md:w-32 md:h-32 rounded-xl md:rounded-2xl overflow-hidden relative">
+                        <Image
+                          src={primeiraArte.caminho_imagem}
+                          alt={campanha.order.nome_campanha || "Campanha"}
+                          width={128}
+                          height={128}
+                          className="w-full h-full object-cover"
+                        />
                       </div>
-                    </div>
+                    )
                   )}
                   <div className="flex-1 min-w-0 flex flex-col justify-start">
                     <p className="font-bold text-gray-800 text-sm md:text-base truncate">{campanha.order.nome_campanha || "Campanha sem nome"}</p>
@@ -374,7 +396,7 @@ const ProgressAdmin = () => {
                       {(() => {
                         const dataInicio = new Date(campanha.order.inicio_campanha);
                         const inicioReal = new Date(dataInicio);
-                        inicioReal.setHours(7, 0, 0, 0); // 7h da manhã do dia de início
+                        inicioReal.setHours(7, 0, 0, 0);
                         const dataAtual = new Date();
                         const isAtiva = dataAtual >= inicioReal;
                         
@@ -388,15 +410,23 @@ const ProgressAdmin = () => {
                         );
                       })()}
                     </div>
-                    <button
-                      onClick={() => {
-                        setSelectedOrderId(campanha.order.id);
-                        setShowOrderDetails(true);
-                      }}
-                      className="text-orange-600 hover:text-orange-700 text-xs font-medium bg-orange-50 hover:bg-orange-100 px-2 py-1 rounded cursor-pointer transition-colors mt-1 self-start"
-                    >
-                      Ver Detalhes
-                    </button>
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      <button
+                        onClick={() => setModalArtesOrderId(campanha.orderId)}
+                        className="text-white bg-orange-500 hover:bg-orange-600 text-xs font-medium px-3 py-1.5 rounded-md cursor-pointer transition-colors"
+                      >
+                        Ver Artes ({campanha.artes.length})
+                      </button>
+                      <button
+                        onClick={() => {
+                          setSelectedOrderId(campanha.order.id);
+                          setShowOrderDetails(true);
+                        }}
+                        className="text-orange-600 hover:text-orange-700 text-xs font-medium bg-orange-50 hover:bg-orange-100 px-3 py-1.5 rounded-md cursor-pointer transition-colors"
+                      >
+                        Ver Detalhes
+                      </button>
+                    </div>
                   </div>
                 </div>
                 
@@ -405,13 +435,13 @@ const ProgressAdmin = () => {
                   <div className="flex flex-col gap-1 p-2 md:p-4 bg-blue-50 rounded-lg border border-blue-100 hover:bg-blue-100 transition-colors">
                     <p className="text-blue-700 font-medium text-xs">Exibições</p>
                     <p className="text-blue-800 text-sm md:text-lg font-semibold">
-                      {formatarNumero(exibicoesAtuais[campanha.arte.id] || calcularExibicoesDinamicas(campanha.order.inicio_campanha, campanha.order.duracao_campanha))}
+                      {formatarNumero(exibicoesAtuais[campanha.orderId] || calcularExibicoesDinamicas(campanha.order.inicio_campanha, campanha.order.duracao_campanha))}
                     </p>
                   </div>
                   <div className="flex flex-col gap-1 p-2 md:p-4 bg-green-50 rounded-lg border border-green-100 hover:bg-green-100 transition-colors">
                     <p className="text-green-700 font-medium text-xs">Alcance</p>
                     <p className="text-green-800 text-sm md:text-lg font-semibold">
-                      {formatarNumero(alcanceAtual[campanha.arte.id] || calcularAlcanceDinamico(campanha.order.alcance_campanha || 0, campanha.order.inicio_campanha, campanha.order.duracao_campanha))}
+                      {formatarNumero(alcanceAtual[campanha.orderId] || calcularAlcanceDinamico(campanha.order.alcance_campanha || 0, campanha.order.inicio_campanha, campanha.order.duracao_campanha))}
                     </p>
                   </div>
                   <div className="flex flex-col gap-1 p-2 md:p-4 bg-orange-50 rounded-lg border border-orange-100 hover:bg-orange-100 transition-colors">
@@ -439,35 +469,166 @@ const ProgressAdmin = () => {
         />
       )}
 
-      {/* Modal para visualizar imagem */}
-      {modalImage && (
-        <div className="fixed inset-0 z-[9999] flex items-end justify-center md:items-center md:justify-center p-4">
-          <div className="absolute inset-0 bg-black/50" onClick={() => setModalImage(null)}></div>
-          <div className="relative bg-white rounded-xl md:rounded-2xl shadow-xl border border-gray-200 p-4 md:p-7 max-w-2xl w-full flex flex-col items-center opacity-100 z-10" onClick={e => e.stopPropagation()}>
+      {/* Modal de artes da campanha */}
+      {modalArtesOrderId && (
+        <div className="fixed inset-0 z-[9998] flex items-end justify-center md:items-center md:justify-center p-2 sm:p-4">
+          <div className="absolute inset-0 bg-black/40" onClick={() => setModalArtesOrderId(null)}></div>
+          <div className="relative bg-white rounded-t-xl md:rounded-xl lg:rounded-2xl shadow-xl border border-gray-200 max-w-2xl w-full max-h-[75vh] md:max-h-[70vh] overflow-hidden flex flex-col z-10" onClick={(e) => e.stopPropagation()}>
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-4 p-3 sm:p-4 md:p-6 border-b border-gray-200 flex-shrink-0">
+              <div className="flex-1 min-w-0">
+                <h3 className="text-base sm:text-lg md:text-xl font-semibold text-gray-800">
+                  Artes da Campanha {campanhasAgrupadas.find(c => c.orderId === modalArtesOrderId)?.order.nome_campanha || `#${modalArtesOrderId}`}
+                </h3>
+                <p className="text-xs sm:text-sm text-gray-500 mt-1">Visualize as artes desta campanha.</p>
+              </div>
+              <button
+                className="text-gray-400 hover:text-gray-600 text-lg font-bold p-2 bg-gray-100 hover:bg-gray-200 rounded-full transition-colors cursor-pointer flex-shrink-0"
+                onClick={() => setModalArtesOrderId(null)}
+                aria-label="Fechar"
+              >
+                ×
+              </button>
+            </div>
+
+            {/* Content */}
+            <div className="p-3 sm:p-4 md:p-6 overflow-y-auto flex-1">
+              {(() => {
+                const campanhaSelecionada = campanhasAgrupadas.find(c => c.orderId === modalArtesOrderId);
+                if (!campanhaSelecionada || campanhaSelecionada.artes.length === 0) {
+                  return <div className="text-center py-8 text-gray-500">Nenhuma arte encontrada.</div>;
+                }
+
+                // Agrupar artes por tipo de tela (screen_type)
+                const artesEmPe = campanhaSelecionada.artes.filter(arte => !arte.screen_type || arte.screen_type === 'standing' || arte.screen_type === 'up');
+                const artesDeitadas = campanhaSelecionada.artes.filter(arte => arte.screen_type === 'down');
+
+                // Função para renderizar um grupo de artes
+                const renderArtesGroup = (artes: ArteCampanha[], tipoLabel: string) => {
+                  if (artes.length === 0) return null;
+
+                  // Usar a primeira arte como representativa do tipo
+                  const arteRepresentativa = artes[0];
+                  const isArteVideo = arteRepresentativa.caminho_imagem ? isVideo(arteRepresentativa.caminho_imagem) : false;
+
+                  return (
+                    <div key={tipoLabel} className="border border-gray-200 rounded-lg p-3 sm:p-4 bg-gray-50 space-y-4">
+                      {/* Título do tipo */}
+                      <div className="flex items-center gap-2">
+                        <h4 className="text-sm sm:text-base font-semibold text-gray-800">
+                          {tipoLabel}
+                        </h4>
+                        <span className="text-xs text-gray-500">({artes.length} arte{artes.length !== 1 ? 's' : ''})</span>
+                      </div>
+
+                      {/* Imagem representativa única */}
+                      <div className="border border-gray-200 rounded-lg p-2 sm:p-3 flex flex-col gap-2 sm:gap-3 bg-white">
+                        <div className="w-full h-48 sm:h-64 bg-white border border-gray-200 rounded-lg flex items-center justify-center overflow-hidden">
+                          {arteRepresentativa.caminho_imagem ? (
+                            arteRepresentativa.caminho_imagem.startsWith("data:image") || arteRepresentativa.caminho_imagem.match(/\.(jpg|jpeg|png|gif|bmp|webp)$/i) ? (
+                              <img
+                                src={arteRepresentativa.caminho_imagem}
+                                alt={`Arte ${tipoLabel}`}
+                                className="object-contain w-full h-full"
+                              />
+                            ) : isArteVideo ? (
+                              <video
+                                src={arteRepresentativa.caminho_imagem}
+                                className="object-contain w-full h-full"
+                                controls={false}
+                                preload="metadata"
+                              />
+                            ) : (
+                              <Image
+                                src={arteRepresentativa.caminho_imagem}
+                                alt={`Arte ${tipoLabel}`}
+                                width={640}
+                                height={360}
+                                className="object-contain w-full h-full"
+                              />
+                            )
+                          ) : (
+                            <span className="text-gray-400 text-sm">Sem preview disponível</span>
+                          )}
+                        </div>
+                        <div className="flex gap-2">
+                          <button
+                            className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs sm:text-sm font-medium px-2 sm:px-3 py-1.5 sm:py-2 rounded-md sm:rounded-lg transition-colors cursor-pointer disabled:cursor-not-allowed"
+                            onClick={() => arteRepresentativa.caminho_imagem && setModalFile({
+                              url: arteRepresentativa.caminho_imagem,
+                              id: arteRepresentativa.id,
+                              orderId: campanhaSelecionada.orderId,
+                            })}
+                            disabled={!arteRepresentativa.caminho_imagem}
+                          >
+                            Assistir
+                          </button>
+                          <button
+                            className="flex-1 bg-orange-500 hover:bg-orange-600 text-white text-xs sm:text-sm font-medium px-2 sm:px-3 py-1.5 sm:py-2 rounded-md sm:rounded-lg transition-colors cursor-pointer disabled:cursor-not-allowed"
+                            onClick={() => arteRepresentativa.caminho_imagem && handleDownload(arteRepresentativa.caminho_imagem, `pedido-${campanhaSelecionada.orderId}_tipo-${tipoLabel.toLowerCase().replace(' ', '-')}`)}
+                            disabled={!arteRepresentativa.caminho_imagem}
+                          >
+                            Baixar
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                };
+
+                return (
+                  <div className="space-y-4">
+                    {renderArtesGroup(artesEmPe, 'Em pé')}
+                    {renderArtesGroup(artesDeitadas, 'Deitado')}
+                  </div>
+                );
+              })()}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal para assistir arquivo */}
+      {modalFile && (
+        <div className="fixed inset-0 z-[9999] flex items-end justify-center md:items-center md:justify-center p-2 sm:p-4">
+          <div className="absolute inset-0 bg-black/50" onClick={() => setModalFile(null)}></div>
+          <div className="relative bg-white rounded-t-xl md:rounded-xl lg:rounded-2xl shadow-xl border border-gray-200 p-3 sm:p-4 md:p-7 max-w-2xl w-full flex flex-col items-center opacity-100 z-10 max-h-[95vh] md:max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
             <button
-              className="absolute top-2 right-2 cursor-pointer text-gray-400 hover:text-gray-600 text-xl font-bold p-2 bg-gray-100 hover:bg-gray-200 rounded-full transition-colors"
-              onClick={() => setModalImage(null)}
+              className="absolute top-2 right-2 cursor-pointer text-gray-400 hover:text-gray-600 text-xl font-bold p-2 bg-gray-100 hover:bg-gray-200 rounded-full transition-colors flex-shrink-0"
+              onClick={() => setModalFile(null)}
               aria-label="Fechar"
             >
               ×
             </button>
-            {isVideo(modalImage.url) ? (
-              <video
-                src={modalImage.url}
-                controls
-                className="object-contain max-h-[300px] md:max-h-[400px] w-auto rounded mb-4 shadow-lg"
-                autoPlay
-              />
-            ) : (
-              <img
-                src={modalImage.url}
-                alt={modalImage.name}
-                className="object-contain max-h-[300px] md:max-h-[400px] w-auto rounded mb-4 shadow-lg"
-              />
+            {modalFile.anuncioName && (
+              <p className="text-xs sm:text-sm text-gray-500 mb-3 text-center w-full">Anúncio: <span className="font-medium text-gray-700">{modalFile.anuncioName}</span></p>
             )}
+            <div className="w-full flex justify-center mb-4">
+              {modalFile.url.startsWith("data:image") || modalFile.url.match(/\.(jpg|jpeg|png|gif|bmp|webp)$/i) ? (
+                <img
+                  src={modalFile.url}
+                  alt={`Arquivo do pedido ${modalFile.id}`}
+                  className="object-contain max-h-[250px] sm:max-h-[300px] md:max-h-[400px] w-auto rounded shadow-lg"
+                />
+              ) : isVideo(modalFile.url) ? (
+                <video
+                  src={modalFile.url}
+                  controls
+                  className="object-contain max-h-[250px] sm:max-h-[300px] md:max-h-[400px] w-full rounded shadow-lg"
+                  autoPlay
+                />
+              ) : (
+                <Image
+                  src={modalFile.url}
+                  alt={`Arquivo do pedido ${modalFile.id}`}
+                  width={400}
+                  height={400}
+                  className="object-contain max-h-[250px] sm:max-h-[300px] md:max-h-[400px] w-auto rounded shadow-lg"
+                />
+              )}
+            </div>
             <button
-              className="bg-orange-500 hover:bg-orange-600 text-white rounded-lg md:rounded-xl px-4 py-2 font-medium text-sm md:text-base mt-2 cursor-pointer transition-colors"
-              onClick={() => handleDownload(modalImage.url, modalImage.name)}
+              className="bg-orange-500 hover:bg-orange-600 text-white rounded-lg md:rounded-xl px-4 sm:px-6 py-2 font-medium text-xs sm:text-sm md:text-base mt-2 cursor-pointer transition-colors w-full sm:w-auto"
+              onClick={() => handleDownload(modalFile.url, modalFile.orderId ? `pedido-${modalFile.orderId}` : modalFile.id)}
             >
               Baixar arquivo
             </button>
