@@ -442,14 +442,18 @@ export default function SimpleMap({ anunciosFiltrados, onCityFound, userNicho, s
     <div
       className={`${isFullscreen ? 'w-full h-full' : 'hidden xl:flex w-[400px]'} flex-shrink-0 z-0 map-container relative`}
       style={{ 
-        height: isFullscreen ? 'calc(100vh - 180px)' : `${mapHeight}px`, 
+        height: isFullscreen
+          ? isMobileViewport
+            ? `${mapHeight}px`
+            : 'calc(100vh - 180px)'
+          : `${mapHeight}px`, 
         background: '#fff',
         ...(isFullscreen && {
           position: 'fixed',
           top: isMobileViewport ? '0px' : '110px',
           left: '0px',
           right: '0px',
-          bottom: '70px', // Acima do header price
+          bottom: isMobileViewport ? '0px' : '70px',
           zIndex: 50
         })
       }}
