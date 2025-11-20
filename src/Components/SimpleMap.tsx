@@ -135,6 +135,7 @@ export default function SimpleMap({ anunciosFiltrados, onCityFound, userNicho, s
   const [mounted, setMounted] = useState(false)
   const [highlightedMarkerId, setHighlightedMarkerId] = useState<number | null>(null)
   const [mapReady, setMapReady] = useState(false)
+  const [isMobileViewport, setIsMobileViewport] = useState(false)
   
   // Acessar contexto do carrinho
   const cartContext = useCart();
@@ -148,6 +149,15 @@ export default function SimpleMap({ anunciosFiltrados, onCityFound, userNicho, s
   useEffect(() => {
     setMounted(true)
     
+    const updateViewport = () => {
+      if (typeof window !== 'undefined') {
+        setIsMobileViewport(window.innerWidth < 1280)
+      }
+    }
+    
+    updateViewport()
+    window.addEventListener('resize', updateViewport)
+    
     // Cleanup function para limpar estado quando componente for desmontado
     return () => {
       setMounted(false)
@@ -155,6 +165,7 @@ export default function SimpleMap({ anunciosFiltrados, onCityFound, userNicho, s
       setLoading(true)
       setHighlightedMarkerId(null)
       setMapHeight(0)
+      window.removeEventListener('resize', updateViewport)
     }
   }, [])
 
@@ -435,7 +446,7 @@ export default function SimpleMap({ anunciosFiltrados, onCityFound, userNicho, s
         background: '#fff',
         ...(isFullscreen && {
           position: 'fixed',
-          top: '110px', // Posição intermediária para ficar bem entre os headers
+          top: isMobileViewport ? '0px' : '110px',
           left: '0px',
           right: '0px',
           bottom: '70px', // Acima do header price
