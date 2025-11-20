@@ -360,73 +360,45 @@ const ProgressAdmin = () => {
               campanha.order.duracao_campanha
             );
             
-            // Usar a primeira arte como preview
-            const primeiraArte = campanha.artes[0];
-            
             return (
               <div key={campanha.orderId} className="flex flex-col md:flex-row items-start gap-3 md:gap-6 bg-white border border-gray-200 rounded-xl md:rounded-2xl p-3 md:p-6 shadow-sm hover:shadow-md transition-shadow">
-                {/* Imagem/Vídeo + Detalhes */}
-                <div className="flex items-start gap-3 md:gap-4 flex-shrink-0 w-full md:w-auto">
-                  {primeiraArte?.caminho_imagem && (
-                    isVideo(primeiraArte.caminho_imagem) ? (
-                      <div className="w-20 h-20 md:w-32 md:h-32 rounded-xl md:rounded-2xl overflow-hidden relative">
-                        <video
-                          src={primeiraArte.caminho_imagem}
-                          className="w-full h-full object-cover"
-                          controls={false}
-                          preload="metadata"
-                          muted
-                        />
-                      </div>
-                    ) : (
-                      <div className="w-20 h-20 md:w-32 md:h-32 rounded-xl md:rounded-2xl overflow-hidden relative">
-                        <Image
-                          src={primeiraArte.caminho_imagem}
-                          alt={campanha.order.nome_campanha || "Campanha"}
-                          width={128}
-                          height={128}
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                    )
-                  )}
-                  <div className="flex-1 min-w-0 flex flex-col justify-start">
-                    <p className="font-bold text-gray-800 text-sm md:text-base truncate">{campanha.order.nome_campanha || "Campanha sem nome"}</p>
-                    <div className="flex items-center gap-2 mt-1">
-                      {(() => {
-                        const dataInicio = new Date(campanha.order.inicio_campanha);
-                        const inicioReal = new Date(dataInicio);
-                        inicioReal.setHours(7, 0, 0, 0);
-                        const dataAtual = new Date();
-                        const isAtiva = dataAtual >= inicioReal;
-                        
-                        return (
-                          <>
-                            <div className={`w-2 h-2 rounded-full ${isAtiva ? 'bg-green-500' : 'bg-yellow-500'}`}></div>
-                            <span className={`text-xs font-medium ${isAtiva ? 'text-green-600' : 'text-yellow-600'}`}>
-                              {isAtiva ? "Ativa" : "Aguardando"}
-                            </span>
-                          </>
-                        );
-                      })()}
-                    </div>
-                    <div className="flex flex-wrap gap-2 mt-2">
-                      <button
-                        onClick={() => setModalArtesOrderId(campanha.orderId)}
-                        className="text-white bg-orange-500 hover:bg-orange-600 text-xs font-medium px-3 py-1.5 rounded-md cursor-pointer transition-colors"
-                      >
-                        Ver Artes ({campanha.artes.length})
-                      </button>
-                      <button
-                        onClick={() => {
-                          setSelectedOrderId(campanha.order.id);
-                          setShowOrderDetails(true);
-                        }}
-                        className="text-orange-600 hover:text-orange-700 text-xs font-medium bg-orange-50 hover:bg-orange-100 px-3 py-1.5 rounded-md cursor-pointer transition-colors"
-                      >
-                        Ver Detalhes
-                      </button>
-                    </div>
+                {/* Detalhes */}
+                <div className="flex-1 min-w-0 flex flex-col justify-start">
+                  <p className="font-bold text-gray-800 text-sm md:text-base truncate">{campanha.order.nome_campanha || "Campanha sem nome"}</p>
+                  <div className="flex items-center gap-2 mt-1">
+                    {(() => {
+                      const dataInicio = new Date(campanha.order.inicio_campanha);
+                      const inicioReal = new Date(dataInicio);
+                      inicioReal.setHours(7, 0, 0, 0);
+                      const dataAtual = new Date();
+                      const isAtiva = dataAtual >= inicioReal;
+                      
+                      return (
+                        <>
+                          <div className={`w-2 h-2 rounded-full ${isAtiva ? 'bg-green-500' : 'bg-yellow-500'}`}></div>
+                          <span className={`text-xs font-medium ${isAtiva ? 'text-green-600' : 'text-yellow-600'}`}>
+                            {isAtiva ? "Ativa" : "Aguardando"}
+                          </span>
+                        </>
+                      );
+                    })()}
+                  </div>
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    <button
+                      onClick={() => setModalArtesOrderId(campanha.orderId)}
+                      className="text-white bg-orange-500 hover:bg-orange-600 text-xs font-medium px-3 py-1.5 rounded-md cursor-pointer transition-colors"
+                    >
+                      Ver Artes
+                    </button>
+                    <button
+                      onClick={() => {
+                        setSelectedOrderId(campanha.order.id);
+                        setShowOrderDetails(true);
+                      }}
+                      className="text-orange-600 hover:text-orange-700 text-xs font-medium bg-orange-50 hover:bg-orange-100 px-3 py-1.5 rounded-md cursor-pointer transition-colors"
+                    >
+                      Ver Detalhes
+                    </button>
                   </div>
                 </div>
                 
