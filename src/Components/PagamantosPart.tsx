@@ -251,7 +251,59 @@ export const PagamantosPart = () => {
       return;
     }
 
+    const billingType: "fisica" | "juridica" =
+      openAccordion === "juridica" || (!!formData.cnpj && !formData.nome)
+        ? "juridica"
+        : "fisica";
+
+    const billingPayload =
+      billingType === "fisica"
+        ? {
+            nome: formData.nome,
+            cpf: formData.cpf,
+            email: formData.email,
+            telefone: formData.telefone,
+            cep: formData.cep,
+            endereco: formData.endereco,
+            numero: formData.numero,
+            bairro: formData.bairro,
+            complemento: formData.complemento,
+            cidade: formData.cidade,
+            estado: formData.estado,
+          }
+        : {
+            razaoSocial: formData.razaoSocial,
+            cnpj: formData.cnpj,
+            email: formData.email,
+            segmento: formData.segmento,
+            telefonej: formData.telefonej,
+            cepJ: formData.cepJ,
+            enderecoJ: formData.enderecoJ,
+            numeroJ: formData.numeroJ,
+            bairroJ: formData.bairroJ,
+            complementoJ: formData.complementoJ,
+            cidadeJ: formData.cidadeJ,
+            estadoJ: formData.estadoJ,
+          };
+
     try {
+      const validationResponse = await fetch("/api/validate-billing", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ tipo: billingType, dados: billingPayload }),
+      });
+
+      if (!validationResponse.ok) {
+        const validationError = await validationResponse.json();
+        const message =
+          validationError?.errors?.join(" ") ||
+          validationError?.message ||
+          "Erro de validação.";
+        setErro(message);
+        setCarregando(false);
+        return;
+      }
+
       let publicUrl: string | undefined;
 
       // Upload da imagem/arte da campanha
