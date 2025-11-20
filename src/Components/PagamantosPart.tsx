@@ -1,7 +1,7 @@
 // c:\Users\Latitude 5490\Desktop\allsee\src\Components\PagamantosPart.tsx
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Button } from "./ui/button";
 import {
   Select,
@@ -158,6 +158,10 @@ export const PagamantosPart = () => {
   >(null);
   const [carregando, setCarregando] = useState(false);
   const [erro, setErro] = useState("");
+  const lastCepLookup = useRef<{ fisica: string; juridica: string }>({
+    fisica: "",
+    juridica: "",
+  });
 
   // ** (1) Image/Video Upload: State for the selected file URL **
   const [imageUrl, setImageUrl] = useState<string | null>(
@@ -218,6 +222,57 @@ export const PagamantosPart = () => {
     }
     // Nenhum selecionado
     return false;
+  };
+
+  const handleCepAutoFill = async (cepRaw: string, tipo: "fisica" | "juridica") => {
+    const digits = (cepRaw || "").replace(/\D/g, "");
+
+    if (digits.length !== 8) {
+      lastCepLookup.current[tipo] = "";
+      return;
+    }
+
+    if (lastCepLookup.current[tipo] === digits) {
+      return;
+    }
+
+    lastCepLookup.current[tipo] = digits;
+
+    try {
+      const response = await fetch(`https://viacep.com.br/ws/${digits}/json/`);
+      if (!response.ok) {
+        throw new Error("Não foi possível consultar o CEP.");
+      }
+
+      const data = await response.json();
+
+      if (data?.erro) {
+        throw new Error("CEP não encontrado.");
+      }
+
+      const updates =
+        tipo === "fisica"
+          ? {
+              bairro: data.bairro ?? formData.bairro,
+              cidade: data.localidade ?? formData.cidade,
+              estado: data.uf ?? formData.estado,
+              endereco: data.logradouro
+                ? `${data.logradouro}${data.complemento ? ` - ${data.complemento}` : ""}`
+                : formData.endereco,
+            }
+          : {
+              bairroJ: data.bairro ?? formData.bairroJ,
+              cidadeJ: data.localidade ?? formData.cidadeJ,
+              estadoJ: data.uf ?? formData.estadoJ,
+              enderecoJ: data.logradouro
+                ? `${data.logradouro}${data.complemento ? ` - ${data.complemento}` : ""}`
+                : formData.enderecoJ,
+            };
+
+      updateFormData(updates as any);
+    } catch (err: any) {
+      toast.error(err?.message || "Erro ao buscar CEP.");
+    }
   };
 
   const handleCheckout = async () => {
@@ -561,7 +616,11 @@ export const PagamantosPart = () => {
                   placeholder="CEP"
                   className="border rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-200"
                   value={formData.cep}
-                  onChange={(e) => updateFormData({ cep: e.target.value })}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    updateFormData({ cep: value });
+                    handleCepAutoFill(value, "fisica");
+                  }}
                 />
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -692,7 +751,11 @@ export const PagamantosPart = () => {
                   placeholder="CEP"
                   className="border rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-200"
                   value={formData.cepJ}
-                  onChange={(e) => updateFormData({ cepJ: e.target.value })}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    updateFormData({ cepJ: value });
+                    handleCepAutoFill(value, "juridica");
+                  }}
                 />
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
