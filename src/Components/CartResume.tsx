@@ -424,31 +424,56 @@ export default function CartResume({
     // O contexto já gerencia a persistência automaticamente
   };
 
+  // Ref para rastrear o último valor calculado
+  const lastAlcanceRef = useRef<number | null>(null);
+  const produtosRef = useRef<string>('');
+  const durationRef = useRef<string>('');
+
   // Calcular alcance quando produtos ou duração mudarem
   useEffect(() => {
-    if (produtos.length === 0) {
-      updateFormData({ alcance_campanha: 0 });
+    if (typeof window === 'undefined' || !updateFormData) return;
+    
+    // Criar uma chave única para detectar mudanças reais
+    const produtosKey = JSON.stringify(produtos.map(p => ({ id: p.id, views: p.views })));
+    const currentKey = `${produtosKey}-${duration}`;
+    const lastKey = `${produtosRef.current}-${durationRef.current}`;
+    
+    // Se não mudou, não recalcula
+    if (currentKey === lastKey && lastAlcanceRef.current !== null) {
       return;
     }
-
-    let total = 0;
-    produtos.forEach((p) => {
-      let views = Number(p.views) || 0;
-      const durationsTrue = [
-        p.duration_2,
-        p.duration_4,
-        p.duration_12,
-        p.duration_24,
-      ].filter(Boolean).length;
-      if (durationsTrue > 1) {
-        if (duration === "4") views = views * 2;
-        if (duration === "12") views = views * 6;
-        if (duration === "24") views = views * 12;
-      }
-      total += views;
-    });
     
-    updateFormData({ alcance_campanha: total });
+    try {
+      let total = 0;
+      
+      if (produtos.length > 0) {
+        produtos.forEach((p) => {
+          let views = Number(p.views) || 0;
+          const durationsTrue = [
+            p.duration_2,
+            p.duration_4,
+            p.duration_12,
+            p.duration_24,
+          ].filter(Boolean).length;
+          if (durationsTrue > 1) {
+            if (duration === "4") views = views * 2;
+            if (duration === "12") views = views * 6;
+            if (duration === "24") views = views * 12;
+          }
+          total += views;
+        });
+      }
+      
+      // Só atualiza se o valor realmente mudou
+      if (lastAlcanceRef.current !== total) {
+        lastAlcanceRef.current = total;
+        produtosRef.current = produtosKey;
+        durationRef.current = duration;
+        updateFormData({ alcance_campanha: total });
+      }
+    } catch (error) {
+      console.error('Erro ao calcular alcance:', error);
+    }
   }, [produtos, duration, updateFormData]);
 
   const handleRemoveImage = () => {
