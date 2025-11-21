@@ -75,6 +75,7 @@ export default async function handler(
       mode: 'payment',
       success_url: `${req.headers.origin || 'https://allseeads.com.br'}/pagamento-concluido?session_id={CHECKOUT_SESSION_ID}&order_id=${orderId}`,
       cancel_url: `${req.headers.origin || 'https://allseeads.com.br'}/pagamento?canceled=true`,
+      client_reference_id: orderId.toString(), // Garantir que o orderId esteja disponível no webhook
       metadata: {
         orderId: orderId.toString(),
         userId: orderData?.id_user || '',

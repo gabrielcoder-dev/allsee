@@ -199,9 +199,9 @@ export default function NavBarAdmin({ onLogout, mobileOpen, setMobileOpen, selec
                 {isExpanded && (
                   <span className="text-sm md:text-base relative z-10">
                     Campanhas
-                    {(counts.approvals > 0 || counts.replacements > 0) && (
+                    {((counts?.approvals ?? 0) > 0 || (counts?.replacements ?? 0) > 0) && (
                       <span className="absolute -top-1 right-[-24px] bg-red-500 text-white text-xs rounded-full px-1 min-w-[18px] h-[18px] flex items-center justify-center">
-                        {counts.approvals + counts.replacements > 99 ? '99+' : counts.approvals + counts.replacements}
+                        {((counts?.approvals ?? 0) + (counts?.replacements ?? 0)) > 99 ? '99+' : ((counts?.approvals ?? 0) + (counts?.replacements ?? 0))}
                       </span>
                     )}
                   </span>

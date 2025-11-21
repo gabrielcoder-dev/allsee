@@ -22,35 +22,48 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
 
   const fetchApprovalCount = async (): Promise<number> => {
     try {
-      const { data: authData, error: authError } = await supabase.auth.getUser();
-      if (authError || !authData?.user) {
-        console.warn('Usuário não autenticado ao buscar aprovações:', authError);
-        return 0;
-      }
-      const userId = authData.user.id;
-
-      // Buscar artes pendentes de aprovação
+      // Buscar TODAS as artes de campanha (sem filtrar por usuário, pois é admin)
       const { data, error } = await supabase
         .from("arte_campanha")
-        .select("id, order_id:id_order")
-        .eq("id_user", userId);
+        .select("id, id_order")
+        .order("id", { ascending: false });
 
       if (error) {
         console.error('Erro ao buscar aprovações:', error);
         return 0;
       }
 
-      if (!data) return 0;
+      if (!data || data.length === 0) return 0;
 
+      // Agrupar por order_id e verificar status
       const pendingOrders = new Set<string>();
+      const allOrders = new Set<string>();
 
       for (const item of data) {
-        const orderId = item.order_id ?? item.id;
-        const status = localStorage.getItem(`order_${orderId}`) || "pendente";
-        if (status !== 'aprovado' && status !== 'rejeitado') {
-          pendingOrders.add(String(orderId));
+        // Usar id_order se existir, senão usar o id da arte como fallback
+        const orderId = item.id_order ?? item.id;
+        const orderKey = String(orderId);
+        allOrders.add(orderKey);
+        
+        // Verificar status no localStorage (se não existir, é pendente)
+        if (typeof window !== 'undefined') {
+          const status = localStorage.getItem(`order_${orderKey}`) || "pendente";
+          // Contar apenas se for pendente (não aprovado e não rejeitado)
+          if (status !== 'aprovado' && status !== 'rejeitado') {
+            pendingOrders.add(orderKey);
+          }
+        } else {
+          // Se não estiver no browser, considerar como pendente
+          pendingOrders.add(orderKey);
         }
       }
+
+      console.log('🔍 Debug contagem aprovações:', {
+        totalArtes: data.length,
+        totalOrders: allOrders.size,
+        pendingOrders: pendingOrders.size,
+        pendingOrderIds: Array.from(pendingOrders)
+      });
 
       return pendingOrders.size;
     } catch (error) {
@@ -62,7 +75,6 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
   const fetchReplacementCount = async (): Promise<number> => {
     try {
       // Buscar artes de troca pendentes
-      // Se a troca foi deletada do banco, ela não existe mais, então não precisa verificar localStorage
       const { data: replacementData, error: replacementError } = await supabase
         .from("arte_troca_campanha")
         .select("id, id_campanha")
@@ -73,11 +85,37 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
         return 0;
       }
 
-      if (!replacementData) return 0;
+      if (!replacementData || replacementData.length === 0) return 0;
 
-      // Simplesmente contar quantas trocas existem no banco
-      // Se foram deletadas, não aparecerão aqui
-      return replacementData.length;
+      // Contar apenas trocas que não foram processadas (não têm status no localStorage)
+      let pendingCount = 0;
+      const processedTrocas: number[] = [];
+      const pendingTrocas: number[] = [];
+      
+      if (typeof window !== 'undefined') {
+        for (const troca of replacementData) {
+          const status = localStorage.getItem(`replacement_order_${troca.id_campanha}`);
+          // Contar apenas se não tiver status (pendente) ou se o status não for "aceita" ou "não aceita"
+          if (!status || (status !== 'aceita' && status !== 'não aceita')) {
+            pendingCount++;
+            pendingTrocas.push(troca.id_campanha);
+          } else {
+            processedTrocas.push(troca.id_campanha);
+          }
+        }
+      } else {
+        // Se não estiver no browser, contar todas
+        pendingCount = replacementData.length;
+      }
+
+      console.log('🔍 Debug contagem trocas:', {
+        totalTrocas: replacementData.length,
+        pendingCount,
+        pendingTrocas,
+        processedTrocas
+      });
+
+      return pendingCount;
     } catch (error) {
       console.error('Erro ao contar substituições:', error);
       return 0;
@@ -99,7 +137,8 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
 
       console.log('📊 Contadores atualizados:', {
         approvals: approvalCount,
-        replacements: replacementCount
+        replacements: replacementCount,
+        total: approvalCount + replacementCount
       });
     } catch (error) {
       console.error('Erro ao atualizar contadores:', error);

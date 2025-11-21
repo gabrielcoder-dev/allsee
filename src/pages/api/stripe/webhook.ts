@@ -61,6 +61,12 @@ function extractOrderId(metadata?: Stripe.Metadata | null): string | undefined {
   );
 }
 
+// Função para validar se é um UUID válido
+function isValidUUID(str: string): boolean {
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  return uuidRegex.test(str);
+}
+
 async function markOrderAsPaid(orderId: string | number) {
   const orderIdStr = typeof orderId === 'string' ? orderId : orderId.toString();
   if (!orderIdStr) {
@@ -117,28 +123,39 @@ export default async function handler(
       case 'checkout.session.completed':
       case 'checkout.session.async_payment_succeeded': {
         const session = event.data.object as Stripe.Checkout.Session;
-        orderId =
-          extractOrderId(session.metadata) ||
-          session.client_reference_id ||
-          (typeof session.payment_intent === 'string' ? session.payment_intent : undefined);
+        // Priorizar metadata.orderId, depois client_reference_id
+        // NÃO usar payment_intent como fallback pois não é um UUID válido
+        const metadataOrderId = extractOrderId(session.metadata);
+        const clientRefId = session.client_reference_id;
+        
+        orderId = metadataOrderId || clientRefId || undefined;
 
         console.log('🧾 Dados da sessão:', {
           sessionId: session.id,
           paymentStatus: session.payment_status,
+          metadataOrderId,
+          clientReferenceId: clientRefId,
           orderId,
         });
         break;
       }
       case 'payment_intent.succeeded': {
         const paymentIntent = event.data.object as Stripe.PaymentIntent;
-        orderId =
-          extractOrderId(paymentIntent.metadata) ||
-          (typeof paymentIntent.id === 'string' ? paymentIntent.id : undefined);
+        // Tentar pegar o orderId dos metadados do payment_intent
+        // Nota: O Stripe pode copiar automaticamente os metadados da sessão para o payment_intent
+        orderId = extractOrderId(paymentIntent.metadata);
+        
+        // Se não encontrou, logar aviso mas não processar
+        // O evento checkout.session.completed já deve ter processado o pagamento
+        if (!orderId) {
+          console.warn('⚠️ orderId não encontrado nos metadados do payment_intent. O evento checkout.session.completed deve processar este pagamento.');
+        }
 
         console.log('💳 PaymentIntent sucedido:', {
           intentId: paymentIntent.id,
           amountReceived: paymentIntent.amount_received,
           orderId,
+          hasMetadata: !!paymentIntent.metadata,
         });
         break;
       }
@@ -170,6 +187,19 @@ export default async function handler(
     }
 
     if (orderId && SUCCESS_EVENTS.has(event.type)) {
+      // Validar se o orderId é um UUID válido antes de tentar atualizar
+      if (!isValidUUID(orderId)) {
+        console.error('❌ orderId inválido (não é um UUID):', {
+          orderId,
+          eventType: event.type,
+          eventId: event.id,
+        });
+        return res.status(400).json({ 
+          error: 'orderId inválido', 
+          received: true 
+        });
+      }
+      
       await markOrderAsPaid(orderId);
     } else if (SUCCESS_EVENTS.has(event.type) && !orderId) {
       console.error('❌ orderId não encontrado nos metadados para evento de sucesso', {
