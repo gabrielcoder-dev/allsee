@@ -38,8 +38,9 @@ export default function HeaderPolTerm() {
             <Image
               src={logoheader}
               alt="Logo"
-              className="w-24 md:w-32"
+              className="w-24 md:w-32 cursor-pointer"
               priority
+              onClick={() => router.push('/results')}
             />
 
             {/* Botões */}

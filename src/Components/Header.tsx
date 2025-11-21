@@ -45,8 +45,9 @@ export default function Header() {
             <Image
               src={logoheader}
               alt="Logo"
-              className="w-24 md:w-32"
+              className="w-24 md:w-32 cursor-pointer"
               priority
+              onClick={() => router.push('/results')}
             />
 
             {/* Desktop Navigation */}

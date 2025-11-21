@@ -80,7 +80,8 @@ export const HeaderResume = () => {
       <Image
         src={logoImg}
         alt="Logo"
-        className='w-20'
+        className='w-20 cursor-pointer'
+        onClick={() => router.push('/results')}
       />
 
       {/* Pesquisa de localização */}

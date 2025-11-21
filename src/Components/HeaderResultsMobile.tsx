@@ -105,7 +105,8 @@ export default function MobileHeader({
           <Image
             src={logoImg}
             alt="Logo"
-            className='w-20'
+            className='w-20 cursor-pointer'
+            onClick={() => router.push('/results')}
           />
 
           <div className='flex items-center gap-8'>

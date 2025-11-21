@@ -86,7 +86,13 @@ export default function ModalMenu({ open, onClose }: ModalMenuProps) {
           
           {/* Grid de opções principais */}
           <div className="grid grid-cols-2 gap-4 mb-2 mt-12">
-            <button className="flex flex-col items-start justify-center gap-2 p-4 rounded-xl bg-orange-600 text-white font-semibold shadow hover:bg-orange-700 transition cursor-pointer">
+            <button 
+              className="flex flex-col items-start justify-center gap-2 p-4 rounded-xl bg-orange-600 text-white font-semibold shadow hover:bg-orange-700 transition cursor-pointer"
+              onClick={() => {
+                router.push('/results');
+                onClose();
+              }}
+            >
               <Menu size={24} />
               <span className="text-sm text-left leading-tight">escolha onde anunciar</span>
             </button>
