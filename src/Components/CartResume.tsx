@@ -22,7 +22,7 @@ import { Calendar } from "@/Components/ui/calendar";
 function toYMD(date: Date): string {
   return date.toISOString().slice(0, 10);
 }
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   Popover,
   PopoverContent,
@@ -421,13 +421,16 @@ export default function CartResume({
     const ymd = date.toISOString().slice(0, 10);
     setStartDate(ymd);
     updateFormData({ startDate: ymd });
-    // Recalcular alcance quando a data mudar
-    calcularEAtualizarAlcance();
     // O contexto já gerencia a persistência automaticamente
   };
 
-  // Função para calcular o alcance total da campanha
-  const calcularAlcanceTotal = useCallback(() => {
+  // Calcular alcance quando produtos ou duração mudarem
+  useEffect(() => {
+    if (produtos.length === 0) {
+      updateFormData({ alcance_campanha: 0 });
+      return;
+    }
+
     let total = 0;
     produtos.forEach((p) => {
       let views = Number(p.views) || 0;
@@ -444,19 +447,9 @@ export default function CartResume({
       }
       total += views;
     });
-    return total;
-  }, [produtos, duration]);
-
-  // Função para calcular e atualizar alcance no formData
-  const calcularEAtualizarAlcance = useCallback(() => {
-    const alcanceTotal = calcularAlcanceTotal();
-    updateFormData({ alcance_campanha: alcanceTotal });
-  }, [calcularAlcanceTotal, updateFormData]);
-
-  // Calcular alcance quando produtos ou duração mudarem
-  useEffect(() => {
-    calcularEAtualizarAlcance();
-  }, [calcularEAtualizarAlcance]);
+    
+    updateFormData({ alcance_campanha: total });
+  }, [produtos, duration, updateFormData]);
 
   const handleRemoveImage = () => {
     setPreviewUrl(null);
