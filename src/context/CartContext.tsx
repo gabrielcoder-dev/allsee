@@ -31,6 +31,7 @@ type FormData = {
   isArtSelected: boolean
   totensArtes?: Record<string, { file: File; previewUrl: string }>
   orderId?: number | string // ID do pedido quando criado
+  alcance_campanha?: number // Alcance total da campanha
   // Dados de pagamento - Pessoa Física
   nome: string
   cpf: string

@@ -14,7 +14,7 @@ export default async function handler(
   }
 
   try {
-    const { id_user, produtos, total, duracao, status, cliente, arte_campanha_url, campaignName, startDate } = req.body;
+    const { id_user, produtos, total, duracao, status, cliente, arte_campanha_url, campaignName, startDate, alcance_campanha } = req.body;
 
     // Validação básica
     if (!id_user) {
@@ -62,6 +62,7 @@ export default async function handler(
       // Informações da campanha
       nome_campanha: campaignName || null,
       inicio_campanha: startDate || null,
+      alcance_campanha: alcance_campanha ? Number(alcance_campanha) : null,
     };
 
     // Salvar dados do cliente em campos individuais (não como JSON)

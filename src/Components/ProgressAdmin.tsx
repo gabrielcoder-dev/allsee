@@ -70,7 +70,7 @@ const ProgressAdmin = () => {
     return Math.max(0, diasRestantes); // Retorna 0 se já passou do prazo
   };
 
-  // Função para calcular exibições dinâmicas baseadas no horário comercial
+  // Função para calcular exibições dinâmicas: 7h às 17h, a cada hora completa = +9 exibições
   const calcularExibicoesDinamicas = (inicioCampanha: string, duracaoSemanas: number) => {
     const dataInicio = new Date(inicioCampanha);
     const dataAtual = new Date();
@@ -86,77 +86,34 @@ const ProgressAdmin = () => {
     const dataFim = new Date(inicioReal);
     dataFim.setDate(dataFim.getDate() + duracaoDias);
     
-    // Se já terminou, retorna o total máximo possível
+    // Se já terminou, retorna o total máximo possível (todos os dias × 10 horas × 9 exibições)
     if (dataAtual >= dataFim) {
-      return duracaoDias * 10 * 9; // 10 horas por dia × 9 exibições por hora × dias
+      return duracaoDias * 10 * 9;
     }
     
-    let exibicoesTotal = 0;
+    // Calcular quantas horas comerciais (7h-17h) já passaram
+    let horasComerciaisPassadas = 0;
     const dataCalculo = new Date(inicioReal);
     
-    // Percorrer cada dia desde o início real (7h) até hoje
-    while (dataCalculo <= dataAtual && dataCalculo < dataFim) {
-      const diaAtual = new Date(dataCalculo);
-      const hoje = new Date(dataAtual);
+    // Percorrer hora por hora desde o início até agora
+    while (dataCalculo < dataAtual && dataCalculo < dataFim) {
+      const diaSemana = dataCalculo.getDay(); // 0 = domingo, 6 = sábado
+      const horaAtual = dataCalculo.getHours();
       
-      // Verificar se é o dia atual
-      const isDiaAtual = diaAtual.toDateString() === hoje.toDateString();
-      
-      if (isDiaAtual) {
-        // Para o dia atual, calcular apenas as horas já passadas (7h às 17h)
-        const horaAtual = hoje.getHours();
-        
-        // Horário comercial: 7h às 17h (10 horas)
-        const horaInicioComercial = 7;
-        const horaFimComercial = 17;
-        
-        if (horaAtual >= horaInicioComercial && horaAtual < horaFimComercial) {
-          // Calcular horas completas já passadas hoje
-          const horasPassadasHoje = horaAtual - horaInicioComercial;
-          exibicoesTotal += horasPassadasHoje * 9;
-          
-          // Se já passou de 17h, adicionar as 10 horas do dia
-        } else if (horaAtual >= horaFimComercial) {
-          exibicoesTotal += 10 * 9; // 10 horas × 9 exibições
-        }
-        // Se ainda não chegou às 7h, não conta nada para hoje
-      } else {
-        // Para dias anteriores, contar as 10 horas completas do horário comercial
-        exibicoesTotal += 10 * 9; // 10 horas × 9 exibições por hora
+      // Considerar apenas dias úteis (segunda a sexta) e horário comercial (7h às 17h)
+      if (diaSemana !== 0 && diaSemana !== 6 && horaAtual >= 7 && horaAtual < 17) {
+        horasComerciaisPassadas++;
       }
       
-      // Avançar para o próximo dia
-      dataCalculo.setDate(dataCalculo.getDate() + 1);
+      // Avançar 1 hora
+      dataCalculo.setHours(dataCalculo.getHours() + 1);
     }
     
-    return exibicoesTotal;
+    // Cada hora comercial = 9 exibições
+    return horasComerciaisPassadas * 9;
   };
 
-  // Função para calcular horas passadas no horário comercial (mesma lógica do meus-anuncios)
-  const calcularHorasPassadas = (dataInicio: Date, dataAtual: Date) => {
-    let horasPassadas = 0;
-    const dataAtualCalculo = new Date(dataInicio);
-
-    while (dataAtualCalculo < dataAtual) {
-      const diaSemana = dataAtualCalculo.getDay(); // 0 = domingo, 6 = sábado
-      
-      // Pular fins de semana (sábado = 6, domingo = 0)
-      if (diaSemana !== 0 && diaSemana !== 6) {
-        const horaAtual = dataAtualCalculo.getHours();
-        
-        // Horário comercial: 7h às 17h
-        if (horaAtual >= 7 && horaAtual < 17) {
-          horasPassadas++;
-        }
-      }
-      
-      dataAtualCalculo.setHours(dataAtualCalculo.getHours() + 1);
-    }
-
-    return horasPassadas;
-  };
-
-  // Função para calcular alcance dinâmico (mesma lógica do meus-anuncios)
+  // Função para calcular alcance dinâmico baseado na média por dia
   const calcularAlcanceDinamico = (alcanceTotal: number, inicioCampanha: string, duracaoSemanas: number) => {
     const dataInicio = new Date(inicioCampanha);
     const dataAtual = new Date();
@@ -175,26 +132,40 @@ const ProgressAdmin = () => {
     // Se já terminou, retorna o total
     if (dataAtual >= dataFim) return alcanceTotal;
     
-    // Calcular horas passadas desde o início (apenas horário comercial: 7h às 17h)
-    const horasPassadas = calcularHorasPassadas(inicioReal, dataAtual);
-    const totalHoras = duracaoDias * 10; // 10 horas por dia (excluindo fins de semana)
+    // Calcular média de alcance por dia
+    const alcancePorDia = alcanceTotal / duracaoDias;
     
-    const alcancePorHora = Math.floor(alcanceTotal / totalHoras);
-    let resto = alcanceTotal % totalHoras;
+    // Calcular quantos dias úteis já passaram (segunda a sexta)
+    let diasUteisPassados = 0;
+    const dataCalculo = new Date(inicioReal);
     
-    let alcanceAtualCalculado = 0;
-    
-    for (let i = 0; i < horasPassadas; i++) {
-      let alcanceHora = alcancePorHora;
+    while (dataCalculo < dataAtual && dataCalculo < dataFim) {
+      const diaSemana = dataCalculo.getDay(); // 0 = domingo, 6 = sábado
       
-      // Distribuir o resto nas primeiras horas
-      if (resto > 0) {
-        alcanceHora += 1;
-        resto--;
+      // Contar apenas dias úteis (segunda a sexta)
+      if (diaSemana !== 0 && diaSemana !== 6) {
+        // Verificar se é o dia atual
+        const hoje = new Date(dataAtual);
+        const isDiaAtual = dataCalculo.toDateString() === hoje.toDateString();
+        
+        if (isDiaAtual) {
+          // Para o dia atual, verificar se já passou das 7h
+          const horaAtual = hoje.getHours();
+          if (horaAtual >= 7) {
+            diasUteisPassados++;
+          }
+        } else {
+          // Para dias anteriores, contar como dia completo
+          diasUteisPassados++;
+        }
       }
       
-      alcanceAtualCalculado += alcanceHora;
+      // Avançar para o próximo dia
+      dataCalculo.setDate(dataCalculo.getDate() + 1);
     }
+    
+    // Calcular alcance atual: média por dia × dias úteis passados
+    const alcanceAtualCalculado = Math.floor(alcancePorDia * diasUteisPassados);
     
     return alcanceAtualCalculado;
   };

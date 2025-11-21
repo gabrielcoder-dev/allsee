@@ -430,6 +430,7 @@ export const PagamantosPart = () => {
         // Adicionar informações da campanha
         campaignName: formData.campaignName || null,
         startDate: formData.startDate || null,
+        alcance_campanha: formData.alcance_campanha || null,
       };
 
       if (publicUrl) {
