@@ -61,12 +61,6 @@ function extractOrderId(metadata?: Stripe.Metadata | null): string | undefined {
   );
 }
 
-// Função para validar se é um UUID válido
-function isValidUUID(str: string): boolean {
-  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-  return uuidRegex.test(str);
-}
-
 async function markOrderAsPaid(orderId: string | number) {
   const orderIdStr = typeof orderId === 'string' ? orderId : orderId.toString();
   if (!orderIdStr) {
@@ -187,9 +181,11 @@ export default async function handler(
     }
 
     if (orderId && SUCCESS_EVENTS.has(event.type)) {
-      // Validar se o orderId é um UUID válido antes de tentar atualizar
-      if (!isValidUUID(orderId)) {
-        console.error('❌ orderId inválido (não é um UUID):', {
+      // Validar se o orderId não está vazio antes de tentar atualizar
+      // A função atualizarStatusCompra aceita tanto UUID quanto number
+      const orderIdStr = typeof orderId === 'string' ? orderId.trim() : String(orderId);
+      if (!orderIdStr || orderIdStr === '') {
+        console.error('❌ orderId vazio ou inválido:', {
           orderId,
           eventType: event.type,
           eventId: event.id,
@@ -200,11 +196,30 @@ export default async function handler(
         });
       }
       
-      await markOrderAsPaid(orderId);
+      try {
+        await markOrderAsPaid(orderIdStr);
+        console.log(`✅ Webhook processado com sucesso para orderId: ${orderIdStr}`);
+      } catch (error: any) {
+        console.error('❌ Erro ao marcar pedido como pago:', {
+          orderId: orderIdStr,
+          error: error.message,
+          eventType: event.type,
+          eventId: event.id,
+        });
+        // Não retornar erro 500 aqui, pois o webhook foi recebido corretamente
+        // Apenas logar o erro para investigação
+      }
     } else if (SUCCESS_EVENTS.has(event.type) && !orderId) {
       console.error('❌ orderId não encontrado nos metadados para evento de sucesso', {
         eventType: event.type,
         eventId: event.id,
+        sessionData: event.type.includes('checkout.session') ? {
+          metadata: (event.data.object as Stripe.Checkout.Session).metadata,
+          clientReferenceId: (event.data.object as Stripe.Checkout.Session).client_reference_id,
+        } : undefined,
+        paymentIntentData: event.type.includes('payment_intent') ? {
+          metadata: (event.data.object as Stripe.PaymentIntent).metadata,
+        } : undefined,
       });
     }
 

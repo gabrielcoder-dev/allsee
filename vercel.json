@@ -1,0 +1,9 @@
+{
+  "crons": [
+    {
+      "path": "/api/admin/limpar-orders-draft",
+      "schedule": "0 * * * *"
+    }
+  ]
+}
+

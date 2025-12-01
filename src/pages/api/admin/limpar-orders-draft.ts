@@ -1,0 +1,97 @@
+import type { NextApiRequest, NextApiResponse } from 'next';
+import { createClient } from '@supabase/supabase-js';
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
+
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  // Aceitar tanto POST quanto GET (GET para cron jobs)
+  if (req.method !== 'POST' && req.method !== 'GET') {
+    return res.status(405).json({ error: 'Método não permitido' });
+  }
+
+  // Validação de secret para cron jobs (opcional, mas recomendado)
+  // O Vercel envia um header 'authorization' com o secret do cron
+  const cronSecret = process.env.CRON_SECRET;
+  if (cronSecret && req.method === 'GET') {
+    const authHeader = req.headers.authorization;
+    if (authHeader !== `Bearer ${cronSecret}`) {
+      console.warn('⚠️ Tentativa de acesso não autorizada ao cron job');
+      return res.status(401).json({ error: 'Não autorizado' });
+    }
+  }
+
+  try {
+    // Data/hora limite: agora - 12 horas
+    const limite = new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString();
+
+    console.log('🧹 Iniciando limpeza de orders draft antigas...', {
+      limite,
+      agora: new Date().toISOString(),
+    });
+
+    // Primeiro, buscar as orders que serão deletadas para log
+    const { data: ordersToDelete, error: selectError } = await supabase
+      .from('order')
+      .select('id, status, created_at')
+      .eq('status', 'draft')
+      .lt('created_at', limite);
+
+    if (selectError) {
+      console.error('❌ Erro ao buscar orders draft antigas:', selectError);
+      return res.status(500).json({ 
+        error: 'Erro ao buscar orders draft antigas',
+        details: selectError.message 
+      });
+    }
+
+    const quantidadeDeletar = ordersToDelete?.length || 0;
+
+    if (quantidadeDeletar === 0) {
+      console.log('✅ Nenhuma order draft antiga encontrada para deletar');
+      return res.status(200).json({ 
+        success: true,
+        message: 'Nenhuma order draft antiga encontrada',
+        deleted: 0
+      });
+    }
+
+    console.log(`📋 Encontradas ${quantidadeDeletar} orders draft para deletar:`, 
+      ordersToDelete?.map(o => ({ id: o.id, created_at: o.created_at }))
+    );
+
+    // Deletar orders com status "draft" criadas há mais de 12 horas
+    const { error: deleteError, count } = await supabase
+      .from('order')
+      .delete()
+      .eq('status', 'draft')
+      .lt('created_at', limite)
+      .select('id', { count: 'exact', head: false });
+
+    if (deleteError) {
+      console.error('❌ Erro ao deletar orders draft antigas:', deleteError);
+      return res.status(500).json({ 
+        error: 'Erro ao deletar orders draft antigas',
+        details: deleteError.message 
+      });
+    }
+
+    console.log(`✅ ${quantidadeDeletar} orders draft deletadas com sucesso!`);
+
+    return res.status(200).json({ 
+      success: true,
+      message: `${quantidadeDeletar} orders draft antigas deletadas com sucesso!`,
+      deleted: quantidadeDeletar,
+      limite
+    });
+  } catch (error: any) {
+    console.error('❌ Erro inesperado ao limpar orders draft:', error);
+    return res.status(500).json({ 
+      error: 'Erro inesperado ao limpar orders draft',
+      details: error.message 
+    });
+  }
+}
+
