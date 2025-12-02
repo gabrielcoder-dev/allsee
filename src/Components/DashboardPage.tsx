@@ -7,6 +7,7 @@ import AnunciosAdminView from '@/Components/AnunciosAdminView';
 import dynamic from 'next/dynamic';
 import ProgressAdmin from '@/Components/ProgressAdmin';
 import AproveitionAdmin from '@/Components/AproveitionAdmin';
+import NotaFiscalAdmin from '@/Components/NotaFiscalAdmin';
 import { NotificationProvider } from '@/context/NotificationContext';
 
 const MapAdmin = dynamic(() => import('@/Components/MapAdmin'), { ssr: false });
@@ -35,6 +36,9 @@ const DashboardPage = () => {
       break;
     case 'andamento':
       ContentComponent = <ProgressAdmin />;
+      break;
+    case 'nota-fiscal':
+      ContentComponent = <NotaFiscalAdmin />;
       break;
     default:
       ContentComponent = <AnunciosAdminView />;
