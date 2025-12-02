@@ -94,8 +94,8 @@ function MetodoPagamentoContent() {
       alert('ID do pedido não encontrado');
       return;
     }
-    setLoading(true);
-    router.push(`/checkout?orderId=${orderId}`);
+    // TODO: Implementar integração com Asaas para pagamento com cartão
+    alert('A integração com cartão de crédito está sendo atualizada. Em breve estará disponível.');
   };
 
   const handlePixClick = async () => {
@@ -106,52 +106,12 @@ function MetodoPagamentoContent() {
 
     setLoadingPix(true);
     try {
-      const response = await fetch('/api/abacatepay/create-pix-payment', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          orderId,
-          amount: total,
-        }),
-      });
-
-      const data = await response.json();
-
-      console.log('📦 Resposta da API:', data);
-
-      if (!response.ok || !data.success) {
-        throw new Error(data.error || 'Erro ao gerar pagamento PIX');
-      }
-
-      // Extrair dados do PIX - tentar todas as possibilidades
-      const qrCodeText = data.qrCodeText || data.qrCode || data.brCode || '';
-      const paymentLink = data.paymentLink || data.link || '';
-
-      console.log('📋 Dados extraídos:', {
-        qrCodeText: qrCodeText ? `${qrCodeText.substring(0, 50)}...` : 'VAZIO',
-        paymentLink: paymentLink || 'VAZIO',
-        billingId: data.billingId || 'VAZIO'
-      });
-
-      if (!qrCodeText && !paymentLink) {
-        console.error('⚠️ ERRO: Nenhum código PIX ou link recebido!');
-        console.error('Dados completos:', data);
-        alert('Erro: Não foi possível gerar o código PIX. Verifique os logs do console.');
-        return;
-      }
-
-      setPixData({
-        qrCode: qrCodeText,
-        qrCodeText: qrCodeText,
-        paymentLink: paymentLink,
-        billingId: data.billingId || '',
-      });
+      // TODO: Implementar integração com Asaas para pagamento PIX
+      alert('A integração com PIX está sendo atualizada. Em breve estará disponível.');
+      setLoadingPix(false);
     } catch (error: any) {
       console.error('Erro ao criar pagamento PIX:', error);
       alert(`Erro ao gerar pagamento PIX: ${error.message}`);
-    } finally {
       setLoadingPix(false);
     }
   };
