@@ -6,6 +6,7 @@ import { useCart } from '@/context/CartContext';
 import { HeaderResume } from '@/Components/HeaderResume';
 import { SiPix } from 'react-icons/si';
 import { MdCreditCard } from 'react-icons/md';
+import { BsReceipt } from 'react-icons/bs';
 import { Loader2, Copy, Check, ExternalLink } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 
@@ -15,12 +16,20 @@ function MetodoPagamentoContent() {
   const { produtos, selectedDurationGlobal, precoComDesconto } = useCart();
   const [loading, setLoading] = useState(false);
   const [loadingPix, setLoadingPix] = useState(false);
+  const [loadingBoleto, setLoadingBoleto] = useState(false);
   const [orderId, setOrderId] = useState<string | null>(null);
+  const [order, setOrder] = useState<any>(null);
   const [pixData, setPixData] = useState<{
     qrCode: string;
     qrCodeText: string;
     paymentLink: string;
     billingId: string;
+  } | null>(null);
+  const [boletoData, setBoletoData] = useState<{
+    boletoUrl: string;
+    barcode: string;
+    billingId: string;
+    dueDate: string;
   } | null>(null);
   const [copied, setCopied] = useState(false);
 
@@ -30,6 +39,25 @@ function MetodoPagamentoContent() {
       setOrderId(id);
     }
   }, [searchParams]);
+
+  // Buscar dados do pedido
+  useEffect(() => {
+    const fetchOrder = async () => {
+      if (!orderId) return;
+      
+      try {
+        const response = await fetch(`/api/admin/get-order?id=${orderId}`);
+        if (response.ok) {
+          const orderData = await response.json();
+          setOrder(orderData);
+        }
+      } catch (error) {
+        console.error('Erro ao buscar pedido:', error);
+      }
+    };
+
+    fetchOrder();
+  }, [orderId]);
 
   // Função de cálculo do preço original (sem desconto)
   const calcularPrecoOriginal = (item: any) => {
@@ -94,8 +122,58 @@ function MetodoPagamentoContent() {
       alert('ID do pedido não encontrado');
       return;
     }
-    // TODO: Implementar integração com Asaas para pagamento com cartão
-    alert('A integração com cartão de crédito está sendo atualizada. Em breve estará disponível.');
+    setLoading(true);
+    router.push(`/checkout?orderId=${orderId}`);
+  };
+
+  const handleBoletoClick = async () => {
+    if (!orderId) {
+      alert('ID do pedido não encontrado');
+      return;
+    }
+
+    setLoadingBoleto(true);
+    try {
+      // Preparar dados do cliente
+      const customer = order ? {
+        nome: order.nome || '',
+        cpf: order.cpf || '',
+        email: order.email || '',
+        telefone: order.telefone || '',
+        razaoSocial: order.razao_social || '',
+        cnpj: order.cnpj || '',
+        telefonej: order.telefone || '',
+      } : {};
+
+      const response = await fetch('/api/asaas/create-boleto', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          orderId,
+          customer,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.error || 'Erro ao gerar boleto');
+      }
+
+      setBoletoData({
+        boletoUrl: data.boletoUrl || '',
+        barcode: data.barcode || '',
+        billingId: data.billingId || '',
+        dueDate: data.dueDate || '',
+      });
+    } catch (error: any) {
+      console.error('Erro ao criar boleto:', error);
+      alert(`Erro ao gerar boleto: ${error.message}`);
+    } finally {
+      setLoadingBoleto(false);
+    }
   };
 
   const handlePixClick = async () => {
@@ -106,12 +184,44 @@ function MetodoPagamentoContent() {
 
     setLoadingPix(true);
     try {
-      // TODO: Implementar integração com Asaas para pagamento PIX
-      alert('A integração com PIX está sendo atualizada. Em breve estará disponível.');
-      setLoadingPix(false);
+      // Preparar dados do cliente
+      const customer = order ? {
+        nome: order.nome || '',
+        cpf: order.cpf || '',
+        email: order.email || '',
+        telefone: order.telefone || '',
+        razaoSocial: order.razao_social || '',
+        cnpj: order.cnpj || '',
+        telefonej: order.telefone || '',
+      } : {};
+
+      const response = await fetch('/api/asaas/create-pix', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          orderId,
+          customer,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.error || 'Erro ao gerar pagamento PIX');
+      }
+
+      setPixData({
+        qrCode: data.qrCode || '',
+        qrCodeText: data.qrCodeText || '',
+        paymentLink: data.paymentLink || '',
+        billingId: data.billingId || '',
+      });
     } catch (error: any) {
       console.error('Erro ao criar pagamento PIX:', error);
       alert(`Erro ao gerar pagamento PIX: ${error.message}`);
+    } finally {
       setLoadingPix(false);
     }
   };
@@ -170,15 +280,15 @@ function MetodoPagamentoContent() {
         </div>
 
         {/* Métodos de pagamento */}
-        {!pixData && (
+        {!pixData && !boletoData && (
           <div className="bg-white rounded-xl shadow border border-gray-100 p-4 md:p-8 flex flex-col gap-4 w-full max-w-2xl">
             <h2 className="text-xl font-bold mb-2">Escolha o método de pagamento</h2>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {/* PIX */}
               <button
                 onClick={handlePixClick}
-                disabled={loading || loadingPix}
+                disabled={loading || loadingPix || loadingBoleto}
                 className="flex items-center gap-3 p-4 border-2 border-gray-200 rounded-lg hover:border-orange-500 hover:bg-orange-50 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <div className="w-8 h-8 flex items-center justify-center">
@@ -187,10 +297,22 @@ function MetodoPagamentoContent() {
                 <span className="font-medium text-gray-800">pix</span>
               </button>
 
+              {/* Boleto */}
+              <button
+                onClick={handleBoletoClick}
+                disabled={loading || loadingPix || loadingBoleto}
+                className="flex items-center gap-3 p-4 border-2 border-gray-200 rounded-lg hover:border-orange-500 hover:bg-orange-50 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <div className="w-8 h-8 flex items-center justify-center">
+                  <BsReceipt className="w-6 h-6 text-gray-800" />
+                </div>
+                <span className="font-medium text-gray-800">boleto</span>
+              </button>
+
               {/* Cartão de crédito */}
               <button
                 onClick={handleCartaoClick}
-                disabled={loading || loadingPix}
+                disabled={loading || loadingPix || loadingBoleto}
                 className="flex items-center gap-3 p-4 border-2 border-gray-200 rounded-lg hover:border-orange-500 hover:bg-orange-50 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <div className="w-8 h-8 flex items-center justify-center">
@@ -211,6 +333,13 @@ function MetodoPagamentoContent() {
               <div className="flex items-center justify-center gap-2 text-gray-600">
                 <Loader2 className="w-5 h-5 animate-spin" />
                 <span>Gerando QR Code PIX...</span>
+              </div>
+            )}
+
+            {loadingBoleto && (
+              <div className="flex items-center justify-center gap-2 text-gray-600">
+                <Loader2 className="w-5 h-5 animate-spin" />
+                <span>Gerando boleto...</span>
               </div>
             )}
           </div>
@@ -304,6 +433,57 @@ function MetodoPagamentoContent() {
               <div className="text-sm text-gray-500 text-center mt-4">
                 <p>Após o pagamento, você será redirecionado automaticamente.</p>
                 <p className="mt-2">O pagamento pode levar alguns minutos para ser confirmado.</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Exibição do Boleto */}
+        {boletoData && (
+          <div className="bg-white rounded-xl shadow border border-gray-100 p-4 md:p-8 flex flex-col gap-6 w-full max-w-2xl">
+            <div className="flex items-center justify-between">
+              <h2 className="text-xl font-bold">Pagamento via Boleto</h2>
+              <button
+                onClick={() => setBoletoData(null)}
+                className="text-gray-500 hover:text-gray-700 text-sm underline"
+              >
+                Escolher outro método
+              </button>
+            </div>
+
+            <div className="border-b border-gray-200"></div>
+
+            <div className="flex flex-col items-center gap-4">
+              <p className="text-gray-700 text-center">
+                Seu boleto foi gerado com sucesso! O vencimento é em 3 dias úteis.
+              </p>
+
+              {boletoData.dueDate && (
+                <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 w-full">
+                  <p className="text-sm text-orange-800">
+                    <strong>Data de vencimento:</strong> {new Date(boletoData.dueDate).toLocaleDateString('pt-BR')}
+                  </p>
+                </div>
+              )}
+
+              {/* Link do Boleto */}
+              {boletoData.boletoUrl && (
+                <div className="w-full">
+                  <a
+                    href={boletoData.boletoUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors font-medium"
+                  >
+                    <ExternalLink className="w-5 h-5" />
+                    Abrir e imprimir boleto
+                  </a>
+                </div>
+              )}
+
+              <div className="text-sm text-gray-500 text-center mt-4">
+                <p>Após o pagamento, você será notificado automaticamente.</p>
+                <p className="mt-2">O boleto pode levar até 2 dias úteis para ser confirmado após o pagamento.</p>
               </div>
             </div>
           </div>
