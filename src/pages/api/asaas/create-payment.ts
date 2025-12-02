@@ -88,7 +88,7 @@ export default async function handler(
     };
 
     // Criar ou buscar cliente no Asaas
-    let asaasCustomerId: string;
+    let asaasCustomerId: string | undefined;
     
     try {
       // Tentar buscar cliente existente por CPF/CNPJ

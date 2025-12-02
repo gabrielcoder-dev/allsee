@@ -70,7 +70,7 @@ export default async function handler(
     if (customer?.telefonej) customerData.phone = customer.telefonej;
 
     // Criar ou buscar cliente no Asaas
-    let asaasCustomerId: string;
+    let asaasCustomerId: string | undefined;
     
     try {
       if (customerData.cpfCnpj) {
