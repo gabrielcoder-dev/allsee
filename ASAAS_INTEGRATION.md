@@ -14,7 +14,7 @@ Adicione as seguintes variáveis de ambiente no seu `.env` ou no dashboard do Ve
 
 ```env
 # Chave da API do Asaas (obrigatória)
-ASAAS_API_KEY=your_asaas_api_key_here
+KEY_API_ASAAS=your_asaas_api_key_here
 
 # Ambiente (opcional, padrão: sandbox)
 # Use 'production' para produção ou 'sandbox' para testes
@@ -156,7 +156,7 @@ Para usar em produção:
 ## 🐛 Troubleshooting
 
 ### Erro: "ASAAS_API_KEY não configurada"
-- Verifique se a variável de ambiente está configurada
+- Verifique se a variável de ambiente `KEY_API_ASAAS` está configurada
 - Reinicie o servidor após adicionar a variável
 
 ### Pagamento não aparece como pago
