@@ -39,12 +39,15 @@ export default async function handler(
     }
 
     // Log do ambiente sendo usado (sem expor a chave)
-    console.log('🔧 Configuração Asaas:', {
-      environment: ASAAS_ENVIRONMENT,
-      apiUrl: ASAAS_API_URL,
-      hasApiKey: !!ASAAS_API_KEY,
-      apiKeyPrefix: ASAAS_API_KEY ? `${ASAAS_API_KEY.substring(0, 10)}...` : 'não configurada'
-    });
+    console.log('═══════════════════════════════════════════════════════');
+    console.log('🔧 CONFIGURAÇÃO ASAAS:');
+    console.log(`   Ambiente: ${ASAAS_ENVIRONMENT.toUpperCase()}`);
+    console.log(`   URL da API: ${ASAAS_API_URL}`);
+    console.log(`   Chave configurada: ${ASAAS_API_KEY ? 'SIM' : 'NÃO'}`);
+    if (ASAAS_API_KEY) {
+      console.log(`   Prefixo da chave: ${ASAAS_API_KEY.substring(0, 15)}...`);
+    }
+    console.log('═══════════════════════════════════════════════════════');
 
     // Buscar dados do pedido
     const { data: order, error: orderError } = await supabase

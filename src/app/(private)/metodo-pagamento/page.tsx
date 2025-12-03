@@ -170,6 +170,8 @@ function MetodoPagamentoContent() {
           statusText: response.statusText,
           error: data.error,
           errorMessages: errorMessages,
+          environment: data.environment,
+          hint: data.hint,
           details: JSON.parse(JSON.stringify(data.details || {})), // Expandir arrays
           errorsArray: errorsArray,
           fullResponse: JSON.parse(JSON.stringify(data))
@@ -181,6 +183,15 @@ function MetodoPagamentoContent() {
           errorsArray.forEach((err: any, index: number) => {
             console.error(`  Erro ${index + 1}:`, JSON.parse(JSON.stringify(err)));
           });
+        }
+        
+        // Se for erro de ambiente, mostrar mensagem mais clara
+        if (data.hint || errorMessages.includes('não pertence a este ambiente') || errorsArray.some((e: any) => e.code === 'invalid_environment')) {
+          console.error('⚠️ SOLUÇÃO PARA ERRO DE AMBIENTE:');
+          console.error(`   Ambiente configurado: ${data.environment || 'sandbox (padrão)'}`);
+          console.error(`   ${data.hint || 'Verifique se a chave KEY_API_ASAAS corresponde ao ambiente configurado'}`);
+          console.error('   - Chaves de SANDBOX só funcionam com ASAAS_ENVIRONMENT=sandbox');
+          console.error('   - Chaves de PRODUÇÃO só funcionam com ASAAS_ENVIRONMENT=production');
         }
         
         throw new Error(errorMessages);
@@ -253,6 +264,8 @@ function MetodoPagamentoContent() {
           statusText: response.statusText,
           error: data.error,
           errorMessages: errorMessages,
+          environment: data.environment,
+          hint: data.hint,
           details: JSON.parse(JSON.stringify(data.details || {})), // Expandir arrays
           errorsArray: errorsArray,
           fullResponse: JSON.parse(JSON.stringify(data))
@@ -264,6 +277,15 @@ function MetodoPagamentoContent() {
           errorsArray.forEach((err: any, index: number) => {
             console.error(`  Erro ${index + 1}:`, JSON.parse(JSON.stringify(err)));
           });
+        }
+        
+        // Se for erro de ambiente, mostrar mensagem mais clara
+        if (data.hint || errorMessages.includes('não pertence a este ambiente') || errorsArray.some((e: any) => e.code === 'invalid_environment')) {
+          console.error('⚠️ SOLUÇÃO PARA ERRO DE AMBIENTE:');
+          console.error(`   Ambiente configurado: ${data.environment || 'sandbox (padrão)'}`);
+          console.error(`   ${data.hint || 'Verifique se a chave KEY_API_ASAAS corresponde ao ambiente configurado'}`);
+          console.error('   - Chaves de SANDBOX só funcionam com ASAAS_ENVIRONMENT=sandbox');
+          console.error('   - Chaves de PRODUÇÃO só funcionam com ASAAS_ENVIRONMENT=production');
         }
         
         throw new Error(errorMessages);
