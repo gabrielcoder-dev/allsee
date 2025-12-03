@@ -119,7 +119,7 @@ function MetodoPagamentoContent() {
 
   const handleCartaoClick = () => {
     if (!orderId) {
-      alert('ID do pedido não encontrado');
+      console.error('❌ ID do pedido não encontrado');
       return;
     }
     setLoading(true);
@@ -128,7 +128,7 @@ function MetodoPagamentoContent() {
 
   const handleBoletoClick = async () => {
     if (!orderId) {
-      alert('ID do pedido não encontrado');
+      console.error('❌ ID do pedido não encontrado');
       return;
     }
 
@@ -159,6 +159,13 @@ function MetodoPagamentoContent() {
       const data = await response.json();
 
       if (!response.ok || !data.success) {
+        console.error('❌ Erro ao gerar boleto - Resposta da API:', {
+          status: response.status,
+          statusText: response.statusText,
+          error: data.error,
+          details: data.details,
+          fullResponse: data
+        });
         throw new Error(data.error || 'Erro ao gerar boleto');
       }
 
@@ -169,8 +176,17 @@ function MetodoPagamentoContent() {
         dueDate: data.dueDate || '',
       });
     } catch (error: any) {
-      console.error('Erro ao criar boleto:', error);
-      alert(`Erro ao gerar boleto: ${error.message}`);
+      console.error('❌ Erro ao criar boleto:', {
+        message: error.message,
+        error: error,
+        stack: error.stack,
+        orderId: orderId,
+        customer: order ? {
+          nome: order.nome,
+          cpf: order.cpf,
+          email: order.email
+        } : null
+      });
     } finally {
       setLoadingBoleto(false);
     }
@@ -178,7 +194,7 @@ function MetodoPagamentoContent() {
 
   const handlePixClick = async () => {
     if (!orderId) {
-      alert('ID do pedido não encontrado');
+      console.error('❌ ID do pedido não encontrado');
       return;
     }
 
@@ -209,6 +225,13 @@ function MetodoPagamentoContent() {
       const data = await response.json();
 
       if (!response.ok || !data.success) {
+        console.error('❌ Erro ao gerar pagamento PIX - Resposta da API:', {
+          status: response.status,
+          statusText: response.statusText,
+          error: data.error,
+          details: data.details,
+          fullResponse: data
+        });
         throw new Error(data.error || 'Erro ao gerar pagamento PIX');
       }
 
@@ -219,8 +242,17 @@ function MetodoPagamentoContent() {
         billingId: data.billingId || '',
       });
     } catch (error: any) {
-      console.error('Erro ao criar pagamento PIX:', error);
-      alert(`Erro ao gerar pagamento PIX: ${error.message}`);
+      console.error('❌ Erro ao criar pagamento PIX:', {
+        message: error.message,
+        error: error,
+        stack: error.stack,
+        orderId: orderId,
+        customer: order ? {
+          nome: order.nome,
+          cpf: order.cpf,
+          email: order.email
+        } : null
+      });
     } finally {
       setLoadingPix(false);
     }

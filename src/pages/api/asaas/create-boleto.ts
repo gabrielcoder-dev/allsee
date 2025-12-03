@@ -85,8 +85,12 @@ export default async function handler(
           }
         }
       }
-    } catch (error) {
-      console.warn('Erro ao buscar cliente, criando novo:', error);
+    } catch (error: any) {
+      console.warn('⚠️ Erro ao buscar cliente existente, criando novo:', {
+        message: error.message,
+        customerData: { cpfCnpj: customerData.cpfCnpj },
+        error
+      });
     }
 
     if (!asaasCustomerId) {
@@ -103,11 +107,25 @@ export default async function handler(
       );
 
       if (!createCustomerResponse.ok) {
-        const errorData = await createCustomerResponse.json();
+        const errorData = await createCustomerResponse.json().catch(() => ({ message: 'Erro ao parsear resposta de erro' }));
+        const statusText = createCustomerResponse.statusText;
+        const status = createCustomerResponse.status;
+        
+        console.error('❌ Erro ao criar cliente no Asaas:', {
+          status,
+          statusText,
+          url: `${ASAAS_API_URL}/customers`,
+          customerData,
+          errorData,
+          responseHeaders: Object.fromEntries(createCustomerResponse.headers.entries())
+        });
+        
         return res.status(500).json({ 
           success: false, 
           error: 'Erro ao criar cliente no Asaas',
-          details: errorData
+          details: errorData,
+          status,
+          statusText
         });
       }
 
@@ -141,12 +159,27 @@ export default async function handler(
     );
 
     if (!createPaymentResponse.ok) {
-      const errorData = await createPaymentResponse.json();
-      console.error('Erro ao criar boleto:', errorData);
+      const errorData = await createPaymentResponse.json().catch(() => ({ message: 'Erro ao parsear resposta de erro' }));
+      const statusText = createPaymentResponse.statusText;
+      const status = createPaymentResponse.status;
+      
+      console.error('❌ Erro ao criar boleto:', {
+        status,
+        statusText,
+        url: `${ASAAS_API_URL}/payments`,
+        paymentData,
+        errorData,
+        orderId,
+        asaasCustomerId,
+        responseHeaders: Object.fromEntries(createPaymentResponse.headers.entries())
+      });
+      
       return res.status(500).json({ 
         success: false, 
         error: 'Erro ao criar boleto',
-        details: errorData
+        details: errorData,
+        status,
+        statusText
       });
     }
 
@@ -172,10 +205,18 @@ export default async function handler(
     });
 
   } catch (error: any) {
-    console.error('❌ Erro ao criar boleto:', error);
+    console.error('❌ Erro inesperado ao criar boleto:', {
+      message: error.message,
+      stack: error.stack,
+      name: error.name,
+      orderId: req.body?.orderId,
+      customer: req.body?.customer,
+      fullError: error
+    });
     return res.status(500).json({
       success: false,
-      error: error.message || 'Erro desconhecido ao criar boleto'
+      error: error.message || 'Erro desconhecido ao criar boleto',
+      details: process.env.NODE_ENV === 'development' ? { stack: error.stack, name: error.name } : undefined
     });
   }
 }
