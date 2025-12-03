@@ -6,7 +6,8 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
-const ASAAS_API_URL = process.env.ASAAS_ENVIRONMENT === 'production' 
+const ASAAS_ENVIRONMENT = process.env.ASAAS_ENVIRONMENT || 'sandbox';
+const ASAAS_API_URL = ASAAS_ENVIRONMENT === 'production' 
   ? 'https://api.asaas.com/v3'
   : 'https://sandbox.asaas.com/api/v3';
 
@@ -120,6 +121,8 @@ export default async function handler(
         console.error('❌ Erro ao criar cliente no Asaas:', {
           status,
           statusText,
+          environment: ASAAS_ENVIRONMENT,
+          apiUrl: ASAAS_API_URL,
           url: `${ASAAS_API_URL}/customers`,
           customerData,
           errorData: JSON.parse(JSON.stringify(errorData)), // Garantir que arrays sejam expandidos
@@ -127,6 +130,14 @@ export default async function handler(
           errorMessages: errorMessages,
           responseHeaders: Object.fromEntries(createCustomerResponse.headers.entries())
         });
+        
+        // Se o erro for de ambiente inválido, adicionar mensagem mais clara
+        if (errorMessages.includes('não pertence a este ambiente') || errorsArray.some((e: any) => e.code === 'invalid_environment')) {
+          console.error('⚠️ ATENÇÃO: A chave de API não corresponde ao ambiente configurado!');
+          console.error(`   Ambiente configurado: ${ASAAS_ENVIRONMENT}`);
+          console.error(`   URL da API: ${ASAAS_API_URL}`);
+          console.error(`   Solução: Verifique se a chave KEY_API_ASAAS corresponde ao ambiente ${ASAAS_ENVIRONMENT}`);
+        }
         
         // Logar cada erro individualmente se for array
         if (Array.isArray(errorsArray) && errorsArray.length > 0) {
@@ -136,12 +147,22 @@ export default async function handler(
           });
         }
         
+        // Mensagem de erro mais clara para erro de ambiente
+        let finalErrorMessage = errorMessages || 'Erro ao criar cliente no Asaas';
+        if (errorMessages.includes('não pertence a este ambiente') || errorsArray.some((e: any) => e.code === 'invalid_environment')) {
+          finalErrorMessage = `Erro de ambiente: A chave de API não corresponde ao ambiente configurado (${ASAAS_ENVIRONMENT}). Verifique se KEY_API_ASAAS está correta para este ambiente.`;
+        }
+        
         return res.status(500).json({ 
           success: false, 
-          error: errorMessages || 'Erro ao criar cliente no Asaas',
+          error: finalErrorMessage,
           details: errorData,
           status,
-          statusText
+          statusText,
+          environment: ASAAS_ENVIRONMENT,
+          hint: errorMessages.includes('não pertence a este ambiente') 
+            ? `Verifique se a chave KEY_API_ASAAS corresponde ao ambiente ${ASAAS_ENVIRONMENT}. Configure ASAAS_ENVIRONMENT=sandbox para testes ou ASAAS_ENVIRONMENT=production para produção.`
+            : undefined
         });
       }
 

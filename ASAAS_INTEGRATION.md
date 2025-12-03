@@ -159,6 +159,14 @@ Para usar em produção:
 - Verifique se a variável de ambiente `KEY_API_ASAAS` está configurada
 - Reinicie o servidor após adicionar a variável
 
+### Erro: "A chave de API informada não pertence a este ambiente" (invalid_environment)
+- **Causa:** A chave de API não corresponde ao ambiente configurado
+- **Solução:**
+  - Se `ASAAS_ENVIRONMENT=sandbox` (ou não configurado), use uma chave de API de **sandbox**
+  - Se `ASAAS_ENVIRONMENT=production`, use uma chave de API de **produção**
+  - Verifique no painel do Asaas qual ambiente a chave pertence
+  - Certifique-se de que `ASAAS_ENVIRONMENT` e `KEY_API_ASAAS` estão alinhados
+
 ### Pagamento não aparece como pago
 - Verifique se o webhook está configurado corretamente
 - Verifique os logs do webhook no painel do Asaas
