@@ -138,18 +138,34 @@ export default async function handler(
         const statusText = createCustomerResponse.statusText;
         const status = createCustomerResponse.status;
         
+        // Extrair erros do array se existir
+        const errorsArray = errorData?.errors || errorData?.error || [];
+        const errorMessages = Array.isArray(errorsArray) 
+          ? errorsArray.map((err: any) => err.description || err.message || err.code || JSON.stringify(err)).join('; ')
+          : (typeof errorsArray === 'string' ? errorsArray : JSON.stringify(errorsArray));
+        
         console.error('❌ Erro ao criar cliente no Asaas:', {
           status,
           statusText,
           url: `${ASAAS_API_URL}/customers`,
           customerData,
-          errorData,
+          errorData: JSON.parse(JSON.stringify(errorData)), // Garantir que arrays sejam expandidos
+          errorsArray: errorsArray,
+          errorMessages: errorMessages,
           responseHeaders: Object.fromEntries(createCustomerResponse.headers.entries())
         });
         
+        // Logar cada erro individualmente se for array
+        if (Array.isArray(errorsArray) && errorsArray.length > 0) {
+          console.error('📋 Detalhes dos erros do Asaas:');
+          errorsArray.forEach((err: any, index: number) => {
+            console.error(`  Erro ${index + 1}:`, JSON.parse(JSON.stringify(err)));
+          });
+        }
+        
         return res.status(500).json({ 
           success: false, 
-          error: 'Erro ao criar cliente no Asaas',
+          error: errorMessages || 'Erro ao criar cliente no Asaas',
           details: errorData,
           status,
           statusText
@@ -204,21 +220,37 @@ export default async function handler(
       const statusText = createPaymentResponse.statusText;
       const status = createPaymentResponse.status;
       
+      // Extrair erros do array se existir
+      const errorsArray = errorData?.errors || errorData?.error || [];
+      const errorMessages = Array.isArray(errorsArray) 
+        ? errorsArray.map((err: any) => err.description || err.message || err.code || JSON.stringify(err)).join('; ')
+        : (typeof errorsArray === 'string' ? errorsArray : JSON.stringify(errorsArray));
+      
       console.error('❌ Erro ao criar pagamento no Asaas:', {
         status,
         statusText,
         url: `${ASAAS_API_URL}/payments`,
         paymentData,
-        errorData,
+        errorData: JSON.parse(JSON.stringify(errorData)), // Garantir que arrays sejam expandidos
+        errorsArray: errorsArray,
+        errorMessages: errorMessages,
         orderId,
         asaasCustomerId,
         paymentMethod,
         responseHeaders: Object.fromEntries(createPaymentResponse.headers.entries())
       });
       
+      // Logar cada erro individualmente se for array
+      if (Array.isArray(errorsArray) && errorsArray.length > 0) {
+        console.error('📋 Detalhes dos erros do Asaas:');
+        errorsArray.forEach((err: any, index: number) => {
+          console.error(`  Erro ${index + 1}:`, JSON.parse(JSON.stringify(err)));
+        });
+      }
+      
       return res.status(500).json({ 
         success: false, 
-        error: 'Erro ao criar pagamento no Asaas',
+        error: errorMessages || 'Erro ao criar pagamento no Asaas',
         details: errorData,
         status,
         statusText

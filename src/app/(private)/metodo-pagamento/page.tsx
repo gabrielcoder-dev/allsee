@@ -159,14 +159,31 @@ function MetodoPagamentoContent() {
       const data = await response.json();
 
       if (!response.ok || !data.success) {
+        // Extrair erros do array se existir
+        const errorsArray = data.details?.errors || data.details?.error || [];
+        const errorMessages = Array.isArray(errorsArray) 
+          ? errorsArray.map((err: any) => err.description || err.message || err.code || JSON.stringify(err)).join('; ')
+          : (data.error || 'Erro ao gerar boleto');
+        
         console.error('❌ Erro ao gerar boleto - Resposta da API:', {
           status: response.status,
           statusText: response.statusText,
           error: data.error,
-          details: data.details,
-          fullResponse: data
+          errorMessages: errorMessages,
+          details: JSON.parse(JSON.stringify(data.details || {})), // Expandir arrays
+          errorsArray: errorsArray,
+          fullResponse: JSON.parse(JSON.stringify(data))
         });
-        throw new Error(data.error || 'Erro ao gerar boleto');
+        
+        // Logar cada erro individualmente se for array
+        if (Array.isArray(errorsArray) && errorsArray.length > 0) {
+          console.error('📋 Detalhes dos erros do Asaas:');
+          errorsArray.forEach((err: any, index: number) => {
+            console.error(`  Erro ${index + 1}:`, JSON.parse(JSON.stringify(err)));
+          });
+        }
+        
+        throw new Error(errorMessages);
       }
 
       setBoletoData({
@@ -225,14 +242,31 @@ function MetodoPagamentoContent() {
       const data = await response.json();
 
       if (!response.ok || !data.success) {
+        // Extrair erros do array se existir
+        const errorsArray = data.details?.errors || data.details?.error || [];
+        const errorMessages = Array.isArray(errorsArray) 
+          ? errorsArray.map((err: any) => err.description || err.message || err.code || JSON.stringify(err)).join('; ')
+          : (data.error || 'Erro ao gerar pagamento PIX');
+        
         console.error('❌ Erro ao gerar pagamento PIX - Resposta da API:', {
           status: response.status,
           statusText: response.statusText,
           error: data.error,
-          details: data.details,
-          fullResponse: data
+          errorMessages: errorMessages,
+          details: JSON.parse(JSON.stringify(data.details || {})), // Expandir arrays
+          errorsArray: errorsArray,
+          fullResponse: JSON.parse(JSON.stringify(data))
         });
-        throw new Error(data.error || 'Erro ao gerar pagamento PIX');
+        
+        // Logar cada erro individualmente se for array
+        if (Array.isArray(errorsArray) && errorsArray.length > 0) {
+          console.error('📋 Detalhes dos erros do Asaas:');
+          errorsArray.forEach((err: any, index: number) => {
+            console.error(`  Erro ${index + 1}:`, JSON.parse(JSON.stringify(err)));
+          });
+        }
+        
+        throw new Error(errorMessages);
       }
 
       setPixData({
