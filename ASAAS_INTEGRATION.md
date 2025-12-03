@@ -23,11 +23,37 @@ ASAAS_ENVIRONMENT=sandbox
 
 ### Como obter a Chave da API do Asaas:
 
-1. Acesse o painel do Asaas: https://www.asaas.com/
+#### Para Ambiente de Testes (Sandbox):
+
+1. **Acesse o Sandbox do Asaas**: https://sandbox.asaas.com/
+2. **Crie uma conta** no ambiente de sandbox (é uma conta separada da produção)
+   - O cadastro é similar ao ambiente de produção
+   - A conta é aprovada automaticamente no sandbox
+3. **Faça login** na sua conta do sandbox
+4. Vá em **Integrações** → **API** (ou **Configurações** → **Integrações**)
+5. **Gere uma nova chave de API** (exclusiva para sandbox)
+6. Copie a chave e adicione como variável de ambiente:
+   ```env
+   ASAAS_ENVIRONMENT=sandbox
+   KEY_API_ASAAS=sua_chave_de_sandbox_aqui
+   ```
+
+#### Para Ambiente de Produção:
+
+1. **Acesse o painel do Asaas**: https://www.asaas.com/
 2. Faça login na sua conta
-3. Vá em **Integrações** ou **API**
-4. Gere uma nova chave de API
-5. Copie a chave e adicione como variável de ambiente
+3. Vá em **Integrações** → **API**
+4. Gere uma nova chave de API (exclusiva para produção)
+5. Copie a chave e adicione como variável de ambiente:
+   ```env
+   ASAAS_ENVIRONMENT=production
+   KEY_API_ASAAS=sua_chave_de_producao_aqui
+   ```
+
+**⚠️ Importante:**
+- As chaves de API são **diferentes** entre sandbox e produção
+- Você precisa criar contas separadas para cada ambiente
+- A chave de sandbox **não funciona** em produção e vice-versa
 
 ## 🔗 Endpoints Criados
 
@@ -133,11 +159,23 @@ Os seguintes campos são salvos na tabela `order`:
 ## 🧪 Testes
 
 ### Ambiente de Sandbox
-Por padrão, o sistema usa o ambiente de sandbox. Para testar:
 
-1. Configure `ASAAS_ENVIRONMENT=sandbox` (ou deixe vazio)
-2. Use os cartões de teste do Asaas
-3. Para PIX, use valores de teste (consulte documentação do Asaas)
+O ambiente de sandbox permite testar integrações sem cobranças reais. Para usar:
+
+1. **Crie uma conta no sandbox**: https://sandbox.asaas.com/
+2. **Gere uma chave de API** no painel do sandbox
+3. **Configure as variáveis de ambiente**:
+   ```env
+   ASAAS_ENVIRONMENT=sandbox
+   KEY_API_ASAAS=sua_chave_de_sandbox
+   ```
+4. Por padrão, o sistema usa sandbox se `ASAAS_ENVIRONMENT` não estiver configurado
+
+**Recursos do Sandbox:**
+- Teste sem cobranças reais
+- Use cartões de teste do Asaas
+- PIX e boletos são simulados
+- Aprovação automática de conta
 
 ### Produção
 Para usar em produção:
