@@ -41,12 +41,27 @@ export default async function handler(
 
     const paymentId = payment.id;
     const paymentStatus = payment.status;
+    const billingType = payment.billingType; // PIX, BOLETO, CREDIT_CARD
+    const installments = payment.installments || 1; // Número total de parcelas
+    const installmentNumber = payment.installment; // Número da parcela atual (se houver)
+    const value = payment.value;
+
+    // Identificar tipo de pagamento
+    const paymentTypeName = 
+      billingType === 'PIX' ? 'PIX' :
+      billingType === 'BOLETO' ? 'BOLETO' :
+      billingType === 'CREDIT_CARD' ? 'CARTÃO DE CRÉDITO' :
+      billingType || 'DESCONHECIDO';
 
     console.log(`📋 Processando webhook para pedido ${orderId}:`, {
       eventType,
       paymentId,
       paymentStatus,
-      valor: payment.value,
+      billingType: paymentTypeName,
+      installments,
+      installmentNumber,
+      valor: value,
+      isParcelado: installments > 1,
     });
 
     // Verificar se o pedido existe
@@ -79,10 +94,66 @@ export default async function handler(
       paymentStatus === 'CONFIRMED';
 
     if (isPaymentConfirmed) {
-      // Atualizar status do pedido para "pago" usando a função existente
-      try {
-        await atualizarStatusCompra(orderId, 'pago');
-        
+      // Verificar se deve atualizar o status baseado no tipo de pagamento
+      let shouldUpdateStatus = false;
+      let updateReason = '';
+
+      // PIX: Sempre atualiza quando pagar (pagamento único)
+      if (billingType === 'PIX') {
+        shouldUpdateStatus = true;
+        updateReason = 'Pagamento PIX recebido';
+      }
+      // BOLETO: Sempre atualiza quando pagar (pagamento único)
+      else if (billingType === 'BOLETO') {
+        shouldUpdateStatus = true;
+        updateReason = 'Boleto pago';
+      }
+      // CARTÃO DE CRÉDITO: 
+      // - Se não é parcelado (1 parcela), atualiza sempre
+      // - Se é parcelado, atualiza quando for a primeira parcela (entrada)
+      else if (billingType === 'CREDIT_CARD') {
+        if (installments === 1 || !installmentNumber || installmentNumber === 1) {
+          shouldUpdateStatus = true;
+          updateReason = installments > 1 
+            ? `Primeira parcela do cartão recebida (${installmentNumber}/${installments})`
+            : 'Pagamento com cartão confirmado';
+        } else {
+          // Parcela subsequente - não atualiza status, mas registra
+          console.log(`ℹ️ Parcela ${installmentNumber}/${installments} do cartão recebida para pedido ${orderId} - Status não alterado`);
+          return res.status(200).json({ 
+            success: true,
+            message: `Parcela ${installmentNumber}/${installments} recebida - Status não alterado`,
+            orderId,
+            status: order.status,
+            installmentNumber,
+            installments
+          });
+        }
+      }
+      // Outros tipos de pagamento: atualiza sempre
+      else {
+        shouldUpdateStatus = true;
+        updateReason = `Pagamento ${paymentTypeName} recebido`;
+      }
+
+      if (shouldUpdateStatus) {
+        // Verificar se o pedido já está pago (evitar atualizações desnecessárias)
+        if (order.status === 'pago') {
+          console.log(`ℹ️ Pedido ${orderId} já está com status "pago" - Atualizando apenas ID do pagamento`);
+        } else {
+          // Atualizar status do pedido para "pago" usando a função existente
+          try {
+            await atualizarStatusCompra(orderId, 'pago');
+            console.log(`✅ Status do pedido ${orderId} atualizado para "pago" - Motivo: ${updateReason}`);
+          } catch (updateError: any) {
+            console.error('❌ Erro ao atualizar status do pedido:', updateError);
+            return res.status(500).json({ 
+              error: 'Erro ao atualizar status do pedido',
+              details: updateError.message 
+            });
+          }
+        }
+
         // Tentar atualizar também o ID do pagamento no pedido (se a coluna existir)
         try {
           await supabase
@@ -97,19 +168,20 @@ export default async function handler(
           console.warn('⚠️ Aviso: não foi possível salvar asaas_payment_id (coluna pode não existir)');
         }
 
-        console.log(`✅ Pedido ${orderId} atualizado para "pago" com sucesso!`);
+        console.log(`✅ Pedido ${orderId} processado com sucesso!`, {
+          tipo: paymentTypeName,
+          motivo: updateReason,
+          statusAnterior: order.status,
+          statusNovo: 'pago'
+        });
         
         return res.status(200).json({ 
           success: true,
           message: 'Pagamento confirmado e pedido atualizado',
           orderId,
-          status: 'pago'
-        });
-      } catch (updateError: any) {
-        console.error('❌ Erro ao atualizar status do pedido:', updateError);
-        return res.status(500).json({ 
-          error: 'Erro ao atualizar status do pedido',
-          details: updateError.message 
+          status: 'pago',
+          paymentType: paymentTypeName,
+          reason: updateReason
         });
       }
     }
@@ -118,6 +190,7 @@ export default async function handler(
     console.log(`ℹ️ Evento processado mas não requer atualização de status:`, {
       eventType,
       paymentStatus,
+      billingType: paymentTypeName,
       orderId,
     });
 
@@ -126,7 +199,8 @@ export default async function handler(
       message: 'Webhook recebido com sucesso',
       orderId,
       eventType,
-      paymentStatus
+      paymentStatus,
+      paymentType: paymentTypeName
     });
 
   } catch (error: any) {
