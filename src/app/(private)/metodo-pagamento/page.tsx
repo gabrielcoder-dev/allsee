@@ -9,6 +9,7 @@ import { MdCreditCard } from 'react-icons/md';
 import { BsReceipt } from 'react-icons/bs';
 import { Loader2, Copy, Check, ExternalLink } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
+import { toast } from 'sonner';
 
 function MetodoPagamentoContent() {
   const searchParams = useSearchParams();
@@ -186,12 +187,43 @@ function MetodoPagamentoContent() {
         }
         
         // Se for erro de ambiente, mostrar mensagem mais clara
-        if (data.hint || errorMessages.includes('não pertence a este ambiente') || errorsArray.some((e: any) => e.code === 'invalid_environment')) {
+        const isEnvironmentError = data.hint || 
+                                   errorMessages.includes('não pertence a este ambiente') || 
+                                   errorsArray.some((e: any) => e.code === 'invalid_environment');
+        
+        if (isEnvironmentError) {
           console.error('⚠️ SOLUÇÃO PARA ERRO DE AMBIENTE:');
           console.error(`   Ambiente configurado: ${data.environment || 'sandbox (padrão)'}`);
           console.error(`   ${data.hint || 'Verifique se a chave KEY_API_ASAAS corresponde ao ambiente configurado'}`);
           console.error('   - Chaves de SANDBOX só funcionam com ASAAS_ENVIRONMENT=sandbox');
           console.error('   - Chaves de PRODUÇÃO só funcionam com ASAAS_ENVIRONMENT=production');
+          
+          // Mostrar toast com instruções claras
+          const env = data.environment || 'sandbox';
+          const sandboxUrl = 'https://sandbox.asaas.com/';
+          const prodUrl = 'https://www.asaas.com/';
+          const correctUrl = env === 'production' ? prodUrl : sandboxUrl;
+          
+          toast.error('Erro de Configuração do ASAAS', {
+            description: `A chave de API não corresponde ao ambiente ${env}. Acesse ${correctUrl} e gere uma chave de API válida para ${env}.`,
+            duration: 10000,
+            action: {
+              label: 'Ver instruções',
+              onClick: () => {
+                const solutionText = data.solutionSteps 
+                  ? data.solutionSteps.join('\n')
+                  : `1. Acesse ${correctUrl}\n2. Faça login\n3. Vá em Integrações → API\n4. Gere uma chave de API do ambiente ${env}\n5. Configure KEY_API_ASAAS com essa chave\n6. Reinicie o servidor`;
+                console.log('📋 INSTRUÇÕES PARA RESOLVER:', solutionText);
+                toast.info('Verifique o console do navegador para instruções detalhadas');
+              }
+            }
+          });
+        } else {
+          // Erro genérico
+          toast.error('Erro ao gerar boleto', {
+            description: errorMessages || 'Ocorreu um erro inesperado. Tente novamente.',
+            duration: 5000
+          });
         }
         
         throw new Error(errorMessages);
@@ -203,6 +235,8 @@ function MetodoPagamentoContent() {
         billingId: data.billingId || '',
         dueDate: data.dueDate || '',
       });
+      
+      toast.success('Boleto gerado com sucesso!');
     } catch (error: any) {
       console.error('❌ Erro ao criar boleto:', {
         message: error.message,
@@ -215,6 +249,14 @@ function MetodoPagamentoContent() {
           email: order.email
         } : null
       });
+      
+      // Se ainda não foi exibido toast de erro
+      if (!error.message.includes('não pertence a este ambiente')) {
+        toast.error('Erro ao processar pagamento', {
+          description: error.message || 'Tente novamente mais tarde',
+          duration: 5000
+        });
+      }
     } finally {
       setLoadingBoleto(false);
     }
@@ -280,12 +322,43 @@ function MetodoPagamentoContent() {
         }
         
         // Se for erro de ambiente, mostrar mensagem mais clara
-        if (data.hint || errorMessages.includes('não pertence a este ambiente') || errorsArray.some((e: any) => e.code === 'invalid_environment')) {
+        const isEnvironmentError = data.hint || 
+                                   errorMessages.includes('não pertence a este ambiente') || 
+                                   errorsArray.some((e: any) => e.code === 'invalid_environment');
+        
+        if (isEnvironmentError) {
           console.error('⚠️ SOLUÇÃO PARA ERRO DE AMBIENTE:');
           console.error(`   Ambiente configurado: ${data.environment || 'sandbox (padrão)'}`);
           console.error(`   ${data.hint || 'Verifique se a chave KEY_API_ASAAS corresponde ao ambiente configurado'}`);
           console.error('   - Chaves de SANDBOX só funcionam com ASAAS_ENVIRONMENT=sandbox');
           console.error('   - Chaves de PRODUÇÃO só funcionam com ASAAS_ENVIRONMENT=production');
+          
+          // Mostrar toast com instruções claras
+          const env = data.environment || 'sandbox';
+          const sandboxUrl = 'https://sandbox.asaas.com/';
+          const prodUrl = 'https://www.asaas.com/';
+          const correctUrl = env === 'production' ? prodUrl : sandboxUrl;
+          
+          toast.error('Erro de Configuração do ASAAS', {
+            description: `A chave de API não corresponde ao ambiente ${env}. Acesse ${correctUrl} e gere uma chave de API válida para ${env}.`,
+            duration: 10000,
+            action: {
+              label: 'Ver instruções',
+              onClick: () => {
+                const solutionText = data.solutionSteps 
+                  ? data.solutionSteps.join('\n')
+                  : `1. Acesse ${correctUrl}\n2. Faça login\n3. Vá em Integrações → API\n4. Gere uma chave de API do ambiente ${env}\n5. Configure KEY_API_ASAAS com essa chave\n6. Reinicie o servidor`;
+                console.log('📋 INSTRUÇÕES PARA RESOLVER:', solutionText);
+                toast.info('Verifique o console do navegador para instruções detalhadas');
+              }
+            }
+          });
+        } else {
+          // Erro genérico
+          toast.error('Erro ao gerar pagamento PIX', {
+            description: errorMessages || 'Ocorreu um erro inesperado. Tente novamente.',
+            duration: 5000
+          });
         }
         
         throw new Error(errorMessages);
@@ -297,6 +370,8 @@ function MetodoPagamentoContent() {
         paymentLink: data.paymentLink || '',
         billingId: data.billingId || '',
       });
+      
+      toast.success('QR Code PIX gerado com sucesso!');
     } catch (error: any) {
       console.error('❌ Erro ao criar pagamento PIX:', {
         message: error.message,
@@ -309,6 +384,14 @@ function MetodoPagamentoContent() {
           email: order.email
         } : null
       });
+      
+      // Se ainda não foi exibido toast de erro
+      if (!error.message.includes('não pertence a este ambiente')) {
+        toast.error('Erro ao processar pagamento', {
+          description: error.message || 'Tente novamente mais tarde',
+          duration: 5000
+        });
+      }
     } finally {
       setLoadingPix(false);
     }

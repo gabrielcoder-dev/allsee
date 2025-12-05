@@ -34,7 +34,19 @@ export default async function handler(
     if (!ASAAS_API_KEY) {
       return res.status(500).json({ 
         success: false, 
-        error: 'ASAAS_API_KEY não configurada' 
+        error: 'KEY_API_ASAAS não configurada no ambiente',
+        environment: ASAAS_ENVIRONMENT,
+        solution: 'Configure a variável de ambiente KEY_API_ASAAS com uma chave válida do Asaas. Para sandbox, obtenha a chave em https://sandbox.asaas.com/'
+      });
+    }
+
+    // Validar formato básico da chave (chaves do Asaas geralmente começam com letras)
+    if (ASAAS_API_KEY.length < 20) {
+      return res.status(500).json({ 
+        success: false, 
+        error: 'Chave de API inválida (formato muito curto)',
+        environment: ASAAS_ENVIRONMENT,
+        solution: 'Verifique se a chave KEY_API_ASAAS está completa e correta'
       });
     }
 
@@ -46,6 +58,7 @@ export default async function handler(
     console.log(`   Chave configurada: ${ASAAS_API_KEY ? 'SIM' : 'NÃO'}`);
     if (ASAAS_API_KEY) {
       console.log(`   Prefixo da chave: ${ASAAS_API_KEY.substring(0, 15)}...`);
+      console.log(`   Tamanho da chave: ${ASAAS_API_KEY.length} caracteres`);
     }
     console.log('═══════════════════════════════════════════════════════');
 
@@ -240,12 +253,47 @@ export default async function handler(
         });
       }
       
+      // Verificar se é erro de ambiente
+      const isEnvironmentError = errorMessages.includes('não pertence a este ambiente') || 
+                                 errorMessages.toLowerCase().includes('invalid_environment') ||
+                                 errorsArray.some((e: any) => e.code === 'invalid_environment' || e.code === 'INVALID_ENVIRONMENT');
+      
+      if (isEnvironmentError) {
+        console.error('⚠️ ERRO DE AMBIENTE DETECTADO:');
+        console.error(`   Ambiente configurado: ${ASAAS_ENVIRONMENT}`);
+        console.error(`   URL da API: ${ASAAS_API_URL}`);
+        console.error('   SOLUÇÃO:');
+        console.error('   1. Verifique se a chave KEY_API_ASAAS corresponde ao ambiente configurado');
+        console.error(`   2. Para sandbox: Acesse https://sandbox.asaas.com/ e gere uma chave de API`);
+        console.error('   3. Para produção: Acesse https://www.asaas.com/ e gere uma chave de API');
+        console.error('   4. Certifique-se de que ASAAS_ENVIRONMENT e KEY_API_ASAAS estão alinhados');
+        
+        return res.status(500).json({ 
+          success: false, 
+          error: `Erro de ambiente: A chave de API não corresponde ao ambiente ${ASAAS_ENVIRONMENT}`,
+          details: errorData,
+          status,
+          statusText,
+          environment: ASAAS_ENVIRONMENT,
+          hint: `Para resolver: 1) Acesse ${ASAAS_ENVIRONMENT === 'production' ? 'https://www.asaas.com/' : 'https://sandbox.asaas.com/'}, 2) Gere uma chave de API do ambiente ${ASAAS_ENVIRONMENT}, 3) Configure KEY_API_ASAAS com essa chave, 4) Reinicie o servidor`,
+          solutionSteps: [
+            `Acesse ${ASAAS_ENVIRONMENT === 'production' ? 'https://www.asaas.com/' : 'https://sandbox.asaas.com/'}`,
+            'Faça login na sua conta',
+            'Vá em Integrações → API',
+            `Gere uma nova chave de API (do ambiente ${ASAAS_ENVIRONMENT})`,
+            'Copie a chave e configure KEY_API_ASAAS',
+            'Reinicie o servidor'
+          ]
+        });
+      }
+      
       return res.status(500).json({ 
         success: false, 
         error: errorMessages || 'Erro ao criar pagamento PIX',
         details: errorData,
         status,
-        statusText
+        statusText,
+        environment: ASAAS_ENVIRONMENT
       });
     }
 

@@ -193,26 +193,167 @@ Para usar em produção:
 
 ## 🐛 Troubleshooting
 
-### Erro: "ASAAS_API_KEY não configurada"
-- Verifique se a variável de ambiente `KEY_API_ASAAS` está configurada
-- Reinicie o servidor após adicionar a variável
+### Erro: "KEY_API_ASAAS não configurada"
+- **Causa:** A variável de ambiente `KEY_API_ASAAS` não está configurada
+- **Solução:**
+  1. Adicione a variável `KEY_API_ASAAS` no seu arquivo `.env.local` ou no painel do Vercel
+  2. Certifique-se de que o valor está correto (sem espaços extras)
+  3. Reinicie o servidor após adicionar a variável
+  4. No ambiente de desenvolvimento, pare o servidor (`Ctrl+C`) e inicie novamente (`npm run dev`)
 
 ### Erro: "A chave de API informada não pertence a este ambiente" (invalid_environment)
-- **Causa:** A chave de API não corresponde ao ambiente configurado
-- **Solução:**
-  - Se `ASAAS_ENVIRONMENT=sandbox` (ou não configurado), use uma chave de API de **sandbox**
-  - Se `ASAAS_ENVIRONMENT=production`, use uma chave de API de **produção**
-  - Verifique no painel do Asaas qual ambiente a chave pertence
-  - Certifique-se de que `ASAAS_ENVIRONMENT` e `KEY_API_ASAAS` estão alinhados
+
+Este é um dos erros mais comuns ao configurar o ASAAS pela primeira vez.
+
+**Causa:** A chave de API configurada não corresponde ao ambiente especificado.
+
+**Como resolver:**
+
+#### Para Ambiente SANDBOX:
+
+1. **Acesse o Sandbox do Asaas:**
+   - URL: https://sandbox.asaas.com/
+   - ⚠️ **Importante:** Esta é uma conta SEPARADA da produção!
+
+2. **Crie uma conta no sandbox:**
+   - O cadastro é gratuito e aprovado automaticamente
+   - Use um email diferente da sua conta de produção, se necessário
+
+3. **Gere uma chave de API:**
+   - Faça login no painel do sandbox
+   - Vá em **Integrações** → **API** (ou **Configurações** → **Integrações**)
+   - Clique em **Gerar nova chave de API**
+   - Copie a chave COMPLETA (ela será longa, cerca de 40-50 caracteres)
+
+4. **Configure as variáveis de ambiente:**
+   ```env
+   ASAAS_ENVIRONMENT=sandbox
+   KEY_API_ASAAS=sua_chave_de_sandbox_aqui
+   ```
+
+5. **Reinicie o servidor:**
+   - No desenvolvimento: Pare (`Ctrl+C`) e inicie novamente (`npm run dev`)
+   - No Vercel: As variáveis são aplicadas automaticamente no próximo deploy
+
+#### Para Ambiente PRODUÇÃO:
+
+1. **Acesse o painel do Asaas de produção:**
+   - URL: https://www.asaas.com/
+   - Faça login na sua conta de produção
+
+2. **Gere uma chave de API de produção:**
+   - Vá em **Integrações** → **API**
+   - Clique em **Gerar nova chave de API**
+   - ⚠️ **Atenção:** Chaves de produção têm acesso a dinheiro real!
+
+3. **Configure as variáveis de ambiente:**
+   ```env
+   ASAAS_ENVIRONMENT=production
+   KEY_API_ASAAS=sua_chave_de_producao_aqui
+   ```
+
+4. **Reinicie o servidor**
+
+#### Checklist de Verificação:
+
+- ✅ `ASAAS_ENVIRONMENT` está configurado como `sandbox` ou `production`?
+- ✅ `KEY_API_ASAAS` contém uma chave válida do ambiente correto?
+- ✅ A chave foi copiada completamente (sem cortes)?
+- ✅ Não há espaços antes ou depois da chave?
+- ✅ O servidor foi reiniciado após configurar as variáveis?
+
+#### Endpoint de Validação:
+
+Você pode usar o endpoint de validação para testar sua configuração:
+
+```bash
+GET /api/asaas/validate-config
+```
+
+Este endpoint irá:
+- Verificar se a chave está configurada
+- Validar o formato da chave
+- Testar a conexão com a API do Asaas
+- Identificar erros de ambiente
+- Fornecer instruções específicas para resolver problemas
+
+#### Mensagens de Erro Comuns:
+
+- **"KEY_API_ASAAS não configurada"**: Adicione a variável de ambiente
+- **"Chave de API inválida (formato muito curto)"**: A chave está incompleta
+- **"A chave de API não pertence ao ambiente sandbox"**: Use uma chave de sandbox
+- **"A chave de API não pertence ao ambiente production"**: Use uma chave de produção
+
+### Erro: Status 500 ao criar pagamento PIX/Boleto
+
+**Possíveis causas e soluções:**
+
+1. **Chave de API inválida:**
+   - Verifique se a chave está correta e completa
+   - Teste usando o endpoint `/api/asaas/validate-config`
+
+2. **Dados do cliente incompletos:**
+   - Certifique-se de que o CPF/CNPJ está no formato correto (apenas números)
+   - Email deve ser válido
+   - Nome não pode estar vazio
+
+3. **Valor inválido:**
+   - O valor deve ser maior que zero
+   - Use formato decimal (ex: 100.50)
+
+4. **Erro de rede/conexão:**
+   - Verifique sua conexão com a internet
+   - O servidor pode estar temporariamente indisponível
 
 ### Pagamento não aparece como pago
-- Verifique se o webhook está configurado corretamente
-- Verifique os logs do webhook no painel do Asaas
-- Certifique-se de que a URL do webhook está acessível publicamente
+
+**Causa:** O webhook não está configurado ou não está funcionando.
+
+**Solução:**
+1. Configure o webhook no painel do Asaas:
+   - URL do webhook: `https://seu-dominio.com/api/asaas/webhook`
+   - Selecione os eventos: `PAYMENT_RECEIVED`, `PAYMENT_OVERDUE`, etc.
+
+2. Verifique se a URL do webhook está acessível publicamente:
+   - Teste acessando a URL no navegador
+   - Deve retornar um erro de método (isso é normal, significa que está acessível)
+
+3. Verifique os logs do webhook no painel do Asaas:
+   - Veja se há tentativas de envio
+   - Verifique se há erros de autenticação
+
+4. Verifique os logs do servidor:
+   - Os webhooks aparecem nos logs quando são recebidos
+   - Erros são logados automaticamente
 
 ### Erro ao criar cliente
-- Verifique se os dados do cliente estão completos (CPF/CNPJ, email, etc.)
-- O Asaas pode ter limitações nos dados aceitos
+
+**Causa:** Dados do cliente inválidos ou incompletos.
+
+**Solução:**
+- Verifique se o CPF/CNPJ está no formato correto (apenas números, sem pontos ou traços)
+- Certifique-se de que o email é válido
+- Nome não pode estar vazio
+- O Asaas pode ter limitações nos dados aceitos (verifique a documentação)
+
+### Como testar a configuração
+
+1. **Use o endpoint de validação:**
+   ```bash
+   curl http://localhost:3000/api/asaas/validate-config
+   ```
+   ou acesse no navegador: `http://localhost:3000/api/asaas/validate-config`
+
+2. **Verifique os logs do servidor:**
+   - Quando você tenta criar um pagamento, os logs mostram:
+     - Ambiente configurado
+     - URL da API sendo usada
+     - Prefixo da chave (para verificação sem expor a chave completa)
+
+3. **Teste criando um pagamento pequeno:**
+   - Use o ambiente de sandbox
+   - Crie um pagamento de teste
+   - Verifique se é criado com sucesso no painel do Asaas
 
 ## 📚 Documentação do Asaas
 
