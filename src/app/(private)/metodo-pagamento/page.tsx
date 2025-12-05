@@ -434,10 +434,6 @@ function MetodoPagamentoContent() {
                 R$ {total.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
               </span>
             </div>
-            
-            <div className="text-sm text-gray-700">
-              Possui cupom? <a href="#" className="text-green-600 hover:underline">Adicionar</a>
-            </div>
           </div>
           
           <div className="border-b border-gray-200 my-2"></div>
