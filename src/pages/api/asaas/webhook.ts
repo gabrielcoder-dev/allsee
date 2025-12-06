@@ -32,12 +32,21 @@ export default async function handler(
     }
 
     // Obter orderId do externalReference
-    const orderId = payment.externalReference;
+    const orderIdRaw = payment.externalReference;
     
-    if (!orderId) {
+    if (!orderIdRaw) {
       console.warn('⚠️ Webhook sem externalReference (orderId)');
       return res.status(400).json({ error: 'externalReference (orderId) não encontrado' });
     }
+
+    // Normalizar orderId (garantir que seja string, removendo espaços se houver)
+    const orderId = typeof orderIdRaw === 'string' ? orderIdRaw.trim() : String(orderIdRaw);
+
+    console.log(`🔍 OrderId recebido:`, {
+      original: orderIdRaw,
+      normalized: orderId,
+      tipo: typeof orderIdRaw
+    });
 
     const paymentId = payment.id;
     const paymentStatus = payment.status;
@@ -64,12 +73,37 @@ export default async function handler(
       isParcelado: installments > 1,
     });
 
-    // Verificar se o pedido existe
-    const { data: order, error: orderError } = await supabase
+    // Verificar se o pedido existe - tentar com o orderId normalizado
+    let order;
+    let orderError;
+    
+    // Tentar buscar primeiro com o orderId como está
+    let { data: orderData, error: orderErrorData } = await supabase
       .from('order')
       .select('id, status, preco')
       .eq('id', orderId)
       .single();
+
+    // Se não encontrar, tentar como número (caso seja um ID numérico)
+    if (orderErrorData || !orderData) {
+      const numericId = Number(orderId);
+      if (!isNaN(numericId)) {
+        console.log(`🔄 Tentando buscar order como número: ${numericId}`);
+        const { data: orderDataNumeric, error: orderErrorNumeric } = await supabase
+          .from('order')
+          .select('id, status, preco')
+          .eq('id', numericId)
+          .single();
+        
+        if (!orderErrorNumeric && orderDataNumeric) {
+          orderData = orderDataNumeric;
+          orderErrorData = null;
+        }
+      }
+    }
+
+    order = orderData;
+    orderError = orderErrorData;
 
     if (orderError || !order) {
       console.error('❌ Pedido não encontrado:', orderId, orderError);
@@ -137,32 +171,102 @@ export default async function handler(
       }
 
       if (shouldUpdateStatus) {
-        // Verificar se o pedido já está pago (evitar atualizações desnecessárias)
-        if (order.status === 'pago') {
-          console.log(`ℹ️ Pedido ${orderId} já está com status "pago" - Atualizando apenas ID do pagamento`);
-        } else {
-          // Atualizar status do pedido para "pago" usando a função existente
+        console.log(`🔄 Iniciando atualização do pedido:`, {
+          orderId: orderId,
+          tipo: typeof orderId,
+          statusAtual: order.status,
+          novoStatus: 'pago'
+        });
+
+        // Atualizar status do pedido diretamente no banco
+        // Primeiro tentar atualizar diretamente com Supabase
+        let updateSuccess = false;
+        
+        try {
+          console.log(`📝 Tentando atualizar status diretamente no Supabase para orderId: ${orderId}...`);
+          
+          const { data: updatedOrder, error: directUpdateError } = await supabase
+            .from('order')
+            .update({ 
+              status: 'pago',
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', orderId)
+            .select('id, status, updated_at')
+            .single();
+
+          if (directUpdateError) {
+            console.error('❌ Erro na atualização direta:', directUpdateError);
+            throw directUpdateError;
+          }
+
+          if (updatedOrder) {
+            console.log(`✅ Status atualizado com sucesso (atualização direta):`, updatedOrder);
+            updateSuccess = true;
+          }
+        } catch (directError: any) {
+          console.warn(`⚠️ Erro na atualização direta, tentando função auxiliar:`, directError);
+          
+          // Se a atualização direta falhar, tentar usando a função auxiliar
           try {
             await atualizarStatusCompra(orderId, 'pago');
-            console.log(`✅ Status do pedido ${orderId} atualizado para "pago" - Motivo: ${updateReason}`);
+            console.log(`✅ Status do pedido ${orderId} atualizado via função auxiliar`);
+            updateSuccess = true;
           } catch (updateError: any) {
-            console.error('❌ Erro ao atualizar status do pedido:', updateError);
+            console.error('❌ Erro ao atualizar status do pedido (função auxiliar também falhou):', updateError);
             return res.status(500).json({ 
               error: 'Erro ao atualizar status do pedido',
-              details: updateError.message 
+              details: updateError.message,
+              directError: directError.message
             });
+          }
+        }
+
+        // Verificar se a atualização realmente funcionou
+        if (updateSuccess) {
+          const { data: verifyOrder, error: verifyError } = await supabase
+            .from('order')
+            .select('id, status')
+            .eq('id', orderId)
+            .single();
+
+          if (verifyError) {
+            console.error('❌ Erro ao verificar atualização:', verifyError);
+          } else if (verifyOrder) {
+            console.log(`✅ Verificação: Status atual do pedido é "${verifyOrder.status}"`);
+            
+            if (verifyOrder.status !== 'pago') {
+              console.error(`❌ PROBLEMA: Status não foi atualizado! Status atual: "${verifyOrder.status}"`);
+              // Tentar atualizar novamente de forma mais forçada
+              const { error: forceUpdateError } = await supabase
+                .from('order')
+                .update({ status: 'pago' })
+                .eq('id', orderId);
+              
+              if (forceUpdateError) {
+                console.error('❌ Erro ao forçar atualização:', forceUpdateError);
+              } else {
+                console.log('✅ Atualização forçada concluída');
+              }
+            }
           }
         }
 
         // Tentar atualizar também o ID do pagamento no pedido (se a coluna existir)
         try {
-          await supabase
+          const { error: paymentIdError } = await supabase
             .from('order')
             .update({ 
               asaas_payment_id: paymentId,
               updated_at: new Date().toISOString()
             })
             .eq('id', orderId);
+          
+          if (paymentIdError) {
+            console.warn('⚠️ Aviso: não foi possível salvar asaas_payment_id:', paymentIdError.message);
+          } else {
+            console.log('✅ asaas_payment_id atualizado com sucesso');
+          }
         } catch (updatePaymentIdError: any) {
           // Ignorar erro se a coluna não existir
           console.warn('⚠️ Aviso: não foi possível salvar asaas_payment_id (coluna pode não existir)');
