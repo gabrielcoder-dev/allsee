@@ -33,6 +33,7 @@ function MetodoPagamentoContent() {
     dueDate: string;
   } | null>(null);
   const [copied, setCopied] = useState(false);
+  const [checkingPayment, setCheckingPayment] = useState(false);
 
   useEffect(() => {
     if (searchParams) {
@@ -403,6 +404,52 @@ function MetodoPagamentoContent() {
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const handleCheckPayment = async () => {
+    if (!orderId) {
+      toast.error('Erro', {
+        description: 'ID do pedido não encontrado',
+        duration: 3000
+      });
+      return;
+    }
+
+    setCheckingPayment(true);
+    try {
+      const response = await fetch(`/api/admin/get-order?id=${orderId}`);
+      
+      if (!response.ok) {
+        throw new Error('Erro ao verificar pagamento');
+      }
+
+      const orderData = await response.json();
+      
+      if (orderData.status === 'pago') {
+        toast.success('Pagamento confirmado!', {
+          description: 'Redirecionando para seus anúncios...',
+          duration: 2000
+        });
+        
+        // Aguardar um pouco para o usuário ver a mensagem
+        setTimeout(() => {
+          router.push('/meus-anuncios');
+        }, 1500);
+      } else {
+        toast.warning('Pagamento ainda não confirmado', {
+          description: 'Aguarde alguns minutos e tente novamente. O pagamento pode levar alguns minutos para ser processado.',
+          duration: 5000
+        });
+      }
+    } catch (error: any) {
+      console.error('Erro ao verificar pagamento:', error);
+      toast.error('Erro ao verificar pagamento', {
+        description: 'Tente novamente em alguns instantes',
+        duration: 4000
+      });
+    } finally {
+      setCheckingPayment(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-[#fcfcfc]">
       <HeaderResume />
@@ -582,20 +629,26 @@ function MetodoPagamentoContent() {
                 </div>
               )}
 
-              {/* Link de pagamento */}
-              {pixData.paymentLink && (
-                <div className="w-full">
-                  <a
-                    href={pixData.paymentLink}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors font-medium"
-                  >
-                    <ExternalLink className="w-5 h-5" />
-                    Abrir link de pagamento
-                  </a>
-                </div>
-              )}
+              {/* Botão "Já paguei" */}
+              <div className="w-full">
+                <button
+                  onClick={handleCheckPayment}
+                  disabled={checkingPayment}
+                  className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {checkingPayment ? (
+                    <>
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                      Verificando...
+                    </>
+                  ) : (
+                    <>
+                      <Check className="w-5 h-5" />
+                      Já paguei
+                    </>
+                  )}
+                </button>
+              </div>
 
               <div className="text-sm text-gray-500 text-center mt-4">
                 <p>Após o pagamento, você será redirecionado automaticamente.</p>

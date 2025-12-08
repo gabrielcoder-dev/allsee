@@ -4,6 +4,7 @@ import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { HeaderResume } from '@/Components/HeaderResume';
 import { Loader2, CreditCard, Lock } from 'lucide-react';
+import { toast } from 'sonner';
 
 function CheckoutContent() {
   const searchParams = useSearchParams();
@@ -138,7 +139,62 @@ function CheckoutContent() {
 
       // Se o pagamento foi confirmado
       if (data.status === 'CONFIRMED') {
-        router.push(`/pagamento-concluido?orderId=${orderId}`);
+        // Mostrar toast de sucesso
+        toast.success('Pagamento confirmado!', {
+          description: 'Redirecionando para seus anúncios...',
+          duration: 2000
+        });
+        
+        // Verificar se o status do pedido foi atualizado para "pago"
+        // Aguardar um pouco para garantir que o banco foi atualizado
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        // Verificar o status do pedido no banco
+        try {
+          const orderResponse = await fetch(`/api/admin/get-order?id=${orderId}`);
+          if (orderResponse.ok) {
+            const orderData = await orderResponse.json();
+            
+            // Se o status já está como "pago", redirecionar direto
+            if (orderData.status === 'pago') {
+              setTimeout(() => {
+                router.push('/meus-anuncios');
+              }, 1500);
+            } else {
+              // Se ainda não está atualizado, aguardar mais um pouco e verificar novamente
+              await new Promise(resolve => setTimeout(resolve, 1000));
+              const orderResponse2 = await fetch(`/api/admin/get-order?id=${orderId}`);
+              if (orderResponse2.ok) {
+                const orderData2 = await orderResponse2.json();
+                if (orderData2.status === 'pago') {
+                  setTimeout(() => {
+                    router.push('/meus-anuncios');
+                  }, 500);
+                } else {
+                  // Mesmo que não esteja atualizado ainda, redirecionar (o webhook vai atualizar)
+                  setTimeout(() => {
+                    router.push('/meus-anuncios');
+                  }, 500);
+                }
+              } else {
+                setTimeout(() => {
+                  router.push('/meus-anuncios');
+                }, 500);
+              }
+            }
+          } else {
+            // Se não conseguir verificar, redirecionar mesmo assim
+            setTimeout(() => {
+              router.push('/meus-anuncios');
+            }, 1500);
+          }
+        } catch (error) {
+          console.error('Erro ao verificar status do pedido:', error);
+          // Em caso de erro, redirecionar mesmo assim
+          setTimeout(() => {
+            router.push('/meus-anuncios');
+          }, 1500);
+        }
       } else {
         // Se precisar de confirmação adicional
         if (data.paymentLink) {
