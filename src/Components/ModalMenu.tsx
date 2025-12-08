@@ -1,6 +1,6 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { X, ChevronDown, ChevronUp, Star, Image as ImageIcon, Menu, List, User, LogOut, MessageCircle, GlobeLockIcon } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { useUserRole } from '@/hooks/useUserRole';
 import ModalLogin from './ModalLogin';
@@ -13,9 +13,15 @@ interface ModalMenuProps {
 export default function ModalMenu({ open, onClose }: ModalMenuProps) {
   const modalRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
+  const pathname = usePathname();
   const { isAdmin } = useUserRole();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
+  
+  // Verificar se está na rota /results
+  const isResultsPage = pathname === '/results';
+  // Verificar se está na rota /meus-anuncios
+  const isMeusAnunciosPage = pathname === '/meus-anuncios';
 
   // Função para fechar o modal com proteção
   const handleClose = () => {
@@ -87,7 +93,11 @@ export default function ModalMenu({ open, onClose }: ModalMenuProps) {
           {/* Grid de opções principais */}
           <div className="grid grid-cols-2 gap-4 mb-2 mt-12">
             <button 
-              className="flex flex-col items-start justify-center gap-2 p-4 rounded-xl bg-orange-600 text-white font-semibold shadow hover:bg-orange-700 transition cursor-pointer"
+              className={`flex flex-col items-start justify-center gap-2 p-4 rounded-xl font-semibold shadow transition cursor-pointer ${
+                isResultsPage 
+                  ? 'bg-orange-600 text-white hover:bg-orange-700' 
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
               onClick={() => {
                 router.push('/results');
                 onClose();
@@ -118,7 +128,11 @@ export default function ModalMenu({ open, onClose }: ModalMenuProps) {
             {/* Botão Meus Anúncios - só aparece quando autenticado */}
             {isAuthenticated && (
               <button
-                className="flex flex-col items-start justify-center gap-2 p-4 rounded-xl bg-gray-100 text-gray-700 font-semibold shadow hover:bg-gray-200 transition cursor-pointer"
+                className={`flex flex-col items-start justify-center gap-2 p-4 rounded-xl font-semibold shadow transition cursor-pointer ${
+                  isMeusAnunciosPage 
+                    ? 'bg-orange-600 text-white hover:bg-orange-700' 
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
                 onClick={() => {
                   router.push('/meus-anuncios');
                   onClose();
