@@ -238,6 +238,24 @@ export default async function handler(
 
     const paymentResult = await createPaymentResponse.json();
 
+    // Verificar se o externalReference foi salvo corretamente
+    console.log('✅ Boleto criado no Asaas:', {
+      paymentId: paymentResult.id,
+      externalReferenceEnviado: paymentData.externalReference,
+      externalReferenceRetornado: paymentResult.externalReference,
+      orderId: orderId,
+      environment: ASAAS_ENVIRONMENT
+    });
+
+    // Se o externalReference não foi retornado, avisar
+    if (!paymentResult.externalReference) {
+      console.warn('⚠️ ATENÇÃO: externalReference não foi retornado na resposta do Asaas!', {
+        paymentId: paymentResult.id,
+        externalReferenceEnviado: paymentData.externalReference,
+        paymentResult: paymentResult
+      });
+    }
+
     // Salvar ID do pagamento no pedido
     await supabase
       .from('order')

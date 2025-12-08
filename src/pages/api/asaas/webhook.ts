@@ -28,15 +28,74 @@ export default async function handler(
     // Verificar se é um evento de pagamento válido
     if (!payment) {
       console.warn('⚠️ Webhook sem dados de pagamento');
+      console.warn('📋 Estrutura completa do evento recebido:', {
+        keys: Object.keys(event),
+        eventType: event.event,
+        hasPayment: !!event.payment,
+        fullEvent: event
+      });
       return res.status(400).json({ error: 'Dados de pagamento não encontrados' });
     }
 
     // Obter orderId do externalReference
-    const orderIdRaw = payment.externalReference;
+    // Tentar múltiplas localizações possíveis
+    let orderIdRaw = payment.externalReference || 
+                     payment.external_reference || 
+                     event.externalReference || 
+                     event.external_reference ||
+                     payment.orderId ||
+                     event.orderId;
+
+    // Log detalhado para debug
+    console.log('🔍 Buscando externalReference em:', {
+      'payment.externalReference': payment.externalReference,
+      'payment.external_reference': payment.external_reference,
+      'event.externalReference': event.externalReference,
+      'event.external_reference': event.external_reference,
+      'payment.orderId': payment.orderId,
+      'event.orderId': event.orderId,
+      'orderIdRaw encontrado': orderIdRaw,
+      'payment keys': Object.keys(payment),
+      'event keys': Object.keys(event)
+    });
     
     if (!orderIdRaw) {
       console.warn('⚠️ Webhook sem externalReference (orderId)');
-      return res.status(400).json({ error: 'externalReference (orderId) não encontrado' });
+      console.warn('📋 Estrutura completa do payment recebido:', {
+        paymentKeys: Object.keys(payment),
+        paymentData: payment,
+        eventKeys: Object.keys(event),
+        fullEvent: event
+      });
+      
+      // Tentar buscar o pedido pelo ID do pagamento (asaas_payment_id)
+      const paymentId = payment.id;
+      if (paymentId) {
+        console.log(`🔄 Tentando buscar pedido pelo asaas_payment_id: ${paymentId}`);
+        const { data: orderByPaymentId, error: orderByPaymentIdError } = await supabase
+          .from('order')
+          .select('id, status, preco')
+          .eq('asaas_payment_id', paymentId)
+          .single();
+        
+        if (!orderByPaymentIdError && orderByPaymentId) {
+          console.log(`✅ Pedido encontrado pelo asaas_payment_id: ${orderByPaymentId.id}`);
+          orderIdRaw = orderByPaymentId.id;
+        } else {
+          console.warn(`⚠️ Não foi possível encontrar pedido pelo asaas_payment_id: ${paymentId}`, orderByPaymentIdError);
+        }
+      }
+      
+      // Se ainda não encontrou, retornar erro
+      if (!orderIdRaw) {
+        return res.status(400).json({ 
+          error: 'externalReference (orderId) não encontrado',
+          receivedPaymentKeys: Object.keys(payment),
+          receivedEventKeys: Object.keys(event),
+          paymentId: payment.id,
+          hint: 'Verifique se o pagamento foi criado com externalReference. O campo pode estar em payment.externalReference ou payment.external_reference. O sistema tentou buscar pelo asaas_payment_id mas não encontrou.'
+        });
+      }
     }
 
     // Normalizar orderId (garantir que seja string, removendo espaços se houver)
