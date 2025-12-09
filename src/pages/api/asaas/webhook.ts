@@ -19,7 +19,16 @@ export default async function handler(
   try {
     const event = req.body;
 
-    console.log('📥 Webhook recebido do Asaas:', JSON.stringify(event, null, 2));
+    // Log completo do webhook recebido
+    console.log('='.repeat(80));
+    console.log('📥 WEBHOOK RECEBIDO DO ASAAS');
+    console.log('='.repeat(80));
+    console.log('📋 Timestamp:', new Date().toISOString());
+    console.log('📋 Headers:', JSON.stringify(req.headers, null, 2));
+    console.log('📋 Body completo:', JSON.stringify(event, null, 2));
+    console.log('📋 Tipo do evento:', event.event);
+    console.log('📋 Chaves do evento:', Object.keys(event));
+    console.log('='.repeat(80));
 
     // O Asaas envia eventos no formato: { event: 'PAYMENT_RECEIVED', payment: {...} }
     const eventType = event.event;
@@ -47,17 +56,21 @@ export default async function handler(
                      event.orderId;
 
     // Log detalhado para debug
-    console.log('🔍 Buscando externalReference em:', {
-      'payment.externalReference': payment.externalReference,
-      'payment.external_reference': payment.external_reference,
-      'event.externalReference': event.externalReference,
-      'event.external_reference': event.external_reference,
-      'payment.orderId': payment.orderId,
-      'event.orderId': event.orderId,
-      'orderIdRaw encontrado': orderIdRaw,
-      'payment keys': Object.keys(payment),
-      'event keys': Object.keys(event)
-    });
+    console.log('='.repeat(80));
+    console.log('🔍 BUSCANDO EXTERNALREFERENCE');
+    console.log('='.repeat(80));
+    console.log('📋 payment.externalReference:', payment.externalReference);
+    console.log('📋 payment.external_reference:', payment.external_reference);
+    console.log('📋 event.externalReference:', event.externalReference);
+    console.log('📋 event.external_reference:', event.external_reference);
+    console.log('📋 payment.orderId:', payment.orderId);
+    console.log('📋 event.orderId:', event.orderId);
+    console.log('📋 orderIdRaw encontrado:', orderIdRaw);
+    console.log('📋 Tipo do orderIdRaw:', typeof orderIdRaw);
+    console.log('📋 Chaves do payment:', Object.keys(payment));
+    console.log('📋 Chaves do event:', Object.keys(event));
+    console.log('📋 Payment completo:', JSON.stringify(payment, null, 2));
+    console.log('='.repeat(80));
     
     if (!orderIdRaw) {
       console.warn('⚠️ Webhook sem externalReference (orderId)');
@@ -86,14 +99,30 @@ export default async function handler(
         }
       }
       
-      // Se ainda não encontrou, retornar erro
+      // Se ainda não encontrou, retornar erro com logs detalhados
       if (!orderIdRaw) {
+        console.error('='.repeat(80));
+        console.error('❌ ERRO: externalReference NÃO ENCONTRADO');
+        console.error('='.repeat(80));
+        console.error('📋 Payment ID:', payment.id);
+        console.error('📋 Payment Status:', payment.status);
+        console.error('📋 Payment BillingType:', payment.billingType);
+        console.error('📋 Payment Value:', payment.value);
+        console.error('📋 Payment completo:', JSON.stringify(payment, null, 2));
+        console.error('📋 Event completo:', JSON.stringify(event, null, 2));
+        console.error('='.repeat(80));
+        
         return res.status(400).json({ 
           error: 'externalReference (orderId) não encontrado',
           receivedPaymentKeys: Object.keys(payment),
           receivedEventKeys: Object.keys(event),
           paymentId: payment.id,
-          hint: 'Verifique se o pagamento foi criado com externalReference. O campo pode estar em payment.externalReference ou payment.external_reference. O sistema tentou buscar pelo asaas_payment_id mas não encontrou.'
+          paymentStatus: payment.status,
+          paymentBillingType: payment.billingType,
+          paymentValue: payment.value,
+          fullPayment: payment,
+          fullEvent: event,
+          hint: 'Verifique se o pagamento foi criado com externalReference. O campo pode estar em payment.externalReference ou payment.external_reference. O sistema tentou buscar pelo asaas_payment_id mas não encontrou. Verifique os logs do servidor para mais detalhes.'
         });
       }
     }

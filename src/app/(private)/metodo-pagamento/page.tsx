@@ -415,15 +415,22 @@ function MetodoPagamentoContent() {
 
     setCheckingPayment(true);
     try {
-      const response = await fetch(`/api/admin/get-order?id=${orderId}`);
+      // Usar o endpoint específico de verificação que consulta tanto banco quanto Asaas
+      const response = await fetch('/api/asaas/check-payment', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ orderId }),
+      });
       
       if (!response.ok) {
         throw new Error('Erro ao verificar pagamento');
       }
 
-      const orderData = await response.json();
+      const data = await response.json();
       
-      if (orderData.status === 'pago') {
+      if (data.success && data.paid) {
         toast.success('Pagamento confirmado!', {
           description: 'Redirecionando para seus anúncios...',
           duration: 2000
@@ -435,7 +442,7 @@ function MetodoPagamentoContent() {
         }, 1500);
       } else {
         toast.warning('Pagamento ainda não confirmado', {
-          description: 'Aguarde alguns minutos e tente novamente. O pagamento pode levar alguns minutos para ser processado.',
+          description: data.message || 'Aguarde alguns minutos e tente novamente. O pagamento pode levar alguns minutos para ser processado.',
           duration: 5000
         });
       }

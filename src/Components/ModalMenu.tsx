@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useState } from 'react';
-import { X, ChevronDown, ChevronUp, Star, Image as ImageIcon, Menu, List, User, LogOut, MessageCircle, GlobeLockIcon } from 'lucide-react';
+import { X, ChevronDown, ChevronUp, Star, Image as ImageIcon, Menu, List, User, LogOut, MessageCircle, GlobeLockIcon, FileText } from 'lucide-react';
 import { useRouter, usePathname } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { useUserRole } from '@/hooks/useUserRole';
@@ -140,6 +140,20 @@ export default function ModalMenu({ open, onClose }: ModalMenuProps) {
               >
                 <List size={24} />
                 <span className="text-sm text-left leading-tight">meus anúncios</span>
+              </button>
+            )}
+
+            {/* Botão Notas Fiscais - só aparece quando autenticado */}
+            {isAuthenticated && (
+              <button
+                className="flex flex-col items-start justify-center gap-2 p-4 rounded-xl bg-gray-100 text-gray-700 font-semibold shadow hover:bg-gray-200 transition cursor-pointer"
+                onClick={() => {
+                  router.push('/notas-fiscais');
+                  onClose();
+                }}
+              >
+                <FileText size={24} />
+                <span className="text-sm text-left leading-tight">notas fiscais</span>
               </button>
             )}
 

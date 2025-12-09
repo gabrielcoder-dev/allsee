@@ -4,11 +4,12 @@
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { useDirectStorageUpload } from '@/hooks/useDirectStorageUpload';
-import { Monitor } from 'lucide-react';
+import { Monitor, FileText, Download, Eye, Loader2 } from 'lucide-react';
 
 // Função para detectar se é vídeo
 const isVideo = (url: string) => {
@@ -67,6 +68,7 @@ interface AnuncioGroup {
 const MeusAnuncios = () => {
   console.log('🚀 COMPONENTE INICIANDO...');
   
+  const router = useRouter();
   const [anuncios, setAnuncios] = useState<AnuncioGroup[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -90,6 +92,10 @@ const MeusAnuncios = () => {
   const [isViewArtsModalOpen, setIsViewArtsModalOpen] = useState(false);
   const [selectedScreenTypeForView, setSelectedScreenTypeForView] = useState<'portrait' | 'landscape' | null>(null);
   const [isTrocaLoading, setIsTrocaLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState<'anuncios' | 'notas'>('anuncios');
+  const [invoices, setInvoices] = useState<any[]>([]);
+  const [loadingInvoices, setLoadingInvoices] = useState(false);
+  const [userId, setUserId] = useState<string | null>(null);
 
   // Hook para upload direto para storage
   const { uploadFile, progress: uploadProgress, isUploading, error: uploadError } = useDirectStorageUpload({
@@ -121,6 +127,49 @@ const MeusAnuncios = () => {
 
     return () => clearInterval(interval);
   }, [orderDetails]);
+
+  // Buscar notas fiscais quando a aba estiver ativa
+  useEffect(() => {
+    if (activeTab === 'notas' && userId) {
+      fetchInvoices();
+    }
+  }, [activeTab, userId]);
+
+  const fetchInvoices = async () => {
+    setLoadingInvoices(true);
+    try {
+      const response = await fetch(`/api/asaas/invoices/list?userId=${userId}`);
+      const data = await response.json();
+
+      if (data.success) {
+        setInvoices(data.invoices || []);
+      } else {
+        toast.error(data.error || 'Erro ao carregar notas fiscais. Tente novamente mais tarde');
+      }
+    } catch (error: any) {
+      console.error('Erro ao buscar notas fiscais:', error);
+      toast.error('Erro ao carregar notas fiscais. Tente novamente mais tarde');
+    } finally {
+      setLoadingInvoices(false);
+    }
+  };
+
+  const handleDownloadInvoice = async (invoiceId: string) => {
+    try {
+      const response = await fetch(`/api/asaas/invoices/download?invoiceId=${invoiceId}`);
+      const data = await response.json();
+
+      if (data.success && data.url) {
+        window.open(data.url, '_blank');
+        toast.success('Nota fiscal aberta');
+      } else {
+        toast.error(data.error || 'Erro ao baixar nota fiscal. Tente novamente');
+      }
+    } catch (error: any) {
+      console.error('Erro ao baixar nota fiscal:', error);
+      toast.error('Erro ao baixar nota fiscal. Tente novamente');
+    }
+  };
 
   useEffect(() => {
     console.log('🚀 useEffect executado - fetchAnuncios iniciando...');
@@ -171,6 +220,7 @@ const MeusAnuncios = () => {
         }
 
         const userId = user.id;
+        setUserId(userId);
         console.log("✅ User ID:", userId);
 
         // Fetch arte_campanha data for the current user
@@ -788,11 +838,120 @@ const summarizeArteStatuses = (artes: ArteResumo[]) => {
             Voltar
           </Link>
           <h1 className="text-3xl font-bold text-orange-600">Meus Anúncios</h1>
+          
+          {/* Tabs */}
+          <div className="flex gap-2 mt-6 border-b border-gray-200">
+            <button
+              onClick={() => setActiveTab('anuncios')}
+              className={`px-4 py-2 font-medium transition-colors ${
+                activeTab === 'anuncios'
+                  ? 'text-orange-600 border-b-2 border-orange-600'
+                  : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              Meus Anúncios
+            </button>
+            <button
+              onClick={() => router.push('/notas-fiscais')}
+              className="px-4 py-2 font-medium transition-colors flex items-center gap-2 text-gray-500 hover:text-gray-700"
+            >
+              <FileText className="w-4 h-4" />
+              Minhas Notas Fiscais
+            </button>
+          </div>
         </div>
       </div>
 
       {/* Conteúdo principal */}
       <div className="px-6 py-4 max-w-4xl mx-auto">
+        {activeTab === 'notas' ? (
+          /* Seção de Notas Fiscais */
+          <div>
+            {loadingInvoices ? (
+              <div className="flex flex-col items-center justify-center py-16">
+                <Loader2 className="w-12 h-12 animate-spin text-orange-600 mb-4" />
+                <p className="text-gray-600">Carregando notas fiscais...</p>
+              </div>
+            ) : invoices.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-16 px-4">
+                <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-6">
+                  <FileText className="w-8 h-8 text-gray-400" />
+                </div>
+                <h2 className="text-xl font-semibold text-gray-700 mb-3 text-center">
+                  Nenhuma nota fiscal encontrada
+                </h2>
+                <p className="text-gray-500 text-center max-w-md">
+                  Suas notas fiscais aparecerão aqui quando forem geradas.
+                </p>
+              </div>
+            ) : (
+              <div className="grid gap-4 md:gap-6 pb-8">
+                {invoices.map((invoice) => (
+                  <div key={invoice.id} className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                    <div className="p-6">
+                      <div className="flex items-start justify-between mb-4">
+                        <div>
+                          <h3 className="text-lg font-semibold text-gray-900 mb-1">
+                            {invoice.order?.nome_campanha || 'Nota Fiscal'}
+                          </h3>
+                          <p className="text-sm text-gray-500">
+                            ID: {invoice.id.substring(0, 20)}...
+                          </p>
+                        </div>
+                        <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                          invoice.status === 'AUTHORIZED' 
+                            ? 'bg-green-100 text-green-800'
+                            : invoice.status === 'CANCELLED'
+                            ? 'bg-red-100 text-red-800'
+                            : 'bg-yellow-100 text-yellow-800'
+                        }`}>
+                          {invoice.status === 'AUTHORIZED' ? 'Autorizada' : 
+                           invoice.status === 'CANCELLED' ? 'Cancelada' : 'Pendente'}
+                        </span>
+                      </div>
+                      
+                      <div className="grid grid-cols-2 gap-4 mb-4">
+                        <div>
+                          <p className="text-xs text-gray-500 mb-1">Valor</p>
+                          <p className="text-lg font-semibold text-gray-900">
+                            R$ {invoice.value?.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) || '0,00'}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-500 mb-1">Data de Emissão</p>
+                          <p className="text-sm font-medium text-gray-900">
+                            {invoice.effectiveDate 
+                              ? new Date(invoice.effectiveDate).toLocaleDateString('pt-BR')
+                              : '-'}
+                          </p>
+                        </div>
+                      </div>
+
+                      {invoice.serviceDescription && (
+                        <div className="mb-4">
+                          <p className="text-xs text-gray-500 mb-1">Descrição</p>
+                          <p className="text-sm text-gray-700">{invoice.serviceDescription}</p>
+                        </div>
+                      )}
+
+                      <div className="flex gap-2 pt-4 border-t border-gray-100">
+                        <button
+                          onClick={() => handleDownloadInvoice(invoice.id)}
+                          className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
+                        >
+                          <Download className="w-4 h-4" />
+                          Baixar PDF
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        ) : (
+          /* Seção de Anúncios (código existente) */
+          <>
         {loading ? (
         <p>Carregando anúncios...</p>
       ) : error ? (
@@ -929,40 +1088,41 @@ const summarizeArteStatuses = (artes: ArteResumo[]) => {
           })}
         </div>
         )}
-      </div>
-      {isArtModalOpen && selectedOrderForArts && (() => {
-        // Agrupar artes por tipo
-        const artesPortrait = selectedOrderForArts.artes.filter(arte => getOrientation(arte.screen_type) === 'portrait');
-        const artesLandscape = selectedOrderForArts.artes.filter(arte => getOrientation(arte.screen_type) === 'landscape');
         
-        return (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={() => {
-            setIsArtModalOpen(false);
-            setSelectedOrderForArts(null);
-            setSelectedOrderIdForTroca(null);
-          }}>
-            <div className="bg-white rounded-2xl w-full max-w-xl mx-auto shadow-2xl max-h-[90vh] overflow-hidden flex flex-col" onClick={(e) => e.stopPropagation()}>
-              <div className="p-4 sm:p-6 border-b border-gray-100 flex items-center justify-between flex-shrink-0">
-                <div>
-                  <h2 className="text-base sm:text-lg font-semibold text-gray-900">Artes do pedido</h2>
-                  <p className="text-xs sm:text-sm text-gray-500 mt-1">
-                    {selectedOrderForArts.nome_campanha}
-                  </p>
+        {/* Modal de Artes */}
+        {isArtModalOpen && selectedOrderForArts && (() => {
+          // Agrupar artes por tipo
+          const artesPortrait = selectedOrderForArts.artes.filter(arte => getOrientation(arte.screen_type) === 'portrait');
+          const artesLandscape = selectedOrderForArts.artes.filter(arte => getOrientation(arte.screen_type) === 'landscape');
+          
+          return (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={() => {
+              setIsArtModalOpen(false);
+              setSelectedOrderForArts(null);
+              setSelectedOrderIdForTroca(null);
+            }}>
+              <div className="bg-white rounded-2xl w-full max-w-xl mx-auto shadow-2xl max-h-[90vh] overflow-hidden flex flex-col" onClick={(e) => e.stopPropagation()}>
+                <div className="p-4 sm:p-6 border-b border-gray-100 flex items-center justify-between flex-shrink-0">
+                  <div>
+                    <h2 className="text-base sm:text-lg font-semibold text-gray-900">Artes do pedido</h2>
+                    <p className="text-xs sm:text-sm text-gray-500 mt-1">
+                      {selectedOrderForArts.nome_campanha}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => {
+                      setIsArtModalOpen(false);
+                      setSelectedOrderForArts(null);
+                      setSelectedOrderIdForTroca(null);
+                    }}
+                    className="p-1 hover:bg-gray-100 rounded-full transition-colors cursor-pointer"
+                  >
+                    <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
                 </div>
-                <button
-                  onClick={() => {
-                    setIsArtModalOpen(false);
-                    setSelectedOrderForArts(null);
-                    setSelectedOrderIdForTroca(null);
-                  }}
-                  className="p-1 hover:bg-gray-100 rounded-full transition-colors cursor-pointer"
-                >
-                  <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              </div>
-              <div className="p-4 sm:p-6 space-y-4 overflow-y-auto flex-1">
+                <div className="p-4 sm:p-6 space-y-4 overflow-y-auto flex-1">
                 {/* Container Em pé */}
                 {artesPortrait.length > 0 && (
                   <div className="border-2 border-gray-200 rounded-xl p-4 bg-gradient-to-br from-orange-50 to-white">
@@ -1040,46 +1200,46 @@ const summarizeArteStatuses = (artes: ArteResumo[]) => {
                     Nenhuma arte encontrada para este pedido.
                   </div>
                 )}
+                </div>
               </div>
             </div>
-          </div>
-        );
-      })()}
-      
-      {/* Modal Ver Artes */}
-      {isViewArtsModalOpen && selectedOrderForArts && selectedScreenTypeForView && (() => {
-        const artesFiltradas = selectedOrderForArts.artes.filter(arte => 
-          getOrientation(arte.screen_type) === selectedScreenTypeForView
-        );
+          );
+        })()}
         
-        return (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={() => {
-            setIsViewArtsModalOpen(false);
-            setSelectedScreenTypeForView(null);
-          }}>
-            <div className="bg-white rounded-2xl w-full max-w-xl mx-auto shadow-2xl max-h-[90vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
-              <div className="p-4 sm:p-6 border-b border-gray-100 flex items-center justify-between flex-shrink-0">
-                <div>
-                  <h2 className="text-base sm:text-lg font-semibold text-gray-900">
-                    Artes {getOrientationLabel(selectedScreenTypeForView)}
-                  </h2>
-                  <p className="text-xs sm:text-sm text-gray-500 mt-1">
-                    {selectedOrderForArts.nome_campanha}
-                  </p>
+        {/* Modal Ver Artes */}
+        {isViewArtsModalOpen && selectedOrderForArts && selectedScreenTypeForView && (() => {
+          const artesFiltradas = selectedOrderForArts.artes.filter(arte => 
+            getOrientation(arte.screen_type) === selectedScreenTypeForView
+          );
+          
+          return (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={() => {
+              setIsViewArtsModalOpen(false);
+              setSelectedScreenTypeForView(null);
+            }}>
+              <div className="bg-white rounded-2xl w-full max-w-xl mx-auto shadow-2xl max-h-[90vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+                <div className="p-4 sm:p-6 border-b border-gray-100 flex items-center justify-between flex-shrink-0">
+                  <div>
+                    <h2 className="text-base sm:text-lg font-semibold text-gray-900">
+                      Artes {getOrientationLabel(selectedScreenTypeForView)}
+                    </h2>
+                    <p className="text-xs sm:text-sm text-gray-500 mt-1">
+                      {selectedOrderForArts.nome_campanha}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => {
+                      setIsViewArtsModalOpen(false);
+                      setSelectedScreenTypeForView(null);
+                    }}
+                    className="p-1 hover:bg-gray-100 rounded-full transition-colors cursor-pointer"
+                  >
+                    <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
                 </div>
-                <button
-                  onClick={() => {
-                    setIsViewArtsModalOpen(false);
-                    setSelectedScreenTypeForView(null);
-                  }}
-                  className="p-1 hover:bg-gray-100 rounded-full transition-colors cursor-pointer"
-                >
-                  <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              </div>
-              <div className="p-4 sm:p-6 space-y-4 overflow-y-auto flex-1">
+                <div className="p-4 sm:p-6 space-y-4 overflow-y-auto flex-1">
                 {artesFiltradas.length === 0 ? (
                   <div className="text-center text-gray-500 py-12">
                     Nenhuma arte encontrada para este tipo.
@@ -1125,14 +1285,14 @@ const summarizeArteStatuses = (artes: ArteResumo[]) => {
                     );
                   })
                 )}
+                </div>
               </div>
             </div>
-          </div>
-        );
-      })()}
+          );
+        })()}
 
-      {/* Modal Trocar Arte Simplificado */}
-      {isTrocaModalOpen && selectedScreenTypeForTroca && selectedOrderIdForTroca && (
+        {/* Modal Trocar Arte Simplificado */}
+        {isTrocaModalOpen && selectedScreenTypeForTroca && selectedOrderIdForTroca && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={() => {
           setIsTrocaModalOpen(false);
           setSelectedScreenTypeForTroca(null);
@@ -1400,8 +1560,8 @@ const summarizeArteStatuses = (artes: ArteResumo[]) => {
         </div>
       )}
 
-      {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={() => {
+        {isModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={() => {
           setIsModalOpen(false);
           setSelectedAnuncioId(null);
           setSelectedOrderIdForTroca(null);
@@ -1485,9 +1645,9 @@ const summarizeArteStatuses = (artes: ArteResumo[]) => {
         </div>
       )}
 
-      {/* Modal de Detalhes */}
-      {isDetailsModalOpen && selectedAnuncioDetails && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={() => {
+        {/* Modal de Detalhes */}
+        {isDetailsModalOpen && selectedAnuncioDetails && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={() => {
           setIsDetailsModalOpen(false);
           setOrderDetails(null);
           setSelectedAnuncioDetails(null);
@@ -1633,6 +1793,9 @@ const summarizeArteStatuses = (artes: ArteResumo[]) => {
           </div>
         </div>
       )}
+          </>
+        )}
+      </div>
 
       <ToastContainer />
     </div>
