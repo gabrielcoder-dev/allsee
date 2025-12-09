@@ -140,15 +140,14 @@ export default function NotasFiscaisPage() {
     <div className="min-h-screen bg-[#fcfcfc]">
       {/* Header */}
       <div className="sticky top-0 z-10 bg-white border-b border-gray-200">
-        <div className="px-6 py-8 max-w-4xl mx-auto">
-          <Link href="/meus-anuncios" className="flex items-center gap-3 text-xl font-semibold text-black hover:text-gray-700 mb-4">
+        <div className="px-6 py-4 max-w-4xl mx-auto">
+          <Link href="/results" className="flex items-center gap-3 text-xl font-semibold text-black hover:text-gray-700 mb-4">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" stroke="currentColor" className="w-5 h-5">
               <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
             </svg>
             Voltar
           </Link>
           <h1 className="text-3xl font-bold text-orange-600">Minhas Notas Fiscais</h1>
-          <p className="text-gray-600 mt-2">Visualize e baixe suas notas fiscais</p>
         </div>
       </div>
 
