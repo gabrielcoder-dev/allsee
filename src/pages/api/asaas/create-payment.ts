@@ -306,26 +306,60 @@ export default async function handler(
       customerId: asaasCustomerId
     });
     
+    // Preparar dados para atualização
+    let updateData: any = {
+      asaas_payment_id: paymentResult.id,
+      updated_at: new Date().toISOString()
+    };
+    
+    if (asaasCustomerId) {
+      updateData.asaas_customer_id = asaasCustomerId;
+    }
+
     const { data: updatedOrder, error: updateError } = await supabase
       .from('order')
-      .update({ 
-        asaas_payment_id: paymentResult.id,
-        asaas_customer_id: asaasCustomerId,
-        updated_at: new Date().toISOString()
-      })
+      .update(updateData)
       .eq('id', orderId)
       .select('id, asaas_payment_id, asaas_customer_id')
       .single();
 
     if (updateError) {
-      console.error('❌ ERRO ao salvar asaas_payment_id:', {
-        error: updateError.message,
-        code: updateError.code,
-        details: updateError.details,
-        hint: updateError.hint,
-        orderId,
-        paymentId: paymentResult.id
-      });
+      // Se o erro for relacionado ao asaas_customer_id, tentar salvar apenas o asaas_payment_id
+      if (updateError.message?.includes('asaas_customer_id')) {
+        console.warn('⚠️ Coluna asaas_customer_id não encontrada, tentando salvar apenas asaas_payment_id...');
+        const retryOnlyPaymentId = await supabase
+          .from('order')
+          .update({ 
+            asaas_payment_id: paymentResult.id,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', orderId)
+          .select('id, asaas_payment_id')
+          .single();
+        
+        if (!retryOnlyPaymentId.error && retryOnlyPaymentId.data) {
+          console.log('✅ asaas_payment_id salvo com sucesso (sem asaas_customer_id):', {
+            orderId: retryOnlyPaymentId.data?.id,
+            asaas_payment_id: retryOnlyPaymentId.data?.asaas_payment_id
+          });
+        } else {
+          console.error('❌ ERRO ao salvar asaas_payment_id:', {
+            error: retryOnlyPaymentId.error?.message || updateError.message,
+            code: retryOnlyPaymentId.error?.code || updateError.code,
+            orderId,
+            paymentId: paymentResult.id
+          });
+        }
+      } else {
+        console.error('❌ ERRO ao salvar asaas_payment_id:', {
+          error: updateError.message,
+          code: updateError.code,
+          details: updateError.details,
+          hint: updateError.hint,
+          orderId,
+          paymentId: paymentResult.id
+        });
+      }
       // Não retornar erro aqui, apenas logar, pois o pagamento já foi criado no Asaas
     } else {
       console.log('✅ asaas_payment_id salvo com sucesso:', {
