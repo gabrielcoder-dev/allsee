@@ -72,15 +72,85 @@ export default async function handler(
       });
     }
 
-    // Se não tem asaas_payment_id, não pode verificar no Asaas
+    // Se não tem asaas_payment_id, tentar buscar pelo externalReference
     if (!order.asaas_payment_id) {
-      console.warn('⚠️ Pedido não tem asaas_payment_id, verificando apenas no banco');
+      console.warn('⚠️ Pedido não tem asaas_payment_id, tentando buscar no Asaas pelo externalReference...');
+      
+      try {
+        // Buscar pagamentos com o externalReference igual ao orderId
+        const searchResponse = await fetch(
+          `${ASAAS_API_URL}/payments?customer=${orderId}&limit=100`,
+          {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+              'access_token': ASAAS_API_KEY,
+            },
+          }
+        );
+
+        if (searchResponse.ok) {
+          const searchData = await searchResponse.json();
+          // Procurar pagamento com externalReference igual ao orderId
+          const payment = searchData.data?.find((p: any) => 
+            p.externalReference === orderId || 
+            p.external_reference === orderId ||
+            p.externalReference === String(orderId)
+          );
+
+          if (payment) {
+            console.log('✅ Pagamento encontrado no Asaas pelo externalReference:', {
+              paymentId: payment.id,
+              status: payment.status,
+              externalReference: payment.externalReference
+            });
+
+            // Salvar o asaas_payment_id no pedido
+            await supabase
+              .from('order')
+              .update({ 
+                asaas_payment_id: payment.id,
+                updated_at: new Date().toISOString()
+              })
+              .eq('id', orderId);
+
+            // Verificar se está pago
+            const isPaid = payment.status === 'RECEIVED' || 
+                           payment.status === 'CONFIRMED' ||
+                           payment.status === 'RECEIVED_IN_CASH_OFFLINE';
+
+            if (isPaid && order.status !== 'pago') {
+              console.log('🔄 Pagamento confirmado no Asaas, atualizando banco...');
+              await supabase
+                .from('order')
+                .update({ 
+                  status: 'pago',
+                  updated_at: new Date().toISOString()
+                })
+                .eq('id', orderId);
+            }
+
+            return res.status(200).json({
+              success: true,
+              paid: isPaid,
+              status: isPaid ? 'pago' : order.status,
+              asaasStatus: payment.status,
+              source: 'asaas',
+              paymentId: payment.id
+            });
+          }
+        }
+      } catch (searchError: any) {
+        console.warn('⚠️ Erro ao buscar pagamento pelo externalReference:', searchError);
+      }
+
+      console.warn('⚠️ Não foi possível encontrar pagamento no Asaas, verificando apenas no banco');
       return res.status(200).json({
         success: true,
         paid: false,
         status: order.status,
         source: 'database',
-        message: 'Pagamento ainda não foi processado'
+        message: 'Pagamento ainda não foi processado ou não encontrado no Asaas'
       });
     }
 

@@ -165,23 +165,42 @@ export default async function handler(
     let order;
     let orderError;
     
-    // Tentar buscar primeiro com o orderId como está
+    console.log('='.repeat(80));
+    console.log('🔍 BUSCANDO PEDIDO NO BANCO DE DADOS');
+    console.log('='.repeat(80));
+    console.log('📋 orderId recebido:', orderId);
+    console.log('📋 tipo do orderId:', typeof orderId);
+    console.log('='.repeat(80));
+    
+    // Tentar buscar primeiro com o orderId como está (pode ser UUID ou número)
     let { data: orderData, error: orderErrorData } = await supabase
       .from('order')
       .select('id, status, preco')
       .eq('id', orderId)
       .single();
 
+    console.log('📋 Primeira tentativa de busca:', {
+      encontrado: !!orderData,
+      erro: orderErrorData?.message,
+      dados: orderData
+    });
+
     // Se não encontrar, tentar como número (caso seja um ID numérico)
     if (orderErrorData || !orderData) {
       const numericId = Number(orderId);
-      if (!isNaN(numericId)) {
+      if (!isNaN(numericId) && orderId !== String(numericId)) {
         console.log(`🔄 Tentando buscar order como número: ${numericId}`);
         const { data: orderDataNumeric, error: orderErrorNumeric } = await supabase
           .from('order')
           .select('id, status, preco')
           .eq('id', numericId)
           .single();
+        
+        console.log('📋 Tentativa numérica:', {
+          encontrado: !!orderDataNumeric,
+          erro: orderErrorNumeric?.message,
+          dados: orderDataNumeric
+        });
         
         if (!orderErrorNumeric && orderDataNumeric) {
           orderData = orderDataNumeric;
@@ -192,6 +211,20 @@ export default async function handler(
 
     order = orderData;
     orderError = orderErrorData;
+    
+    console.log('='.repeat(80));
+    console.log('📋 RESULTADO DA BUSCA DO PEDIDO');
+    console.log('='.repeat(80));
+    console.log('📋 Pedido encontrado:', !!order);
+    if (order) {
+      console.log('📋 ID do pedido:', order.id);
+      console.log('📋 Status atual:', order.status);
+      console.log('📋 Preço:', order.preco);
+    }
+    if (orderError) {
+      console.log('📋 Erro:', orderError.message);
+    }
+    console.log('='.repeat(80));
 
     if (orderError || !order) {
       console.error('❌ Pedido não encontrado:', orderId, orderError);
@@ -208,12 +241,27 @@ export default async function handler(
     // Eventos que indicam pagamento confirmado:
     // - PAYMENT_RECEIVED
     // - PAYMENT_CONFIRMED
-    // - Status: RECEIVED, CONFIRMED
+    // - PAYMENT_APPROVED
+    // - Status: RECEIVED, CONFIRMED, APPROVED
     const isPaymentConfirmed = 
       eventType === 'PAYMENT_RECEIVED' ||
       eventType === 'PAYMENT_CONFIRMED' ||
+      eventType === 'PAYMENT_APPROVED' ||
       paymentStatus === 'RECEIVED' ||
-      paymentStatus === 'CONFIRMED';
+      paymentStatus === 'CONFIRMED' ||
+      paymentStatus === 'APPROVED';
+
+    // Log detalhado do evento recebido
+    console.log('='.repeat(80));
+    console.log('🔍 ANALISANDO EVENTO DE PAGAMENTO');
+    console.log('='.repeat(80));
+    console.log('📋 eventType:', eventType);
+    console.log('📋 paymentStatus:', paymentStatus);
+    console.log('📋 billingType:', billingType);
+    console.log('📋 isPaymentConfirmed:', isPaymentConfirmed);
+    console.log('📋 orderId:', orderId);
+    console.log('📋 order.status atual:', order.status);
+    console.log('='.repeat(80));
 
     if (isPaymentConfirmed) {
       // Verificar se deve atualizar o status baseado no tipo de pagamento
@@ -378,6 +426,49 @@ export default async function handler(
       }
     }
 
+    // Para outros eventos, verificar se ainda assim é um pagamento confirmado
+    // Por exemplo, PIX pode vir com status diferente mas já estar pago
+    console.log('='.repeat(80));
+    console.log('⚠️ EVENTO NÃO RECONHECIDO COMO PAGAMENTO CONFIRMADO');
+    console.log('='.repeat(80));
+    console.log('📋 eventType:', eventType);
+    console.log('📋 paymentStatus:', paymentStatus);
+    console.log('📋 billingType:', billingType);
+    console.log('📋 payment completo:', JSON.stringify(payment, null, 2));
+    console.log('='.repeat(80));
+
+    // Verificar se mesmo assim o status indica pagamento recebido
+    // Para PIX, o status pode ser "RECEIVED" mas o evento pode ter outro nome
+    if (billingType === 'PIX' && (paymentStatus === 'RECEIVED' || paymentStatus === 'CONFIRMED')) {
+      console.log('🔄 PIX detectado com status RECEIVED/CONFIRMED - Atualizando status mesmo sem evento específico');
+      
+      try {
+        const { error: updateError } = await supabase
+          .from('order')
+          .update({ 
+            status: 'pago',
+            asaas_payment_id: paymentId,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', orderId);
+
+        if (updateError) {
+          console.error('❌ Erro ao atualizar status do PIX:', updateError);
+        } else {
+          console.log('✅ Status do PIX atualizado para "pago"');
+          return res.status(200).json({ 
+            success: true,
+            message: 'Pagamento PIX confirmado e pedido atualizado',
+            orderId,
+            status: 'pago',
+            paymentType: 'PIX'
+          });
+        }
+      } catch (error: any) {
+        console.error('❌ Erro ao processar atualização do PIX:', error);
+      }
+    }
+
     // Para outros eventos, apenas registrar
     console.log(`ℹ️ Evento processado mas não requer atualização de status:`, {
       eventType,
@@ -392,7 +483,8 @@ export default async function handler(
       orderId,
       eventType,
       paymentStatus,
-      paymentType: paymentTypeName
+      paymentType: paymentTypeName,
+      note: 'Evento não reconhecido como pagamento confirmado. Verifique os logs para mais detalhes.'
     });
 
   } catch (error: any) {

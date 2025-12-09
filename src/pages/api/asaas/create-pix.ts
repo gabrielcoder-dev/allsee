@@ -354,14 +354,111 @@ export default async function handler(
     }
 
     // Salvar ID do pagamento no pedido
-    await supabase
+    console.log('💾 Salvando asaas_payment_id no pedido:', {
+      orderId,
+      orderIdType: typeof orderId,
+      paymentId: paymentResult.id,
+      customerId: asaasCustomerId
+    });
+    
+    // Tentar atualizar com o orderId como está
+    let { data: updatedOrder, error: updateError } = await supabase
       .from('order')
       .update({ 
         asaas_payment_id: paymentResult.id,
         asaas_customer_id: asaasCustomerId,
         updated_at: new Date().toISOString()
       })
-      .eq('id', orderId);
+      .eq('id', orderId)
+      .select('id, asaas_payment_id, asaas_customer_id')
+      .single();
+
+    // Se não funcionou, tentar como string ou número
+    if (updateError) {
+      console.warn('⚠️ Primeira tentativa falhou, tentando formatos alternativos...', {
+        error: updateError.message,
+        orderId,
+        orderIdType: typeof orderId
+      });
+
+      // Tentar como string
+      const orderIdString = String(orderId);
+      const retryUpdate = await supabase
+        .from('order')
+        .update({ 
+          asaas_payment_id: paymentResult.id,
+          asaas_customer_id: asaasCustomerId,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', orderIdString)
+        .select('id, asaas_payment_id, asaas_customer_id')
+        .single();
+
+      if (!retryUpdate.error && retryUpdate.data) {
+        updatedOrder = retryUpdate.data;
+        updateError = null;
+        console.log('✅ Sucesso na segunda tentativa (como string)');
+      } else if (!isNaN(Number(orderId))) {
+        // Tentar como número
+        const orderIdNumber = Number(orderId);
+        const retryUpdateNumeric = await supabase
+          .from('order')
+          .update({ 
+            asaas_payment_id: paymentResult.id,
+            asaas_customer_id: asaasCustomerId,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', orderIdNumber)
+          .select('id, asaas_payment_id, asaas_customer_id')
+          .single();
+
+        if (!retryUpdateNumeric.error && retryUpdateNumeric.data) {
+          updatedOrder = retryUpdateNumeric.data;
+          updateError = null;
+          console.log('✅ Sucesso na terceira tentativa (como número)');
+        } else {
+          updateError = retryUpdateNumeric.error;
+        }
+      } else {
+        updateError = retryUpdate.error;
+      }
+    }
+
+    if (updateError) {
+      console.error('❌ ERRO ao salvar asaas_payment_id:', {
+        error: updateError.message,
+        code: updateError.code,
+        details: updateError.details,
+        hint: updateError.hint,
+        orderId,
+        orderIdType: typeof orderId,
+        paymentId: paymentResult.id
+      });
+      // Não retornar erro aqui, apenas logar, pois o pagamento já foi criado no Asaas
+    } else {
+      console.log('✅ asaas_payment_id salvo com sucesso:', {
+        orderId: updatedOrder?.id,
+        asaas_payment_id: updatedOrder?.asaas_payment_id,
+        asaas_customer_id: updatedOrder?.asaas_customer_id
+      });
+
+      // Verificar se realmente foi salvo
+      const { data: verifyOrder } = await supabase
+        .from('order')
+        .select('id, asaas_payment_id')
+        .eq('id', orderId)
+        .single();
+
+      if (verifyOrder?.asaas_payment_id !== paymentResult.id) {
+        console.error('⚠️ ATENÇÃO: Verificação falhou! O asaas_payment_id não foi salvo corretamente.', {
+          esperado: paymentResult.id,
+          encontrado: verifyOrder?.asaas_payment_id,
+          orderId
+        });
+      } else {
+        console.log('✅ Verificação confirmada: asaas_payment_id está salvo corretamente');
+      }
+    }
 
     return res.status(200).json({
       success: true,

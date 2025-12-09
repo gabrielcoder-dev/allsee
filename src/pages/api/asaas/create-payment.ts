@@ -300,14 +300,40 @@ export default async function handler(
     }
 
     // Salvar ID do pagamento no pedido
-    await supabase
+    console.log('💾 Salvando asaas_payment_id no pedido:', {
+      orderId,
+      paymentId: paymentResult.id,
+      customerId: asaasCustomerId
+    });
+    
+    const { data: updatedOrder, error: updateError } = await supabase
       .from('order')
       .update({ 
         asaas_payment_id: paymentResult.id,
         asaas_customer_id: asaasCustomerId,
         updated_at: new Date().toISOString()
       })
-      .eq('id', orderId);
+      .eq('id', orderId)
+      .select('id, asaas_payment_id, asaas_customer_id')
+      .single();
+
+    if (updateError) {
+      console.error('❌ ERRO ao salvar asaas_payment_id:', {
+        error: updateError.message,
+        code: updateError.code,
+        details: updateError.details,
+        hint: updateError.hint,
+        orderId,
+        paymentId: paymentResult.id
+      });
+      // Não retornar erro aqui, apenas logar, pois o pagamento já foi criado no Asaas
+    } else {
+      console.log('✅ asaas_payment_id salvo com sucesso:', {
+        orderId: updatedOrder?.id,
+        asaas_payment_id: updatedOrder?.asaas_payment_id,
+        asaas_customer_id: updatedOrder?.asaas_customer_id
+      });
+    }
 
     return res.status(200).json({
       success: true,
