@@ -242,14 +242,18 @@ export default async function handler(
     // - PAYMENT_RECEIVED
     // - PAYMENT_CONFIRMED
     // - PAYMENT_APPROVED
-    // - Status: RECEIVED, CONFIRMED, APPROVED
-    const isPaymentConfirmed = 
-      eventType === 'PAYMENT_RECEIVED' ||
-      eventType === 'PAYMENT_CONFIRMED' ||
-      eventType === 'PAYMENT_APPROVED' ||
-      paymentStatus === 'RECEIVED' ||
-      paymentStatus === 'CONFIRMED' ||
-      paymentStatus === 'APPROVED';
+    // - Status: RECEIVED, CONFIRMED, APPROVED, RECEIVED_IN_CASH_OFFLINE
+    const isStatusPaid = paymentStatus === 'RECEIVED' || 
+                         paymentStatus === 'CONFIRMED' ||
+                         paymentStatus === 'RECEIVED_IN_CASH_OFFLINE' ||
+                         paymentStatus === 'APPROVED';
+    
+    const isEventPaid = eventType === 'PAYMENT_RECEIVED' ||
+                        eventType === 'PAYMENT_CONFIRMED' ||
+                        eventType === 'PAYMENT_APPROVED';
+    
+    // Considerar confirmado se o status OU o evento indicarem pagamento
+    const isPaymentConfirmed = isStatusPaid || isEventPaid;
 
     // Log detalhado do evento recebido
     console.log('='.repeat(80));
@@ -258,10 +262,17 @@ export default async function handler(
     console.log('📋 eventType:', eventType);
     console.log('📋 paymentStatus:', paymentStatus);
     console.log('📋 billingType:', billingType);
+    console.log('📋 isStatusPaid:', isStatusPaid);
+    console.log('📋 isEventPaid:', isEventPaid);
     console.log('📋 isPaymentConfirmed:', isPaymentConfirmed);
     console.log('📋 orderId:', orderId);
     console.log('📋 order.status atual:', order.status);
     console.log('='.repeat(80));
+    
+    // Se o status indica pagamento confirmado, ATUALIZAR SEMPRE, mesmo que o evento não seja reconhecido
+    if (isStatusPaid && order.status !== 'pago') {
+      console.log('🔄 STATUS INDICA PAGO - Forçando atualização independente do tipo de evento...');
+    }
 
     if (isPaymentConfirmed) {
       // Verificar se deve atualizar o status baseado no tipo de pagamento
@@ -437,35 +448,88 @@ export default async function handler(
     console.log('📋 payment completo:', JSON.stringify(payment, null, 2));
     console.log('='.repeat(80));
 
-    // Verificar se mesmo assim o status indica pagamento recebido
-    // Para PIX, o status pode ser "RECEIVED" mas o evento pode ter outro nome
-    if (billingType === 'PIX' && (paymentStatus === 'RECEIVED' || paymentStatus === 'CONFIRMED')) {
-      console.log('🔄 PIX detectado com status RECEIVED/CONFIRMED - Atualizando status mesmo sem evento específico');
+    // Verificar se o status do pagamento indica que foi recebido/confirmado
+    // Independente do tipo de evento, se o status é RECEIVED/CONFIRMED, deve atualizar
+    const isStatusPaid = paymentStatus === 'RECEIVED' || 
+                         paymentStatus === 'CONFIRMED' ||
+                         paymentStatus === 'RECEIVED_IN_CASH_OFFLINE' ||
+                         paymentStatus === 'APPROVED';
+
+    if (isStatusPaid) {
+      console.log('🔄 Status do pagamento indica PAGO - Atualizando status do pedido...');
+      console.log(`📋 billingType: ${billingType}, paymentStatus: ${paymentStatus}`);
       
       try {
-        const { error: updateError } = await supabase
+        // Atualizar status para pago
+        const { data: updatedOrder, error: updateError } = await supabase
           .from('order')
           .update({ 
             status: 'pago',
             asaas_payment_id: paymentId,
             updated_at: new Date().toISOString()
           })
-          .eq('id', orderId);
+          .eq('id', orderId)
+          .select('id, status')
+          .single();
 
         if (updateError) {
-          console.error('❌ Erro ao atualizar status do PIX:', updateError);
-        } else {
-          console.log('✅ Status do PIX atualizado para "pago"');
-          return res.status(200).json({ 
-            success: true,
-            message: 'Pagamento PIX confirmado e pedido atualizado',
+          console.error('❌ Erro ao atualizar status:', {
+            error: updateError.message,
+            code: updateError.code,
+            details: updateError.details,
             orderId,
-            status: 'pago',
-            paymentType: 'PIX'
+            paymentId
           });
+          
+          // Tentar novamente com função auxiliar
+          try {
+            await atualizarStatusCompra(orderId, 'pago');
+            console.log('✅ Status atualizado via função auxiliar');
+          } catch (auxError: any) {
+            console.error('❌ Erro também na função auxiliar:', auxError);
+          }
+        } else if (updatedOrder) {
+          console.log('✅ Status atualizado com sucesso:', {
+            orderId: updatedOrder.id,
+            status: updatedOrder.status
+          });
+          
+          // Verificar se realmente foi atualizado
+          const { data: verifyOrder } = await supabase
+            .from('order')
+            .select('id, status')
+            .eq('id', orderId)
+            .single();
+          
+          if (verifyOrder?.status === 'pago') {
+            console.log('✅ Verificação confirmada: status é "pago"');
+          } else {
+            console.error(`❌ PROBLEMA: Status não foi atualizado! Status atual: "${verifyOrder?.status}"`);
+            // Tentar forçar atualização
+            await supabase
+              .from('order')
+              .update({ status: 'pago' })
+              .eq('id', orderId);
+          }
         }
+
+        return res.status(200).json({ 
+          success: true,
+          message: `Pagamento ${billingType || 'confirmado'} e pedido atualizado`,
+          orderId,
+          status: 'pago',
+          paymentType: billingType,
+          paymentStatus,
+          eventType
+        });
       } catch (error: any) {
-        console.error('❌ Erro ao processar atualização do PIX:', error);
+        console.error('❌ Erro ao processar atualização:', error);
+        return res.status(200).json({ 
+          success: true,
+          message: 'Webhook recebido mas erro ao atualizar status',
+          orderId,
+          error: error.message
+        });
       }
     }
 
