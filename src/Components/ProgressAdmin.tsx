@@ -3,6 +3,8 @@
 import React, { useState, useEffect, useMemo } from "react";
 import Image from "next/image";
 import { createClient } from '@supabase/supabase-js';
+import { Eye, Image as ImageIcon, Trash2, Loader2, CheckCircle2, AlertCircle } from "lucide-react";
+import { toast } from "sonner";
 import OrderDetailsModal from "./OrderDetailsModal";
 
 // Função para detectar se é vídeo
@@ -30,6 +32,7 @@ interface OrderDetails {
   duracao_campanha: number;
   exibicoes_campanha: number;
   alcance_campanha: number;
+  preco?: number;
 }
 
 interface CampanhaAgrupada {
@@ -47,6 +50,8 @@ const ProgressAdmin = () => {
   const [selectedOrderId, setSelectedOrderId] = useState<number | string | null>(null);
   const [modalArtesOrderId, setModalArtesOrderId] = useState<string | number | null>(null);
   const [modalFile, setModalFile] = useState<{ url: string; id: number | string; orderId?: string | number; anuncioName?: string | null } | null>(null);
+  const [orderToDelete, setOrderToDelete] = useState<string | number | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Função para calcular dias restantes (mesma lógica do meus-anuncios)
   const calcularDiasRestantes = (inicioCampanha: string, duracaoSemanas: number) => {
@@ -196,6 +201,94 @@ const ProgressAdmin = () => {
     document.body.removeChild(a);
   };
 
+  // Função para formatar data
+  const formatDate = (dateString: string) => {
+    if (!dateString) return '-';
+    return new Date(dateString).toLocaleDateString('pt-BR');
+  };
+
+  // Função para formatar moeda
+  const formatCurrency = (value: number | undefined) => {
+    if (!value) return 'R$ 0,00';
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL'
+    }).format(value);
+  };
+
+  // Função para obter badge de status
+  const getStatusBadge = (inicioCampanha: string) => {
+    const dataInicio = new Date(inicioCampanha);
+    const inicioReal = new Date(dataInicio);
+    inicioReal.setHours(7, 0, 0, 0);
+    const dataAtual = new Date();
+    const isAtiva = dataAtual >= inicioReal;
+
+    if (isAtiva) {
+      return (
+        <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+          <CheckCircle2 className="w-3 h-3" />
+          Ativa
+        </span>
+      );
+    } else {
+      return (
+        <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+          <AlertCircle className="w-3 h-3" />
+          Aguardando
+        </span>
+      );
+    }
+  };
+
+  // Função para excluir campanha
+  const handleDelete = async (orderId: string | number) => {
+    if (!confirm('Tem certeza que deseja excluir esta campanha?')) {
+      return;
+    }
+
+    setOrderToDelete(orderId);
+    setIsDeleting(true);
+    try {
+      const response = await fetch('/api/admin/delete-order', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orderId }),
+      });
+
+      const result = await response.json().catch(() => ({}));
+
+      if (!response.ok || !result.success) {
+        throw new Error(result.error || 'Erro ao excluir campanha');
+      }
+
+      toast.success('Campanha excluída com sucesso');
+      
+      // Remover campanha da lista
+      setCampanhasAgrupadas((prev) => prev.filter((c) => c.orderId !== orderId));
+
+      // Fechar modais se estiverem abertos para esta campanha
+      if (modalArtesOrderId === orderId) {
+        setModalArtesOrderId(null);
+      }
+      if (selectedOrderId === orderId) {
+        setSelectedOrderId(null);
+        setShowOrderDetails(false);
+      }
+      if (modalFile?.orderId === orderId) {
+        setModalFile(null);
+      }
+    } catch (error: any) {
+      console.error('Erro ao excluir campanha:', error);
+      toast.error('Erro ao excluir campanha', {
+        description: error?.message || 'Tente novamente'
+      });
+    } finally {
+      setIsDeleting(false);
+      setOrderToDelete(null);
+    }
+  };
+
   useEffect(() => {
     const buscarCampanhas = async () => {
       try {
@@ -311,92 +404,108 @@ const ProgressAdmin = () => {
   }
 
   return (
-    <div className="w-full h-full p-3 md:p-6 bg-gray-50 min-h-screen">
-      <div className="mb-6 md:mb-8">
-        <h2 className="text-2xl md:text-3xl font-bold text-orange-600 mb-4 md:mb-6">
-          Campanhas em Andamento
-        </h2>
-      </div>
-      <div className="space-y-4 md:space-y-6">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white p-4 md:p-6 lg:p-8">
+      <div className="max-w-7xl mx-auto">
+        {/* Header */}
+        <div className="mb-6 md:mb-8">
+          <h1 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-orange-600 to-orange-500 bg-clip-text text-transparent">
+            Campanhas em Andamento
+          </h1>
+          <p className="text-gray-600 mt-2">
+            Gerencie todas as campanhas do sistema
+          </p>
+        </div>
+
+        {/* Campanhas Table */}
         {campanhasAgrupadas.length === 0 ? (
-          <div className="text-center py-12">
-            <div className="bg-white rounded-xl p-8 shadow-sm border border-gray-200">
+          <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-12">
+            <div className="text-center">
               <p className="text-gray-500 text-lg">Nenhuma campanha em andamento encontrada.</p>
             </div>
           </div>
         ) : (
-          campanhasAgrupadas.map((campanha) => {
-            const diasRestantes = calcularDiasRestantes(
-              campanha.order.inicio_campanha, 
-              campanha.order.duracao_campanha
-            );
-            
-            return (
-              <div key={campanha.orderId} className="flex flex-col md:flex-row items-start gap-3 md:gap-6 bg-white border border-gray-200 rounded-xl md:rounded-2xl p-3 md:p-6 shadow-sm hover:shadow-md transition-shadow">
-                {/* Detalhes */}
-                <div className="flex-1 min-w-0 flex flex-col justify-start">
-                  <p className="font-bold text-gray-800 text-sm md:text-base truncate">{campanha.order.nome_campanha || "Campanha sem nome"}</p>
-                  <div className="flex items-center gap-2 mt-1">
-                    {(() => {
-                      const dataInicio = new Date(campanha.order.inicio_campanha);
-                      const inicioReal = new Date(dataInicio);
-                      inicioReal.setHours(7, 0, 0, 0);
-                      const dataAtual = new Date();
-                      const isAtiva = dataAtual >= inicioReal;
-                      
-                      return (
-                        <>
-                          <div className={`w-2 h-2 rounded-full ${isAtiva ? 'bg-green-500' : 'bg-yellow-500'}`}></div>
-                          <span className={`text-xs font-medium ${isAtiva ? 'text-green-600' : 'text-yellow-600'}`}>
-                            {isAtiva ? "Ativa" : "Aguardando"}
-                          </span>
-                        </>
-                      );
-                    })()}
-                  </div>
-                  <div className="flex flex-wrap gap-2 mt-2">
-                    <button
-                      onClick={() => setModalArtesOrderId(campanha.orderId)}
-                      className="text-white bg-orange-500 hover:bg-orange-600 text-xs font-medium px-3 py-1.5 rounded-md cursor-pointer transition-colors"
-                    >
-                      Ver Artes
-                    </button>
-                    <button
-                      onClick={() => {
-                        setSelectedOrderId(campanha.order.id);
-                        setShowOrderDetails(true);
-                      }}
-                      className="text-orange-600 hover:text-orange-700 text-xs font-medium bg-orange-50 hover:bg-orange-100 px-3 py-1.5 rounded-md cursor-pointer transition-colors"
-                    >
-                      Ver Detalhes
-                    </button>
-                  </div>
-                </div>
-                
-                {/* Dados */}
-                <div className="w-full md:flex-1 grid grid-cols-3 gap-2 md:gap-4">
-                  <div className="flex flex-col gap-1 p-2 md:p-4 bg-blue-50 rounded-lg border border-blue-100 hover:bg-blue-100 transition-colors">
-                    <p className="text-blue-700 font-medium text-xs">Exibições</p>
-                    <p className="text-blue-800 text-sm md:text-lg font-semibold">
-                      {formatarNumero(exibicoesAtuais[campanha.orderId] || calcularExibicoesDinamicas(campanha.order.inicio_campanha, campanha.order.duracao_campanha))}
-                    </p>
-                  </div>
-                  <div className="flex flex-col gap-1 p-2 md:p-4 bg-green-50 rounded-lg border border-green-100 hover:bg-green-100 transition-colors">
-                    <p className="text-green-700 font-medium text-xs">Alcance</p>
-                    <p className="text-green-800 text-sm md:text-lg font-semibold">
-                      {formatarNumero(alcanceAtual[campanha.orderId] || calcularAlcanceDinamico(campanha.order.alcance_campanha || 0, campanha.order.inicio_campanha, campanha.order.duracao_campanha))}
-                    </p>
-                  </div>
-                  <div className="flex flex-col gap-1 p-2 md:p-4 bg-orange-50 rounded-lg border border-orange-100 hover:bg-orange-100 transition-colors">
-                    <p className="text-orange-700 font-medium text-xs">Restante</p>
-                    <p className="text-orange-800 text-sm md:text-lg font-semibold">
-                      {diasRestantes}d
-                    </p>
-                  </div>
-                </div>
-              </div>
-            );
-          })
+          <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gray-50 border-b border-gray-200">
+                  <tr>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      ID
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Campanha
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Valor
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Data
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Status
+                    </th>
+                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Ações
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {campanhasAgrupadas.map((campanha) => (
+                    <tr key={campanha.orderId} className="hover:bg-gray-50">
+                      <td className="px-4 py-3 whitespace-nowrap text-sm font-mono text-gray-900">
+                        #{campanha.order.id}
+                      </td>
+                      <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
+                        {campanha.order.nome_campanha || '-'}
+                      </td>
+                      <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
+                        {formatCurrency(campanha.order.preco)}
+                      </td>
+                      <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
+                        {formatDate(campanha.order.inicio_campanha)}
+                      </td>
+                      <td className="px-4 py-3 whitespace-nowrap">
+                        {getStatusBadge(campanha.order.inicio_campanha)}
+                      </td>
+                      <td className="px-4 py-3 whitespace-nowrap text-right text-sm font-medium">
+                        <div className="flex items-center justify-end gap-2">
+                          <button
+                            onClick={() => {
+                              setSelectedOrderId(campanha.order.id);
+                              setShowOrderDetails(true);
+                            }}
+                            className="text-blue-600 hover:text-blue-800 p-1 rounded transition-colors"
+                            title="Visualizar detalhes"
+                          >
+                            <Eye className="w-5 h-5" />
+                          </button>
+                          <button
+                            onClick={() => setModalArtesOrderId(campanha.orderId)}
+                            className="text-green-600 hover:text-green-800 p-1 rounded transition-colors"
+                            title="Ver artes"
+                          >
+                            <ImageIcon className="w-5 h-5" />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(campanha.orderId)}
+                            disabled={isDeleting && orderToDelete === campanha.orderId}
+                            className="text-red-600 hover:text-red-800 p-1 rounded transition-colors disabled:opacity-50"
+                            title="Excluir"
+                          >
+                            {isDeleting && orderToDelete === campanha.orderId ? (
+                              <Loader2 className="w-5 h-5 animate-spin" />
+                            ) : (
+                              <Trash2 className="w-5 h-5" />
+                            )}
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
         )}
       </div>
 
