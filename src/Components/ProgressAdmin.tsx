@@ -311,9 +311,9 @@ const ProgressAdmin = () => {
   }
 
   return (
-    <div className="w-full h-full p-3 md:p-6 bg-gray-50 min-h-screen">
+    <div className="w-full h-full p-3 md:p-6 bg-white min-h-screen">
       <div className="mb-6 md:mb-8">
-        <h2 className="text-2xl md:text-3xl font-bold text-orange-600 mb-4 md:mb-6">
+        <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-4 md:mb-6">
           Campanhas em Andamento
         </h2>
       </div>

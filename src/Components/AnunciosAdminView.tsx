@@ -15,9 +15,9 @@ const AnunciosAdminView = () => {
   }
 
   return (
-    <div className='relative w-full flex flex-col gap-6 md:gap-12 p-3 md:p-6 min-h-screen bg-gray-50'>
+    <div className='relative w-full flex flex-col gap-6 md:gap-12 p-3 md:p-6 min-h-screen bg-white'>
       <div className="pl-2 md:pl-6">
-        <h2 className='text-2xl md:text-3xl font-bold text-orange-600'>
+        <h2 className='text-2xl md:text-3xl font-bold text-gray-900'>
           Totens
         </h2>
       </div>
