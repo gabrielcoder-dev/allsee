@@ -47,7 +47,7 @@ const AproveitionAdmin = () => {
   const [selectedOrderId, setSelectedOrderId] = useState<string | number | null>(null);
   const [imagesModalOrderId, setImagesModalOrderId] = useState<OrderIdentifier | null>(null);
   const [anunciosMap, setAnunciosMap] = useState<Record<string, string>>({});
-  const [orderInfoMap, setOrderInfoMap] = useState<Record<string, { nome_campanha?: string | null }>>({});
+  const [orderInfoMap, setOrderInfoMap] = useState<Record<string, { nome_campanha?: string | null; preco?: number; inicio_campanha?: string }>>({});
   const [orderToDelete, setOrderToDelete] = useState<OrderIdentifier | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [activeTab, setActiveTab] = useState<'atuais' | 'trocas'>('atuais');
