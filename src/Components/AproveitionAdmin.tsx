@@ -4,8 +4,9 @@ import React, { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import { supabase } from "@/lib/supabase";
 import OrderDetailsModal from "./OrderDetailsModal";
-import { Check, X } from "lucide-react";
+import { Check, X, Eye, Image as ImageIcon, Trash2, Loader2, CheckCircle2, AlertCircle } from "lucide-react";
 import { useNotifications } from "@/context/NotificationContext";
+import { toast } from "sonner";
 
 type OrderIdentifier = string;
 
@@ -136,13 +137,17 @@ const AproveitionAdmin = () => {
 
           const { data: ordersData, error: ordersError } = await supabase
             .from('order')
-            .select('id, nome_campanha')
+            .select('id, nome_campanha, preco, inicio_campanha')
             .in('id', orderIdsForQuery);
 
           if (!ordersError && ordersData) {
-            const map: Record<string, { nome_campanha?: string | null }> = {};
+            const map: Record<string, { nome_campanha?: string | null; preco?: number; inicio_campanha?: string }> = {};
             ordersData.forEach((order: any) => {
-              map[String(order.id)] = { nome_campanha: order.nome_campanha };
+              map[String(order.id)] = { 
+                nome_campanha: order.nome_campanha,
+                preco: order.preco,
+                inicio_campanha: order.inicio_campanha
+              };
             });
             setOrderInfoMap(map);
           }
@@ -207,6 +212,40 @@ const AproveitionAdmin = () => {
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
+  };
+
+  // Função para formatar data
+  const formatDate = (dateString: string | undefined) => {
+    if (!dateString) return '-';
+    return new Date(dateString).toLocaleDateString('pt-BR');
+  };
+
+  // Função para formatar moeda
+  const formatCurrency = (value: number | undefined) => {
+    if (!value) return 'R$ 0,00';
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL'
+    }).format(value);
+  };
+
+  // Função para obter badge de status
+  const getStatusBadge = (status: string) => {
+    const statusMap: { [key: string]: { color: string; icon: any; label: string } } = {
+      'aprovado': { color: 'bg-green-100 text-green-800', icon: CheckCircle2, label: 'Aprovado' },
+      'rejeitado': { color: 'bg-red-100 text-red-800', icon: AlertCircle, label: 'Rejeitado' },
+      'pendente': { color: 'bg-yellow-100 text-yellow-800', icon: AlertCircle, label: 'Pendente' },
+    };
+
+    const statusInfo = statusMap[status] || { color: 'bg-gray-100 text-gray-800', icon: AlertCircle, label: status };
+    const Icon = statusInfo.icon;
+
+    return (
+      <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${statusInfo.color}`}>
+        <Icon className="w-3 h-3" />
+        {statusInfo.label}
+      </span>
+    );
   };
 
   const updateArteStatus = (arte: ArteCampanhaItem, status: 'aceita' | 'não aceita') => {
@@ -876,69 +915,121 @@ const AproveitionAdmin = () => {
   if (!groupedOrders.length) return <div className="p-4">Nenhuma arte encontrada.</div>;
 
   return (
-    <div className="w-full h-full p-2 sm:p-3 md:p-4 lg:p-6 overflow-auto bg-gray-50 min-h-screen">
-      <div className="mb-4 sm:mb-6 md:mb-8">
-        <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-orange-600 mb-3 sm:mb-4 md:mb-6">
-          Aprovação de Artes
-        </h2>
-      </div>
-      <div className="space-y-2 sm:space-y-3 md:space-y-4">
-        {groupedOrders.map((group) => {
-          const status = getOrderStatus(group.orderId);
-          const hasPendingArt = group.artes.some(
-            (arte) => arte.statusLocal !== 'aceita' && arte.statusLocal !== 'não aceita'
-          );
-          const hasTroca = ordersWithTrocas.has(group.orderId);
-          const shouldShowDot = hasPendingArt || hasTroca;
-          return (
-            <div
-              key={group.orderId}
-              className="relative flex flex-col gap-2 sm:gap-3 md:gap-4 justify-between bg-white border border-gray-200 rounded-lg sm:rounded-xl md:rounded-2xl p-2 sm:p-3 md:p-4 shadow-sm hover:shadow-md transition-shadow"
-            >
-              {shouldShowDot && (
-                <span className="absolute -top-1 -left-1 inline-flex h-3 w-3 sm:h-4 sm:w-4 rounded-full bg-orange-500 border-2 border-white"></span>
-              )}
-              <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 md:gap-4 min-w-0 flex-1">
-                <div className="flex flex-col gap-1 min-w-0 flex-1">
-                  <span className="text-[10px] sm:text-xs md:text-sm uppercase tracking-wide text-gray-400">Campanha</span>
-                  <span className="text-sm sm:text-base md:text-lg font-semibold text-gray-800 truncate max-w-full">
-                    {orderInfoMap[group.orderId]?.nome_campanha || `Pedido #${group.orderId}`}
-                  </span>
-                  <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-                    <span className="text-[10px] sm:text-xs text-gray-500">{group.artes.length} arquivo(s)</span>
-                    <span className="text-[10px] sm:text-xs text-gray-500">Status: {status}</span>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
-                  <button
-                    className="text-white bg-orange-500 hover:bg-orange-600 text-[10px] sm:text-xs md:text-sm font-medium px-2 sm:px-3 py-1 sm:py-1.5 rounded-md sm:rounded-lg cursor-pointer transition-colors whitespace-nowrap"
-                    onClick={() => setImagesModalOrderId(group.orderId)}
-                  >
-                    Ver imagens
-                  </button>
-                  <button
-                    className="text-gray-600 hover:text-gray-700 text-[10px] sm:text-xs md:text-sm font-medium bg-gray-100 hover:bg-gray-200 px-2 sm:px-3 py-1 sm:py-1.5 rounded-md sm:rounded-lg cursor-pointer transition-colors whitespace-nowrap"
-                    onClick={() => {
-                      setSelectedOrderId(group.orderIdValue);
-                      setShowOrderDetails(true);
-                    }}
-                  >
-                    Ver Detalhes
-                  </button>
-                  <button
-                    className="bg-red-500 hover:bg-red-600 text-white rounded-md sm:rounded-lg md:rounded-xl px-2 sm:px-3 py-1 sm:py-1.5 font-medium text-[10px] sm:text-xs md:text-sm cursor-pointer transition-colors flex items-center gap-1 sm:gap-2 whitespace-nowrap"
-                    onClick={() => setOrderToDelete(group.orderId)}
-                    title="Excluir pedido"
-                  >
-                    <span className="font-semibold text-sm sm:text-base">×</span>
-                    <span className="hidden sm:inline">Excluir campanha</span>
-                    <span className="sm:hidden">Excluir</span>
-                  </button>
-                </div>
-              </div>
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white p-4 md:p-6 lg:p-8">
+      <div className="max-w-7xl mx-auto">
+        {/* Header */}
+        <div className="mb-6 md:mb-8">
+          <h1 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-orange-600 to-orange-500 bg-clip-text text-transparent">
+            Aprovação de Artes
+          </h1>
+          <p className="text-gray-600 mt-2">
+            Gerencie todas as campanhas pendentes de aprovação
+          </p>
+        </div>
+
+        {/* Campanhas Table */}
+        {groupedOrders.length === 0 ? (
+          <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-12">
+            <div className="text-center">
+              <p className="text-gray-500 text-lg">Nenhuma campanha encontrada.</p>
             </div>
-          );
-        })}
+          </div>
+        ) : (
+          <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gray-50 border-b border-gray-200">
+                  <tr>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      ID
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Campanha
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Valor
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Data
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Status
+                    </th>
+                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Ações
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {groupedOrders.map((group) => {
+                    const status = getOrderStatus(group.orderId);
+                    const hasPendingArt = group.artes.some(
+                      (arte) => arte.statusLocal !== 'aceita' && arte.statusLocal !== 'não aceita'
+                    );
+                    const hasTroca = ordersWithTrocas.has(group.orderId);
+                    const shouldShowDot = hasPendingArt || hasTroca;
+                    
+                    return (
+                      <tr key={group.orderId} className="hover:bg-gray-50 relative">
+                        {shouldShowDot && (
+                          <span className="absolute -top-1 -left-1 inline-flex h-3 w-3 rounded-full bg-orange-500 border-2 border-white z-10"></span>
+                        )}
+                        <td className="px-4 py-3 whitespace-nowrap text-sm font-mono text-gray-900">
+                          #{group.orderIdValue}
+                        </td>
+                        <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
+                          {orderInfoMap[group.orderId]?.nome_campanha || `Pedido #${group.orderId}`}
+                        </td>
+                        <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
+                          {formatCurrency(orderInfoMap[group.orderId]?.preco)}
+                        </td>
+                        <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
+                          {formatDate(orderInfoMap[group.orderId]?.inicio_campanha)}
+                        </td>
+                        <td className="px-4 py-3 whitespace-nowrap">
+                          {getStatusBadge(status)}
+                        </td>
+                        <td className="px-4 py-3 whitespace-nowrap text-right text-sm font-medium">
+                          <div className="flex items-center justify-end gap-2">
+                            <button
+                              onClick={() => {
+                                setSelectedOrderId(group.orderIdValue);
+                                setShowOrderDetails(true);
+                              }}
+                              className="text-blue-600 hover:text-blue-800 p-1 rounded transition-colors"
+                              title="Visualizar detalhes"
+                            >
+                              <Eye className="w-5 h-5" />
+                            </button>
+                            <button
+                              onClick={() => setImagesModalOrderId(group.orderId)}
+                              className="text-green-600 hover:text-green-800 p-1 rounded transition-colors"
+                              title="Ver artes"
+                            >
+                              <ImageIcon className="w-5 h-5" />
+                            </button>
+                            <button
+                              onClick={() => setOrderToDelete(group.orderId)}
+                              disabled={isDeleting && orderToDelete === group.orderId}
+                              className="text-red-600 hover:text-red-800 p-1 rounded transition-colors disabled:opacity-50"
+                              title="Excluir"
+                            >
+                              {isDeleting && orderToDelete === group.orderId ? (
+                                <Loader2 className="w-5 h-5 animate-spin" />
+                              ) : (
+                                <Trash2 className="w-5 h-5" />
+                              )}
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Modal listar artes do pedido */}
@@ -1453,6 +1544,7 @@ const AproveitionAdmin = () => {
                       throw new Error(result.error || 'Erro ao excluir pedido');
                     }
 
+                    toast.success('Campanha excluída com sucesso');
                     setArteCampanhas((prev) => prev.filter((arte) => arte.id_order !== orderToDelete));
 
                     if (typeof window !== 'undefined') {
@@ -1478,7 +1570,9 @@ const AproveitionAdmin = () => {
                     }
                   } catch (error: any) {
                     console.error('❌ Erro ao excluir pedido:', error);
-                    alert(error?.message || 'Erro ao excluir pedido. Tente novamente.');
+                    toast.error('Erro ao excluir campanha', {
+                      description: error?.message || 'Tente novamente'
+                    });
                   } finally {
                     setIsDeleting(false);
                     setOrderToDelete(null);
