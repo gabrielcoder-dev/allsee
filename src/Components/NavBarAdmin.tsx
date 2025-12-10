@@ -81,15 +81,15 @@ export default function NavBarAdmin({ onLogout, mobileOpen, setMobileOpen, selec
 
       <nav
         className={`
-          flex flex-col justify-between bg-white border-r border-gray-200 h-screen
-          transition-all duration-300 ease-in-out z-50
+          flex flex-col justify-between bg-gradient-to-b from-gray-50 to-white border-r border-gray-200/50 h-screen
+          transition-all duration-300 ease-in-out z-50 backdrop-blur-sm
           ${isMobile
             ? mobileOpen
               ? 'fixed top-0 left-0 w-64 transform translate-x-0 shadow-2xl'
               : 'fixed top-0 left-0 w-64 transform -translate-x-full'
             : open
-              ? 'relative w-64 shadow-sm'
-              : 'relative w-20 shadow-sm'
+              ? 'relative w-64 shadow-xl'
+              : 'relative w-20 shadow-lg'
           }
         `}
       >
@@ -121,9 +121,10 @@ export default function NavBarAdmin({ onLogout, mobileOpen, setMobileOpen, selec
 
         {/* Topo */}
         <div>
-          <div className="flex items-center gap-4 px-4 py-6">
+          <div className="flex items-center gap-4 px-4 py-6 relative">
+            <div className="absolute inset-0 bg-gradient-to-r from-orange-500/10 to-transparent rounded-r-2xl"></div>
             {isExpanded && (
-              <span className="text-xl md:text-2xl font-bold text-gray-900">
+              <span className="text-xl md:text-2xl font-bold bg-gradient-to-r from-orange-600 to-orange-500 bg-clip-text text-transparent relative z-10">
                 Dashboard
               </span>
             )}
@@ -131,9 +132,10 @@ export default function NavBarAdmin({ onLogout, mobileOpen, setMobileOpen, selec
 
           {/* Boas-vindas */}
           {isExpanded && (
-            <div className="px-6 pb-4">
-              <span className="text-gray-600 text-sm md:text-base">Bem-vindo,</span>
-              <div className="font-bold text-lg md:text-2xl text-gray-900 pl-5">
+            <div className="px-6 pb-4 relative">
+              <div className="absolute inset-0 bg-gradient-to-r from-orange-500/5 to-transparent rounded-r-xl"></div>
+              <span className="text-gray-600 text-sm md:text-base relative z-10">Bem-vindo,</span>
+              <div className="font-bold text-lg md:text-2xl bg-gradient-to-r from-orange-600 to-orange-500 bg-clip-text text-transparent pl-5 relative z-10">
                 {userName}
               </div>
             </div>

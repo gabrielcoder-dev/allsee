@@ -915,11 +915,11 @@ const AproveitionAdmin = () => {
   if (!groupedOrders.length) return <div className="p-4">Nenhuma arte encontrada.</div>;
 
   return (
-    <div className="min-h-screen bg-white p-4 md:p-6 lg:p-8">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white p-4 md:p-6 lg:p-8">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-6 md:mb-8">
-          <h1 className="text-2xl md:text-3xl font-bold text-gray-900">
+          <h1 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-orange-600 to-orange-500 bg-clip-text text-transparent">
             Aprovação de Artes
           </h1>
           <p className="text-gray-600 mt-2">

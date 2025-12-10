@@ -46,14 +46,14 @@ const DashboardPage = () => {
 
   return (
     <NotificationProvider>
-      <div className='h-screen flex flex-col bg-white overflow-hidden'>
+      <div className='h-screen flex overflow-hidden'>
         <NavBarAdmin 
           mobileOpen={mobileOpen} 
           setMobileOpen={setMobileOpen} 
           selectedMenu={selectedMenu}
           setSelectedMenu={setSelectedMenu}
         />
-        <main className={`flex-1 overflow-y-auto transition-all duration-300 bg-white ${
+        <main className={`flex-1 overflow-y-auto transition-all duration-300 ${
           isMobile ? 'w-full' : 'ml-0'
         }`}>
           {ContentComponent}
