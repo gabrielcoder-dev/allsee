@@ -434,7 +434,7 @@ export default async function handler(
             updated_at: new Date().toISOString()
           })
           .eq('id', orderId)
-          .select('id, asaas_payment_id')
+          .select('id, asaas_payment_id, asaas_customer_id')
           .single();
         
         if (!retryOnlyPaymentId.error && retryOnlyPaymentId.data) {

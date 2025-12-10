@@ -450,12 +450,12 @@ export default async function handler(
 
     // Verificar se o status do pagamento indica que foi recebido/confirmado
     // Independente do tipo de evento, se o status é RECEIVED/CONFIRMED, deve atualizar
-    const isStatusPaid = paymentStatus === 'RECEIVED' || 
-                         paymentStatus === 'CONFIRMED' ||
-                         paymentStatus === 'RECEIVED_IN_CASH_OFFLINE' ||
-                         paymentStatus === 'APPROVED';
+    const isStatusPaidSecondCheck = paymentStatus === 'RECEIVED' || 
+                                    paymentStatus === 'CONFIRMED' ||
+                                    paymentStatus === 'RECEIVED_IN_CASH_OFFLINE' ||
+                                    paymentStatus === 'APPROVED';
 
-    if (isStatusPaid) {
+    if (isStatusPaidSecondCheck) {
       console.log('🔄 Status do pagamento indica PAGO - Atualizando status do pedido...');
       console.log(`📋 billingType: ${billingType}, paymentStatus: ${paymentStatus}`);
       
