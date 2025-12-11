@@ -1,7 +1,7 @@
 "use client"
 
-import React, { useState, useEffect } from "react";
-import { Download, Eye, Trash2, FileText, Loader2, AlertCircle, CheckCircle2, XCircle } from "lucide-react";
+import React, { useState, useEffect, useRef } from "react";
+import { Download, Eye, Trash2, FileText, Loader2, AlertCircle, CheckCircle2, XCircle, ChevronDown } from "lucide-react";
 import { toast } from "sonner";
 
 interface Invoice {
@@ -28,6 +28,9 @@ const NotaFiscalAdmin = () => {
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
   const [viewingInvoice, setViewingInvoice] = useState(false);
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
+  const [downloadingFormat, setDownloadingFormat] = useState<string | null>(null);
+  const [openDownloadMenu, setOpenDownloadMenu] = useState<string | null>(null);
+  const downloadMenuRef = useRef<{ [key: string]: HTMLDivElement | null }>({});
 
   useEffect(() => {
     fetchInvoices();
@@ -40,7 +43,11 @@ const NotaFiscalAdmin = () => {
       const data = await response.json();
 
       if (data.success) {
-        setInvoices(data.invoices || []);
+        // Filtrar apenas notas fiscais autorizadas
+        const authorizedInvoices = (data.invoices || []).filter(
+          (invoice: Invoice) => invoice.status === 'AUTHORIZED'
+        );
+        setInvoices(authorizedInvoices);
       } else {
         toast.error('Erro ao carregar notas fiscais', {
           description: data.error || 'Tente novamente mais tarde'
@@ -56,24 +63,63 @@ const NotaFiscalAdmin = () => {
     }
   };
 
-  const handleDownload = async (invoiceId: string) => {
-    setDownloadingId(invoiceId);
-    try {
-      const response = await fetch(`/api/asaas/invoices/download?invoiceId=${invoiceId}`);
-      const data = await response.json();
-
-      if (data.success) {
-        if (data.url) {
-          // Abrir URL em nova aba
-          window.open(data.url, '_blank');
-          toast.success('Nota fiscal aberta');
-        } else {
-          toast.error('URL de download não disponível');
+  // Fechar menu de download ao clicar fora
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      Object.values(downloadMenuRef.current).forEach((ref) => {
+        if (ref && !ref.contains(event.target as Node)) {
+          setOpenDownloadMenu(null);
         }
+      });
+    };
+
+    if (openDownloadMenu) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [openDownloadMenu]);
+
+  const handleDownload = async (invoiceId: string, format: 'pdf' | 'xml') => {
+    const downloadKey = `${invoiceId}-${format}`;
+    setDownloadingId(invoiceId);
+    setDownloadingFormat(downloadKey);
+    setOpenDownloadMenu(null);
+
+    try {
+      const response = await fetch(`/api/asaas/invoices/download?invoiceId=${invoiceId}&format=${format}`);
+      
+      // Verificar se é um arquivo binário (PDF ou XML)
+      const contentType = response.headers.get('content-type');
+      if (contentType?.includes('application/pdf') || contentType?.includes('application/xml') || contentType?.includes('text/xml')) {
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `nota-fiscal-${invoiceId}.${format}`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        toast.success(`Nota fiscal ${format.toUpperCase()} baixada com sucesso`);
       } else {
-        toast.error('Erro ao baixar nota fiscal', {
-          description: data.error || 'Tente novamente'
-        });
+        // Se retornar JSON com URL
+        const data = await response.json();
+        if (data.success) {
+          if (data.url) {
+            // Abrir URL em nova aba
+            window.open(data.url, '_blank');
+            toast.success(`Nota fiscal ${format.toUpperCase()} aberta`);
+          } else {
+            toast.error('URL de download não disponível');
+          }
+        } else {
+          toast.error('Erro ao baixar nota fiscal', {
+            description: data.error || 'Tente novamente'
+          });
+        }
       }
     } catch (error: any) {
       console.error('Erro ao baixar nota fiscal:', error);
@@ -82,7 +128,12 @@ const NotaFiscalAdmin = () => {
       });
     } finally {
       setDownloadingId(null);
+      setDownloadingFormat(null);
     }
+  };
+
+  const toggleDownloadMenu = (invoiceId: string) => {
+    setOpenDownloadMenu(openDownloadMenu === invoiceId ? null : invoiceId);
   };
 
   const handleView = (invoice: Invoice) => {
@@ -236,18 +287,61 @@ const NotaFiscalAdmin = () => {
                             >
                               <Eye className="w-5 h-5" />
                             </button>
-                            <button
-                              onClick={() => handleDownload(invoice.id)}
-                              disabled={downloadingId === invoice.id}
-                              className="text-green-600 hover:text-green-800 p-1 rounded transition-colors disabled:opacity-50"
-                              title="Baixar"
-                            >
-                              {downloadingId === invoice.id ? (
-                                <Loader2 className="w-5 h-5 animate-spin" />
-                              ) : (
-                                <Download className="w-5 h-5" />
+                            <div className="relative" ref={(el) => { downloadMenuRef.current[invoice.id] = el; }}>
+                              <button
+                                onClick={() => toggleDownloadMenu(invoice.id)}
+                                disabled={downloadingId === invoice.id}
+                                className="text-green-600 hover:text-green-800 p-1 rounded transition-colors disabled:opacity-50 relative"
+                                title="Baixar"
+                              >
+                                {downloadingId === invoice.id ? (
+                                  <Loader2 className="w-5 h-5 animate-spin" />
+                                ) : (
+                                  <div className="flex items-center gap-1">
+                                    <Download className="w-5 h-5" />
+                                    <ChevronDown className="w-3 h-3" />
+                                  </div>
+                                )}
+                              </button>
+                              {openDownloadMenu === invoice.id && downloadingId !== invoice.id && (
+                                <div className="absolute right-0 mt-1 w-40 bg-white rounded-lg shadow-lg border border-gray-200 z-50 py-1">
+                                  <button
+                                    onClick={() => handleDownload(invoice.id, 'pdf')}
+                                    disabled={downloadingFormat === `${invoice.id}-pdf`}
+                                    className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors flex items-center gap-2 disabled:opacity-50"
+                                  >
+                                    {downloadingFormat === `${invoice.id}-pdf` ? (
+                                      <>
+                                        <Loader2 className="w-4 h-4 animate-spin" />
+                                        <span>Baixando PDF...</span>
+                                      </>
+                                    ) : (
+                                      <>
+                                        <FileText className="w-4 h-4" />
+                                        <span>Baixar PDF</span>
+                                      </>
+                                    )}
+                                  </button>
+                                  <button
+                                    onClick={() => handleDownload(invoice.id, 'xml')}
+                                    disabled={downloadingFormat === `${invoice.id}-xml`}
+                                    className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors flex items-center gap-2 disabled:opacity-50"
+                                  >
+                                    {downloadingFormat === `${invoice.id}-xml` ? (
+                                      <>
+                                        <Loader2 className="w-4 h-4 animate-spin" />
+                                        <span>Baixando XML...</span>
+                                      </>
+                                    ) : (
+                                      <>
+                                        <FileText className="w-4 h-4" />
+                                        <span>Baixar XML</span>
+                                      </>
+                                    )}
+                                  </button>
+                                </div>
                               )}
-                            </button>
+                            </div>
                             <button
                               onClick={() => handleDelete(invoice.id)}
                               className="text-red-600 hover:text-red-800 p-1 rounded transition-colors"
@@ -323,13 +417,42 @@ const NotaFiscalAdmin = () => {
                   </div>
                 )}
                 <div className="flex gap-2 pt-4">
-                  <button
-                    onClick={() => handleDownload(selectedInvoice.id)}
-                    className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-                  >
-                    <Download className="w-4 h-4" />
-                    Baixar PDF
-                  </button>
+                  <div className="flex-1 flex gap-2">
+                    <button
+                      onClick={() => handleDownload(selectedInvoice.id, 'pdf')}
+                      disabled={downloadingFormat === `${selectedInvoice.id}-pdf`}
+                      className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50"
+                    >
+                      {downloadingFormat === `${selectedInvoice.id}-pdf` ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          <span>Baixando PDF...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Download className="w-4 h-4" />
+                          <span>Baixar PDF</span>
+                        </>
+                      )}
+                    </button>
+                    <button
+                      onClick={() => handleDownload(selectedInvoice.id, 'xml')}
+                      disabled={downloadingFormat === `${selectedInvoice.id}-xml`}
+                      className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+                    >
+                      {downloadingFormat === `${selectedInvoice.id}-xml` ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          <span>Baixando XML...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Download className="w-4 h-4" />
+                          <span>Baixar XML</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
                   <button
                     onClick={() => setViewingInvoice(false)}
                     className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"

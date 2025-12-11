@@ -16,7 +16,7 @@ export default async function handler(
   }
 
   try {
-    const { invoiceId } = req.query;
+    const { invoiceId, format = 'pdf' } = req.query;
 
     if (!invoiceId) {
       return res.status(400).json({ 
@@ -32,17 +32,28 @@ export default async function handler(
       });
     }
 
+    // Validar formato
+    const validFormats = ['pdf', 'xml'];
+    if (!validFormats.includes(format as string)) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Formato inválido. Use "pdf" ou "xml"' 
+      });
+    }
+
+    // Construir URL de download baseado no formato
+    const downloadUrl = format === 'xml' 
+      ? `${ASAAS_API_URL}/invoices/${invoiceId}/xml`
+      : `${ASAAS_API_URL}/invoices/${invoiceId}/download`;
+
     // Buscar URL de download da nota fiscal
-    const response = await fetch(
-      `${ASAAS_API_URL}/invoices/${invoiceId}/download`,
-      {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'access_token': ASAAS_API_KEY,
-        },
-      }
-    );
+    const response = await fetch(downloadUrl, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'access_token': ASAAS_API_KEY,
+      },
+    });
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
@@ -52,7 +63,30 @@ export default async function handler(
       });
     }
 
-    // Se retornar PDF diretamente
+    // Para XML, retornar o conteúdo diretamente
+    if (format === 'xml') {
+      const contentType = response.headers.get('content-type');
+      const isXml = contentType?.includes('application/xml') || contentType?.includes('text/xml');
+      
+      if (isXml) {
+        const buffer = await response.arrayBuffer();
+        res.setHeader('Content-Type', 'application/xml');
+        res.setHeader('Content-Disposition', `attachment; filename="nota-fiscal-${invoiceId}.xml"`);
+        return res.send(Buffer.from(buffer));
+      }
+      
+      // Se retornar URL para XML
+      const data = await response.json();
+      if (data.url) {
+        return res.status(200).json({
+          success: true,
+          url: data.url,
+          format: 'xml'
+        });
+      }
+    }
+
+    // Para PDF, verificar se retornou PDF diretamente
     const contentType = response.headers.get('content-type');
     if (contentType?.includes('application/pdf')) {
       const buffer = await response.arrayBuffer();
@@ -66,13 +100,15 @@ export default async function handler(
     if (data.url) {
       return res.status(200).json({
         success: true,
-        url: data.url
+        url: data.url,
+        format: format as string
       });
     }
 
     return res.status(200).json({
       success: true,
-      data
+      data,
+      format: format as string
     });
 
   } catch (error: any) {
