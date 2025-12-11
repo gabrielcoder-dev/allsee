@@ -152,11 +152,22 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const searchTerm = q.toLowerCase().trim()
     
-    if (searchTerm.length < 2) {
+    if (searchTerm.length < 1) {
       return res.json({ addresses: [] })
     }
 
     console.log('🔍 Buscando cidades para:', searchTerm)
+
+    // Função para normalizar texto (remover acentos)
+    const normalizeText = (text: string): string => {
+      return text
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .trim()
+    }
+
+    const normalizedSearchTerm = normalizeText(searchTerm)
 
     // Verificar se o cache ainda é válido
     const now = Date.now()
@@ -165,13 +176,72 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       cacheTimestamp = now
     }
 
-    // Buscar apenas cidades brasileiras
+    // Função para calcular score de relevância
+    const calculateScore = (cityName: string, state: string, searchTerm: string): number => {
+      const normalizedCityName = normalizeText(cityName)
+      const normalizedState = normalizeText(state)
+      
+      // Dividir o nome da cidade em palavras
+      const cityWords = normalizedCityName.split(/\s+/)
+      const searchWords = searchTerm.split(/\s+/)
+      
+      let score = 0
+      
+      // Verificar se começa com o termo de busca (maior prioridade)
+      if (normalizedCityName.startsWith(searchTerm)) {
+        score += 1000
+      }
+      
+      // Verificar se alguma palavra da cidade começa com o termo de busca
+      searchWords.forEach(searchWord => {
+        cityWords.forEach(cityWord => {
+          if (cityWord.startsWith(searchWord)) {
+            score += 500
+          } else if (cityWord.includes(searchWord)) {
+            score += 100
+          }
+        })
+      })
+      
+      // Verificar se o nome completo contém o termo
+      if (normalizedCityName.includes(searchTerm)) {
+        score += 200
+      }
+      
+      // Verificar se o estado contém o termo (menor prioridade)
+      if (normalizedState.includes(searchTerm)) {
+        score += 10
+      }
+      
+      return score
+    }
+
+    // Buscar cidades brasileiras com busca melhorada
     const matchingCities = brazilianCitiesCache
-      .filter(city => 
-        city.name.toLowerCase().includes(searchTerm) ||
-        city.state.toLowerCase().includes(searchTerm)
-      )
-      .slice(0, 3) // Limitar a 3 para resposta mais rápida
+      .map(city => {
+        const normalizedCityName = normalizeText(city.name)
+        const normalizedState = normalizeText(city.state)
+        
+        // Verificar se corresponde ao termo de busca
+        const cityWords = normalizedCityName.split(/\s+/)
+        const matches = 
+          normalizedCityName.includes(normalizedSearchTerm) ||
+          normalizedState.includes(normalizedSearchTerm) ||
+          cityWords.some(word => word.startsWith(normalizedSearchTerm)) ||
+          cityWords.some(word => word.includes(normalizedSearchTerm))
+        
+        if (!matches) return null
+        
+        const score = calculateScore(city.name, city.state, normalizedSearchTerm)
+        
+        return {
+          ...city,
+          score
+        }
+      })
+      .filter((city): city is any => city !== null)
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 10) // Aumentar para 10 resultados iniciais
 
     // Buscar coordenadas específicas para cada cidade encontrada
     const citiesWithCoordinates = (await Promise.all(

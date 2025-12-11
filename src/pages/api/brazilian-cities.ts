@@ -269,29 +269,92 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const searchTerm = q.toLowerCase().trim()
     
-    if (searchTerm.length < 2) {
+    if (searchTerm.length < 1) {
       return res.json({ cities: [] })
     }
 
     console.log('🏙️ Buscando cidades para:', searchTerm)
 
+    // Função para normalizar texto (remover acentos)
+    const normalizeText = (text: string): string => {
+      return text
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .trim()
+    }
+
+    const normalizedSearchTerm = normalizeText(searchTerm)
+
+    // Função para calcular score de relevância
+    const calculateScore = (cityName: string, state: string, searchTerm: string): number => {
+      const normalizedCityName = normalizeText(cityName)
+      const normalizedState = normalizeText(state)
+      
+      // Dividir o nome da cidade em palavras
+      const cityWords = normalizedCityName.split(/\s+/)
+      const searchWords = searchTerm.split(/\s+/)
+      
+      let score = 0
+      
+      // Verificar se começa com o termo de busca (maior prioridade)
+      if (normalizedCityName.startsWith(searchTerm)) {
+        score += 1000
+      }
+      
+      // Verificar se alguma palavra da cidade começa com o termo de busca
+      searchWords.forEach(searchWord => {
+        cityWords.forEach(cityWord => {
+          if (cityWord.startsWith(searchWord)) {
+            score += 500
+          } else if (cityWord.includes(searchWord)) {
+            score += 100
+          }
+        })
+      })
+      
+      // Verificar se o nome completo contém o termo
+      if (normalizedCityName.includes(searchTerm)) {
+        score += 200
+      }
+      
+      // Verificar se o estado contém o termo (menor prioridade)
+      if (normalizedState.includes(searchTerm)) {
+        score += 10
+      }
+      
+      return score
+    }
+
     // Filtrar cidades que correspondem ao termo de busca
     const matchingCities = brazilianCities
-      .filter(city => 
-        city.name.toLowerCase().includes(searchTerm) ||
-        city.state.toLowerCase().includes(searchTerm)
-      )
-      .map(city => ({
-        id: `city_${city.name}_${city.state}`,
-        name: city.name,
-        address: `${city.name}, ${city.state}, ${city.country}`,
-        lat: city.lat,
-        lng: city.lng,
-        type: 'city' as const,
-        // Score para ordenação (cidades que começam com o termo têm prioridade)
-        score: city.name.toLowerCase().startsWith(searchTerm) ? 100 : 
-               city.name.toLowerCase().includes(searchTerm) ? 50 : 10
-      }))
+      .map(city => {
+        const normalizedCityName = normalizeText(city.name)
+        const normalizedState = normalizeText(city.state)
+        
+        // Verificar se corresponde ao termo de busca
+        const cityWords = normalizedCityName.split(/\s+/)
+        const matches = 
+          normalizedCityName.includes(normalizedSearchTerm) ||
+          normalizedState.includes(normalizedSearchTerm) ||
+          cityWords.some(word => word.startsWith(normalizedSearchTerm)) ||
+          cityWords.some(word => word.includes(normalizedSearchTerm))
+        
+        if (!matches) return null
+        
+        const score = calculateScore(city.name, city.state, normalizedSearchTerm)
+        
+        return {
+          id: `city_${city.name}_${city.state}`,
+          name: city.name,
+          address: `${city.name}, ${city.state}, ${city.country}`,
+          lat: city.lat,
+          lng: city.lng,
+          type: 'city' as const,
+          score
+        }
+      })
+      .filter((city): city is any => city !== null)
       .sort((a, b) => b.score - a.score)
       .slice(0, 10) // Limitar a 10 resultados
 

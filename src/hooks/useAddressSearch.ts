@@ -15,8 +15,8 @@ interface UseAddressSearchOptions {
 }
 
 export function useAddressSearch({ 
-  debounceMs = 300, 
-  minLength = 2 
+  debounceMs = 150, // Reduzido para resposta mais rápida
+  minLength = 1 // Reduzido para permitir busca com 1 caractere
 }: UseAddressSearchOptions = {}) {
   const [query, setQuery] = useState('')
   const [suggestions, setSuggestions] = useState<AddressSuggestion[]>([])

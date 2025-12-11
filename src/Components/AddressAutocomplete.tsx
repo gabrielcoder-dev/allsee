@@ -132,7 +132,7 @@ export default function AddressAutocomplete({
       )}
 
       {/* Estado vazio */}
-      {isOpen && !isLoading && suggestions.length === 0 && query.length >= 2 && (
+      {isOpen && !isLoading && suggestions.length === 0 && query.length >= 1 && (
         <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-[9998] p-4">
           <div className="text-center text-gray-500 text-sm">
             Nenhuma cidade encontrada para "{query}"
