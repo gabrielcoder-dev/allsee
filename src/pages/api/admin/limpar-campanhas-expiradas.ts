@@ -34,10 +34,36 @@ async function deletarOrderCompleta(orderId: string | number) {
   console.log(`🗑️ Deletando order completa: ${orderIdStr}`);
 
   // Buscar artes relacionadas ao pedido
-  const { data: arteCampanhas, error: arteFetchError } = await supabase
+  // Tentar buscar tanto como string quanto como number para garantir compatibilidade
+  let arteCampanhas: any[] = [];
+  let arteFetchError: any = null;
+  
+  // Primeiro, tentar buscar como string
+  const { data: artesStr, error: errorStr } = await supabase
     .from('arte_campanha')
     .select('id')
     .eq('id_order', orderIdStr);
+  
+  if (!errorStr && artesStr) {
+    arteCampanhas = artesStr;
+  } else {
+    // Se não encontrou como string, tentar como number (se orderId for numérico)
+    const orderIdNum = Number(orderIdStr);
+    if (!isNaN(orderIdNum)) {
+      const { data: artesNum, error: errorNum } = await supabase
+        .from('arte_campanha')
+        .select('id')
+        .eq('id_order', orderIdNum);
+      
+      if (!errorNum && artesNum) {
+        arteCampanhas = artesNum;
+      } else {
+        arteFetchError = errorNum;
+      }
+    } else {
+      arteFetchError = errorStr;
+    }
+  }
 
   if (arteFetchError) {
     console.error(`❌ Erro ao buscar artes do pedido ${orderIdStr}:`, arteFetchError);
