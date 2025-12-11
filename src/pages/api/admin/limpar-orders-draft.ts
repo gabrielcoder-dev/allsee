@@ -123,8 +123,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    // Data/hora limite: agora - 12 horas
-    const limite = new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString();
+    // Data/hora limite: agora - 1 hora (mais confiável para Vercel)
+    const limite = new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString();
 
     console.log('🧹 Iniciando limpeza de orders draft antigas...', {
       limite,

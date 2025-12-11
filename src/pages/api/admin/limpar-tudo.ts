@@ -6,28 +6,7 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
-// Função para calcular se a campanha expirou (considerando data de início + duração)
-function campanhaExpirada(inicioCampanha: string, duracaoSemanas: number): boolean {
-  if (!inicioCampanha || !duracaoSemanas) {
-    return false;
-  }
-  
-  const dataInicio = new Date(inicioCampanha);
-  const dataAtual = new Date();
-  
-  // Converter semanas para dias
-  const duracaoDias = duracaoSemanas * 7;
-  const dataFim = new Date(dataInicio);
-  dataFim.setDate(dataFim.getDate() + duracaoDias);
-  
-  // Adicionar um buffer de 1 hora para garantir que a campanha realmente terminou
-  // Se a data atual é maior ou igual à data fim + 1 hora, a campanha expirou
-  const dataFimComBuffer = new Date(dataFim.getTime() + 60 * 60 * 1000); // +1 hora
-  
-  return dataAtual >= dataFimComBuffer;
-}
-
-// Função para deletar uma order e tudo relacionado (reutilizando lógica do delete-order.ts)
+// Função para deletar uma order e tudo relacionado
 async function deletarOrderCompleta(orderId: string | number) {
   const orderIdStr = String(orderId);
   
@@ -126,6 +105,26 @@ async function deletarOrderCompleta(orderId: string | number) {
   };
 }
 
+// Função para calcular se a campanha expirou
+function campanhaExpirada(inicioCampanha: string, duracaoSemanas: number): boolean {
+  if (!inicioCampanha || !duracaoSemanas) {
+    return false;
+  }
+  
+  const dataInicio = new Date(inicioCampanha);
+  const dataAtual = new Date();
+  
+  // Converter semanas para dias
+  const duracaoDias = duracaoSemanas * 7;
+  const dataFim = new Date(dataInicio);
+  dataFim.setDate(dataFim.getDate() + duracaoDias);
+  
+  // Adicionar um buffer de 1 hora para garantir que a campanha realmente terminou
+  const dataFimComBuffer = new Date(dataFim.getTime() + 60 * 60 * 1000); // +1 hora
+  
+  return dataAtual >= dataFimComBuffer;
+}
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   // Aceitar tanto POST quanto GET (GET para cron jobs)
   if (req.method !== 'POST' && req.method !== 'GET') {
@@ -143,7 +142,43 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    console.log('🧹 Iniciando limpeza de campanhas expiradas...');
+    const resultados = {
+      draft: { deleted: 0, failed: 0, errors: [] as any[] },
+      expiradas: { deleted: 0, failed: 0, errors: [] as any[] }
+    };
+
+    // ========== LIMPEZA 1: Orders Draft ==========
+    console.log('🧹 [1/2] Iniciando limpeza de orders draft...');
+    
+    // Data/hora limite: agora - 1 hora
+    const limiteDraft = new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString();
+
+    const { data: ordersDraft, error: draftError } = await supabase
+      .from('order')
+      .select('id, status, created_at')
+      .eq('status', 'draft')
+      .lt('created_at', limiteDraft);
+
+    if (draftError) {
+      console.error('❌ Erro ao buscar orders draft:', draftError);
+      resultados.draft.errors.push({ error: draftError.message });
+    } else if (ordersDraft && ordersDraft.length > 0) {
+      console.log(`📋 Encontradas ${ordersDraft.length} orders draft para deletar`);
+      
+      for (const order of ordersDraft) {
+        try {
+          await deletarOrderCompleta(order.id);
+          resultados.draft.deleted++;
+        } catch (error: any) {
+          console.error(`❌ Erro ao deletar order draft ${order.id}:`, error);
+          resultados.draft.failed++;
+          resultados.draft.errors.push({ orderId: order.id, error: error.message });
+        }
+      }
+    }
+
+    // ========== LIMPEZA 2: Campanhas Expiradas ==========
+    console.log('🧹 [2/2] Iniciando limpeza de campanhas expiradas...');
 
     // Buscar todas as orders com status "pago" que têm campanha
     const { data: orders, error: ordersError } = await supabase
@@ -155,84 +190,61 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     if (ordersError) {
       console.error('❌ Erro ao buscar orders:', ordersError);
-      return res.status(500).json({
-        error: 'Erro ao buscar orders',
-        details: ordersError.message
+      resultados.expiradas.errors.push({ error: ordersError.message });
+    } else if (orders && orders.length > 0) {
+      console.log(`📋 Verificando ${orders.length} orders com campanhas...`);
+
+      // Filtrar orders com campanhas expiradas
+      const ordersExpiradas = orders.filter(order => {
+        if (!order.inicio_campanha || !order.duracao_campanha) {
+          return false;
+        }
+        return campanhaExpirada(order.inicio_campanha, order.duracao_campanha);
       });
-    }
 
-    if (!orders || orders.length === 0) {
-      console.log('✅ Nenhuma order com campanha encontrada');
-      return res.status(200).json({
-        success: true,
-        message: 'Nenhuma campanha expirada encontrada',
-        deleted: 0
-      });
-    }
+      if (ordersExpiradas.length > 0) {
+        console.log(`📋 Encontradas ${ordersExpiradas.length} campanhas expiradas para deletar`);
 
-    console.log(`📋 Verificando ${orders.length} orders com campanhas...`);
-
-    // Filtrar orders com campanhas expiradas
-    const ordersExpiradas = orders.filter(order => {
-      if (!order.inicio_campanha || !order.duracao_campanha) {
-        return false;
-      }
-      return campanhaExpirada(order.inicio_campanha, order.duracao_campanha);
-    });
-
-    if (ordersExpiradas.length === 0) {
-      console.log('✅ Nenhuma campanha expirada encontrada');
-      return res.status(200).json({
-        success: true,
-        message: 'Nenhuma campanha expirada encontrada',
-        deleted: 0,
-        checked: orders.length
-      });
-    }
-
-    console.log(`📋 Encontradas ${ordersExpiradas.length} campanhas expiradas para deletar:`, 
-      ordersExpiradas.map(o => ({ 
-        id: o.id, 
-        nome: o.nome_campanha,
-        inicio: o.inicio_campanha,
-        duracao: o.duracao_campanha
-      }))
-    );
-
-    // Deletar cada order expirada
-    const resultados: Array<{ orderId: string | number; success: boolean; error?: string }> = [];
-    
-    for (const order of ordersExpiradas) {
-      try {
-        await deletarOrderCompleta(order.id);
-        resultados.push({ orderId: order.id, success: true });
-      } catch (error: any) {
-        console.error(`❌ Erro ao deletar order ${order.id}:`, error);
-        resultados.push({ 
-          orderId: order.id, 
-          success: false, 
-          error: error.message 
-        });
+        for (const order of ordersExpiradas) {
+          try {
+            await deletarOrderCompleta(order.id);
+            resultados.expiradas.deleted++;
+          } catch (error: any) {
+            console.error(`❌ Erro ao deletar order expirada ${order.id}:`, error);
+            resultados.expiradas.failed++;
+            resultados.expiradas.errors.push({ orderId: order.id, error: error.message });
+          }
+        }
       }
     }
 
-    const sucessos = resultados.filter(r => r.success).length;
-    const falhas = resultados.filter(r => !r.success).length;
+    const totalDeleted = resultados.draft.deleted + resultados.expiradas.deleted;
+    const totalFailed = resultados.draft.failed + resultados.expiradas.failed;
 
-    console.log(`✅ Limpeza concluída: ${sucessos} deletadas com sucesso, ${falhas} falhas`);
+    console.log(`✅ Limpeza concluída: ${totalDeleted} deletadas, ${totalFailed} falhas`);
 
     return res.status(200).json({
       success: true,
-      message: `${sucessos} campanhas expiradas deletadas com sucesso!`,
-      deleted: sucessos,
-      failed: falhas,
-      checked: orders.length,
-      results: resultados
+      message: `Limpeza concluída: ${totalDeleted} orders deletadas`,
+      draft: {
+        deleted: resultados.draft.deleted,
+        failed: resultados.draft.failed,
+        errors: resultados.draft.errors
+      },
+      expiradas: {
+        deleted: resultados.expiradas.deleted,
+        failed: resultados.expiradas.failed,
+        errors: resultados.expiradas.errors
+      },
+      total: {
+        deleted: totalDeleted,
+        failed: totalFailed
+      }
     });
   } catch (error: any) {
-    console.error('❌ Erro inesperado ao limpar campanhas expiradas:', error);
+    console.error('❌ Erro inesperado na limpeza:', error);
     return res.status(500).json({
-      error: 'Erro inesperado ao limpar campanhas expiradas',
+      error: 'Erro inesperado na limpeza',
       details: error.message
     });
   }
