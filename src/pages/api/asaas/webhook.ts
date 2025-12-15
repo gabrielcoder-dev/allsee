@@ -30,9 +30,39 @@ export default async function handler(
     console.log('📋 Chaves do evento:', Object.keys(event));
     console.log('='.repeat(80));
 
-    // O Asaas envia eventos no formato: { event: 'PAYMENT_RECEIVED', payment: {...} }
+    // O Asaas envia eventos no formato: 
+    // - { event: 'PAYMENT_RECEIVED', payment: {...} } (eventos de pagamento)
+    // - { event: 'INVOICE_SYNCHRONIZED', invoice: {...} } (eventos de fatura)
     const eventType = event.event;
-    const payment = event.payment;
+    let payment = event.payment;
+    const invoice = event.invoice;
+
+    // Se não tem payment mas tem invoice, tentar extrair payment da invoice
+    if (!payment && invoice) {
+      console.log('📋 Evento com invoice em vez de payment, tentando extrair dados...');
+      console.log('📋 Invoice recebido:', JSON.stringify(invoice, null, 2));
+      
+      // Alguns eventos de invoice podem ter payment dentro
+      if (invoice.payment) {
+        payment = invoice.payment;
+        console.log('✅ Payment encontrado dentro da invoice');
+      } else if (invoice.id) {
+        // Se a invoice tem um ID, podemos buscar o pagamento relacionado
+        // Mas por enquanto, vamos apenas logar e retornar sucesso para eventos de invoice
+        console.log('ℹ️ Evento de invoice sem payment direto. Tipo:', eventType);
+        
+        // Para eventos de invoice que não são de pagamento, apenas confirmar recebimento
+        if (eventType === 'INVOICE_SYNCHRONIZED' || eventType === 'INVOICE_CREATED') {
+          console.log('✅ Evento de invoice processado (não requer atualização de status)');
+          return res.status(200).json({ 
+            success: true,
+            message: 'Evento de invoice recebido e processado',
+            eventType,
+            note: 'Eventos de invoice não atualizam status de pedido. Aguarde evento de pagamento.'
+          });
+        }
+      }
+    }
 
     // Verificar se é um evento de pagamento válido
     if (!payment) {
@@ -41,9 +71,27 @@ export default async function handler(
         keys: Object.keys(event),
         eventType: event.event,
         hasPayment: !!event.payment,
+        hasInvoice: !!event.invoice,
         fullEvent: event
       });
-      return res.status(400).json({ error: 'Dados de pagamento não encontrados' });
+      
+      // Para eventos que não são de pagamento, retornar sucesso mas sem processar
+      if (eventType && !eventType.includes('PAYMENT')) {
+        console.log('ℹ️ Evento não relacionado a pagamento, retornando sucesso sem processar');
+        return res.status(200).json({ 
+          success: true,
+          message: 'Evento recebido mas não requer processamento',
+          eventType,
+          note: 'Este tipo de evento não atualiza status de pedido.'
+        });
+      }
+      
+      return res.status(200).json({ 
+        success: false,
+        error: 'Dados de pagamento não encontrados',
+        eventType,
+        note: 'Webhook recebido mas sem dados de pagamento para processar.'
+      });
     }
 
     // Obter orderId do externalReference
@@ -100,6 +148,7 @@ export default async function handler(
       }
       
       // Se ainda não encontrou, retornar erro com logs detalhados
+      // Mas não bloquear o webhook (retornar 200 para evitar retries infinitos)
       if (!orderIdRaw) {
         console.error('='.repeat(80));
         console.error('❌ ERRO: externalReference NÃO ENCONTRADO');
@@ -112,7 +161,10 @@ export default async function handler(
         console.error('📋 Event completo:', JSON.stringify(event, null, 2));
         console.error('='.repeat(80));
         
-        return res.status(400).json({ 
+        // Retornar 200 para não gerar retry infinito do Asaas
+        // Mas logar o erro para investigação
+        return res.status(200).json({ 
+          success: false,
           error: 'externalReference (orderId) não encontrado',
           receivedPaymentKeys: Object.keys(payment),
           receivedEventKeys: Object.keys(event),
@@ -120,9 +172,8 @@ export default async function handler(
           paymentStatus: payment.status,
           paymentBillingType: payment.billingType,
           paymentValue: payment.value,
-          fullPayment: payment,
-          fullEvent: event,
-          hint: 'Verifique se o pagamento foi criado com externalReference. O campo pode estar em payment.externalReference ou payment.external_reference. O sistema tentou buscar pelo asaas_payment_id mas não encontrou. Verifique os logs do servidor para mais detalhes.'
+          hint: 'O pedido pode ter sido deletado ou o externalReference pode estar incorreto. Verifique os logs do servidor para mais detalhes.',
+          note: 'Webhook processado mas pedido não encontrado. Verifique se o pedido existe no banco de dados.'
         });
       }
     }
@@ -170,6 +221,8 @@ export default async function handler(
     console.log('='.repeat(80));
     console.log('📋 orderId recebido:', orderId);
     console.log('📋 tipo do orderId:', typeof orderId);
+    console.log('📋 orderId length:', orderId.length);
+    console.log('📋 É UUID?', /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(orderId));
     console.log('='.repeat(80));
     
     // Tentar buscar primeiro com o orderId como está (pode ser UUID ou número)
@@ -179,17 +232,19 @@ export default async function handler(
       .eq('id', orderId)
       .single();
 
-    console.log('📋 Primeira tentativa de busca:', {
+    console.log('📋 Primeira tentativa de busca (como recebido):', {
       encontrado: !!orderData,
       erro: orderErrorData?.message,
+      code: orderErrorData?.code,
       dados: orderData
     });
 
-    // Se não encontrar, tentar como número (caso seja um ID numérico)
+    // Se não encontrar, tentar diferentes formatos
     if (orderErrorData || !orderData) {
+      // Tentar como número (caso seja um ID numérico passado como string)
       const numericId = Number(orderId);
       if (!isNaN(numericId) && orderId !== String(numericId)) {
-        console.log(`🔄 Tentando buscar order como número: ${numericId}`);
+        console.log(`🔄 Tentativa 2: Buscando order como número: ${numericId}`);
         const { data: orderDataNumeric, error: orderErrorNumeric } = await supabase
           .from('order')
           .select('id, status, preco')
@@ -199,11 +254,65 @@ export default async function handler(
         console.log('📋 Tentativa numérica:', {
           encontrado: !!orderDataNumeric,
           erro: orderErrorNumeric?.message,
+          code: orderErrorNumeric?.code,
           dados: orderDataNumeric
         });
         
         if (!orderErrorNumeric && orderDataNumeric) {
           orderData = orderDataNumeric;
+          orderErrorData = null;
+        }
+      }
+      
+      // Se ainda não encontrou e parece ser UUID, tentar buscar sem hífens ou com formato diferente
+      if ((orderErrorData || !orderData) && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(orderId)) {
+        // Tentar buscar todos os pedidos recentes para debug (últimos 10)
+        console.log(`🔄 Tentativa 3: Buscando pedidos recentes para debug...`);
+        const { data: recentOrders, error: recentError } = await supabase
+          .from('order')
+          .select('id, status, preco, created_at')
+          .order('created_at', { ascending: false })
+          .limit(10);
+        
+        if (!recentError && recentOrders) {
+          console.log('📋 Pedidos recentes encontrados:', recentOrders.map(o => ({
+            id: o.id,
+            tipo: typeof o.id,
+            status: o.status
+          })));
+          
+          // Verificar se algum pedido tem ID similar
+          const matchingOrder = recentOrders.find(o => 
+            String(o.id) === orderId || 
+            String(o.id).replace(/-/g, '') === orderId.replace(/-/g, '')
+          );
+          
+          if (matchingOrder) {
+            console.log(`✅ Pedido encontrado por comparação manual:`, matchingOrder);
+            orderData = matchingOrder;
+            orderErrorData = null;
+          }
+        }
+      }
+      
+      // Última tentativa: buscar pelo asaas_payment_id se disponível
+      if ((orderErrorData || !orderData) && paymentId) {
+        console.log(`🔄 Tentativa 4: Buscando pelo asaas_payment_id: ${paymentId}`);
+        const { data: orderByPaymentId, error: orderByPaymentIdError } = await supabase
+          .from('order')
+          .select('id, status, preco')
+          .eq('asaas_payment_id', paymentId)
+          .maybeSingle();
+        
+        console.log('📋 Busca por asaas_payment_id:', {
+          encontrado: !!orderByPaymentId,
+          erro: orderByPaymentIdError?.message,
+          dados: orderByPaymentId
+        });
+        
+        if (!orderByPaymentIdError && orderByPaymentId) {
+          console.log(`✅ Pedido encontrado pelo asaas_payment_id: ${orderByPaymentId.id}`);
+          orderData = orderByPaymentId;
           orderErrorData = null;
         }
       }
@@ -227,8 +336,28 @@ export default async function handler(
     console.log('='.repeat(80));
 
     if (orderError || !order) {
-      console.error('❌ Pedido não encontrado:', orderId, orderError);
-      return res.status(404).json({ error: 'Pedido não encontrado' });
+      console.error('='.repeat(80));
+      console.error('❌ PEDIDO NÃO ENCONTRADO');
+      console.error('='.repeat(80));
+      console.error('📋 orderId recebido:', orderId);
+      console.error('📋 tipo do orderId:', typeof orderId);
+      console.error('📋 Erro da busca:', orderError);
+      console.error('📋 paymentId (asaas):', paymentId);
+      console.error('📋 paymentStatus:', paymentStatus);
+      console.error('📋 externalReference do payment:', payment.externalReference || payment.external_reference);
+      console.error('='.repeat(80));
+      
+      // Retornar erro mais detalhado mas não bloquear o webhook (retornar 200 para não gerar retry infinito)
+      return res.status(200).json({ 
+        success: false,
+        error: 'Pedido não encontrado no banco de dados',
+        orderId,
+        paymentId,
+        paymentStatus,
+        externalReference: payment.externalReference || payment.external_reference,
+        hint: 'O pedido pode ter sido deletado ou o externalReference pode estar incorreto. Verifique se o pedido existe no banco de dados.',
+        note: 'Webhook processado mas pedido não encontrado. Verifique os logs para mais detalhes.'
+      });
     }
 
     console.log(`📦 Pedido encontrado:`, {
