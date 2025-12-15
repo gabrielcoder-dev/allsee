@@ -270,8 +270,122 @@ export default async function handler(
     console.log('='.repeat(80));
     
     // Se o status indica pagamento confirmado, ATUALIZAR SEMPRE, mesmo que o evento não seja reconhecido
+    // Esta verificação garante que qualquer pagamento com status RECEIVED/CONFIRMED seja atualizado
     if (isStatusPaid && order.status !== 'pago') {
       console.log('🔄 STATUS INDICA PAGO - Forçando atualização independente do tipo de evento...');
+      
+      // Atualizar diretamente quando o status indica pagamento
+      try {
+        const { data: updatedOrder, error: directUpdateError } = await supabase
+          .from('order')
+          .update({ 
+            status: 'pago',
+            asaas_payment_id: paymentId,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', orderId)
+          .select('id, status')
+          .single();
+
+        if (directUpdateError) {
+          console.error('❌ Erro na atualização direta (status pago):', directUpdateError);
+          // Tentar função auxiliar
+          try {
+            await atualizarStatusCompra(orderId, 'pago');
+            console.log(`✅ Status atualizado via função auxiliar (status pago)`);
+            
+            // Verificar se foi atualizado
+            const { data: verifyOrder } = await supabase
+              .from('order')
+              .select('id, status')
+              .eq('id', orderId)
+              .single();
+            
+            if (verifyOrder?.status === 'pago') {
+              return res.status(200).json({ 
+                success: true,
+                message: 'Pagamento confirmado e pedido atualizado (via função auxiliar)',
+                orderId,
+                status: 'pago',
+                paymentType: paymentTypeName,
+                paymentStatus,
+                eventType
+              });
+            }
+          } catch (auxError: any) {
+            console.error('❌ Erro também na função auxiliar:', auxError);
+            // Mesmo com erro, retornar sucesso parcial pois o pagamento foi processado
+            return res.status(200).json({ 
+              success: true,
+              message: 'Pagamento confirmado mas houve problema ao atualizar status',
+              orderId,
+              status: order.status,
+              paymentType: paymentTypeName,
+              paymentStatus,
+              eventType,
+              warning: 'Status pode não ter sido atualizado corretamente',
+              error: auxError.message
+            });
+          }
+        } else if (updatedOrder) {
+          console.log(`✅ Status atualizado com sucesso (status pago):`, updatedOrder);
+          
+          // Verificar se realmente foi atualizado
+          const { data: verifyOrder } = await supabase
+            .from('order')
+            .select('id, status')
+            .eq('id', orderId)
+            .single();
+          
+          if (verifyOrder?.status === 'pago') {
+            console.log('✅ Verificação confirmada: status é "pago"');
+            return res.status(200).json({ 
+              success: true,
+              message: 'Pagamento confirmado e pedido atualizado (status pago)',
+              orderId,
+              status: 'pago',
+              paymentType: paymentTypeName,
+              paymentStatus,
+              eventType
+            });
+          } else {
+            console.error(`❌ PROBLEMA: Status não foi atualizado! Status atual: "${verifyOrder?.status}"`);
+            // Tentar forçar atualização novamente
+            const { error: forceUpdateError } = await supabase
+              .from('order')
+              .update({ status: 'pago' })
+              .eq('id', orderId);
+            
+            if (forceUpdateError) {
+              console.error('❌ Erro ao forçar atualização:', forceUpdateError);
+              // Mesmo com erro, retornar sucesso parcial pois o pagamento foi processado
+              return res.status(200).json({ 
+                success: true,
+                message: 'Pagamento confirmado mas houve problema ao atualizar status',
+                orderId,
+                status: verifyOrder?.status || order.status,
+                paymentType: paymentTypeName,
+                paymentStatus,
+                eventType,
+                warning: 'Status pode não ter sido atualizado corretamente'
+              });
+            } else {
+              console.log('✅ Atualização forçada concluída');
+              return res.status(200).json({ 
+                success: true,
+                message: 'Pagamento confirmado e pedido atualizado (atualização forçada)',
+                orderId,
+                status: 'pago',
+                paymentType: paymentTypeName,
+                paymentStatus,
+                eventType
+              });
+            }
+          }
+        }
+      } catch (error: any) {
+        console.error('❌ Erro ao processar atualização (status pago):', error);
+      }
     }
 
     if (isPaymentConfirmed) {
@@ -439,6 +553,7 @@ export default async function handler(
 
     // Para outros eventos, verificar se ainda assim é um pagamento confirmado
     // Por exemplo, PIX pode vir com status diferente mas já estar pago
+    // Esta verificação só é necessária se não entrou no bloco anterior
     console.log('='.repeat(80));
     console.log('⚠️ EVENTO NÃO RECONHECIDO COMO PAGAMENTO CONFIRMADO');
     console.log('='.repeat(80));
@@ -450,12 +565,14 @@ export default async function handler(
 
     // Verificar se o status do pagamento indica que foi recebido/confirmado
     // Independente do tipo de evento, se o status é RECEIVED/CONFIRMED, deve atualizar
+    // Esta é uma verificação de fallback caso o evento não tenha sido reconhecido anteriormente
     const isStatusPaidSecondCheck = paymentStatus === 'RECEIVED' || 
                                     paymentStatus === 'CONFIRMED' ||
                                     paymentStatus === 'RECEIVED_IN_CASH_OFFLINE' ||
                                     paymentStatus === 'APPROVED';
 
-    if (isStatusPaidSecondCheck) {
+    // Só atualizar aqui se não foi atualizado anteriormente e o status indica pagamento
+    if (isStatusPaidSecondCheck && order.status !== 'pago') {
       console.log('🔄 Status do pagamento indica PAGO - Atualizando status do pedido...');
       console.log(`📋 billingType: ${billingType}, paymentStatus: ${paymentStatus}`);
       
