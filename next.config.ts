@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import path from "path";
 
 const nextConfig: NextConfig = {
   // Configuração para permitir imagens do Supabase Storage
@@ -24,13 +25,11 @@ const nextConfig: NextConfig = {
   },
   // Configurações para lidar com arquivos grandes
   serverExternalPackages: [],
-  // Configurações de API - aumentar limite global
-  serverRuntimeConfig: {
-    maxFileSize: '1.5gb',
-  },
   // Otimizações para uploads rápidos
   compress: true,
   poweredByHeader: false,
+  // Fix para warning de lockfiles múltiplos
+  outputFileTracingRoot: path.resolve(process.cwd()),
   // Headers para permitir uploads grandes
   async headers() {
     return [
