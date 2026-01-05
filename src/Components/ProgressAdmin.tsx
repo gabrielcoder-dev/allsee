@@ -201,10 +201,30 @@ const ProgressAdmin = () => {
       try {
         setLoading(true);
         
-        // Buscar todas as artes de campanha
+        // PRIMEIRO: Buscar apenas orders com status "pago"
+        const { data: ordersPagas, error: ordersError } = await supabase
+          .from('order')
+          .select('id')
+          .eq('status', 'pago');
+
+        if (ordersError) {
+          console.error('Erro ao buscar orders pagas:', ordersError);
+          return;
+        }
+
+        if (!ordersPagas || ordersPagas.length === 0) {
+          setCampanhasAgrupadas([]);
+          return;
+        }
+
+        // Pegar apenas os IDs das orders pagas
+        const orderIdsPagas = ordersPagas.map(o => o.id);
+
+        // Buscar artes de campanha apenas das orders pagas
         const { data: artes, error: artesError } = await supabase
           .from('arte_campanha')
           .select('id, caminho_imagem, id_order, screen_type, mime_type')
+          .in('id_order', orderIdsPagas)
           .order('id', { ascending: false });
 
         if (artesError) {
@@ -227,21 +247,14 @@ const ProgressAdmin = () => {
           artesPorOrder.get(orderId)!.push(arte);
         });
 
-        // Buscar detalhes das orders
-        const orderIds = Array.from(artesPorOrder.keys());
-        const orderIdsForQuery = orderIds.map((id) => {
-          if (typeof id === 'number') return id;
-          const numeric = Number(id);
-          return !Number.isNaN(numeric) && !String(id).includes('-') ? numeric : String(id);
-        });
-
-        const { data: orders, error: ordersError } = await supabase
+        // Buscar detalhes completos das orders pagas
+        const { data: orders, error: ordersFullError } = await supabase
           .from('order')
           .select('*')
-          .in('id', orderIdsForQuery);
+          .in('id', orderIdsPagas);
 
-        if (ordersError) {
-          console.error('Erro ao buscar orders:', ordersError);
+        if (ordersFullError) {
+          console.error('Erro ao buscar detalhes das orders:', ordersFullError);
           return;
         }
 

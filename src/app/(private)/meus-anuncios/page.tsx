@@ -226,19 +226,37 @@ const MeusAnuncios = () => {
         // Fetch arte_campanha data for the current user
         console.log('📊 Buscando arte_campanha para userId:', userId);
         
-        // PRIMEIRO: Vamos ver TODAS as arte_campanha para debug
-        const { data: allArteCampanhas, error: allError } = await supabase
-          .from("arte_campanha")
-          .select(`id, caminho_imagem, order_id:id_order, id_user`)
-          .order("id", { ascending: false });
+        // PRIMEIRO: Buscar apenas orders com status "pago" do usuário
+        const { data: ordersPagas, error: ordersError } = await supabase
+          .from('order')
+          .select('id')
+          .eq('status', 'pago')
+          .eq('id_user', userId);
+
+        if (ordersError) {
+          console.error('❌ Erro ao buscar orders pagas:', ordersError);
+          setError(ordersError.message);
+          setLoading(false);
+          return;
+        }
+
+        if (!ordersPagas || ordersPagas.length === 0) {
+          console.log("⚠️ Nenhuma order paga encontrada para este usuário");
+          setAnuncios([]);
+          setLoading(false);
+          return;
+        }
+
+        // Pegar apenas os IDs das orders pagas
+        const orderIdsPagas = ordersPagas.map(o => o.id);
+        console.log('✅ Orders pagas encontradas:', orderIdsPagas.length);
         
-        console.log('🔍 TODAS as arte_campanha no banco:', allArteCampanhas);
-        
-        // SEGUNDO: Filtrar apenas as do usuário atual
+        // SEGUNDO: Filtrar arte_campanha do usuário que pertencem a orders pagas
         const { data: arteCampanhas, error: arteError } = await supabase
           .from("arte_campanha")
           .select(`id, caminho_imagem, order_id:id_order, screen_type`)
-          .eq('id_user', userId);
+          .eq('id_user', userId)
+          .in('id_order', orderIdsPagas);
 
         if (arteError) {
           console.error("❌ arteCampanhas error:", arteError);
@@ -247,23 +265,9 @@ const MeusAnuncios = () => {
           return;
         }
 
-        console.log('📋 Resultado da query arte_campanha (filtrado por usuário):', {
+        console.log('📋 Resultado da query arte_campanha (filtrado por usuário e orders pagas):', {
           count: arteCampanhas?.length || 0,
           data: arteCampanhas
-        });
-        
-        // Comparar com todas as arte_campanha
-        const userArteCampanhas = allArteCampanhas?.filter(ac => ac.id_user === userId) || [];
-        console.log('🔍 Arte_campanha do usuário (filtrado manualmente):', {
-          count: userArteCampanhas.length,
-          data: userArteCampanhas
-        });
-        
-        // Verificar se há diferença entre as queries
-        console.log('⚖️ Comparação:', {
-          queryFiltered: arteCampanhas?.length || 0,
-          manualFiltered: userArteCampanhas.length,
-          totalInDB: allArteCampanhas?.length || 0
         });
 
         if (!arteCampanhas || arteCampanhas.length === 0) {
@@ -304,7 +308,8 @@ const MeusAnuncios = () => {
         const { data: ordersData, error: ordersError } = await supabase
           .from("order")
           .select(`id, nome_campanha, inicio_campanha, duracao_campanha, preco`)
-          .in("id", orderIdsForQuery.length > 0 ? orderIdsForQuery : [-1]);
+          .in("id", orderIdsForQuery.length > 0 ? orderIdsForQuery : [-1])
+          .eq('status', 'pago');
 
         if (ordersError) {
           setError(ordersError.message);

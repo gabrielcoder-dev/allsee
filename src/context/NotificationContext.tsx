@@ -22,10 +22,27 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
 
   const fetchApprovalCount = async (): Promise<number> => {
     try {
-      // Buscar TODAS as artes de campanha (sem filtrar por usuário, pois é admin)
+      // PRIMEIRO: Buscar apenas orders com status "pago"
+      const { data: ordersPagas, error: ordersError } = await supabase
+        .from('order')
+        .select('id')
+        .eq('status', 'pago');
+
+      if (ordersError) {
+        console.error('Erro ao buscar orders pagas:', ordersError);
+        return 0;
+      }
+
+      if (!ordersPagas || ordersPagas.length === 0) return 0;
+
+      // Pegar apenas os IDs das orders pagas
+      const orderIdsPagas = ordersPagas.map(o => o.id);
+
+      // Buscar artes de campanha apenas das orders pagas
       const { data, error } = await supabase
         .from("arte_campanha")
         .select("id, id_order")
+        .in('id_order', orderIdsPagas)
         .order("id", { ascending: false });
 
       if (error) {
@@ -74,10 +91,42 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
 
   const fetchReplacementCount = async (): Promise<number> => {
     try {
-      // Buscar artes de troca pendentes
+      // PRIMEIRO: Buscar apenas orders com status "pago"
+      const { data: ordersPagas, error: ordersError } = await supabase
+        .from('order')
+        .select('id')
+        .eq('status', 'pago');
+
+      if (ordersError) {
+        console.error('Erro ao buscar orders pagas:', ordersError);
+        return 0;
+      }
+
+      if (!ordersPagas || ordersPagas.length === 0) return 0;
+
+      // Pegar apenas os IDs das orders pagas
+      const orderIdsPagas = ordersPagas.map(o => o.id);
+
+      // Buscar arte_campanha das orders pagas para pegar os IDs das campanhas
+      const { data: arteCampanhasPagas, error: arteError } = await supabase
+        .from("arte_campanha")
+        .select("id")
+        .in('id_order', orderIdsPagas);
+
+      if (arteError) {
+        console.error('Erro ao buscar arte_campanha:', arteError);
+        return 0;
+      }
+
+      if (!arteCampanhasPagas || arteCampanhasPagas.length === 0) return 0;
+
+      const arteCampanhaIdsPagas = arteCampanhasPagas.map(ac => ac.id);
+
+      // Buscar artes de troca pendentes apenas das campanhas pagas
       const { data: replacementData, error: replacementError } = await supabase
         .from("arte_troca_campanha")
         .select("id, id_campanha")
+        .in('id_campanha', arteCampanhaIdsPagas)
         .order("id", { ascending: false });
 
       if (replacementError) {

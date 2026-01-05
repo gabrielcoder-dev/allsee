@@ -42,10 +42,52 @@ const ReplacementAdmin = () => {
 
       setLoading(true);
       
-      // Primeiro, buscar todas as arte_troca_campanha
+      // PRIMEIRO: Buscar apenas orders com status "pago"
+      const { data: ordersPagas, error: ordersError } = await supabase
+        .from('order')
+        .select('id')
+        .eq('status', 'pago');
+
+      if (ordersError) {
+        console.error("Erro ao buscar orders pagas:", ordersError);
+        setLoading(false);
+        return;
+      }
+
+      if (!ordersPagas || ordersPagas.length === 0) {
+        setOrders([]);
+        setLoading(false);
+        return;
+      }
+
+      // Pegar apenas os IDs das orders pagas
+      const orderIdsPagas = ordersPagas.map(o => o.id);
+
+      // Buscar arte_campanha apenas das orders pagas
+      const { data: campanhasPagas, error: campanhasError } = await supabase
+        .from("arte_campanha")
+        .select("id")
+        .in('id_order', orderIdsPagas);
+
+      if (campanhasError) {
+        console.error("Erro ao buscar arte_campanha pagas:", campanhasError);
+        setLoading(false);
+        return;
+      }
+
+      if (!campanhasPagas || campanhasPagas.length === 0) {
+        setOrders([]);
+        setLoading(false);
+        return;
+      }
+
+      const campanhaIdsPagas = campanhasPagas.map(c => c.id);
+
+      // Buscar arte_troca_campanha apenas das campanhas pagas
       const { data: trocaData, error: trocaError } = await supabase
         .from("arte_troca_campanha")
         .select("id, caminho_imagem, id_campanha")
+        .in("id_campanha", campanhaIdsPagas)
         .order("id", { ascending: false });
 
       if (trocaError) {

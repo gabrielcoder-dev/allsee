@@ -67,9 +67,33 @@ const AproveitionAdmin = () => {
   useEffect(() => {
     async function fetchOrders() {
       setLoading(true);
+      
+      // PRIMEIRO: Buscar apenas orders com status "pago"
+      const { data: ordersPagas, error: ordersError } = await supabase
+        .from('order')
+        .select('id')
+        .eq('status', 'pago');
+
+      if (ordersError) {
+        console.error('Erro ao buscar orders pagas:', ordersError);
+        setLoading(false);
+        return;
+      }
+
+      if (!ordersPagas || ordersPagas.length === 0) {
+        setArteCampanhas([]);
+        setLoading(false);
+        return;
+      }
+
+      // Pegar apenas os IDs das orders pagas
+      const orderIdsPagas = ordersPagas.map(o => o.id);
+
+      // Buscar artes de campanha apenas das orders pagas
       const { data, error } = await supabase
         .from("arte_campanha")
         .select("id, caminho_imagem, id_order, id_anuncio, mime_type, screen_type")
+        .in('id_order', orderIdsPagas)
         .order("id", { ascending: false });
 
       if (!error && data) {
