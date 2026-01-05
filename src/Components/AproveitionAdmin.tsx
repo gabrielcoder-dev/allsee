@@ -994,11 +994,11 @@ const AproveitionAdmin = () => {
                     const shouldShowDot = hasPendingArt || hasTroca;
                     
                     return (
-                      <tr key={group.orderId} className="hover:bg-gray-50 relative">
-                        {shouldShowDot && (
-                          <span className="absolute -top-1 -left-1 inline-flex h-3 w-3 rounded-full bg-orange-500 border-2 border-white z-10"></span>
-                        )}
-                        <td className="px-4 py-3 whitespace-nowrap text-sm font-mono text-gray-900">
+                      <tr key={group.orderId} className="hover:bg-gray-50">
+                        <td className="px-4 py-3 whitespace-nowrap text-sm font-mono text-gray-900 relative">
+                          {shouldShowDot && (
+                            <span className="absolute -top-1 -left-1 inline-flex h-3 w-3 rounded-full bg-orange-500 border-2 border-white z-10"></span>
+                          )}
                           #{group.orderIdValue}
                         </td>
                         <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
