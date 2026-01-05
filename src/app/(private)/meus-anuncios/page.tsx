@@ -305,15 +305,15 @@ const MeusAnuncios = () => {
           return Number.isNaN(numericId) ? id : numericId;
         });
 
-        const { data: ordersData, error: ordersError } = await supabase
+        const { data: ordersData, error: ordersDataError } = await supabase
           .from("order")
           .select(`id, nome_campanha, inicio_campanha, duracao_campanha, preco`)
           .in("id", orderIdsForQuery.length > 0 ? orderIdsForQuery : [-1])
           .eq('status', 'pago');
 
-        if (ordersError) {
-          setError(ordersError.message);
-          console.error("Orders error:", ordersError);
+        if (ordersDataError) {
+          setError(ordersDataError.message);
+          console.error("Orders error:", ordersDataError);
           setLoading(false);
           return;
         }
