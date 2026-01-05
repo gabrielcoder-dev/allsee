@@ -431,6 +431,10 @@ function MetodoPagamentoContent() {
       const data = await response.json();
       
       if (data.success && data.paid) {
+        // Limpar dados do localStorage (carrinho e informações da compra)
+        localStorage.removeItem('cart');
+        localStorage.removeItem('formData');
+        
         toast.success('Pagamento confirmado!', {
           description: 'Redirecionando para seus anúncios...',
           duration: 2000

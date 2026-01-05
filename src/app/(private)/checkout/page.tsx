@@ -139,6 +139,10 @@ function CheckoutContent() {
 
       // Se o pagamento foi confirmado
       if (data.status === 'CONFIRMED') {
+        // Limpar dados do localStorage (carrinho e informações da compra)
+        localStorage.removeItem('cart');
+        localStorage.removeItem('formData');
+        
         // Mostrar toast de sucesso
         toast.success('Pagamento confirmado!', {
           description: 'Redirecionando para seus anúncios...',

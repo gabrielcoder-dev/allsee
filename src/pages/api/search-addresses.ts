@@ -198,15 +198,22 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           if (cityWord.startsWith(searchWord)) {
             score += 500
           } else if (cityWord.includes(searchWord)) {
-            score += 100
+            score += 200 // Aumentado de 100 para 200 para dar mais peso
           }
         })
       })
       
-      // Verificar se o nome completo contém o termo
+      // Verificar se o nome completo contém o termo (aumentar peso)
       if (normalizedCityName.includes(searchTerm)) {
-        score += 200
+        score += 300 // Aumentado de 200 para 300
       }
+      
+      // Verificar se alguma palavra contém o termo no início (ex: "Barra" em "Barra do Garças")
+      cityWords.forEach(word => {
+        if (word.includes(searchTerm) && word.indexOf(searchTerm) === 0) {
+          score += 400 // Bonus para palavras que começam com o termo
+        }
+      })
       
       // Verificar se o estado contém o termo (menor prioridade)
       if (normalizedState.includes(searchTerm)) {
@@ -222,12 +229,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         const normalizedCityName = normalizeText(city.name)
         const normalizedState = normalizeText(city.state)
         
-        // Verificar se corresponde ao termo de busca
+        // Verificar se corresponde ao termo de busca - busca mais flexível
         const cityWords = normalizedCityName.split(/\s+/)
+        
+        // Verificar correspondência de forma mais abrangente
+        // A busca deve encontrar cidades que contenham o termo em qualquer parte do nome
         const matches = 
+          // Nome completo contém o termo (ex: "barra" em "barra do garças")
           normalizedCityName.includes(normalizedSearchTerm) ||
+          // Estado contém o termo
           normalizedState.includes(normalizedSearchTerm) ||
+          // Alguma palavra da cidade começa com o termo (ex: "barra" em "Barra do Garças")
           cityWords.some(word => word.startsWith(normalizedSearchTerm)) ||
+          // Alguma palavra da cidade contém o termo (ex: "barra" em qualquer palavra)
           cityWords.some(word => word.includes(normalizedSearchTerm))
         
         if (!matches) return null
@@ -241,7 +255,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       })
       .filter((city): city is any => city !== null)
       .sort((a, b) => b.score - a.score)
-      .slice(0, 10) // Aumentar para 10 resultados iniciais
+      .slice(0, 15) // Aumentar para 15 resultados iniciais para ter mais opções
 
     // Buscar coordenadas específicas para cada cidade encontrada
     const citiesWithCoordinates = (await Promise.all(
@@ -259,9 +273,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             lng = coords.lng
             console.log(`✅ Coordenadas específicas encontradas: ${lat}, ${lng}`)
           } else {
-            // Se não encontrou coordenadas, não retornar esta cidade
-            console.log(`❌ Não foi possível encontrar coordenadas para ${city.name}, ${city.state}`)
-            return null
+            // Se não encontrou coordenadas, usar coordenadas aproximadas do estado como fallback
+            console.log(`⚠️ Coordenadas não encontradas para ${city.name}, ${city.state}, usando coordenadas do estado`)
+            const stateCoords = getStateCoordinates(city.state)
+            lat = stateCoords.lat
+            lng = stateCoords.lng
           }
         }
 
@@ -276,11 +292,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           lng: lng,
           type: 'city' as const,
           // Score para ordenação (cidades que começam com o termo têm prioridade)
-          score: city.name.toLowerCase().startsWith(searchTerm) ? 100 : 
-                 city.name.toLowerCase().includes(searchTerm) ? 50 : 10
+          score: city.score || (city.name.toLowerCase().startsWith(searchTerm) ? 100 : 
+                 city.name.toLowerCase().includes(searchTerm) ? 50 : 10)
         }
       })
-    )).filter(city => city !== null) as any[]
+    )).filter(city => city !== null && city.lat && city.lng) as any[]
     
     // Ordenar e limitar resultados
     const finalCities = citiesWithCoordinates

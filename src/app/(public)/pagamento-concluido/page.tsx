@@ -7,6 +7,10 @@ export default function PagamentoConcluido() {
   const router = useRouter();
 
   useEffect(() => {
+    // Limpar dados do localStorage (carrinho e informações da compra)
+    localStorage.removeItem('cart');
+    localStorage.removeItem('formData');
+    
     // Redireciona automaticamente para /meus-anuncios após 2 segundos
     const timer = setTimeout(() => {
       router.push('/meus-anuncios');
@@ -22,7 +26,12 @@ export default function PagamentoConcluido() {
       <p>Redirecionando para seus anúncios...</p>
       <div style={{ marginTop: 20 }}>
         <button 
-          onClick={() => router.push('/meus-anuncios')}
+          onClick={() => {
+            // Limpar dados do localStorage ao clicar no botão também
+            localStorage.removeItem('cart');
+            localStorage.removeItem('formData');
+            router.push('/meus-anuncios');
+          }}
           style={{ 
             padding: '10px 20px', 
             backgroundColor: '#f97316', 
