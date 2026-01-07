@@ -7,6 +7,87 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
+const ASAAS_ENVIRONMENT = process.env.ASAAS_ENVIRONMENT || 'sandbox';
+const ASAAS_API_URL = ASAAS_ENVIRONMENT === 'production' 
+  ? 'https://api.asaas.com/v3'
+  : 'https://sandbox.asaas.com/api/v3';
+
+const ASAAS_API_KEY = process.env.KEY_API_ASAAS;
+
+// Função auxiliar para criar nota fiscal automaticamente para pessoa jurídica
+async function criarNotaFiscalAutomatica(order: any, paymentId: string) {
+  // Verificar se é pessoa jurídica (tem CNPJ e não tem CPF)
+  const isPessoaJuridica = order.cnpj && !order.cpf;
+  
+  if (!isPessoaJuridica || !paymentId || !ASAAS_API_KEY) {
+    if (!isPessoaJuridica) {
+      console.log('ℹ️ Pessoa física detectada - Nota fiscal não será criada automaticamente');
+    }
+    return { success: false, reason: !isPessoaJuridica ? 'pessoa_fisica' : 'payment_id_ou_api_key_ausente' };
+  }
+
+  console.log('='.repeat(80));
+  console.log('📄 PESSOA JURÍDICA DETECTADA - Criando nota fiscal automaticamente');
+  console.log('='.repeat(80));
+  console.log('📋 CNPJ:', order.cnpj);
+  console.log('📋 Payment ID:', paymentId);
+  console.log('📋 Valor:', order.preco);
+  console.log('📋 Campanha:', order.nome_campanha);
+  
+  try {
+    // Criar nota fiscal no Asaas
+    const invoiceData = {
+      payment: paymentId,
+      serviceDescription: order.nome_campanha || 'Serviço de publicidade em totens digitais',
+      value: order.preco || 0,
+      effectiveDate: new Date().toISOString().split('T')[0],
+    };
+
+    console.log('📝 Dados da nota fiscal:', invoiceData);
+
+    const invoiceResponse = await fetch(`${ASAAS_API_URL}/invoices`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'access_token': ASAAS_API_KEY,
+      },
+      body: JSON.stringify(invoiceData),
+    });
+
+    if (!invoiceResponse.ok) {
+      const errorData = await invoiceResponse.json().catch(() => ({}));
+      console.error('❌ Erro ao criar nota fiscal:', errorData);
+      return { 
+        success: false, 
+        error: errorData.message || 'Erro ao criar nota fiscal',
+        details: errorData
+      };
+    }
+
+    const invoice = await invoiceResponse.json();
+    console.log('✅ Nota fiscal criada com sucesso:', {
+      id: invoice.id,
+      status: invoice.status,
+      payment: invoice.payment
+    });
+    
+    return { 
+      success: true, 
+      invoice: {
+        id: invoice.id,
+        status: invoice.status,
+        payment: invoice.payment
+      }
+    };
+  } catch (error: any) {
+    console.error('❌ Erro ao criar nota fiscal:', error);
+    return { 
+      success: false, 
+      error: error.message || 'Erro ao criar nota fiscal'
+    };
+  }
+}
+
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
@@ -226,9 +307,10 @@ export default async function handler(
     console.log('='.repeat(80));
     
     // Tentar buscar primeiro com o orderId como está (pode ser UUID ou número)
+    // Buscar também cnpj e cpf para verificar se é pessoa jurídica
     let { data: orderData, error: orderErrorData } = await supabase
       .from('order')
-      .select('id, status, preco')
+      .select('id, status, preco, cnpj, cpf, nome_campanha')
       .eq('id', orderId)
       .single();
 
@@ -241,15 +323,15 @@ export default async function handler(
 
     // Se não encontrar, tentar diferentes formatos
     if (orderErrorData || !orderData) {
-      // Tentar como número (caso seja um ID numérico passado como string)
-      const numericId = Number(orderId);
-      if (!isNaN(numericId) && orderId !== String(numericId)) {
-        console.log(`🔄 Tentativa 2: Buscando order como número: ${numericId}`);
-        const { data: orderDataNumeric, error: orderErrorNumeric } = await supabase
-          .from('order')
-          .select('id, status, preco')
-          .eq('id', numericId)
-          .single();
+        // Tentar como número (caso seja um ID numérico passado como string)
+        const numericId = Number(orderId);
+        if (!isNaN(numericId) && orderId !== String(numericId)) {
+          console.log(`🔄 Tentativa 2: Buscando order como número: ${numericId}`);
+          const { data: orderDataNumeric, error: orderErrorNumeric } = await supabase
+            .from('order')
+            .select('id, status, preco, cnpj, cpf, nome_campanha')
+            .eq('id', numericId)
+            .single();
         
         console.log('📋 Tentativa numérica:', {
           encontrado: !!orderDataNumeric,
@@ -270,7 +352,7 @@ export default async function handler(
         console.log(`🔄 Tentativa 3: Buscando pedidos recentes para debug...`);
         const { data: recentOrders, error: recentError } = await supabase
           .from('order')
-          .select('id, status, preco, created_at')
+          .select('id, status, preco, cnpj, cpf, nome_campanha, created_at')
           .order('created_at', { ascending: false })
           .limit(10);
         
@@ -300,7 +382,7 @@ export default async function handler(
         console.log(`🔄 Tentativa 4: Buscando pelo asaas_payment_id: ${paymentId}`);
         const { data: orderByPaymentId, error: orderByPaymentIdError } = await supabase
           .from('order')
-          .select('id, status, preco')
+          .select('id, status, preco, cnpj, cpf, nome_campanha')
           .eq('asaas_payment_id', paymentId)
           .maybeSingle();
         
@@ -500,6 +582,19 @@ export default async function handler(
               });
             } else {
               console.log('✅ Atualização forçada concluída');
+              
+              // Buscar dados atualizados do pedido para criar nota fiscal
+              const { data: updatedOrderForInvoice } = await supabase
+                .from('order')
+                .select('id, status, cnpj, cpf, preco, nome_campanha')
+                .eq('id', orderId)
+                .single();
+              
+              // Criar nota fiscal automaticamente se for pessoa jurídica
+              const invoiceResult = updatedOrderForInvoice 
+                ? await criarNotaFiscalAutomatica(updatedOrderForInvoice, paymentId)
+                : { success: false };
+              
               return res.status(200).json({ 
                 success: true,
                 message: 'Pagamento confirmado e pedido atualizado (atualização forçada)',
@@ -507,7 +602,8 @@ export default async function handler(
                 status: 'pago',
                 paymentType: paymentTypeName,
                 paymentStatus,
-                eventType
+                eventType,
+                invoiceCreated: invoiceResult.success || false
               });
             }
           }
@@ -612,13 +708,13 @@ export default async function handler(
           }
         }
 
-        // Verificar se a atualização realmente funcionou
-        if (updateSuccess) {
-          const { data: verifyOrder, error: verifyError } = await supabase
-            .from('order')
-            .select('id, status')
-            .eq('id', orderId)
-            .single();
+          // Verificar se a atualização realmente funcionou
+          if (updateSuccess) {
+            const { data: verifyOrder, error: verifyError } = await supabase
+              .from('order')
+              .select('id, status, cnpj, cpf, preco, nome_campanha')
+              .eq('id', orderId)
+              .single();
 
           if (verifyError) {
             console.error('❌ Erro ao verificar atualização:', verifyError);
@@ -637,7 +733,21 @@ export default async function handler(
                 console.error('❌ Erro ao forçar atualização:', forceUpdateError);
               } else {
                 console.log('✅ Atualização forçada concluída');
+                
+                // Buscar dados atualizados para criar nota fiscal
+                const { data: orderForInvoice } = await supabase
+                  .from('order')
+                  .select('id, status, cnpj, cpf, preco, nome_campanha')
+                  .eq('id', orderId)
+                  .single();
+                
+                if (orderForInvoice) {
+                  await criarNotaFiscalAutomatica(orderForInvoice, paymentId);
+                }
               }
+            } else {
+              // Status foi atualizado com sucesso, criar nota fiscal se for pessoa jurídica
+              await criarNotaFiscalAutomatica(verifyOrder, paymentId);
             }
           }
         }
@@ -662,11 +772,15 @@ export default async function handler(
           console.warn('⚠️ Aviso: não foi possível salvar asaas_payment_id (coluna pode não existir)');
         }
 
+        // Criar nota fiscal automaticamente se for pessoa jurídica
+        const invoiceResult = await criarNotaFiscalAutomatica(order, paymentId);
+        
         console.log(`✅ Pedido ${orderId} processado com sucesso!`, {
           tipo: paymentTypeName,
           motivo: updateReason,
           statusAnterior: order.status,
-          statusNovo: 'pago'
+          statusNovo: 'pago',
+          notaFiscalCriada: invoiceResult.success ? 'sim' : 'não'
         });
         
         return res.status(200).json({ 
@@ -675,7 +789,9 @@ export default async function handler(
           orderId,
           status: 'pago',
           paymentType: paymentTypeName,
-          reason: updateReason
+          reason: updateReason,
+          invoiceCreated: invoiceResult.success || false,
+          invoice: invoiceResult.success ? invoiceResult.invoice : undefined
         });
       }
     }
