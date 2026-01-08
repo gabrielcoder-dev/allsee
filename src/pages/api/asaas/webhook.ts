@@ -1132,6 +1132,19 @@ export default async function handler(
           }
         }
 
+        // Buscar order atualizado para tentar criar nota fiscal (fallback)
+        const { data: finalOrder } = await supabase
+          .from('order')
+          .select('id, status, cnpj, cpf, preco, nome_campanha, razao_social, email, telefone, cep, endereco, numero, bairro, complemento, cidade, estado, setor')
+          .eq('id', orderId)
+          .single();
+        
+        let invoiceCreated = false;
+        if (finalOrder?.status === 'pago') {
+          const invoiceResult = await criarNotaFiscalAutomatica(finalOrder, paymentId);
+          invoiceCreated = invoiceResult.success || false;
+        }
+
         return res.status(200).json({ 
           success: true,
           message: `Pagamento ${billingType || 'confirmado'} e pedido atualizado`,
@@ -1139,7 +1152,8 @@ export default async function handler(
           status: 'pago',
           paymentType: billingType,
           paymentStatus,
-          eventType
+          eventType,
+          invoiceCreated
         });
       } catch (error: any) {
         console.error('❌ Erro ao processar atualização:', error);
