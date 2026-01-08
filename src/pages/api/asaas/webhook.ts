@@ -180,12 +180,74 @@ async function criarNotaFiscalAutomatica(order: any, paymentId: string) {
       }
     }
 
+    // Buscar serviços municipais cadastrados no Asaas
+    console.log('🔍 Buscando serviços municipais cadastrados no Asaas...');
+    let municipalServiceId: string | null = null;
+    
+    // Primeiro, tentar usar variável de ambiente se configurada
+    if (process.env.ASAAS_MUNICIPAL_SERVICE_ID) {
+      municipalServiceId = process.env.ASAAS_MUNICIPAL_SERVICE_ID;
+      console.log('✅ Usando municipalServiceId da variável de ambiente:', municipalServiceId);
+    } else {
+      // Tentar buscar da API do Asaas (tentar ambos os endpoints possíveis)
+      const endpoints = [
+        `${ASAAS_API_URL}/municipalServices`,
+        `${ASAAS_API_URL}/invoices/municipalServices`,
+      ];
+
+      for (const endpoint of endpoints) {
+        try {
+          console.log(`🔍 Tentando buscar serviços municipais em: ${endpoint}`);
+          const servicesResponse = await fetch(endpoint, {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+              'access_token': ASAAS_API_KEY,
+            },
+          });
+
+          if (servicesResponse.ok) {
+            const servicesData = await servicesResponse.json();
+            const services = servicesData.data || servicesData || [];
+            
+            if (Array.isArray(services) && services.length > 0) {
+              // Usar o primeiro serviço disponível
+              municipalServiceId = services[0].id;
+              console.log('✅ Serviço municipal encontrado:', {
+                id: municipalServiceId,
+                code: services[0].code || services[0].municipalServiceCode,
+                description: services[0].description || services[0].municipalServiceName,
+                totalServices: services.length,
+                endpoint
+              });
+              break; // Parar se encontrou
+            }
+          } else {
+            const servicesError = await servicesResponse.json().catch(() => ({}));
+            console.warn(`⚠️ Endpoint ${endpoint} retornou erro:`, servicesError);
+          }
+        } catch (servicesError: any) {
+          console.warn(`⚠️ Erro ao buscar em ${endpoint}:`, servicesError.message);
+        }
+      }
+    }
+
+    if (!municipalServiceId) {
+      console.error('❌ municipalServiceId não encontrado! É necessário cadastrar um serviço municipal no Asaas ou configurar a variável ASAAS_MUNICIPAL_SERVICE_ID');
+      return { 
+        success: false, 
+        error: 'municipalServiceId é obrigatório. Configure um serviço municipal no Asaas ou defina a variável ASAAS_MUNICIPAL_SERVICE_ID',
+        details: 'O identificador único do serviço municipal precisa ser informado. Acesse o Asaas > Notas Fiscais > Configurações para cadastrar um serviço.'
+      };
+    }
+
     // Criar nota fiscal no Asaas
     const invoiceData: any = {
       payment: paymentId,
       serviceDescription: order.nome_campanha || 'Serviço de publicidade em totens digitais',
       value: order.preco || paymentData.value || 0,
       effectiveDate: new Date().toISOString().split('T')[0],
+      municipalServiceId: municipalServiceId,
     };
 
     console.log('📝 Dados da nota fiscal que serão enviados:', invoiceData);
