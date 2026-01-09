@@ -573,7 +573,7 @@ const getStatusDisplay = (status: ArteStatus) => {
       };
     case "nao_aceita":
       return {
-        text: "Arte não aceita, tente novamente!",
+        text: "Arte não aceita, por favor escolha outra.",
         badgeClass: "bg-red-100 text-red-700",
         dotClass: "bg-red-500",
         canRequestSwap: true,
@@ -620,7 +620,7 @@ const summarizeArteStatuses = (artes: ArteResumo[]) => {
   if (aceitas > 0 && naoAceitas > 0) {
     return {
       status: "nao_aceita" as ArteStatus,
-      text: "Uma arte não aceita",
+      text: "Arte não aceita, por favor escolha outra.",
       badgeClass: "bg-red-100 text-red-700",
       dotClass: "bg-red-500",
     };
@@ -638,7 +638,7 @@ const summarizeArteStatuses = (artes: ArteResumo[]) => {
   if (naoAceitas === artes.length) {
     return {
       status: "nao_aceita" as ArteStatus,
-      text: "Nenhuma arte aceita",
+      text: "Arte não aceita, por favor escolha outra.",
       badgeClass: "bg-red-100 text-red-700",
       dotClass: "bg-red-500",
     };
@@ -647,7 +647,7 @@ const summarizeArteStatuses = (artes: ArteResumo[]) => {
   if (naoAceitas > 0) {
     return {
       status: "nao_aceita" as ArteStatus,
-      text: "Nenhuma arte aceita",
+      text: "Arte não aceita, por favor escolha outra.",
       badgeClass: "bg-red-100 text-red-700",
       dotClass: "bg-red-500",
     };
@@ -1066,6 +1066,24 @@ const summarizeArteStatuses = (artes: ArteResumo[]) => {
                     </div>
                   </div>
                   
+                  {/* Mensagem e botão quando arte recusada */}
+                  {anuncio.status === 'nao_aceita' && (
+                    <div className="mb-3 p-3 bg-red-50 border border-red-200 rounded-lg">
+                      <p className="text-sm text-red-700 mb-2">
+                        Arte não aceita, por favor escolha outra.
+                      </p>
+                      <button 
+                        className="w-full text-xs font-medium py-2 px-3 rounded-lg bg-orange-600 text-white hover:bg-orange-700 transition-colors cursor-pointer"
+                        onClick={() => {
+                          setSelectedOrderForArts(anuncio);
+                          setIsArtModalOpen(true);
+                        }}
+                      >
+                        Trocar arte
+                      </button>
+                    </div>
+                  )}
+                  
                   <div className="flex gap-2">
                     <button 
                       className="flex-1 text-xs font-medium py-2 px-3 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors cursor-pointer"
@@ -1253,6 +1271,7 @@ const summarizeArteStatuses = (artes: ArteResumo[]) => {
                   artesFiltradas.map((arte) => {
                     const statusInfo = getStatusDisplay(arte.status);
                     const isVideoArte = arte.caminho_imagem ? isVideo(arte.caminho_imagem) : false;
+                    const isRejected = arte.status === 'nao_aceita';
 
                     return (
                       <div key={arte.id} className="flex flex-col sm:flex-row sm:items-center gap-4 p-4 border border-gray-200 rounded-xl">
@@ -1281,10 +1300,29 @@ const summarizeArteStatuses = (artes: ArteResumo[]) => {
                         </div>
                         <div className="flex-1">
                           <p className="text-sm font-semibold text-gray-900 mb-2">Arte #{arte.id}</p>
-                          <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium ${statusInfo.badgeClass}`}>
+                          <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium ${statusInfo.badgeClass} mb-2`}>
                             <div className={`w-2 h-2 rounded-full ${statusInfo.dotClass}`}></div>
                             {statusInfo.text}
                           </div>
+                          {isRejected && (
+                            <div className="mt-2">
+                              <p className="text-sm text-red-700 mb-2">
+                                Arte não aceita, por favor escolha outra.
+                              </p>
+                              <button
+                                className="text-xs font-medium py-2 px-4 rounded-lg bg-orange-600 text-white hover:bg-orange-700 transition-colors cursor-pointer"
+                                onClick={() => {
+                                  setIsViewArtsModalOpen(false);
+                                  setSelectedScreenTypeForView(null);
+                                  setSelectedScreenTypeForTroca(getOrientation(arte.screen_type));
+                                  setSelectedOrderIdForTroca(selectedOrderForArts.order_id);
+                                  setIsTrocaModalOpen(true);
+                                }}
+                              >
+                                Trocar arte
+                              </button>
+                            </div>
+                          )}
                         </div>
                       </div>
                     );
