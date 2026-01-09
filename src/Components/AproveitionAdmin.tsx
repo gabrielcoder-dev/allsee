@@ -47,7 +47,7 @@ const AproveitionAdmin = () => {
   const [selectedOrderId, setSelectedOrderId] = useState<string | number | null>(null);
   const [imagesModalOrderId, setImagesModalOrderId] = useState<OrderIdentifier | null>(null);
   const [anunciosMap, setAnunciosMap] = useState<Record<string, string>>({});
-  const [orderInfoMap, setOrderInfoMap] = useState<Record<string, { nome_campanha?: string | null; preco?: number; inicio_campanha?: string }>>({});
+  const [orderInfoMap, setOrderInfoMap] = useState<Record<string, { nome_campanha?: string | null; preco?: number; inicio_campanha?: string; duracao_campanha?: number | string }>>({});
   const [orderToDelete, setOrderToDelete] = useState<OrderIdentifier | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [activeTab, setActiveTab] = useState<'atuais' | 'trocas'>('atuais');
@@ -161,16 +161,17 @@ const AproveitionAdmin = () => {
 
           const { data: ordersData, error: ordersError } = await supabase
             .from('order')
-            .select('id, nome_campanha, preco, inicio_campanha')
+            .select('id, nome_campanha, preco, inicio_campanha, duracao_campanha')
             .in('id', orderIdsForQuery);
 
           if (!ordersError && ordersData) {
-            const map: Record<string, { nome_campanha?: string | null; preco?: number; inicio_campanha?: string }> = {};
+            const map: Record<string, { nome_campanha?: string | null; preco?: number; inicio_campanha?: string; duracao_campanha?: number | string }> = {};
             ordersData.forEach((order: any) => {
               map[String(order.id)] = { 
                 nome_campanha: order.nome_campanha,
                 preco: order.preco,
-                inicio_campanha: order.inicio_campanha
+                inicio_campanha: order.inicio_campanha,
+                duracao_campanha: order.duracao_campanha
               };
             });
             setOrderInfoMap(map);
@@ -253,8 +254,52 @@ const AproveitionAdmin = () => {
     }).format(value);
   };
 
+  // Função para verificar se a campanha já acabou
+  const isCampanhaFinalizada = (inicioCampanha?: string, duracaoCampanha?: number | string): boolean => {
+    if (!inicioCampanha || !duracaoCampanha) return false;
+    
+    // Converter duracao para número se for string
+    const duracaoNum = typeof duracaoCampanha === 'string' ? parseFloat(duracaoCampanha) : duracaoCampanha;
+    if (isNaN(duracaoNum) || duracaoNum <= 0) return false;
+    
+    const dataInicio = new Date(inicioCampanha);
+    const dataAtual = new Date();
+    
+    // Converter semanas para dias
+    const duracaoDias = duracaoNum * 7;
+    
+    // Calcular data de fim da campanha
+    const dataFim = new Date(dataInicio);
+    dataFim.setDate(dataFim.getDate() + duracaoDias);
+    
+    // Verificar se já passou da data de fim
+    return dataAtual > dataFim;
+  };
+
   // Função para obter badge de status
-  const getStatusBadge = (status: string) => {
+  const getStatusBadge = (status: string, orderId?: string) => {
+    // Se for aprovado, verificar se a campanha já acabou
+    if (status === 'aprovado' && orderId) {
+      const orderInfo = orderInfoMap[orderId];
+      const finalizada = isCampanhaFinalizada(orderInfo?.inicio_campanha, orderInfo?.duracao_campanha);
+      
+      if (finalizada) {
+        return (
+          <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+            <AlertCircle className="w-3 h-3" />
+            Finalizada
+          </span>
+        );
+      } else {
+        return (
+          <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+            <CheckCircle2 className="w-3 h-3" />
+            Ativa
+          </span>
+        );
+      }
+    }
+
     const statusMap: { [key: string]: { color: string; icon: any; label: string } } = {
       'aprovado': { color: 'bg-green-100 text-green-800', icon: CheckCircle2, label: 'Aprovado' },
       'rejeitado': { color: 'bg-red-100 text-red-800', icon: AlertCircle, label: 'Rejeitado' },
@@ -1011,7 +1056,7 @@ const AproveitionAdmin = () => {
                           {formatDate(orderInfoMap[group.orderId]?.inicio_campanha)}
                         </td>
                         <td className="px-4 py-3 whitespace-nowrap">
-                          {getStatusBadge(status)}
+                          {getStatusBadge(status, group.orderId)}
                         </td>
                         <td className="px-4 py-3 whitespace-nowrap text-right text-sm font-medium">
                           <div className="flex items-center justify-end gap-2">
