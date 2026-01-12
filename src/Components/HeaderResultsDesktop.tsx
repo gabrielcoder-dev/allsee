@@ -231,7 +231,7 @@ const HeaderResultsDesktop = ({ onDurationChange, selectedDuration, onTipoMidiaC
                   }, 2000); // 2 segundos de animação
                 }}
                 onCloseDropdown={closeDropdown}
-                placeholder="Ex: Rua das Flores, Centro, Primavera do Leste"
+                placeholder="Ex: Cuiabá, MT, Brasil"
                 className="flex-1"
               />
               <Search className="w-5 h-5 text-gray-500 cursor-pointer lg:hidden" />

@@ -146,11 +146,11 @@ export default function MobileHeader({
               <div className="flex-1 flex flex-col">
                 <div className="flex items-center gap-1">
                   <MapPinIcon className="w-4 h-5 text-gray-600" />
-                  <span className="text-gray-500 mb-1 font-semibold">Endereço ou região</span>
+                  <span className="text-gray-500 mb-1 font-semibold">Cidade</span>
                 </div>
                 <input
                   type="text"
-                  placeholder="Ex.: Bairro Castelândia"
+                  placeholder="Ex: Cuiabá, MT, Brasil"
                   className="bg-transparent outline-none w-full text-sm"
                   value={location}
                   onChange={e => {

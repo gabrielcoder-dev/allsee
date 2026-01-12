@@ -32,7 +32,7 @@ export default function AddressAutocomplete({
   error,
   onSelectAddress,
   onCloseDropdown,
-  placeholder = "Ex: Rua das Flores, Centro, Primavera do Leste",
+  placeholder = "Ex: Cuiabá, MT, Brasil",
   className = ""
 }: AddressAutocompleteProps) {
   const inputRef = useRef<HTMLInputElement>(null)
@@ -72,7 +72,7 @@ export default function AddressAutocomplete({
       {/* Input Field */}
       <div className="flex items-center gap-1">
         <MapPinIcon className="w-4 h-5 text-orange-500" />
-        <span className="text-gray-500 mb-1 font-semibold">endereço ou região</span>
+        <span className="text-gray-500 mb-1 font-semibold">Cidade</span>
         {isLoading && (
           <span className="text-xs text-blue-500 ml-2 animate-pulse">Buscando...</span>
         )}
