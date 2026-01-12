@@ -118,8 +118,19 @@ async function criarNotaFiscalAutomatica(order: any, paymentId: string) {
       id: paymentData.id,
       customer: paymentData.customer,
       status: paymentData.status,
-      value: paymentData.value
+      value: paymentData.value,
+      deleted: paymentData.deleted
     });
+
+    // Verificar se o payment está deletado - se sim, não criar nota fiscal
+    if (paymentData.deleted === true) {
+      console.log('⚠️ Pagamento está deletado - Não será criada nota fiscal');
+      return { 
+        success: false, 
+        reason: 'payment_deleted',
+        error: 'Não é possível criar nota fiscal para pagamento deletado'
+      };
+    }
 
     // Verificar se o customer existe e tem dados completos
     const customerId = paymentData.customer;
@@ -353,6 +364,28 @@ export default async function handler(
     let payment = event.payment;
     const invoice = event.invoice;
 
+    // Eventos que não devem processar atualização de status ou criar nota fiscal
+    // Estes eventos são apenas informativos e devem retornar sucesso imediatamente
+    const informationalEvents = [
+      'PAYMENT_DELETED',
+      'PAYMENT_REFUNDED',
+      'PAYMENT_OVERDUE',
+      'PAYMENT_RESTORED',
+      'PAYMENT_AWAITING_RISK_ANALYSIS',
+      'PAYMENT_APPROVED_BY_RISK_ANALYSIS',
+      'PAYMENT_REPROVED_BY_RISK_ANALYSIS'
+    ];
+
+    if (eventType && informationalEvents.includes(eventType)) {
+      console.log(`ℹ️ Evento informativo detectado: ${eventType} - Retornando sucesso sem processar`);
+      return res.status(200).json({ 
+        success: true,
+        message: `Evento ${eventType} recebido e processado`,
+        eventType,
+        note: 'Este tipo de evento não atualiza status de pedido ou cria nota fiscal. Apenas para registro.'
+      });
+    }
+
     // Se não tem payment mas tem invoice, tentar extrair payment da invoice
     if (!payment && invoice) {
       console.log('📋 Evento com invoice em vez de payment, tentando extrair dados...');
@@ -410,6 +443,18 @@ export default async function handler(
       });
     }
 
+    // Verificar se o pagamento foi deletado - se sim, não processar
+    if (payment.deleted === true) {
+      console.log(`ℹ️ Pagamento deletado detectado (payment.deleted: ${payment.deleted}) - Retornando sucesso sem processar`);
+      return res.status(200).json({ 
+        success: true,
+        message: 'Webhook recebido para pagamento deletado',
+        eventType,
+        paymentId: payment.id,
+        note: 'Pagamento deletado não deve atualizar status ou criar nota fiscal. Apenas para registro.'
+      });
+    }
+
     // Obter orderId do externalReference
     // Tentar múltiplas localizações possíveis
     let orderIdRaw = payment.externalReference || 
@@ -463,6 +508,15 @@ export default async function handler(
         }
       }
       
+      // Tentar buscar por subscription ID se disponível
+      const subscriptionId = payment.subscription;
+      if (!orderIdRaw && subscriptionId) {
+        console.log(`🔄 Tentando buscar pedido pelo subscription ID: ${subscriptionId}`);
+        // Nota: Se a tabela order tiver uma coluna asaas_subscription_id, usar aqui
+        // Por enquanto, apenas logar
+        console.log(`ℹ️ Subscription ID encontrado: ${subscriptionId}, mas busca por subscription ainda não implementada`);
+      }
+      
       // Se ainda não encontrou, retornar erro com logs detalhados
       // Mas não bloquear o webhook (retornar 200 para evitar retries infinitos)
       if (!orderIdRaw) {
@@ -473,6 +527,8 @@ export default async function handler(
         console.error('📋 Payment Status:', payment.status);
         console.error('📋 Payment BillingType:', payment.billingType);
         console.error('📋 Payment Value:', payment.value);
+        console.error('📋 Payment Subscription:', payment.subscription);
+        console.error('📋 Payment Deleted:', payment.deleted);
         console.error('📋 Payment completo:', JSON.stringify(payment, null, 2));
         console.error('📋 Event completo:', JSON.stringify(event, null, 2));
         console.error('='.repeat(80));
@@ -488,8 +544,9 @@ export default async function handler(
           paymentStatus: payment.status,
           paymentBillingType: payment.billingType,
           paymentValue: payment.value,
+          paymentSubscription: payment.subscription,
           hint: 'O pedido pode ter sido deletado ou o externalReference pode estar incorreto. Verifique os logs do servidor para mais detalhes.',
-          note: 'Webhook processado mas pedido não encontrado. Verifique se o pedido existe no banco de dados.'
+          note: 'Webhook processado mas pedido não encontrado. Verifique se o pedido existe no banco de dados. Não foi possível criar nota fiscal sem pedido.'
         });
       }
     }
