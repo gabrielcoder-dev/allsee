@@ -103,6 +103,73 @@ async function fetchBrazilianCities(): Promise<any[]> {
   }
 }
 
+// Lista de cidades conhecidas de Mato Grosso com coordenadas fixas
+const KNOWN_MT_CITIES: {[key: string]: {lat: number, lng: number}} = {
+  'Primavera do Leste': { lat: -15.5586, lng: -54.2811 },
+  'Cuiabá': { lat: -15.6014, lng: -56.0979 },
+  'Várzea Grande': { lat: -15.6500, lng: -56.1322 },
+  'Rondonópolis': { lat: -16.4706, lng: -54.6356 },
+  'Sinop': { lat: -11.8604, lng: -55.5091 },
+  'Tangará da Serra': { lat: -14.6229, lng: -57.4933 },
+  'Cáceres': { lat: -16.0764, lng: -57.6811 },
+  'Sorriso': { lat: -12.5428, lng: -55.7069 },
+  'Lucas do Rio Verde': { lat: -13.0583, lng: -55.9042 },
+  'Nova Mutum': { lat: -13.8378, lng: -56.0861 },
+  'Campo Verde': { lat: -15.5450, lng: -55.1625 },
+  'Diamantino': { lat: -14.4086, lng: -56.4461 },
+  'Poconé': { lat: -16.2561, lng: -56.6228 },
+  'Barra do Garças': { lat: -15.8900, lng: -52.2567 },
+  'Alta Floresta': { lat: -9.8756, lng: -56.0861 },
+  'Juína': { lat: -11.3778, lng: -58.7392 },
+  'Colíder': { lat: -10.8139, lng: -55.4511 },
+  'Guarantã do Norte': { lat: -9.7878, lng: -54.9011 },
+  'Peixoto de Azevedo': { lat: -10.2250, lng: -54.9811 },
+  'Nova Xavantina': { lat: -14.6761, lng: -52.3550 },
+  'Canarana': { lat: -13.5519, lng: -52.2708 },
+  'Querência': { lat: -12.6097, lng: -52.1831 },
+  'São Félix do Araguaia': { lat: -11.6147, lng: -50.6706 },
+  'Confresa': { lat: -10.6439, lng: -51.5697 },
+  'Vila Rica': { lat: -10.0139, lng: -51.1186 },
+  'Comodoro': { lat: -13.6619, lng: -59.7861 },
+  'Pontes e Lacerda': { lat: -15.2261, lng: -59.3353 },
+  'Vila Bela da Santíssima Trindade': { lat: -15.0089, lng: -59.9508 },
+  'Mirassol d\'Oeste': { lat: -15.6758, lng: -58.0950 },
+  'São José dos Quatro Marcos': { lat: -15.6278, lng: -58.1772 },
+  'Araputanga': { lat: -15.4647, lng: -58.3425 },
+  'Lambari d\'Oeste': { lat: -15.3189, lng: -58.0028 },
+  'Rio Branco': { lat: -15.2419, lng: -58.1258 },
+  'Salto do Céu': { lat: -15.1303, lng: -58.1317 },
+  'Glória d\'Oeste': { lat: -15.7689, lng: -58.3108 }
+}
+
+// Função para normalizar texto (remover acentos) - reutilizada
+function normalizeTextForSearch(text: string): string {
+  return text
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim()
+}
+
+// Função para obter coordenadas de uma cidade conhecida (case-insensitive e sem acentos)
+function getKnownCityCoordinates(cityName: string, state: string): {lat: number, lng: number} | null {
+  if (state === 'MT') {
+    // Normalizar o nome da cidade para busca
+    const normalizedCityName = normalizeTextForSearch(cityName)
+    
+    // Buscar cidade conhecida (case-insensitive e sem acentos)
+    const knownCity = Object.keys(KNOWN_MT_CITIES).find(
+      knownCityName => normalizeTextForSearch(knownCityName) === normalizedCityName
+    )
+    
+    if (knownCity) {
+      console.log(`✅ Usando coordenadas conhecidas para ${cityName}, ${state}`)
+      return KNOWN_MT_CITIES[knownCity]
+    }
+  }
+  return null
+}
+
 // Função para obter coordenadas aproximadas por estado (mais rápida)
 function getStateCoordinates(state: string): {lat: number, lng: number} {
   const stateCoords: {[key: string]: {lat: number, lng: number}} = {
@@ -265,19 +332,28 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         
         // Se não tem coordenadas, buscar coordenadas específicas
         if (!lat || !lng) {
-          console.log(`🔍 Buscando coordenadas para ${city.name}, ${city.state}`)
-          const coords = await fetchCityCoordinates(city.name, city.state)
-          
-          if (coords) {
-            lat = coords.lat
-            lng = coords.lng
-            console.log(`✅ Coordenadas específicas encontradas: ${lat}, ${lng}`)
+          // Primeiro verificar se é uma cidade conhecida de MT
+          const knownCoords = getKnownCityCoordinates(city.name, city.state)
+          if (knownCoords) {
+            lat = knownCoords.lat
+            lng = knownCoords.lng
+            console.log(`✅ Usando coordenadas conhecidas para ${city.name}, ${city.state}: ${lat}, ${lng}`)
           } else {
-            // Se não encontrou coordenadas, usar coordenadas aproximadas do estado como fallback
-            console.log(`⚠️ Coordenadas não encontradas para ${city.name}, ${city.state}, usando coordenadas do estado`)
-            const stateCoords = getStateCoordinates(city.state)
-            lat = stateCoords.lat
-            lng = stateCoords.lng
+            // Se não for cidade conhecida, tentar buscar via API
+            console.log(`🔍 Buscando coordenadas para ${city.name}, ${city.state}`)
+            const coords = await fetchCityCoordinates(city.name, city.state)
+            
+            if (coords) {
+              lat = coords.lat
+              lng = coords.lng
+              console.log(`✅ Coordenadas específicas encontradas: ${lat}, ${lng}`)
+            } else {
+              // Se não encontrou coordenadas, usar coordenadas aproximadas do estado como último fallback
+              console.log(`⚠️ Coordenadas não encontradas para ${city.name}, ${city.state}, usando coordenadas do estado`)
+              const stateCoords = getStateCoordinates(city.state)
+              lat = stateCoords.lat
+              lng = stateCoords.lng
+            }
           }
         }
 
