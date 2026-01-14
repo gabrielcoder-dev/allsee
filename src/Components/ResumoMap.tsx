@@ -36,21 +36,196 @@ type MarkerType = {
   };
 };
 
+// Função para extrair cidade do endereço
+function extractCityFromAddress(address: string): string | null {
+  if (!address) return null;
+  
+  // Formato típico: "Rua - Número - Bairro - Cidade - Estado"
+  const parts = address.split(' - ').map(p => p.trim());
+  
+  // A cidade geralmente está no penúltimo ou último lugar (antes do estado)
+  // Ex: "Rua Goiás - 1345 - Jardim Cuiabá - Barra do Garças - MT"
+  if (parts.length >= 2) {
+    // Se tiver estado no final, a cidade é o penúltimo
+    const lastPart = parts[parts.length - 1];
+    const secondLastPart = parts[parts.length - 2];
+    
+    // Se o último é um estado (2 letras), a cidade é o penúltimo
+    if (lastPart.length === 2 && /^[A-Z]{2}$/.test(lastPart)) {
+      return secondLastPart;
+    }
+    // Caso contrário, pode ser que a cidade esteja no último lugar
+    return lastPart;
+  }
+  
+  return null;
+}
+
+// Lista de cidades conhecidas de Mato Grosso com coordenadas
+const KNOWN_CITIES_COORDS: {[key: string]: LatLngTuple} = {
+  'Primavera do Leste': [-15.5586, -54.2811],
+  'Cuiabá': [-15.6014, -56.0979],
+  'Várzea Grande': [-15.6500, -56.1322],
+  'Rondonópolis': [-16.4706, -54.6356],
+  'Sinop': [-11.8604, -55.5091],
+  'Barra do Garças': [-15.8900, -52.2567],
+  'Tangará da Serra': [-14.6229, -57.4933],
+  'Cáceres': [-16.0764, -57.6811],
+  'Sorriso': [-12.5428, -55.7069],
+  'Lucas do Rio Verde': [-13.0583, -55.9042],
+  'Nova Mutum': [-13.8378, -56.0861],
+  'Campo Verde': [-15.5450, -55.1625],
+  'Diamantino': [-14.4086, -56.4461],
+  'Poconé': [-16.2561, -56.6228],
+  'Alta Floresta': [-9.8756, -56.0861],
+  'Juína': [-11.3778, -58.7392],
+  'Colíder': [-10.8139, -55.4511],
+  'Guarantã do Norte': [-9.7878, -54.9011],
+  'Peixoto de Azevedo': [-10.2250, -54.9811],
+  'Nova Xavantina': [-14.6761, -52.3550],
+  'Canarana': [-13.5519, -52.2708],
+  'Querência': [-12.6097, -52.1831],
+  'São Félix do Araguaia': [-11.6147, -50.6706],
+  'Confresa': [-10.6439, -51.5697],
+  'Vila Rica': [-10.0139, -51.1186],
+  'Comodoro': [-13.6619, -59.7861],
+  'Pontes e Lacerda': [-15.2261, -59.3353],
+  'Vila Bela da Santíssima Trindade': [-15.0089, -59.9508],
+  'Mirassol d\'Oeste': [-15.6758, -58.0950],
+  'São José dos Quatro Marcos': [-15.6278, -58.1772],
+  'Araputanga': [-15.4647, -58.3425],
+  'Lambari d\'Oeste': [-15.3189, -58.0028],
+  'Rio Branco': [-15.2419, -58.1258],
+  'Salto do Céu': [-15.1303, -58.1317],
+  'Glória d\'Oeste': [-15.7689, -58.3108]
+}
+
+// Função para normalizar nome da cidade (case-insensitive, sem acentos)
+function normalizeCityName(cityName: string): string {
+  return cityName
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim()
+}
+
+// Função para encontrar coordenadas de uma cidade
+function getCityCoordinates(cityName: string): LatLngTuple | null {
+  if (!cityName) return null;
+  
+  const normalized = normalizeCityName(cityName);
+  
+  for (const [knownCity, coords] of Object.entries(KNOWN_CITIES_COORDS)) {
+    if (normalizeCityName(knownCity) === normalized) {
+      return coords;
+    }
+  }
+  
+  return null;
+}
+
 // Componente para controlar o mapa
 function MapController({ 
-  markers
+  markers,
+  produtos
 }: { 
   markers: MarkerType[];
+  produtos: any[];
 }) {
   const map = useMap();
 
-  // Garantir que o mapa sempre inicie em Primavera do Leste com zoom mais distante
   useEffect(() => {
+    if (!produtos || produtos.length === 0) {
+      // Se não há produtos, voltar para Primavera do Leste
+      const timer = setTimeout(() => {
+        map.setView(PRIMAVERA_DO_LESTE_COORDS, 12);
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+
+    // Filtrar apenas os markers que estão no carrinho
+    const markersNoCarrinho = markers.filter(marker => {
+      const markerAnuncioId = marker.anuncio_id?.toString();
+      return produtos.some(p => p.id === markerAnuncioId);
+    });
+
+    if (markersNoCarrinho.length === 0) {
+      // Se não há markers no carrinho, voltar para Primavera do Leste
+      const timer = setTimeout(() => {
+        map.setView(PRIMAVERA_DO_LESTE_COORDS, 12);
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+
+    // Extrair cidades de cada produto
+    const produtosComCidades = produtos.map((produto, index) => {
+      const cidade = extractCityFromAddress(produto.endereco || '');
+      const marker = markersNoCarrinho.find(m => m.anuncio_id?.toString() === produto.id);
+      return {
+        produto,
+        cidade,
+        marker,
+        index // Ordem de adição (primeiro = 0)
+      };
+    }).filter(item => item.marker); // Apenas produtos que têm marker
+
+    if (produtosComCidades.length === 0) {
+      const timer = setTimeout(() => {
+        map.setView(PRIMAVERA_DO_LESTE_COORDS, 12);
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+
+    // Lógica de navegação
+    let targetCoords: LatLngTuple;
+    let targetZoom: number;
+
+    if (produtosComCidades.length === 1) {
+      // Caso 1: Apenas 1 totem → ir para o marker específico
+      const marker = produtosComCidades[0].marker!;
+      targetCoords = [marker.lat, marker.lng];
+      targetZoom = 15; // Zoom próximo para ver o totem
+      console.log('📍 Navegando para 1 totem específico:', targetCoords);
+    } else {
+      // Caso 2: 2 ou mais totens
+      const cidades = produtosComCidades.map(item => item.cidade).filter(Boolean);
+      const cidadesUnicas = [...new Set(cidades)];
+      
+      if (cidadesUnicas.length === 1 && cidadesUnicas[0]) {
+        // Caso 2a: Todos da mesma cidade → mostrar a cidade
+        const cidadeCoords = getCityCoordinates(cidadesUnicas[0]);
+        if (cidadeCoords) {
+          targetCoords = cidadeCoords;
+          targetZoom = 13; // Zoom médio para ver a cidade
+          console.log('🏙️ Navegando para cidade:', cidadesUnicas[0], targetCoords);
+        } else {
+          // Se não encontrou coordenadas da cidade, calcular centro dos markers
+          const lats = produtosComCidades.map(item => item.marker!.lat);
+          const lngs = produtosComCidades.map(item => item.marker!.lng);
+          targetCoords = [
+            (Math.min(...lats) + Math.max(...lats)) / 2,
+            (Math.min(...lngs) + Math.max(...lngs)) / 2
+          ];
+          targetZoom = 13;
+          console.log('📍 Navegando para centro dos totens da mesma cidade:', targetCoords);
+        }
+      } else {
+        // Caso 2b: Cidades diferentes → mostrar o primeiro totem adicionado
+        const primeiroProduto = produtosComCidades[0];
+        const marker = primeiroProduto.marker!;
+        targetCoords = [marker.lat, marker.lng];
+        targetZoom = 15; // Zoom próximo para ver o totem
+        console.log('📍 Navegando para primeiro totem adicionado:', targetCoords);
+      }
+    }
+
+    // Navegar para a posição calculada
     const timer = setTimeout(() => {
-      map.setView(PRIMAVERA_DO_LESTE_COORDS, 12);
+      map.setView(targetCoords, targetZoom);
     }, 100);
+
     return () => clearTimeout(timer);
-  }, [map]);
+  }, [map, produtos, markers]);
 
   return null;
 }
@@ -183,7 +358,7 @@ export default function ResumoMap({ produtos }: { produtos: any[] }) {
             maxZoom={18}
             worldCopyJump={true}
           >
-            <MapController markers={markers} />
+            <MapController markers={markers} produtos={produtos} />
             
             <TileLayer
               attribution='&copy; <a href="https://osm.org/copyright">OpenStreetMap</a> contributors'
@@ -239,7 +414,7 @@ export default function ResumoMap({ produtos }: { produtos: any[] }) {
         maxZoom={18}
         worldCopyJump={true}
       >
-        <MapController markers={markers} />
+        <MapController markers={markers} produtos={produtos} />
         
         <TileLayer
           attribution='&copy; <a href="https://osm.org/copyright">OpenStreetMap</a> contributors'
