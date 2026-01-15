@@ -252,17 +252,113 @@ async function criarNotaFiscalAutomatica(order: any, paymentId: string) {
       };
     }
 
+    // Validar e preparar valor da nota fiscal
+    let invoiceValue = 0;
+    
+    // Converter order.preco (pode ser string ou number do banco de dados)
+    if (order.preco !== null && order.preco !== undefined && order.preco !== '') {
+      if (typeof order.preco === 'number') {
+        invoiceValue = order.preco;
+      } else if (typeof order.preco === 'string') {
+        // Remover caracteres não numéricos exceto ponto e vírgula
+        const cleanedPrice = String(order.preco).replace(/[^\d.,-]/g, '').replace(',', '.');
+        invoiceValue = parseFloat(cleanedPrice);
+      } else {
+        invoiceValue = parseFloat(String(order.preco));
+      }
+    }
+    
+    // Se não conseguiu obter do order, tentar do payment
+    if ((isNaN(invoiceValue) || invoiceValue <= 0) && paymentData.value) {
+      if (typeof paymentData.value === 'number') {
+        invoiceValue = paymentData.value;
+      } else if (typeof paymentData.value === 'string') {
+        const cleanedPaymentValue = String(paymentData.value).replace(/[^\d.,-]/g, '').replace(',', '.');
+        invoiceValue = parseFloat(cleanedPaymentValue);
+      } else {
+        invoiceValue = parseFloat(String(paymentData.value));
+      }
+    }
+    
+    // Garantir que o valor seja um número válido maior que 0
+    if (isNaN(invoiceValue) || invoiceValue <= 0) {
+      console.error('❌ Valor da nota fiscal inválido:', {
+        orderPreco: order.preco,
+        orderPrecoType: typeof order.preco,
+        paymentValue: paymentData.value,
+        paymentValueType: typeof paymentData.value,
+        calculatedValue: invoiceValue,
+        isNaN: isNaN(invoiceValue)
+      });
+      return { 
+        success: false, 
+        error: 'Valor da nota fiscal inválido. O valor deve ser maior que zero.',
+        details: {
+          orderPreco: order.preco,
+          orderPrecoType: typeof order.preco,
+          paymentValue: paymentData.value,
+          paymentValueType: typeof paymentData.value,
+          calculatedValue: invoiceValue
+        }
+      };
+    }
+
+    // Validar formato da data (YYYY-MM-DD)
+    const today = new Date();
+    const effectiveDate = today.toISOString().split('T')[0];
+    
+    // Validar se a data está no formato correto
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(effectiveDate)) {
+      console.error('❌ Formato de data inválido:', effectiveDate);
+      return { 
+        success: false, 
+        error: 'Formato de data inválido para a nota fiscal'
+      };
+    }
+
+    // Verificar se o payment existe e está válido antes de criar nota fiscal
+    if (paymentData.deleted === true) {
+      console.error('❌ Não é possível criar nota fiscal para pagamento deletado');
+      return { 
+        success: false, 
+        error: 'Não é possível criar nota fiscal para pagamento deletado',
+        reason: 'payment_deleted'
+      };
+    }
+
+    // Verificar se o payment está pago (pode ser necessário para criar nota fiscal)
+    if (paymentData.status && !['RECEIVED', 'CONFIRMED', 'APPROVED', 'RECEIVED_IN_CASH_OFFLINE'].includes(paymentData.status)) {
+      console.warn('⚠️ Pagamento não está confirmado. Status:', paymentData.status);
+      // Não bloquear, mas avisar que pode dar erro na API
+    }
+
     // Criar nota fiscal no Asaas
     const invoiceData: any = {
       payment: paymentId,
-      serviceDescription: order.nome_campanha || 'Serviço de publicidade em totens digitais',
-      value: order.preco || paymentData.value || 0,
-      effectiveDate: new Date().toISOString().split('T')[0],
+      serviceDescription: (order.nome_campanha || 'Serviço de publicidade em totens digitais').substring(0, 500), // Limitar tamanho
+      value: invoiceValue.toFixed(2), // Formatar com 2 casas decimais
+      effectiveDate: effectiveDate,
       municipalServiceId: municipalServiceId,
     };
 
     console.log('📝 Dados da nota fiscal que serão enviados:', invoiceData);
     console.log('📝 URL da API:', `${ASAAS_API_URL}/invoices`);
+
+    // Validações finais antes de enviar
+    if (!invoiceData.payment || !invoiceData.municipalServiceId || !invoiceData.value || !invoiceData.effectiveDate) {
+      const missingFields = [];
+      if (!invoiceData.payment) missingFields.push('payment');
+      if (!invoiceData.municipalServiceId) missingFields.push('municipalServiceId');
+      if (!invoiceData.value) missingFields.push('value');
+      if (!invoiceData.effectiveDate) missingFields.push('effectiveDate');
+      
+      console.error('❌ Campos obrigatórios faltando:', missingFields);
+      return { 
+        success: false, 
+        error: `Campos obrigatórios faltando: ${missingFields.join(', ')}`,
+        details: { missingFields, invoiceData }
+      };
+    }
 
     const invoiceResponse = await fetch(`${ASAAS_API_URL}/invoices`, {
       method: 'POST',
@@ -286,17 +382,46 @@ async function criarNotaFiscalAutomatica(order: any, paymentId: string) {
         errorData = { message: responseText, rawResponse: responseText };
       }
       
+      // Extrair mensagens de erro específicas do array errors
+      let errorMessages: string[] = [];
+      if (errorData.errors && Array.isArray(errorData.errors)) {
+        errorMessages = errorData.errors.map((err: any) => {
+          if (typeof err === 'string') return err;
+          if (err.message) return err.message;
+          if (err.description) return err.description;
+          if (err.code) return `${err.code}: ${err.description || err.message || ''}`;
+          return JSON.stringify(err);
+        }).filter(Boolean);
+      }
+      
+      // Se não houver mensagens no array, usar message ou description
+      if (errorMessages.length === 0) {
+        if (errorData.message) errorMessages.push(errorData.message);
+        if (errorData.description) errorMessages.push(errorData.description);
+        if (errorMessages.length === 0) {
+          errorMessages.push(`Erro ao criar nota fiscal (${invoiceResponse.status})`);
+        }
+      }
+      
+      const errorMessage = errorMessages.join('; ');
+      
       console.error('❌ Erro ao criar nota fiscal:', {
         status: invoiceResponse.status,
         statusText: invoiceResponse.statusText,
-        errorData
+        errorData,
+        errorMessages,
+        invoiceData: {
+          ...invoiceData,
+          value: invoiceData.value, // Já formatado
+        }
       });
       
       return { 
         success: false, 
-        error: errorData.message || errorData.description || `Erro ao criar nota fiscal (${invoiceResponse.status})`,
+        error: errorMessage,
         details: errorData,
-        status: invoiceResponse.status
+        status: invoiceResponse.status,
+        invoiceData: invoiceData // Incluir dados enviados para debug
       };
     }
 
