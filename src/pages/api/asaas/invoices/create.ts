@@ -109,6 +109,74 @@ export default async function handler(
       console.warn('⚠️ Erro ao verificar pagamento, continuando mesmo assim:', paymentCheckError.message);
     }
 
+    // Buscar municipalServiceName se municipalServiceId foi fornecido
+    // O valor pode ser um ID interno (ex: "76174") ou um código (ex: "17.06")
+    let municipalServiceName: string | null = null;
+    let actualMunicipalServiceId = municipalServiceId; // ID que será usado na API
+    
+    if (municipalServiceId) {
+      console.log('🔍 Buscando nome do serviço municipal para:', municipalServiceId);
+      const endpoints = [
+        `${ASAAS_API_URL}/municipalServices`,
+        `${ASAAS_API_URL}/invoices/municipalServices`,
+      ];
+
+      for (const endpoint of endpoints) {
+        try {
+          const servicesResponse = await fetch(endpoint, {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+              'access_token': ASAAS_API_KEY,
+            },
+          });
+
+          if (servicesResponse.ok) {
+            const servicesData = await servicesResponse.json();
+            const services = servicesData.data || servicesData || [];
+            
+            if (Array.isArray(services)) {
+              // Procurar pelo ID OU pelo código (pode ser que o valor seja um código como "17.06")
+              const foundService = services.find((s: any) => 
+                s.id === municipalServiceId || 
+                s.id === String(municipalServiceId) ||
+                s.code === municipalServiceId ||
+                s.municipalServiceCode === municipalServiceId ||
+                String(s.code) === String(municipalServiceId) ||
+                String(s.municipalServiceCode) === String(municipalServiceId)
+              );
+              
+              if (foundService) {
+                // Sempre usar o ID interno do Asaas
+                actualMunicipalServiceId = foundService.id;
+                municipalServiceName = foundService.municipalServiceName || 
+                                      foundService.name || 
+                                      foundService.description || 
+                                      null;
+                if (municipalServiceName) {
+                  console.log('✅ Serviço municipal encontrado:', {
+                    valorProcurado: municipalServiceId,
+                    idEncontrado: actualMunicipalServiceId,
+                    codigo: foundService.code || foundService.municipalServiceCode,
+                    name: municipalServiceName
+                  });
+                  break;
+                }
+              }
+            }
+          }
+        } catch (error: any) {
+          console.warn(`⚠️ Erro ao buscar nome do serviço em ${endpoint}:`, error.message);
+        }
+      }
+
+      if (!municipalServiceName) {
+        console.warn('⚠️ Não foi possível obter municipalServiceName. Assumindo que o valor é o ID interno.');
+        // Se não encontrou, assumir que o valor fornecido já é o ID interno
+        actualMunicipalServiceId = municipalServiceId;
+      }
+    }
+
     // Preparar dados da nota fiscal
     const invoiceData: any = {
       payment: paymentId,
@@ -117,9 +185,23 @@ export default async function handler(
       effectiveDate: invoiceDate,
     };
 
-    // municipalServiceId é opcional, mas se fornecido, deve ser incluído
+    // municipalServiceId e municipalServiceName são obrigatórios se municipalServiceId foi fornecido
     if (municipalServiceId) {
-      invoiceData.municipalServiceId = municipalServiceId;
+      invoiceData.municipalServiceId = actualMunicipalServiceId; // Usar o ID interno do Asaas
+      if (municipalServiceName) {
+        invoiceData.municipalServiceName = municipalServiceName;
+      } else {
+        // Se não conseguiu buscar o nome, retornar erro
+        return res.status(400).json({
+          success: false,
+          error: 'municipalServiceName é obrigatório quando municipalServiceId é fornecido. Não foi possível obter o nome do serviço municipal.',
+          details: {
+            valorFornecido: municipalServiceId,
+            idInterno: actualMunicipalServiceId,
+            hint: 'Verifique se o serviço municipal está cadastrado corretamente no Asaas com nome/descrição. O valor pode ser um ID interno ou um código (ex: "17.06")'
+          }
+        });
+      }
     }
 
     // Validações finais antes de enviar
