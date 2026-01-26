@@ -195,6 +195,7 @@ async function criarNotaFiscalAutomatica(order: any, paymentId: string) {
     console.log('🔍 Buscando serviços municipais cadastrados no Asaas...');
     let municipalServiceId: string | null = null;
     let municipalServiceName: string | null = null;
+    let municipalServiceCode: string | null = null; // Salvar o código para usar como fallback
     
     // Primeiro, tentar usar variável de ambiente se configurada
     if (process.env.ASAAS_MUNICIPAL_SERVICE_ID) {
@@ -236,6 +237,7 @@ async function criarNotaFiscalAutomatica(order: any, paymentId: string) {
               
               if (foundService) {
                 municipalServiceId = foundService.id; // Sempre usar o ID interno do Asaas
+                municipalServiceCode = foundService.code || foundService.municipalServiceCode || null;
                 municipalServiceName = foundService.municipalServiceName || 
                                       foundService.name || 
                                       foundService.description || 
@@ -243,7 +245,7 @@ async function criarNotaFiscalAutomatica(order: any, paymentId: string) {
                 console.log('✅ Serviço municipal encontrado:', {
                   valorProcurado: envValue,
                   idEncontrado: municipalServiceId,
-                  codigo: foundService.code || foundService.municipalServiceCode,
+                  codigo: municipalServiceCode,
                   name: municipalServiceName
                 });
                 break;
@@ -299,6 +301,11 @@ async function criarNotaFiscalAutomatica(order: any, paymentId: string) {
                       console.log('✅ ID atualizado para o ID interno do Asaas:', municipalServiceId);
                     }
                     
+                    // Salvar o código do serviço
+                    if (!municipalServiceCode) {
+                      municipalServiceCode = foundService.code || foundService.municipalServiceCode || null;
+                    }
+                    
                     municipalServiceName = foundService.municipalServiceName || 
                                           foundService.name || 
                                           foundService.description || 
@@ -347,6 +354,7 @@ async function criarNotaFiscalAutomatica(order: any, paymentId: string) {
             if (Array.isArray(services) && services.length > 0) {
               // Usar o primeiro serviço disponível
               municipalServiceId = services[0].id;
+              municipalServiceCode = services[0].code || services[0].municipalServiceCode || null;
               municipalServiceName = services[0].municipalServiceName || 
                                     services[0].name || 
                                     services[0].description || 
@@ -354,7 +362,7 @@ async function criarNotaFiscalAutomatica(order: any, paymentId: string) {
               console.log('✅ Serviço municipal encontrado:', {
                 id: municipalServiceId,
                 name: municipalServiceName,
-                code: services[0].code || services[0].municipalServiceCode,
+                code: municipalServiceCode,
                 description: services[0].description || services[0].municipalServiceName,
                 totalServices: services.length,
                 endpoint
@@ -428,6 +436,11 @@ async function criarNotaFiscalAutomatica(order: any, paymentId: string) {
                   console.log('✅ ID atualizado para o ID interno do Asaas:', municipalServiceId);
                 }
                 
+                // Salvar o código do serviço
+                if (!municipalServiceCode) {
+                  municipalServiceCode = foundService.code || foundService.municipalServiceCode || null;
+                }
+                
                 municipalServiceName = foundService.municipalServiceName || 
                                       foundService.name || 
                                       foundService.description || 
@@ -457,6 +470,35 @@ async function criarNotaFiscalAutomatica(order: any, paymentId: string) {
         } catch (error: any) {
           console.warn(`⚠️ Erro ao buscar nome do serviço em ${endpoint}:`, error.message);
         }
+      }
+    }
+
+    // Fallback: Se não encontrou o nome pela API, usar o valor da variável de ambiente ou código
+    if (!municipalServiceName && municipalServiceId) {
+      console.warn('⚠️ municipalServiceName não encontrado pela API. Usando fallback...');
+      
+      // Prioridade 1: Tentar usar o código do serviço encontrado
+      if (municipalServiceCode) {
+        municipalServiceName = municipalServiceCode;
+        console.log('✅ Usando código do serviço como nome:', municipalServiceName);
+      }
+      // Prioridade 2: Tentar usar o valor da variável de ambiente (pode conter o código completo como "17.06 - Descrição...")
+      else if (process.env.ASAAS_MUNICIPAL_SERVICE_ID) {
+        const envValue = process.env.ASAAS_MUNICIPAL_SERVICE_ID;
+        // Se o valor da variável parece ser um código completo (contém "-" ou é maior que um código simples)
+        if (envValue.includes('-') || envValue.length > 10) {
+          municipalServiceName = envValue;
+          console.log('✅ Usando valor completo da variável de ambiente como nome:', municipalServiceName);
+        } else {
+          // Se for apenas um código como "17.06", usar como nome
+          municipalServiceName = envValue;
+          console.log('✅ Usando código da variável de ambiente como nome:', municipalServiceName);
+        }
+      } 
+      // Prioridade 3: Último recurso: usar o ID como nome (melhor que nada)
+      else {
+        municipalServiceName = `Serviço Municipal ${municipalServiceId}`;
+        console.warn('⚠️ Usando nome genérico baseado no ID:', municipalServiceName);
       }
     }
 
