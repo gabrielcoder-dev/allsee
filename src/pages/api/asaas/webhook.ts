@@ -196,6 +196,7 @@ async function criarNotaFiscalAutomatica(order: any, paymentId: string) {
     let municipalServiceId: string | null = null;
     let municipalServiceName: string | null = null;
     let municipalServiceCode: string | null = null; // Salvar o código para usar como fallback
+    let issTax: number | null = null; // Salvar a alíquota de ISS do serviço
     
     // Primeiro, tentar usar variável de ambiente se configurada
     if (process.env.ASAAS_MUNICIPAL_SERVICE_ID) {
@@ -242,11 +243,22 @@ async function criarNotaFiscalAutomatica(order: any, paymentId: string) {
                                       foundService.name || 
                                       foundService.description || 
                                       null;
+                // Buscar alíquota de ISS do serviço
+                const issTaxValue: any = foundService.issTax || foundService.iss || null;
+                if (issTaxValue !== null) {
+                  if (typeof issTaxValue === 'string') {
+                    // Converter string para número (ex: "2%" -> 2)
+                    issTax = parseFloat(String(issTaxValue).replace('%', '').replace(',', '.'));
+                  } else if (typeof issTaxValue === 'number') {
+                    issTax = issTaxValue;
+                  }
+                }
                 console.log('✅ Serviço municipal encontrado:', {
                   valorProcurado: envValue,
                   idEncontrado: municipalServiceId,
                   codigo: municipalServiceCode,
-                  name: municipalServiceName
+                  name: municipalServiceName,
+                  issTax: issTax
                 });
                 break;
               }
@@ -306,6 +318,18 @@ async function criarNotaFiscalAutomatica(order: any, paymentId: string) {
                       municipalServiceCode = foundService.code || foundService.municipalServiceCode || null;
                     }
                     
+                    // Salvar alíquota de ISS
+                    if (issTax === null) {
+                      const issTaxValue: any = foundService.issTax || foundService.iss || null;
+                      if (issTaxValue !== null) {
+                        if (typeof issTaxValue === 'string') {
+                          issTax = parseFloat(String(issTaxValue).replace('%', '').replace(',', '.'));
+                        } else if (typeof issTaxValue === 'number') {
+                          issTax = issTaxValue;
+                        }
+                      }
+                    }
+                    
                     municipalServiceName = foundService.municipalServiceName || 
                                           foundService.name || 
                                           foundService.description || 
@@ -359,10 +383,21 @@ async function criarNotaFiscalAutomatica(order: any, paymentId: string) {
                                     services[0].name || 
                                     services[0].description || 
                                     null;
+              // Buscar alíquota de ISS do serviço
+              const issTaxValue: any = services[0].issTax || services[0].iss || null;
+              if (issTaxValue !== null) {
+                if (typeof issTaxValue === 'string') {
+                  // Converter string para número (ex: "2%" -> 2)
+                  issTax = parseFloat(String(issTaxValue).replace('%', '').replace(',', '.'));
+                } else if (typeof issTaxValue === 'number') {
+                  issTax = issTaxValue;
+                }
+              }
               console.log('✅ Serviço municipal encontrado:', {
                 id: municipalServiceId,
                 name: municipalServiceName,
                 code: municipalServiceCode,
+                issTax: issTax,
                 description: services[0].description || services[0].municipalServiceName,
                 totalServices: services.length,
                 endpoint
@@ -439,6 +474,18 @@ async function criarNotaFiscalAutomatica(order: any, paymentId: string) {
                 // Salvar o código do serviço
                 if (!municipalServiceCode) {
                   municipalServiceCode = foundService.code || foundService.municipalServiceCode || null;
+                }
+                
+                // Salvar alíquota de ISS
+                if (issTax === null) {
+                  const issTaxValue: any = foundService.issTax || foundService.iss || null;
+                  if (issTaxValue !== null) {
+                    if (typeof issTaxValue === 'string') {
+                      issTax = parseFloat(String(issTaxValue).replace('%', '').replace(',', '.'));
+                    } else if (typeof issTaxValue === 'number') {
+                      issTax = issTaxValue;
+                    }
+                  }
                 }
                 
                 municipalServiceName = foundService.municipalServiceName || 
@@ -603,6 +650,33 @@ async function criarNotaFiscalAutomatica(order: any, paymentId: string) {
     if (municipalServiceName) {
       invoiceData.municipalServiceName = municipalServiceName;
     }
+
+    // Adicionar impostos (obrigatório pela API)
+    // Calcular ISS baseado na alíquota do serviço
+    let issValue = 0;
+    if (issTax !== null && !isNaN(issTax) && issTax > 0) {
+      // Calcular ISS: valor da nota * (alíquota / 100)
+      issValue = invoiceValue * (issTax / 100);
+      console.log('💰 Calculando ISS:', {
+        valorNota: invoiceValue,
+        aliquota: issTax,
+        valorISS: issValue.toFixed(2)
+      });
+    } else {
+      // Se não tiver alíquota, usar 0 (a API pode calcular automaticamente)
+      console.warn('⚠️ Alíquota de ISS não encontrada. Usando 0. A API pode calcular automaticamente.');
+    }
+
+    // Adicionar objeto taxes (obrigatório pela API do Asaas)
+    invoiceData.taxes = {
+      iss: issValue.toFixed(2), // Valor do ISS calculado
+      // Outros impostos podem ser adicionados aqui se necessário
+      // cofins: 0,
+      // csll: 0,
+      // inss: 0,
+      // ir: 0,
+      // pis: 0,
+    };
 
     console.log('📝 Dados da nota fiscal que serão enviados:', invoiceData);
     console.log('📝 URL da API:', `${ASAAS_API_URL}/invoices`);
