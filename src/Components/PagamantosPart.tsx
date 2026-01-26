@@ -239,7 +239,8 @@ export const PagamantosPart = () => {
     lastCepLookup.current[tipo] = digits;
 
     try {
-      const response = await fetch(`https://vicep.com.br/ws/${digits}/json/`);
+      // Usar ViaCEP - API gratuita e confiável para busca de CEP
+      const response = await fetch(`https://viacep.com.br/ws/${digits}/json/`);
       if (!response.ok) {
         throw new Error("Não foi possível consultar o CEP.");
       }
@@ -250,23 +251,16 @@ export const PagamantosPart = () => {
         throw new Error("CEP não encontrado.");
       }
 
+      // Preencher apenas cidade e estado
       const updates =
         tipo === "fisica"
           ? {
-              bairro: data.bairro ?? formData.bairro,
               cidade: data.localidade ?? formData.cidade,
               estado: data.uf ?? formData.estado,
-              endereco: data.logradouro
-                ? `${data.logradouro}${data.complemento ? ` - ${data.complemento}` : ""}`
-                : formData.endereco,
             }
           : {
-              bairroJ: data.bairro ?? formData.bairroJ,
               cidadeJ: data.localidade ?? formData.cidadeJ,
               estadoJ: data.uf ?? formData.estadoJ,
-              enderecoJ: data.logradouro
-                ? `${data.logradouro}${data.complemento ? ` - ${data.complemento}` : ""}`
-                : formData.enderecoJ,
             };
 
       updateFormData(updates as any);
