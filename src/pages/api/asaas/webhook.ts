@@ -271,8 +271,14 @@ async function criarNotaFiscalAutomatica(order: any, paymentId: string) {
       
       // Se não encontrou pelo código, assumir que o valor da variável é o ID
       if (!municipalServiceId) {
-        console.log('⚠️ Serviço não encontrado pelo código, assumindo que o valor é o ID interno');
+        console.log('⚠️ Serviço não encontrado pelo código na API. Isso pode ser normal se a API não retornar serviços ou se o serviço estiver cadastrado diretamente no Asaas.');
+        console.log('📋 Assumindo que o valor da variável é o ID/código do serviço:', envValue);
         municipalServiceId = envValue;
+        
+        // Se o valor é "17.06", já definir o código
+        if (envValue === '17.06' || envValue.includes('17.06')) {
+          municipalServiceCode = '17.06';
+        }
         
         // Tentar buscar o nome do serviço imediatamente usando o ID assumido
         if (!municipalServiceName) {
@@ -526,7 +532,12 @@ async function criarNotaFiscalAutomatica(order: any, paymentId: string) {
       
       // Prioridade 1: Tentar usar o código do serviço encontrado
       if (municipalServiceCode) {
-        municipalServiceName = municipalServiceCode;
+        // Se o código é "17.06", usar um nome mais descritivo
+        if (municipalServiceCode === '17.06') {
+          municipalServiceName = '17.06 - Propaganda e publicidade, inclusive promoção de vendas, planejamento de campanhas ou sistemas de publicidade, elaboração de desenhos, textos e demais materiais publicitários';
+        } else {
+          municipalServiceName = municipalServiceCode;
+        }
         console.log('✅ Usando código do serviço como nome:', municipalServiceName);
       }
       // Prioridade 2: Tentar usar o valor da variável de ambiente (pode conter o código completo como "17.06 - Descrição...")
@@ -537,12 +548,21 @@ async function criarNotaFiscalAutomatica(order: any, paymentId: string) {
           municipalServiceName = envValue;
           console.log('✅ Usando valor completo da variável de ambiente como nome:', municipalServiceName);
         } else {
-          // Se for apenas um código como "17.06", usar como nome
-          municipalServiceName = envValue;
+          // Se for apenas um código como "17.06", usar nome descritivo
+          if (envValue === '17.06') {
+            municipalServiceName = '17.06 - Propaganda e publicidade, inclusive promoção de vendas, planejamento de campanhas ou sistemas de publicidade, elaboração de desenhos, textos e demais materiais publicitários';
+          } else {
+            municipalServiceName = envValue;
+          }
           console.log('✅ Usando código da variável de ambiente como nome:', municipalServiceName);
         }
       } 
-      // Prioridade 3: Último recurso: usar o ID como nome (melhor que nada)
+      // Prioridade 3: Se o ID é "17.06", usar nome descritivo
+      else if (municipalServiceId === '17.06') {
+        municipalServiceName = '17.06 - Propaganda e publicidade, inclusive promoção de vendas, planejamento de campanhas ou sistemas de publicidade, elaboração de desenhos, textos e demais materiais publicitários';
+        console.log('✅ Usando nome descritivo para código 17.06:', municipalServiceName);
+      }
+      // Prioridade 4: Último recurso: usar o ID como nome (melhor que nada)
       else {
         municipalServiceName = `Serviço Municipal ${municipalServiceId}`;
         console.warn('⚠️ Usando nome genérico baseado no ID:', municipalServiceName);
@@ -663,8 +683,16 @@ async function criarNotaFiscalAutomatica(order: any, paymentId: string) {
         valorISS: issValue.toFixed(2)
       });
     } else {
-      // Se não tiver alíquota, usar 0 (a API pode calcular automaticamente)
-      console.warn('⚠️ Alíquota de ISS não encontrada. Usando 0. A API pode calcular automaticamente.');
+      // Fallback: Se não encontrou a alíquota, usar 2% como padrão (alíquota comum para serviço 17.06)
+      // Isso é melhor que 0, pois a API pode rejeitar se o ISS for 0
+      const defaultIssTax = 2; // 2% é uma alíquota comum para serviços de publicidade
+      issValue = invoiceValue * (defaultIssTax / 100);
+      console.warn('⚠️ Alíquota de ISS não encontrada. Usando alíquota padrão de 2%:', {
+        valorNota: invoiceValue,
+        aliquotaPadrao: defaultIssTax,
+        valorISS: issValue.toFixed(2),
+        nota: 'Se a alíquota real for diferente, ajuste no painel do Asaas'
+      });
     }
 
     // Adicionar objeto taxes (obrigatório pela API do Asaas)
@@ -884,8 +912,44 @@ export default async function handler(
       
       // Alguns eventos de invoice podem ter payment dentro
       if (invoice.payment) {
-        payment = invoice.payment;
-        console.log('✅ Payment encontrado dentro da invoice');
+        // Se payment é uma string (ID), precisamos buscar o payment completo da API
+        if (typeof invoice.payment === 'string') {
+          const paymentId = invoice.payment;
+          console.log('📋 Payment é uma string (ID), buscando payment completo da API:', paymentId);
+          
+          try {
+            if (!ASAAS_API_KEY) {
+              throw new Error('ASAAS_API_KEY não configurada');
+            }
+            
+            const paymentResponse = await fetch(`${ASAAS_API_URL}/payments/${paymentId}`, {
+              method: 'GET',
+              headers: {
+                'Content-Type': 'application/json',
+                'access_token': ASAAS_API_KEY,
+              },
+            });
+            
+            if (paymentResponse.ok) {
+              payment = await paymentResponse.json();
+              console.log('✅ Payment completo encontrado:', {
+                id: payment.id,
+                externalReference: payment.externalReference,
+                status: payment.status
+              });
+            } else {
+              console.warn('⚠️ Não foi possível buscar payment completo. Status:', paymentResponse.status);
+              // Continuar com payment como string para eventos de invoice
+            }
+          } catch (error: any) {
+            console.warn('⚠️ Erro ao buscar payment completo:', error.message);
+            // Continuar com payment como string para eventos de invoice
+          }
+        } else {
+          // Se payment já é um objeto, usar diretamente
+          payment = invoice.payment;
+          console.log('✅ Payment encontrado dentro da invoice (objeto)');
+        }
       } else if (invoice.id) {
         // Se a invoice tem um ID, podemos buscar o pagamento relacionado
         // Mas por enquanto, vamos apenas logar e retornar sucesso para eventos de invoice
@@ -934,8 +998,78 @@ export default async function handler(
       });
     }
 
+    // Se payment é uma string (ID), buscar o payment completo da API
+    if (typeof payment === 'string') {
+      const paymentId = payment;
+      console.log('📋 Payment é uma string (ID), buscando payment completo da API:', paymentId);
+      
+      try {
+        if (!ASAAS_API_KEY) {
+          throw new Error('ASAAS_API_KEY não configurada');
+        }
+        
+        const paymentResponse = await fetch(`${ASAAS_API_URL}/payments/${paymentId}`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'access_token': ASAAS_API_KEY as string,
+          },
+        });
+        
+        if (paymentResponse.ok) {
+          payment = await paymentResponse.json();
+          console.log('✅ Payment completo encontrado:', {
+            id: payment.id,
+            externalReference: payment.externalReference,
+            status: payment.status
+          });
+        } else {
+          console.warn('⚠️ Não foi possível buscar payment completo. Status:', paymentResponse.status);
+          // Se não conseguir buscar, tentar buscar pelo paymentId no banco de dados
+          console.log('🔍 Tentando buscar orderId pelo paymentId no banco de dados:', paymentId);
+          const { data: orderData } = await supabase
+            .from('order')
+            .select('id')
+            .eq('asaas_payment_id', paymentId)
+            .single();
+          
+          if (orderData) {
+            console.log('✅ Order encontrado pelo paymentId:', orderData.id);
+            // Criar um objeto payment mínimo para continuar o processamento
+            payment = {
+              id: paymentId,
+              externalReference: orderData.id,
+              status: 'RECEIVED' // Assumir que se a invoice foi criada, o pagamento foi recebido
+            };
+          } else {
+            console.warn('⚠️ Order não encontrado pelo paymentId. Continuando com payment como string.');
+            // Para eventos de invoice, retornar sucesso sem processar
+            if (eventType === 'INVOICE_CREATED' || eventType === 'INVOICE_SYNCHRONIZED') {
+              return res.status(200).json({ 
+                success: true,
+                message: 'Evento de invoice recebido. Nota fiscal já foi criada automaticamente.',
+                eventType,
+                note: 'Aguarde evento de pagamento para atualizar status do pedido.'
+              });
+            }
+          }
+        }
+      } catch (error: any) {
+        console.warn('⚠️ Erro ao buscar payment completo:', error.message);
+        // Para eventos de invoice, retornar sucesso sem processar
+        if (eventType === 'INVOICE_CREATED' || eventType === 'INVOICE_SYNCHRONIZED') {
+          return res.status(200).json({ 
+            success: true,
+            message: 'Evento de invoice recebido. Nota fiscal já foi criada automaticamente.',
+            eventType,
+            note: 'Aguarde evento de pagamento para atualizar status do pedido.'
+          });
+        }
+      }
+    }
+
     // Verificar se o pagamento foi deletado - se sim, não processar
-    if (payment.deleted === true) {
+    if (payment && typeof payment === 'object' && payment.deleted === true) {
       console.log(`ℹ️ Pagamento deletado detectado (payment.deleted: ${payment.deleted}) - Retornando sucesso sem processar`);
       return res.status(200).json({ 
         success: true,
@@ -948,11 +1082,11 @@ export default async function handler(
 
     // Obter orderId do externalReference
     // Tentar múltiplas localizações possíveis
-    let orderIdRaw = payment.externalReference || 
-                     payment.external_reference || 
+    let orderIdRaw = (payment && typeof payment === 'object' && payment.externalReference) || 
+                     (payment && typeof payment === 'object' && payment.external_reference) || 
                      event.externalReference || 
                      event.external_reference ||
-                     payment.orderId ||
+                     (payment && typeof payment === 'object' && payment.orderId) ||
                      event.orderId;
 
     // Log detalhado para debug
@@ -973,7 +1107,8 @@ export default async function handler(
     console.log('='.repeat(80));
     
     if (!orderIdRaw) {
-      console.warn('⚠️ Webhook sem externalReference (orderId)');
+      console.warn('⚠️ Webhook sem externalReference (orderId) no payment');
+      console.warn('📋 Tentando fallback: buscar pedido pelo asaas_payment_id...');
       console.warn('📋 Estrutura completa do payment recebido:', {
         paymentKeys: Object.keys(payment),
         paymentData: payment,
@@ -982,9 +1117,9 @@ export default async function handler(
       });
       
       // Tentar buscar o pedido pelo ID do pagamento (asaas_payment_id)
-      const paymentId = payment.id;
+      const paymentId = payment && typeof payment === 'object' ? payment.id : (typeof payment === 'string' ? payment : null);
       if (paymentId) {
-        console.log(`🔄 Tentando buscar pedido pelo asaas_payment_id: ${paymentId}`);
+        console.log(`🔄 FALLBACK: Buscando pedido pelo asaas_payment_id: ${paymentId}`);
         const { data: orderByPaymentId, error: orderByPaymentIdError } = await supabase
           .from('order')
           .select('id, status, preco')
@@ -992,11 +1127,14 @@ export default async function handler(
           .single();
         
         if (!orderByPaymentIdError && orderByPaymentId) {
-          console.log(`✅ Pedido encontrado pelo asaas_payment_id: ${orderByPaymentId.id}`);
+          console.log(`✅ FALLBACK SUCESSO: Pedido encontrado pelo asaas_payment_id: ${orderByPaymentId.id}`);
+          console.log(`✅ Continuando processamento normalmente com orderId: ${orderByPaymentId.id}`);
           orderIdRaw = orderByPaymentId.id;
         } else {
-          console.warn(`⚠️ Não foi possível encontrar pedido pelo asaas_payment_id: ${paymentId}`, orderByPaymentIdError);
+          console.warn(`⚠️ FALLBACK FALHOU: Não foi possível encontrar pedido pelo asaas_payment_id: ${paymentId}`, orderByPaymentIdError);
         }
+      } else {
+        console.warn('⚠️ FALLBACK IMPOSSÍVEL: paymentId não disponível para busca');
       }
       
       // Tentar buscar por subscription ID se disponível
@@ -1012,7 +1150,8 @@ export default async function handler(
       // Mas não bloquear o webhook (retornar 200 para evitar retries infinitos)
       if (!orderIdRaw) {
         console.error('='.repeat(80));
-        console.error('❌ ERRO: externalReference NÃO ENCONTRADO');
+        console.error('❌ ERRO: externalReference NÃO ENCONTRADO E FALLBACK TAMBÉM FALHOU');
+        console.error('📋 NOTA: Se o pedido foi atualizado mesmo assim, pode ter sido processado em outro momento');
         console.error('='.repeat(80));
         console.error('📋 Payment ID:', payment.id);
         console.error('📋 Payment Status:', payment.status);
